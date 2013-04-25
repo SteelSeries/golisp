@@ -15,7 +15,6 @@ import (
 )
 
 func makeNumber(str string) (n Number, err error) {
-    fmt.Printf("Making number from '%s'\n", str)
     var i int
     _, err = fmt.Sscanf(str, "%d", &i)
     if err != nil {
@@ -64,7 +63,6 @@ func isLispIdent(str string) bool {
 func parseExpression(s *scanner.Scanner) (sexpr Expression, eof bool, err error) {
     for {
         _, tok, lit := (*s).Scan()
-        fmt.Printf("Found token: '%s'\n", lit)
         switch tok {
         case token.EOF:
             {
@@ -110,7 +108,6 @@ func parseExpression(s *scanner.Scanner) (sexpr Expression, eof bool, err error)
 }
 
 func Parse(src string) (sexprs Expression, err error) {
-    fmt.Printf("Parsing: '%s'\n", src)
     var s scanner.Scanner
     fset := token.NewFileSet()
     file := fset.AddFile("", fset.Base(), len(src))
