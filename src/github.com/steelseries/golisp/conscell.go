@@ -6,20 +6,21 @@
 package golisp
 
 import (
+    "fmt"
     "strings"
 )
 
 type ConsCell struct {
-    Car Expression
-    Cdr Expression
+    Car *Expression
+    Cdr *Expression
 }
 
 func EmptyCons() ConsCell {
-    return ConsCell{Nil, Nil}
+    return ConsCell{&Nil, &Nil}
 }
 
 func Cons(a Expression, b Expression) ConsCell {
-    return ConsCell{a, b}
+    return ConsCell{&a, &b}
 }
 
 func (self ConsCell) IntValue() int {
@@ -38,17 +39,24 @@ func (self ConsCell) IdentifierValue() string {
     return ""
 }
 
-func (self ConsCell) Head() Expression {
+func (self *ConsCell) Head() Expression {
     return self.Car
 }
 
-func (self ConsCell) Tail() Expression {
+func (self *ConsCell) Tail() Expression {
     return self.Cdr
 }
 
 func (self ConsCell) rawLength() int {
     i := 0
-    for c := self; !c.rawIsNil(); c, i = c.Cdr.(ConsCell), i+1 {
+    c := self
+    for {
+        i = i + 1
+        if c.Cdr.IsNil().IsTrue() {
+            break
+        } else {
+            c = c.Cdr.(ConsCell)
+        }
     }
     return i
 }
@@ -62,14 +70,21 @@ func (self ConsCell) Eval() Expression {
 }
 
 func (self ConsCell) String() string {
-
+    println("ConsCell.String()")
     contents := make([]string, 0, self.rawLength())
-    for c := self; !c.rawIsNil(); c = c.Cdr.(ConsCell) {
-        contents = append(contents, c.Car.String())
-    }
-    strings.Join(contents, " ")
+    c := self
 
-    return ""
+    for {
+        contents = append(contents, c.Car.String())
+        fmt.Printf("%v\n", contents)
+        if c.Cdr.IsNil().IsTrue() {
+            break
+        } else {
+            c = c.Cdr.(ConsCell)
+        }
+    }
+
+    return fmt.Sprintf("(%s)", strings.Join(contents, " "))
 }
 
 func (self ConsCell) IsEqual(other Expression) Boolean {
@@ -82,7 +97,7 @@ func (self ConsCell) IsEqual(other Expression) Boolean {
 }
 
 func (self ConsCell) rawIsNil() bool {
-    return self.Car.IsNil().BooleanValue() && self.Cdr.IsNil().BooleanValue()
+    return self.Car.IsNil().IsTrue() && self.Cdr.IsNil().IsTrue()
 }
 
 func (self ConsCell) IsNil() Boolean {

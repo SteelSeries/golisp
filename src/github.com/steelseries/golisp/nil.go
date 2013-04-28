@@ -52,11 +52,11 @@ func (self NilType) IsEqual(other Expression) Boolean {
 }
 
 func (self NilType) IsNil() Boolean {
-    return False
+    return True
 }
 
 func (self NilType) NotNil() Boolean {
-    return True
+    return False
 }
 
 func (self NilType) IsList() Boolean {

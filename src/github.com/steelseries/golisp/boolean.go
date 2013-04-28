@@ -24,6 +24,10 @@ func (self Boolean) BooleanValue() bool {
     return self.value
 }
 
+func (self Boolean) IsTrue() bool {
+    return self.value
+}
+
 func (self Boolean) IdentifierValue() string {
     return ""
 }

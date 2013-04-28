@@ -6,13 +6,20 @@
 
 package golisp
 
+import "fmt"
+
 func arrayToList(sexprs []Expression) Expression {
+    fmt.Printf("arrayToList: %v\n", sexprs)
+
     head := EmptyCons()
-    lastCell := head
+    lastCell := &head
     for _, element := range sexprs {
-        newCell := ConsCell{element, Nil}
+        fmt.Printf("%v\n", element)
+        newCell := Cons(element, Nil)
         lastCell.Cdr = newCell
-        lastCell = newCell
+        c := lastCell.Cdr.(ConsCell)
+        lastCell = &c
+        println(head.Cdr.String())
     }
     return head.Cdr
 }

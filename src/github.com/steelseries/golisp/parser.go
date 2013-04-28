@@ -14,6 +14,25 @@ import (
     "unicode"
 )
 
+var lookahead_token token.Token = -1
+var lookahead_lit = ""
+var s scanner.Scanner
+
+func initScanner(src string) {
+    fset := token.NewFileSet()
+    file := fset.AddFile("", fset.Base(), len(src))
+    s.Init(file, []byte(src), nil, scanner.ScanComments)
+    consumeToken()
+}
+
+func nextToken() (tok token.Token, lit string) {
+    return lookahead_token, lookahead_lit
+}
+
+func consumeToken() {
+    _, lookahead_token, lookahead_lit = s.Scan()
+}
+
 func makeNumber(str string) (n Number, err error) {
     var i int
     _, err = fmt.Sscanf(str, "%d", &i)
@@ -25,7 +44,7 @@ func makeNumber(str string) (n Number, err error) {
 }
 
 func makeString(str string) (s String, err error) {
-    s = StringWithValue(str)
+    s = StringWithValue(str[1 : len(str)-1])
     return
 }
 
@@ -34,8 +53,9 @@ func makeSymbol(str string) (s Symbol, err error) {
     return
 }
 
-func parseBoolean(s *scanner.Scanner) (b Boolean, err error) {
-    _, _, lit := (*s).Scan()
+func parseBoolean() (b Boolean, err error) {
+    _, lit := nextToken()
+    consumeToken()
     if lit[0] == 't' {
         return True, nil
     } else {
@@ -43,7 +63,35 @@ func parseBoolean(s *scanner.Scanner) (b Boolean, err error) {
     }
 }
 
-func parseConsCell(s *scanner.Scanner) (sexpr Expression, eof bool, err error) {
+func parseConsCell() (sexpr Expression, eof bool, err error) {
+    println("ParseConsCell")
+    tok, _ := nextToken()
+    if tok == token.RPAREN {
+        consumeToken()
+        println("Found RPAREN")
+        sexpr = Nil
+        return
+    }
+
+    var car Expression
+    cells := make([]Expression, 0, 10)
+    for tok != token.RPAREN {
+        car, eof, err = parseExpression()
+        if eof {
+            err = errors.New("Unexpected EOF (expected closing parenthesis)")
+            return
+        }
+        if err != nil {
+            return
+        }
+        fmt.Printf("%v\n", car)
+        cells = append(cells, car)
+        fmt.Printf("%v\n", cells)
+        tok, _ = nextToken()
+    }
+
+    println("Found RPAREN")
+    sexpr = arrayToList(cells)
     return
 }
 
@@ -60,37 +108,52 @@ func isLispIdent(str string) bool {
     return true
 }
 
-func parseExpression(s *scanner.Scanner) (sexpr Expression, eof bool, err error) {
+func parseExpression() (sexpr Expression, eof bool, err error) {
+    println("..ParseExpression")
     for {
-        _, tok, lit := (*s).Scan()
+        tok, lit := nextToken()
         switch tok {
         case token.EOF:
             {
+                consumeToken()
+                println("..Found EOF")
                 eof = true
                 err = nil
                 return
             }
         case token.COMMENT:
-            break
+            {
+                consumeToken()
+                println("..Found COMMENT")
+                break
+            }
         case token.INT:
             {
+                consumeToken()
+                println("..Found INT")
                 sexpr, err = makeNumber(lit)
                 return
             }
         case token.STRING:
             {
+                consumeToken()
+                println("..Found STRING")
                 sexpr, err = makeString(lit)
                 return
             }
         case token.IDENT:
             {
+                consumeToken()
+                println("..Found IDENT")
                 sexpr, err = makeSymbol(lit)
                 return
             }
         case token.ILLEGAL:
             {
+                consumeToken()
+                println("..Found ILLEGAL")
                 if isBooleanConstant(lit) {
-                    sexpr, err = parseBoolean(s)
+                    sexpr, err = parseBoolean()
                 } else if isLispIdent(lit) {
                     sexpr, err = makeSymbol(lit)
                 } else {
@@ -100,7 +163,9 @@ func parseExpression(s *scanner.Scanner) (sexpr Expression, eof bool, err error)
             }
         case token.LPAREN:
             {
-                sexpr, eof, err = parseConsCell(s)
+                consumeToken()
+                println("..Found LPAREN")
+                sexpr, eof, err = parseConsCell()
                 return
             }
         }
@@ -108,18 +173,15 @@ func parseExpression(s *scanner.Scanner) (sexpr Expression, eof bool, err error)
 }
 
 func Parse(src string) (sexprs Expression, err error) {
-    var s scanner.Scanner
-    fset := token.NewFileSet()
-    file := fset.AddFile("", fset.Base(), len(src))
-    s.Init(file, []byte(src), nil, scanner.ScanComments)
+    initScanner(src)
     resultSexprs := make([]Expression, 0, 2)
-    nextSexpr, eof, err := parseExpression(&s)
+    nextSexpr, eof, err := parseExpression()
     if err != nil {
         return
     }
     for !eof {
         resultSexprs = append(resultSexprs, nextSexpr)
-        nextSexpr, eof, err = parseExpression(&s)
+        nextSexpr, eof, err = parseExpression()
         if eof {
             break
         }
