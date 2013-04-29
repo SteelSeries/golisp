@@ -7,10 +7,10 @@
 package golisp
 
 type Binding struct {
-    Sym Symbol
-    Val Expression
+    Sym *Data
+    Val *Data
 }
 
-func BindingWithSymbolAndValue(sym Symbol, val Expression) Binding {
+func BindingWithSymbolAndValue(sym *Data, val *Data) Binding {
     return Binding{sym, val}
 }

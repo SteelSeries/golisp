@@ -2,7 +2,7 @@
 // No license is given for the use of this source code.
 
 // This package impliments a basic LISP interpretor for embedding in a go program for scripting.
-// This file inmpliments the cons cell
+// This file inmpliments data elements
 package golisp
 
 import (
@@ -17,7 +17,7 @@ const (
     StringType
     SymbolType
     FunctionType
-    PrimativeType
+    PrimitiveType
 )
 
 type Data struct {
@@ -27,13 +27,22 @@ type Data struct {
     String       string
     Number       int
     FuncionValue *Data
-    Primative    *PrimativeFunction
+    Primitive    *PrimitiveFunction
 }
 
-// Creation functions
+var True *Data = BooleanWithValue(true)
+var False *Data = BooleanWithValue(false)
+
+func TypeOf(d *Data) int {
+    return d.Type
+}
 
 func Cons(car *Data, cdr *Data) *Data {
     return &Data{Type: ConsCellType, Car: car, Cdr: cdr, String: "", Number: 0}
+}
+
+func EmptyCons() *Data {
+    return Cons(nil, nil)
 }
 
 func NumberWithValue(n int) *Data {
@@ -52,7 +61,7 @@ func StringWithValue(s string) *Data {
     return &Data{Type: StringType, Car: nil, Cdr: nil, String: s, Number: 0}
 }
 
-func SymbolWithValue(s string) *Data {
+func SymbolWithName(s string) *Data {
     return &Data{Type: SymbolType, Car: nil, Cdr: nil, String: s, Number: 0}
 }
 
@@ -93,34 +102,10 @@ func BooleanValue(d *Data) bool {
         }
     }
 
-    return false
+    return true
 }
 
-func Car(d *Data) *Data {
-    if d == nil {
-        return nil
-    }
-
-    if d.Type == ConsCellType {
-        return d.Car
-    }
-
-    return nil
-}
-
-func Cdr(d *Data) *Data {
-    if d == nil {
-        return nil
-    }
-
-    if d.Type == ConsCellType {
-        return d.Cdr
-    }
-
-    return nil
-}
-
-func Length(d *Data) {
+func Length(d *Data) int {
     if d == nil {
         return 0
     }
@@ -132,23 +117,23 @@ func Length(d *Data) {
     return 0
 }
 
-func IsEqual(d *Data, o *Data) {
+func IsEqual(d *Data, o *Data) bool {
     return d == o || *d == *o
 }
 
-func IsNil(d *Data) {
+func NilP(d *Data) bool {
     return d == nil
 }
 
-func NotNil(d *Data) {
+func NotNilP(d *Data) bool {
     return d != nil
 }
 
-func IsList(d *Data) {
+func ListP(d *Data) bool {
     return d.Type == ConsCellType
 }
 
-func String(d *Data) {
+func String(d *Data) string {
     if d == nil {
         return "()"
     }
@@ -156,12 +141,20 @@ func String(d *Data) {
     switch d.Type {
     case ConsCellType:
         {
-            contents := make([]string, 0, Length(d))
-            c = d
-            for c := d; NotNil(Cdr(c)); c = Cdr(c) {
-                contents = append(contents, (String(Car(c))))
+            if NilP(Car(d)) && NilP(Cdr(d)) {
+                return "()"
             }
-            return fmt.Sprintf("(%s)", strings.Join(contents, " "))
+            var c *Data = d
+            contents := make([]string, 0, Length(d))
+            for NotNilP(c) && ListP(c) {
+                contents = append(contents, String(Car(c)))
+                c = Cdr(c)
+            }
+            if NilP(c) {
+                return fmt.Sprintf("(%s)", strings.Join(contents, " "))
+            } else {
+                return fmt.Sprintf("(%s . %s)", strings.Join(contents, " "), String(c))
+            }
         }
     case NumberType:
         return fmt.Sprintf("%d", d.Number)
@@ -172,14 +165,16 @@ func String(d *Data) {
             return "#t"
         }
     case StringType:
+        return fmt.Sprintf(`"%s"`, d.String)
+    case SymbolType:
         return d.String
-    case Symbol:
-        return d.String
-    case FuncionType:
+    case FunctionType:
         return fmt.Sprintf("<function: %s>", String(Car(d.FuncionValue)))
-    case PrimativeType:
-        return d.Primative.String()
+    case PrimitiveType:
+        return d.Primitive.String()
     }
+
+    return ""
 }
 
 func Eval(d *Data) *Data {
@@ -190,16 +185,19 @@ func Eval(d *Data) *Data {
     switch d.Type {
     case ConsCellType:
         {
-            function = Eval(Car(d))
-            args = Cdr(d)
+            function := Eval(Car(d))
+            args := Cdr(d)
             return Apply(function, args)
         }
-    case Symbol:
+    case SymbolType:
         return ValueOf(d)
     case NumberType, BooleanType, StringType:
         return d
     }
+
+    return nil
 }
 
 func Apply(function *Data, args *Data) *Data {
+    return nil
 }

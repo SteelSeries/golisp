@@ -9,7 +9,7 @@ import (
 )
 
 type StringAtomSuite struct {
-    atom String
+    atom *Data
 }
 
 var _ = Suite(&StringAtomSuite{})
@@ -19,17 +19,17 @@ func (s *StringAtomSuite) SetUpTest(c *C) {
 }
 
 func (s *StringAtomSuite) TestNumericValue(c *C) {
-    c.Check(s.atom.IntValue(), Equals, 0)
+    c.Check(IntValue(s.atom), Equals, 0)
 }
 
 func (s *StringAtomSuite) TestString(c *C) {
-    c.Check(s.atom.String(), Equals, "Hello, world.")
+    c.Check(String(s.atom), Equals, `"Hello, world."`)
 }
 
 func (s *StringAtomSuite) TestEval(c *C) {
-    c.Check(s.atom.Eval(), Equals, s.atom)
+    c.Check(Eval(s.atom), Equals, s.atom)
 }
 
 func (s *StringAtomSuite) TestBooleanValue(c *C) {
-    c.Check(s.atom.BooleanValue(), Equals, true)
+    c.Check(BooleanValue(s.atom), Equals, true)
 }

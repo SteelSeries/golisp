@@ -6,20 +6,25 @@
 
 package golisp
 
-import "fmt"
-
-func arrayToList(sexprs []Expression) Expression {
-    fmt.Printf("arrayToList: %v\n", sexprs)
-
+func arrayToList(sexprs []*Data) *Data {
     head := EmptyCons()
-    lastCell := &head
+    lastCell := head
     for _, element := range sexprs {
-        fmt.Printf("%v\n", element)
-        newCell := Cons(element, Nil)
+        newCell := Cons(element, nil)
         lastCell.Cdr = newCell
-        c := lastCell.Cdr.(ConsCell)
-        lastCell = &c
-        println(head.Cdr.String())
+        lastCell = newCell
     }
+    return head.Cdr
+}
+
+func arrayToListWithTail(sexprs []*Data, tail *Data) *Data {
+    head := EmptyCons()
+    lastCell := head
+    for _, element := range sexprs {
+        newCell := Cons(element, nil)
+        lastCell.Cdr = newCell
+        lastCell = newCell
+    }
+    lastCell.Cdr = tail
     return head.Cdr
 }

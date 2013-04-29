@@ -11,9 +11,9 @@ import (
 )
 
 type ConsCellSuite struct {
-    a    Number
-    b    Number
-    cell ConsCell
+    a    *Data
+    b    *Data
+    cell *Data
 }
 
 var _ = Suite(&ConsCellSuite{})

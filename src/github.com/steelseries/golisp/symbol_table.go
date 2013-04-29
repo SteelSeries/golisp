@@ -21,7 +21,7 @@ func init() {
     PushLocalBindings()
 }
 
-func findSymbol(name string) (symbol Symbol, found bool) {
+func findSymbol(name string) (symbol *Data, found bool) {
     for frame := symbolTable.Frames.Front(); frame != nil; frame = frame.Next() {
         binding, present := frame.Value.(SymbolTableFrame).BindingNamed(name)
         if present {
@@ -35,8 +35,8 @@ func localFrame() SymbolTableFrame {
     return symbolTable.Frames.Front().Value.(SymbolTableFrame)
 }
 
-func findBindingFor(symbol Symbol) (binding Binding, found bool) {
-    name := symbol.IdentifierValue()
+func findBindingFor(symbol *Data) (binding Binding, found bool) {
+    name := StringValue(symbol)
     for frame := symbolTable.Frames.Front(); frame != nil; frame = frame.Next() {
         binding, found = frame.Value.(SymbolTableFrame).BindingNamed(name)
         if found {
@@ -46,38 +46,38 @@ func findBindingFor(symbol Symbol) (binding Binding, found bool) {
     return
 }
 
-func findBindingInLocalFrameFor(symbol Symbol) (b Binding, found bool) {
-    return localFrame().BindingNamed(symbol.IdentifierValue())
+func findBindingInLocalFrameFor(symbol *Data) (b Binding, found bool) {
+    return localFrame().BindingNamed(StringValue(symbol))
 }
 
-func Intern(name string) (sym Symbol) {
+func Intern(name string) (sym *Data) {
     sym, found := findSymbol(name)
     if !found {
         sym = SymbolWithName(name)
-        BindTo(sym, &Nil)
+        BindTo(sym, nil)
         return
     } else {
         return
     }
 }
 
-func BindTo(symbol Symbol, value Expression) Expression {
+func BindTo(symbol *Data, value *Data) *Data {
     binding, found := findBindingInLocalFrameFor(symbol)
     if found {
         binding.Val = value
     } else {
         binding := BindingWithSymbolAndValue(symbol, value)
-        localFrame().SetBindingAt(symbol.name, binding)
+        localFrame().SetBindingAt(StringValue(symbol), binding)
     }
     return value
 }
 
-func ValueOf(symbol Symbol) Expression {
+func ValueOf(symbol *Data) *Data {
     binding, found := findBindingFor(symbol)
     if found {
         return binding.Val
     } else {
-        return Nil
+        return nil
     }
 }
 
