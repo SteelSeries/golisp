@@ -6,6 +6,7 @@
 package golisp
 
 import (
+    "errors"
     "fmt"
     "strings"
 )
@@ -21,13 +22,13 @@ const (
 )
 
 type Data struct {
-    Type         int
-    Car          *Data
-    Cdr          *Data
-    String       string
-    Number       int
-    FuncionValue *Data
-    Primitive    *PrimitiveFunction
+    Type   int
+    Car    *Data
+    Cdr    *Data
+    String string
+    Number int
+    Func   *Function
+    Prim   *PrimitiveFunction
 }
 
 var True *Data = BooleanWithValue(true)
@@ -38,7 +39,7 @@ func TypeOf(d *Data) int {
 }
 
 func Cons(car *Data, cdr *Data) *Data {
-    return &Data{Type: ConsCellType, Car: car, Cdr: cdr, String: "", Number: 0}
+    return &Data{Type: ConsCellType, Car: car, Cdr: cdr, String: "", Number: 0, Func: nil, Prim: nil}
 }
 
 func EmptyCons() *Data {
@@ -46,23 +47,31 @@ func EmptyCons() *Data {
 }
 
 func NumberWithValue(n int) *Data {
-    return &Data{Type: NumberType, Car: nil, Cdr: nil, String: "", Number: n}
+    return &Data{Type: NumberType, Car: nil, Cdr: nil, String: "", Number: n, Func: nil, Prim: nil}
 }
 
 func BooleanWithValue(b bool) *Data {
-    var num = 0
+    var num int = 0
     if b {
         num = 1
     }
-    return &Data{Type: BooleanType, Car: nil, Cdr: nil, String: "", Number: num}
+    return &Data{Type: BooleanType, Car: nil, Cdr: nil, String: "", Number: num, Func: nil, Prim: nil}
 }
 
 func StringWithValue(s string) *Data {
-    return &Data{Type: StringType, Car: nil, Cdr: nil, String: s, Number: 0}
+    return &Data{Type: StringType, Car: nil, Cdr: nil, String: s, Number: 0, Func: nil, Prim: nil}
 }
 
 func SymbolWithName(s string) *Data {
-    return &Data{Type: SymbolType, Car: nil, Cdr: nil, String: s, Number: 0}
+    return &Data{Type: SymbolType, Car: nil, Cdr: nil, String: s, Number: 0, Func: nil, Prim: nil}
+}
+
+func FunctionWithNameArgsAndBody(name string, args *Data, body *Data) *Data {
+    return &Data{Type: FunctionType, Car: nil, Cdr: nil, String: "", Number: 0, Func: MakeFunction(name, args, body), Prim: nil}
+}
+
+func PrimitiveWithNameAndFunc(name string, f *PrimitiveFunction) *Data {
+    return &Data{Type: PrimitiveType, Car: nil, Cdr: nil, String: "", Number: 0, Func: nil, Prim: f}
 }
 
 func IntValue(d *Data) int {
@@ -169,15 +178,15 @@ func String(d *Data) string {
     case SymbolType:
         return d.String
     case FunctionType:
-        return fmt.Sprintf("<function: %s>", String(Car(d.FuncionValue)))
+        return fmt.Sprintf("<function: %s>", d.Func.Name)
     case PrimitiveType:
-        return d.Primitive.String()
+        return d.Prim.String()
     }
 
     return ""
 }
 
-func Eval(d *Data) *Data {
+func Eval(d *Data) (result *Data) {
     if d == nil {
         return nil
     }
@@ -187,17 +196,32 @@ func Eval(d *Data) *Data {
         {
             function := Eval(Car(d))
             args := Cdr(d)
-            return Apply(function, args)
+            var err error
+            result, err = Apply(function, args)
+            if err != nil {
+                fmt.Printf("Error during evaluation: %s\n", err)
+                result = nil
+            }
+            return
         }
     case SymbolType:
         return ValueOf(d)
-    case NumberType, BooleanType, StringType:
-        return d
     }
 
-    return nil
+    return d
 }
 
-func Apply(function *Data, args *Data) *Data {
-    return nil
+func Apply(function *Data, args *Data) (result *Data, err error) {
+    if function == nil {
+        err = errors.New("Nil when function expected.\n")
+        return
+    }
+
+    switch function.Type {
+    case FunctionType:
+        return function.Func.Apply(args)
+    case PrimitiveType:
+        return function.Prim.Apply(args)
+    }
+    return
 }

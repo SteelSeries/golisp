@@ -7,18 +7,24 @@
 package golisp
 
 type SymbolTableFrame struct {
-    Bindings map[string]Binding
+    Bindings map[string]*Binding
 }
 
-func NewSymbolTableFrame() SymbolTableFrame {
-    return SymbolTableFrame{make(map[string]Binding, 10)}
+func (self *SymbolTableFrame) Dump() {
+    for _, b := range self.Bindings {
+        b.Dump()
+    }
 }
 
-func (self SymbolTableFrame) BindingNamed(name string) (b Binding, present bool) {
+func NewSymbolTableFrame() *SymbolTableFrame {
+    return &SymbolTableFrame{make(map[string]*Binding, 10)}
+}
+
+func (self *SymbolTableFrame) BindingNamed(name string) (b *Binding, present bool) {
     b, present = self.Bindings[name]
     return
 }
 
-func (self SymbolTableFrame) SetBindingAt(name string, b Binding) {
+func (self *SymbolTableFrame) SetBindingAt(name string, b *Binding) {
     self.Bindings[name] = b
 }

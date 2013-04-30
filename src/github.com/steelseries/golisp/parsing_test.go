@@ -63,10 +63,8 @@ func (s *ParsingSuite) TestBooleanFalse(c *C) {
 
 func (s *ParsingSuite) TestBooleanAnythingElseIsFalse(c *C) {
     initScanner("#w")
-    sexpr, _, err := parseExpression()
-    c.Assert(err, IsNil)
-    c.Assert(TypeOf(sexpr), Equals, BooleanType)
-    c.Assert(BooleanValue(sexpr), Equals, false)
+    _, _, err := parseExpression()
+    c.Assert(err, NotNil)
 }
 
 func (s *ParsingSuite) TestSymbol(c *C) {
@@ -157,4 +155,20 @@ func (s *ParsingSuite) TestDottedPair(c *C) {
     c.Assert(IntValue(Car(sexpr)), Equals, 1)
     c.Assert(TypeOf(Cdr(sexpr)), Equals, NumberType)
     c.Assert(IntValue(Cdr(sexpr)), Equals, 2)
+}
+
+func (s *ParsingSuite) TestPrimitive(c *C) {
+    initScanner("(+ 1 2)")
+    sexpr, _, err := parseExpression()
+    c.Assert(err, IsNil)
+    c.Assert(TypeOf(sexpr), Equals, ConsCellType)
+
+    c.Assert(TypeOf(Car(sexpr)), Equals, SymbolType)
+    c.Assert(StringValue(Car(sexpr)), Equals, "+")
+
+    c.Assert(TypeOf(Cadr(sexpr)), Equals, NumberType)
+    c.Assert(IntValue(Cadr(sexpr)), Equals, 1)
+
+    c.Assert(TypeOf(Caddr(sexpr)), Equals, NumberType)
+    c.Assert(IntValue(Caddr(sexpr)), Equals, 2)
 }

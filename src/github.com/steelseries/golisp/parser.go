@@ -49,7 +49,7 @@ func makeString(str string) (s *Data, err error) {
 }
 
 func makeSymbol(str string) (s *Data, err error) {
-    s = SymbolWithName(str)
+    s = Intern(str)
     return
 }
 
@@ -58,17 +58,17 @@ func parseBoolean() (b *Data, err error) {
     consumeToken()
     if lit[0] == 't' {
         return True, nil
-    } else {
+    } else if lit[0] == 'f' {
         return False, nil
+    } else {
+        return nil, errors.New(fmt.Sprintf("#%s is not a legal boolean constant.", lit))
     }
 }
 
 func parseConsCell() (sexpr *Data, eof bool, err error) {
-    //println("ParseConsCell")
     tok, _ := nextToken()
     if tok == token.RPAREN {
         consumeToken()
-        //println("Found RPAREN")
         sexpr = nil
         return
     }
@@ -105,7 +105,6 @@ func parseConsCell() (sexpr *Data, eof bool, err error) {
         tok, _ = nextToken()
     }
 
-    //println("Found RPAREN")
     consumeToken()
     sexpr = arrayToList(cells)
     return
@@ -124,15 +123,18 @@ func isLispIdent(str string) bool {
     return true
 }
 
+func newSymbol(lit string) (sym *Data, eof bool, err error) {
+    consumeToken()
+    sym, err = makeSymbol(lit)
+    return
+}
+
 func parseExpression() (sexpr *Data, eof bool, err error) {
-    //println("..ParseExpression")
     for {
         tok, lit := nextToken()
-        //fmt.Printf("got token: %d", tok)
         switch tok {
         case token.EOF:
             {
-                //println("..Found EOF")
                 eof = true
                 err = nil
                 return
@@ -140,41 +142,65 @@ func parseExpression() (sexpr *Data, eof bool, err error) {
         case token.COMMENT:
             {
                 consumeToken()
-                //println("..Found COMMENT")
                 break
             }
         case token.INT:
             {
                 consumeToken()
-                //println("..Found INT")
                 sexpr, err = makeNumber(lit)
                 return
             }
         case token.STRING:
             {
                 consumeToken()
-                //println("..Found STRING")
                 sexpr, err = makeString(lit)
                 return
             }
         case token.LPAREN:
             {
                 consumeToken()
-                //println("..Found LPAREN")
                 sexpr, eof, err = parseConsCell()
                 return
             }
         case token.IDENT:
             {
                 consumeToken()
-                //println("..Found IDENT")
                 sexpr, err = makeSymbol(lit)
                 return
             }
+        case token.ADD:
+            return newSymbol("+")
+        case token.SUB:
+            return newSymbol("-")
+        case token.MUL:
+            return newSymbol("*")
+        case token.QUO:
+            return newSymbol("/")
+        case token.REM:
+            return newSymbol("%")
+        case token.LSS:
+            return newSymbol("<")
+        case token.GTR:
+            return newSymbol(">")
+        case token.EQL:
+            return newSymbol("==")
+        case token.NOT:
+            return newSymbol("!")
+        case token.NEQ:
+            return newSymbol("!=")
+        case token.LEQ:
+            return newSymbol("<=")
+        case token.GEQ:
+            return newSymbol(">=")
+        case token.IF:
+            return newSymbol("if")
+        case token.MAP:
+            return newSymbol("map")
+        case token.VAR:
+            return newSymbol("var")
         case token.ILLEGAL:
             {
                 consumeToken()
-                //println("..Found ILLEGAL")
                 if isBooleanConstant(lit) {
                     sexpr, err = parseBoolean()
                 } else if isLispIdent(lit) {
@@ -187,7 +213,6 @@ func parseExpression() (sexpr *Data, eof bool, err error) {
         default:
             {
                 consumeToken()
-                //fmt.Printf("..Found token %d", tok)
                 sexpr, err = makeSymbol(lit)
                 return
             }

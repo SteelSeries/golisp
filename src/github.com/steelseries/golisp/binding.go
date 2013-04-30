@@ -6,11 +6,19 @@
 
 package golisp
 
+import (
+    "fmt"
+)
+
 type Binding struct {
     Sym *Data
     Val *Data
 }
 
-func BindingWithSymbolAndValue(sym *Data, val *Data) Binding {
-    return Binding{sym, val}
+func (self *Binding) Dump() {
+    fmt.Printf("   %s => %v\n", StringValue(self.Sym), self.Val)
+}
+
+func BindingWithSymbolAndValue(sym *Data, val *Data) *Binding {
+    return &Binding{sym, val}
 }
