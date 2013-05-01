@@ -20,8 +20,8 @@ type TestStruct struct {
     D int
 }
 
-func (s *ObjectAtomSuite) SetUpTest(c *C) {
+func (s *ObjectAtomSuite) TestObject(c *C) {
     obj := &TestStruct{D: 5}
     s.o = ObjectWithValue(unsafe.Pointer(obj))
-    c.Assert((*map[string]int)(ObjectValue(s.o)), Equals, obj)
+    c.Assert((*TestStruct)(ObjectValue(s.o)), Equals, obj)
 }
