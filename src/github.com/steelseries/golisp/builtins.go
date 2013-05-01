@@ -12,6 +12,7 @@ package golisp
 import (
     "container/list"
     "errors"
+    "fmt"
 )
 
 func init() {
@@ -123,17 +124,23 @@ func Quotient(args *Data) (result *Data, err error) {
 // }
 
 func If(args *Data) (result *Data, err error) {
-    condition := BooleanValue(Eval(Car(args)))
-    thenClause := Cadr(args)
-    elseClause := Caddr(args)
-    if Cdddr(args) != nil {
-        err = errors.New("Too many arguments to IF")
+    if Length(args) < 2 || Length(args) > 3 {
+        err = errors.New(fmt.Sprintf("IF requires 2 or 3 arguments. Received %d.", Length(args)))
         return
     }
+
+    c, err := Eval(Car(args))
+    if err != nil {
+        return
+    }
+    condition := BooleanValue(c)
+    thenClause := Cadr(args)
+    elseClause := Caddr(args)
+
     if condition {
-        return Eval(thenClause), nil
+        return Eval(thenClause)
     } else {
-        return Eval(elseClause), nil
+        return Eval(elseClause)
     }
 }
 

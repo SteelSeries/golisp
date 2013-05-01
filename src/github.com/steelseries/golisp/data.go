@@ -186,29 +186,29 @@ func String(d *Data) string {
     return ""
 }
 
-func Eval(d *Data) (result *Data) {
+func Eval(d *Data) (result *Data, err error) {
     if d == nil {
-        return nil
+        return
     }
 
     switch d.Type {
     case ConsCellType:
         {
-            function := Eval(Car(d))
-            args := Cdr(d)
-            var err error
-            result, err = Apply(function, args)
+            var function *Data
+            function, err = Eval(Car(d))
             if err != nil {
-                fmt.Printf("Error during evaluation: %s\n", err)
-                result = nil
+                return
             }
+            args := Cdr(d)
+            result, err = Apply(function, args)
             return
         }
     case SymbolType:
-        return ValueOf(d)
+        result = ValueOf(d)
+        return
     }
 
-    return d
+    return d, nil
 }
 
 func Apply(function *Data, args *Data) (result *Data, err error) {

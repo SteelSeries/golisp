@@ -19,17 +19,19 @@ func (s *NumberAtomSuite) SetUpTest(c *C) {
 }
 
 func (s *NumberAtomSuite) TestNumericValue(c *C) {
-    c.Check(IntValue(s.n), Equals, 5)
+    c.Assert(IntValue(s.n), Equals, 5)
 }
 
 func (s *NumberAtomSuite) TestString(c *C) {
-    c.Check(String(s.n), Equals, "5")
+    c.Assert(String(s.n), Equals, "5")
 }
 
 func (s *NumberAtomSuite) TestEval(c *C) {
-    c.Check(Eval(s.n), Equals, s.n)
+    n, err := Eval(s.n)
+    c.Assert(err, IsNil)
+    c.Assert(n, Equals, s.n)
 }
 
 func (s *NumberAtomSuite) TestBooleanValue(c *C) {
-    c.Check(BooleanValue(s.n), Equals, true)
+    c.Assert(BooleanValue(s.n), Equals, true)
 }
