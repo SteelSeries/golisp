@@ -2,7 +2,7 @@
 // No license is given for the use of this source code.
 
 // This package impliments a basic LISP interpretor for embedding in a go program for scripting.
-// This file pre-loads primitive bui8ltin functions
+// This file pre-loads primitive builtin functions
 
 // Basic arithmetic is implimented, with skeletons for the rest of the "special" symbols.
 // Flesh out as required. Remember to add tests to builtins_test.go
@@ -41,60 +41,74 @@ func InitBuiltins() {
 
 func Add(args *Data) (result *Data, err error) {
     var acc int = 0
+    var n *Data
     for c := args; NotNilP(c); c = Cdr(c) {
-        if TypeOf(Car(c)) != NumberType {
+        n, err = Eval(Car(c))
+        if err != nil {
+            return
+        } else if TypeOf(n) != NumberType {
             err = errors.New("Number expected")
             return
         }
-        acc += IntValue(Car(c))
+        acc += IntValue(n)
     }
     return NumberWithValue(acc), nil
 }
 
 func Subtract(args *Data) (result *Data, err error) {
-    if TypeOf(Car(args)) != NumberType {
+    var n *Data
+    n, err = Eval(Car(args))
+    if TypeOf(n) != NumberType {
         err = errors.New("Number expected")
         return
     }
-    var acc int = IntValue(Car(args))
+    var acc int = IntValue(n)
     if Length(args) == 1 { //negation
         acc = -acc
     } else {
         for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-            if TypeOf(Car(c)) != NumberType {
+            n, err = Eval(Car(c))
+            if TypeOf(n) != NumberType {
                 err = errors.New("Number expected")
                 return
             }
-            acc -= IntValue(Car(c))
+            acc -= IntValue(n)
         }
     }
     return NumberWithValue(acc), nil
 }
 
 func Multiply(args *Data) (result *Data, err error) {
+    var n *Data
     var acc int = 1
     for c := args; NotNilP(c); c = Cdr(c) {
-        if TypeOf(Car(c)) != NumberType {
+        n, err = Eval(Car(c))
+        if err != nil {
+            return
+        } else if TypeOf(n) != NumberType {
             err = errors.New("Number expected")
             return
         }
-        acc *= IntValue(Car(c))
+        acc *= IntValue(n)
     }
     return NumberWithValue(acc), nil
 }
 
 func Quotient(args *Data) (result *Data, err error) {
-    if TypeOf(Car(args)) != NumberType {
+    var n *Data
+    n, err = Eval(Car(args))
+    if TypeOf(n) != NumberType {
         err = errors.New("Number expected")
         return
     }
-    var acc int = IntValue(Car(args))
+    var acc int = IntValue(n)
     for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-        if TypeOf(Car(c)) != NumberType {
+        n, err = Eval(Car(c))
+        if TypeOf(n) != NumberType {
             err = errors.New("Number expected")
             return
         }
-        acc /= IntValue(Car(c))
+        acc /= IntValue(n)
     }
     return NumberWithValue(acc), nil
 }

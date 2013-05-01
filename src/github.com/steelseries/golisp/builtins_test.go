@@ -19,7 +19,7 @@ func (s *BuiltinsSuite) SetUpSuite(c *C) {
     symbolTable = &SymbolTable{list.New()}
     PushLocalBindings()
     InitBuiltins()
-    symbolTable.Dump()
+    //    symbolTable.Dump()
 }
 
 // Add
@@ -145,6 +145,17 @@ func (s *BuiltinsSuite) TestTrinaryQuotient(c *C) {
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, NumberType)
     c.Assert(IntValue(result), Equals, 4)
+}
+
+// compound
+
+func (s *BuiltinsSuite) TestCompoundMath(c *C) {
+    code, _ := Parse("(+ 1 (* 2 3))")
+    result, err := Eval(code)
+    c.Assert(err, IsNil)
+    c.Assert(result, NotNil)
+    c.Assert(TypeOf(result), Equals, NumberType)
+    c.Assert(IntValue(result), Equals, 7)
 }
 
 // If
