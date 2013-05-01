@@ -9,6 +9,7 @@ import (
     "errors"
     "fmt"
     "strings"
+    "unsafe"
 )
 
 const (
@@ -19,17 +20,21 @@ const (
     SymbolType
     FunctionType
     PrimitiveType
+    ObjectType
 )
 
 type Data struct {
-    Type   int
-    Car    *Data
-    Cdr    *Data
-    String string
-    Number int
-    Func   *Function
-    Prim   *PrimitiveFunction
+    Type   int                // data type
+    Car    *Data              // ConsCellType
+    Cdr    *Data              // ConsCellType
+    String string             // StringType & SymbolType
+    Number int                // NumberType & BooleanType
+    Func   *Function          // FunctionType
+    Prim   *PrimitiveFunction // PrimitiveType
+    Obj    unsafe.Pointer     // ObjectType
 }
+
+// Boolean constants
 
 var True *Data = BooleanWithValue(true)
 var False *Data = BooleanWithValue(false)
@@ -74,6 +79,10 @@ func PrimitiveWithNameAndFunc(name string, f *PrimitiveFunction) *Data {
     return &Data{Type: PrimitiveType, Car: nil, Cdr: nil, String: "", Number: 0, Func: nil, Prim: f}
 }
 
+func ObjectWithValue(o unsafe.Pointer) *Data {
+    return &Data{Type: ObjectType, Car: nil, Cdr: nil, String: "", Number: 0, Func: nil, Prim: nil, Obj: o}
+}
+
 func IntValue(d *Data) int {
     if d == nil {
         return 0
@@ -112,6 +121,18 @@ func BooleanValue(d *Data) bool {
     }
 
     return true
+}
+
+func ObjectValue(d *Data) (p unsafe.Pointer) {
+    if d == nil {
+        return
+    }
+
+    if d.Type == ObjectType {
+        return d.Obj
+    }
+
+    return
 }
 
 func Length(d *Data) int {
@@ -181,6 +202,8 @@ func String(d *Data) string {
         return fmt.Sprintf("<function: %s>", d.Func.Name)
     case PrimitiveType:
         return d.Prim.String()
+    case ObjectType:
+        return fmt.Sprintf("<opaque Go object: %v>", d.Obj)
     }
 
     return ""
