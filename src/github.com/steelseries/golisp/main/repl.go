@@ -16,7 +16,6 @@ import (
 func main() {
     for true {
         in := bufio.NewReader(os.Stdin)
-        input := ""
 
         for true {
             fmt.Printf(">")
