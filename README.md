@@ -139,32 +139,36 @@ Special forms
 `(if <condition> <true clause>)`
 
 If the condition evaluates to logically true, the true clause is evaluated and the result is the result of the if form, otherwise nil is the result of the if form.
-    `(if (< 1 2) "less")` ==> "less"
-    `(if (< 2 2) "less")` ==> nil
+
+    (if (< 1 2) "less") ==> "less"
+    (if (< 2 2) "less") ==> nil
 
 `(if <condition> <true clause> <else clause>)`
 
 If the condition evaluates to logically true, the true clause is evaluated and the result is the result of the if form, otherwise the else clause is evaluated and is the result of the if form.
-    `(if (< 1 2) "less" "not less")` ==> "less"
-    `(if (< 2 2) "less" "not less")` ==> "not less"
+
+    (if (< 1 2) "less" "not less") ==> "less"
+    (if (< 2 2) "less" "not less") ==> "not less"
 
 '(lambda (<param>...) <expr>...)`
 
 Creates an anonymous function. This can then be used in a function call.
-    `((lamdba (x) (+ x x)) 5)` ==> 10
+
+    ((lamdba (x) (+ x x)) 5) ==> 10
 
 `(define <symbol> <value>)`
 
 Evaluates the value expression and binds it to the symbol, returning the value.
+
     (define x (+ 2 3)) ==> 5
     x ==> 5
 
 `(define (<symbol> <param>...) <body>)`
 
 Define a function:
-- `<symbol>` specifies the name (how you reference the function)
-- `<param>...` parameters of the function, these are bound to the respective arguments when the function is called.
-- `<body>` the sequence of expressions that are evaluated in order when the function is called. The final evaluation result becomes the value of evaluation of the function.
+- <symbol> specifies the name (how you reference the function)
+- <param>... parameters of the function, these are bound to the respective arguments when the function is called.
+- <body> the sequence of expressions that are evaluated in order when the function is called. The final evaluation result becomes the value of evaluation of the function.
 
     (define (double x)
             (+ x x))
