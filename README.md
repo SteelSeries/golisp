@@ -166,9 +166,12 @@ Evaluates the value expression and binds it to the symbol, returning the value.
 `(define (<symbol> <param>...) <body>)`
 
 Define a function:
-- `<symbol>` specifies the name (how you reference the function)
-- `<param>...` parameters of the function, these are bound to the respective arguments when the function is called.
-- `<body>` the sequence of expressions that are evaluated in order when the function is called. The final evaluation result becomes the value of evaluation of the function.
+
+`<symbol>` specifies the name (how you reference the function)
+
+`<param>...` parameters of the function, these are bound to the respective arguments when the function is called.
+
+`<body>` the sequence of expressions that are evaluated in order when the function is called. The final evaluation result becomes the value of evaluation of the function.
 
     (define (double x)
             (+ x x))
