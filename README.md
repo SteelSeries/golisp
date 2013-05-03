@@ -172,7 +172,6 @@ Define a function:
 
     (define (double x)
             (+ x x))
-
     (double 5) ==> 10
 
 `(quote <expr>)`
