@@ -565,3 +565,79 @@ func (s *BuiltinsSuite) TestDefineFunction(c *C) {
     c.Assert(TypeOf(v), Equals, NumberType)
     c.Assert(IntValue(v), Equals, 10)
 }
+
+func (s *BuiltinsSuite) TestMapSingleCollection(c *C) {
+    code, _ := Parse("(map (lambda (x) (* x 2)) (quote (1 2 3)))")
+    result, err := Eval(code)
+    c.Assert(err, IsNil)
+
+    c.Assert(result, NotNil)
+    c.Assert(TypeOf(result), Equals, ConsCellType)
+    c.Assert(TypeOf(Car(result)), Equals, NumberType)
+    c.Assert(IntValue(Car(result)), Equals, 2)
+
+    c.Assert(TypeOf(Cdr(result)), Equals, ConsCellType)
+    c.Assert(TypeOf(Cadr(result)), Equals, NumberType)
+    c.Assert(IntValue(Cadr(result)), Equals, 4)
+
+    c.Assert(TypeOf(Cddr(result)), Equals, ConsCellType)
+    c.Assert(TypeOf(Caddr(result)), Equals, NumberType)
+    c.Assert(IntValue(Caddr(result)), Equals, 6)
+
+    c.Assert(NilP(Cdddr(result)), Equals, true)
+}
+
+// func (s *BuiltinsSuite) TestMapMultipleCollection(c *C) {
+//     code, _ := Parse("(map (lambda (x y) (* x y)) (quote (1 2 3)) (quote (4 5 6)))")
+//     result, err := Eval(code)
+//     c.Assert(err, IsNil)
+
+//     c.Assert(result, NotNil)
+//     c.Assert(TypeOf(result), Equals, ConsCellType)
+//     c.Assert(TypeOf(Car(result)), Equals, NumberType)
+//     c.Assert(IntValue(Car(result)), Equals, 5)
+
+//     c.Assert(TypeOf(Cdr(result)), Equals, ConsCellType)
+//     c.Assert(TypeOf(Cadr(result)), Equals, NumberType)
+//     c.Assert(IntValue(Cadr(result)), Equals, 7)
+
+//     c.Assert(TypeOf(Cddr(result)), Equals, ConsCellType)
+//     c.Assert(TypeOf(Caddr(result)), Equals, NumberType)
+//     c.Assert(IntValue(Caddr(result)), Equals, 9)
+
+//     c.Assert(NilP(Cdddr(result)), Equals, true)
+// }
+
+func (s *BuiltinsSuite) TestQuote(c *C) {
+    code, _ := Parse("(quote (1 2))")
+    result, err := Eval(code)
+    c.Assert(err, IsNil)
+
+    c.Assert(result, NotNil)
+    c.Assert(TypeOf(result), Equals, ConsCellType)
+    c.Assert(TypeOf(Car(result)), Equals, NumberType)
+    c.Assert(IntValue(Car(result)), Equals, 1)
+
+    c.Assert(TypeOf(Cdr(result)), Equals, ConsCellType)
+    c.Assert(TypeOf(Cadr(result)), Equals, NumberType)
+    c.Assert(IntValue(Cadr(result)), Equals, 2)
+
+    c.Assert(NilP(Cddr(result)), Equals, true)
+}
+
+func (s *BuiltinsSuite) TestQuoteShortcut(c *C) {
+    code, _ := Parse("'(1 2)")
+    result, err := Eval(code)
+    c.Assert(err, IsNil)
+
+    c.Assert(result, NotNil)
+    c.Assert(TypeOf(result), Equals, ConsCellType)
+    c.Assert(TypeOf(Car(result)), Equals, NumberType)
+    c.Assert(IntValue(Car(result)), Equals, 1)
+
+    c.Assert(TypeOf(Cdr(result)), Equals, ConsCellType)
+    c.Assert(TypeOf(Cadr(result)), Equals, NumberType)
+    c.Assert(IntValue(Cadr(result)), Equals, 2)
+
+    c.Assert(NilP(Cddr(result)), Equals, true)
+}

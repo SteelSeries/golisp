@@ -6,7 +6,7 @@
 
 package golisp
 
-func arrayToList(sexprs []*Data) *Data {
+func ArrayToList(sexprs []*Data) *Data {
     head := EmptyCons()
     lastCell := head
     for _, element := range sexprs {
@@ -17,7 +17,7 @@ func arrayToList(sexprs []*Data) *Data {
     return head.Cdr
 }
 
-func arrayToListWithTail(sexprs []*Data, tail *Data) *Data {
+func ArrayToListWithTail(sexprs []*Data, tail *Data) *Data {
     head := EmptyCons()
     lastCell := head
     for _, element := range sexprs {

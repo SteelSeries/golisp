@@ -55,6 +55,10 @@ func PairP(d *Data) bool {
     return TypeOf(d) == ConsCellType
 }
 
+func FunctionP(d *Data) bool {
+    return TypeOf(d) == FunctionType || TypeOf(d) == PrimitiveType
+}
+
 func Cons(car *Data, cdr *Data) *Data {
     return &Data{Type: ConsCellType, Car: car, Cdr: cdr, String: "", Number: 0, Func: nil, Prim: nil}
 }

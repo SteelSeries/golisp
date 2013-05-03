@@ -25,6 +25,7 @@ func main() {
             }
             input = strings.TrimRight(input, "\r\n")
             code, err := golisp.Parse(input)
+            println(golisp.String(code))
             if err != nil {
                 fmt.Printf("Error: %s\n", err)
             } else {

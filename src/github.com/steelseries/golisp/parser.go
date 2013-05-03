@@ -9,29 +9,9 @@ package golisp
 import (
     "errors"
     "fmt"
-    "go/scanner"
     "go/token"
     "unicode"
 )
-
-var lookahead_token token.Token = -1
-var lookahead_lit = ""
-var s scanner.Scanner
-
-func initScanner(src string) {
-    fset := token.NewFileSet()
-    file := fset.AddFile("", fset.Base(), len(src))
-    s.Init(file, []byte(src), nil, scanner.ScanComments)
-    consumeToken()
-}
-
-func nextToken() (tok token.Token, lit string) {
-    return lookahead_token, lookahead_lit
-}
-
-func consumeToken() {
-    _, lookahead_token, lookahead_lit = s.Scan()
-}
 
 func makeNumber(str string) (n *Data, err error) {
     var i int
@@ -53,9 +33,9 @@ func makeSymbol(str string) (s *Data, err error) {
     return
 }
 
-func parseBoolean() (b *Data, err error) {
-    _, lit := nextToken()
-    consumeToken()
+func parseBoolean(s *Tokenizer) (b *Data, err error) {
+    _, lit := s.NextToken()
+    s.ConsumeToken()
     if lit[0] == 't' {
         return True, nil
     } else if lit[0] == 'f' {
@@ -65,10 +45,10 @@ func parseBoolean() (b *Data, err error) {
     }
 }
 
-func parseConsCell() (sexpr *Data, eof bool, err error) {
-    tok, _ := nextToken()
+func parseConsCell(s *Tokenizer) (sexpr *Data, eof bool, err error) {
+    tok, _ := s.NextToken()
     if tok == token.RPAREN {
-        consumeToken()
+        s.ConsumeToken()
         sexpr = nil
         return
     }
@@ -78,21 +58,21 @@ func parseConsCell() (sexpr *Data, eof bool, err error) {
     cells := make([]*Data, 0, 10)
     for tok != token.RPAREN {
         if tok == token.PERIOD {
-            consumeToken()
-            cdr, eof, err = parseExpression()
+            s.ConsumeToken()
+            cdr, eof, err = parseExpression(s)
             if eof || err != nil {
                 return
             }
-            tok, _ = nextToken()
+            tok, _ = s.NextToken()
             if tok != token.RPAREN {
                 err = errors.New("Expected ')'")
                 return
             }
-            consumeToken()
-            sexpr = arrayToListWithTail(cells, cdr)
+            s.ConsumeToken()
+            sexpr = ArrayToListWithTail(cells, cdr)
             return
         } else {
-            car, eof, err = parseExpression()
+            car, eof, err = parseExpression(s)
             if eof {
                 err = errors.New("Unexpected EOF (expected closing parenthesis)")
                 return
@@ -102,11 +82,11 @@ func parseConsCell() (sexpr *Data, eof bool, err error) {
             }
             cells = append(cells, car)
         }
-        tok, _ = nextToken()
+        tok, _ = s.NextToken()
     }
 
-    consumeToken()
-    sexpr = arrayToList(cells)
+    s.ConsumeToken()
+    sexpr = ArrayToList(cells)
     return
 }
 
@@ -123,15 +103,15 @@ func isLispIdent(str string) bool {
     return true
 }
 
-func newSymbol(lit string) (sym *Data, eof bool, err error) {
-    consumeToken()
+func newSymbol(s *Tokenizer, lit string) (sym *Data, eof bool, err error) {
+    s.ConsumeToken()
     sym, err = makeSymbol(lit)
     return
 }
 
-func parseExpression() (sexpr *Data, eof bool, err error) {
+func parseExpression(s *Tokenizer) (sexpr *Data, eof bool, err error) {
     for {
-        tok, lit := nextToken()
+        tok, lit := s.NextToken()
         switch tok {
         case token.EOF:
             {
@@ -141,79 +121,88 @@ func parseExpression() (sexpr *Data, eof bool, err error) {
             }
         case token.COMMENT:
             {
-                consumeToken()
+                s.ConsumeToken()
                 break
             }
         case token.INT:
             {
-                consumeToken()
+                s.ConsumeToken()
                 sexpr, err = makeNumber(lit)
                 return
             }
         case token.STRING:
             {
-                consumeToken()
+                s.ConsumeToken()
                 sexpr, err = makeString(lit)
                 return
             }
         case token.LPAREN:
             {
-                consumeToken()
-                sexpr, eof, err = parseConsCell()
+                s.ConsumeToken()
+                sexpr, eof, err = parseConsCell(s)
                 return
             }
         case token.IDENT:
             {
-                consumeToken()
+                s.ConsumeToken()
                 sexpr, err = makeSymbol(lit)
                 return
             }
         case token.ADD:
-            return newSymbol("+")
+            return newSymbol(s, "+")
         case token.SUB:
-            return newSymbol("-")
+            return newSymbol(s, "-")
         case token.MUL:
-            return newSymbol("*")
+            return newSymbol(s, "*")
         case token.QUO:
-            return newSymbol("/")
+            return newSymbol(s, "/")
         case token.REM:
-            return newSymbol("%")
+            return newSymbol(s, "%")
         case token.LSS:
-            return newSymbol("<")
+            return newSymbol(s, "<")
         case token.GTR:
-            return newSymbol(">")
+            return newSymbol(s, ">")
         case token.EQL:
-            return newSymbol("==")
+            return newSymbol(s, "==")
         case token.NOT:
-            return newSymbol("!")
+            return newSymbol(s, "!")
         case token.NEQ:
-            return newSymbol("!=")
+            return newSymbol(s, "!=")
         case token.LEQ:
-            return newSymbol("<=")
+            return newSymbol(s, "<=")
         case token.GEQ:
-            return newSymbol(">=")
+            return newSymbol(s, ">=")
         case token.IF:
-            return newSymbol("if")
+            return newSymbol(s, "if")
         case token.MAP:
-            return newSymbol("map")
+            return newSymbol(s, "map")
         case token.VAR:
-            return newSymbol("var")
+            return newSymbol(s, "var")
         case token.ILLEGAL:
             {
-                consumeToken()
+                s.ConsumeToken()
                 if isBooleanConstant(lit) {
-                    sexpr, err = parseBoolean()
-                } else if isLispIdent(lit) {
-                    sexpr, err = makeSymbol(lit)
+                    sexpr, err = parseBoolean(s)
                 } else {
+                    println("Illegal symbol: `" + lit + "`")
                     err = errors.New("Illegal symbol: `" + lit + "`")
                 }
                 return
             }
         default:
             {
-                consumeToken()
-                sexpr, err = makeSymbol(lit)
+                s.ConsumeToken()
+                if lit[0] == '\'' {
+                    quoteSymbol := SymbolWithName("quote")
+                    var value *Data
+                    value, err = Parse(lit[1:])
+                    if err != nil {
+                        return
+                    }
+                    sexpr = Cons(quoteSymbol, Cons(value, nil))
+                } else {
+                    sexpr, err = makeSymbol(lit)
+                }
                 return
             }
         }
@@ -221,7 +210,7 @@ func parseExpression() (sexpr *Data, eof bool, err error) {
 }
 
 func Parse(src string) (sexpr *Data, err error) {
-    initScanner(src)
-    sexpr, _, err = parseExpression()
+    s := NewTokenizer(src)
+    sexpr, _, err = parseExpression(s)
     return
 }

@@ -23,6 +23,7 @@ func init() {
 
 func InitBuiltins() {
     // MakePrimitiveFunction(<symbol>, <required # args, -1 means >= 1>, <function>)
+    Intern("nil")
     MakePrimitiveFunction("+", -1, Add)
     MakePrimitiveFunction("-", -1, Subtract)
     MakePrimitiveFunction("*", -1, Multiply)
@@ -39,6 +40,8 @@ func InitBuiltins() {
     MakePrimitiveFunction("lambda", -1, Lambda)
     MakePrimitiveFunction("define", 2, Define)
     MakePrimitiveFunction("dump", 0, DumpSymbolTable)
+    MakePrimitiveFunction("map", 2, Map)
+    MakePrimitiveFunction("quote", 1, Quote)
 }
 
 func Add(args *Data) (result *Data, err error) {
@@ -389,6 +392,42 @@ func Define(args *Data) (result *Data, err error) {
 func DumpSymbolTable(args *Data) (result *Data, err error) {
     symbolTable.Dump()
     return
+}
+
+func Map(args *Data) (result *Data, err error) {
+    f, err := Eval(Car(args))
+    if err != nil {
+        return
+    }
+    if !FunctionP(f) {
+        err = errors.New("Map needs a function as its first argument")
+        return
+    }
+
+    col, err := Eval(Cadr(args))
+    if err != nil {
+        return
+    }
+    if !ListP(col) {
+        err = errors.New("Map needs a list as its second argument")
+        return
+    }
+
+    var d []*Data = make([]*Data, 0, Length(col))
+    var v *Data
+    for c := col; NotNilP(c); c = Cdr(c) {
+        v, err = Apply(f, Cons(Car(c), nil))
+        if err != nil {
+            return
+        }
+        d = append(d, v)
+    }
+
+    return ArrayToList(d), nil
+}
+
+func Quote(args *Data) (result *Data, err error) {
+    return Car(args), nil
 }
 
 /// Function template
