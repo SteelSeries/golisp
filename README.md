@@ -150,7 +150,7 @@ If the condition evaluates to logically true, the true clause is evaluated and t
     (if (< 1 2) "less" "not less") ==> "less"
     (if (< 2 2) "less" "not less") ==> "not less"
 
-'(lambda (<param>...) <expr>...)`
+`(lambda (<param>...) <expr>...)`
 
 Creates an anonymous function. This can then be used in a function call.
 
