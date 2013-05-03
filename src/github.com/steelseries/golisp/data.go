@@ -43,6 +43,18 @@ func TypeOf(d *Data) int {
     return d.Type
 }
 
+func SymbolP(d *Data) bool {
+    return TypeOf(d) == SymbolType
+}
+
+func NumberP(d *Data) bool {
+    return TypeOf(d) == NumberType
+}
+
+func PairP(d *Data) bool {
+    return TypeOf(d) == ConsCellType
+}
+
 func Cons(car *Data, cdr *Data) *Data {
     return &Data{Type: ConsCellType, Car: car, Cdr: cdr, String: "", Number: 0, Func: nil, Prim: nil}
 }
@@ -71,8 +83,8 @@ func SymbolWithName(s string) *Data {
     return &Data{Type: SymbolType, Car: nil, Cdr: nil, String: s, Number: 0, Func: nil, Prim: nil}
 }
 
-func FunctionWithNameArgsAndBody(name string, args *Data, body *Data) *Data {
-    return &Data{Type: FunctionType, Car: nil, Cdr: nil, String: "", Number: 0, Func: MakeFunction(name, args, body), Prim: nil}
+func FunctionWithNameParamsAndBody(name string, params *Data, body *Data) *Data {
+    return &Data{Type: FunctionType, Car: nil, Cdr: nil, String: "", Number: 0, Func: MakeFunction(name, params, body), Prim: nil}
 }
 
 func PrimitiveWithNameAndFunc(name string, f *PrimitiveFunction) *Data {
@@ -239,7 +251,6 @@ func Apply(function *Data, args *Data) (result *Data, err error) {
         err = errors.New("Nil when function expected.\n")
         return
     }
-
     switch function.Type {
     case FunctionType:
         return function.Func.Apply(args)

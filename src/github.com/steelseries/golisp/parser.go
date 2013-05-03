@@ -49,7 +49,7 @@ func makeString(str string) (s *Data, err error) {
 }
 
 func makeSymbol(str string) (s *Data, err error) {
-    s = Intern(str)
+    s = SymbolWithName(str)
     return
 }
 

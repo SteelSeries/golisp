@@ -160,7 +160,7 @@ func (s *BuiltinsSuite) TestCompoundMath(c *C) {
 
 // If
 
-func (s *BuiltinsSuite) TestTrueWithThen(c *C) {
+func (s *BuiltinsSuite) TestIfTrueWithThen(c *C) {
     code, _ := Parse("(if #t 5)")
     result, err := Eval(code)
     c.Assert(err, IsNil)
@@ -169,14 +169,14 @@ func (s *BuiltinsSuite) TestTrueWithThen(c *C) {
     c.Assert(IntValue(result), Equals, 5)
 }
 
-func (s *BuiltinsSuite) TestFalseWithThen(c *C) {
+func (s *BuiltinsSuite) TestIfFalseWithThen(c *C) {
     code, _ := Parse("(if #f 5)")
     result, err := Eval(code)
     c.Assert(err, IsNil)
     c.Assert(result, IsNil)
 }
 
-func (s *BuiltinsSuite) TestTrueWithThenAndElse(c *C) {
+func (s *BuiltinsSuite) TestIfTrueWithThenAndElse(c *C) {
     code, _ := Parse("(if #t 5 10)")
     result, err := Eval(code)
     c.Assert(err, IsNil)
@@ -185,7 +185,7 @@ func (s *BuiltinsSuite) TestTrueWithThenAndElse(c *C) {
     c.Assert(IntValue(result), Equals, 5)
 }
 
-func (s *BuiltinsSuite) TestFalseWithThenAndElse(c *C) {
+func (s *BuiltinsSuite) TestIfFalseWithThenAndElse(c *C) {
     code, _ := Parse("(if #f 5 10)")
     result, err := Eval(code)
     c.Assert(err, IsNil)
@@ -194,21 +194,21 @@ func (s *BuiltinsSuite) TestFalseWithThenAndElse(c *C) {
     c.Assert(IntValue(result), Equals, 10)
 }
 
-func (s *BuiltinsSuite) TestTrueWithNoClauses(c *C) {
+func (s *BuiltinsSuite) TestIfTrueWithNoClauses(c *C) {
     code, _ := Parse("(if #t)")
     result, err := Eval(code)
     c.Assert(err, NotNil)
     c.Assert(result, IsNil)
 }
 
-func (s *BuiltinsSuite) TestFalseWithNoClauses(c *C) {
+func (s *BuiltinsSuite) TestIfFalseWithNoClauses(c *C) {
     code, _ := Parse("(if #f)")
     result, err := Eval(code)
     c.Assert(err, NotNil)
     c.Assert(result, IsNil)
 }
 
-func (s *BuiltinsSuite) TestWithNoArgs(c *C) {
+func (s *BuiltinsSuite) TestIfWithNoArgs(c *C) {
     code, _ := Parse("(if)")
     result, err := Eval(code)
     c.Assert(err, NotNil)
@@ -222,7 +222,7 @@ func (s *BuiltinsSuite) TestWithTooManyArgs(c *C) {
     c.Assert(result, IsNil)
 }
 
-func (s *BuiltinsSuite) TestTrueWithMoreInvolvedArgs(c *C) {
+func (s *BuiltinsSuite) TestIfTrueWithMoreInvolvedArgs(c *C) {
     code, _ := Parse("(if #t (+ 3 2) (- 3 2))")
     result, err := Eval(code)
     c.Assert(err, IsNil)
@@ -231,11 +231,337 @@ func (s *BuiltinsSuite) TestTrueWithMoreInvolvedArgs(c *C) {
     c.Assert(IntValue(result), Equals, 5)
 }
 
-func (s *BuiltinsSuite) TestFalseWithMoreInvolvedArgs(c *C) {
+func (s *BuiltinsSuite) TestIfFalseWithMoreInvolvedArgs(c *C) {
     code, _ := Parse("(if #f (+ 3 2) (- 3 2))")
     result, err := Eval(code)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, NumberType)
     c.Assert(IntValue(result), Equals, 1)
+}
+
+// %
+
+func (s *BuiltinsSuite) TestRemainderWithNoArgs(c *C) {
+    code, _ := Parse("(%)")
+    _, err := Eval(code)
+    c.Assert(err, NotNil)
+}
+
+func (s *BuiltinsSuite) TestRemainderWithOneArg(c *C) {
+    code, _ := Parse("(% 5)")
+    _, err := Eval(code)
+    c.Assert(err, NotNil)
+}
+
+func (s *BuiltinsSuite) TestRemainder1(c *C) {
+    code, _ := Parse("(% 5 2)")
+    result, err := Eval(code)
+    c.Assert(err, IsNil)
+    c.Assert(result, NotNil)
+    c.Assert(TypeOf(result), Equals, NumberType)
+    c.Assert(IntValue(result), Equals, 1)
+}
+
+func (s *BuiltinsSuite) TestRemainder3(c *C) {
+    code, _ := Parse("(% 7 4)")
+    result, err := Eval(code)
+    c.Assert(err, IsNil)
+    c.Assert(result, NotNil)
+    c.Assert(TypeOf(result), Equals, NumberType)
+    c.Assert(IntValue(result), Equals, 3)
+}
+
+func (s *BuiltinsSuite) TestRemainder0(c *C) {
+    code, _ := Parse("(% 7 7)")
+    result, err := Eval(code)
+    c.Assert(err, IsNil)
+    c.Assert(result, NotNil)
+    c.Assert(TypeOf(result), Equals, NumberType)
+    c.Assert(IntValue(result), Equals, 0)
+}
+
+// <
+
+func (s *BuiltinsSuite) TestLessThanWithNoArgs(c *C) {
+    code, _ := Parse("(<)")
+    _, err := Eval(code)
+    c.Assert(err, NotNil)
+}
+
+func (s *BuiltinsSuite) TestLessThanWithOneArg(c *C) {
+    code, _ := Parse("(< 5)")
+    _, err := Eval(code)
+    c.Assert(err, NotNil)
+}
+
+func (s *BuiltinsSuite) TestLessThanFalse(c *C) {
+    code, _ := Parse("(< 5 2)")
+    result, err := Eval(code)
+    c.Assert(err, IsNil)
+    c.Assert(result, NotNil)
+    c.Assert(TypeOf(result), Equals, BooleanType)
+    c.Assert(BooleanValue(result), Equals, false)
+}
+
+func (s *BuiltinsSuite) TestLessThanTrue(c *C) {
+    code, _ := Parse("(< 2 5)")
+    result, err := Eval(code)
+    c.Assert(err, IsNil)
+    c.Assert(result, NotNil)
+    c.Assert(TypeOf(result), Equals, BooleanType)
+    c.Assert(BooleanValue(result), Equals, true)
+}
+
+func (s *BuiltinsSuite) TestLessThanBoundry(c *C) {
+    code, _ := Parse("(< 2 2)")
+    result, err := Eval(code)
+    c.Assert(err, IsNil)
+    c.Assert(result, NotNil)
+    c.Assert(TypeOf(result), Equals, BooleanType)
+    c.Assert(BooleanValue(result), Equals, false)
+}
+
+// >
+
+func (s *BuiltinsSuite) TestGreaterThanWithNoArgs(c *C) {
+    code, _ := Parse("(>)")
+    _, err := Eval(code)
+    c.Assert(err, NotNil)
+}
+
+func (s *BuiltinsSuite) TestGreaterThanWithOneArg(c *C) {
+    code, _ := Parse("(> 5)")
+    _, err := Eval(code)
+    c.Assert(err, NotNil)
+}
+
+func (s *BuiltinsSuite) TestGreaterThanFalse(c *C) {
+    code, _ := Parse("(> 2 5)")
+    result, err := Eval(code)
+    c.Assert(err, IsNil)
+    c.Assert(result, NotNil)
+    c.Assert(TypeOf(result), Equals, BooleanType)
+    c.Assert(BooleanValue(result), Equals, false)
+}
+
+func (s *BuiltinsSuite) TestGreaterThanTrue(c *C) {
+    code, _ := Parse("(> 5 2)")
+    result, err := Eval(code)
+    c.Assert(err, IsNil)
+    c.Assert(result, NotNil)
+    c.Assert(TypeOf(result), Equals, BooleanType)
+    c.Assert(BooleanValue(result), Equals, true)
+}
+
+func (s *BuiltinsSuite) TestGreaterThanBoundry(c *C) {
+    code, _ := Parse("(> 2 2)")
+    result, err := Eval(code)
+    c.Assert(err, IsNil)
+    c.Assert(result, NotNil)
+    c.Assert(TypeOf(result), Equals, BooleanType)
+    c.Assert(BooleanValue(result), Equals, false)
+}
+
+// ==
+
+func (s *BuiltinsSuite) TestEqualToWithNoArgs(c *C) {
+    code, _ := Parse("(==)")
+    _, err := Eval(code)
+    c.Assert(err, NotNil)
+}
+
+func (s *BuiltinsSuite) TestEqualToWithOneArg(c *C) {
+    code, _ := Parse("(== 5)")
+    _, err := Eval(code)
+    c.Assert(err, NotNil)
+}
+
+func (s *BuiltinsSuite) TestEqualToFalse(c *C) {
+    code, _ := Parse("(== 2 5)")
+    result, err := Eval(code)
+    c.Assert(err, IsNil)
+    c.Assert(result, NotNil)
+    c.Assert(TypeOf(result), Equals, BooleanType)
+    c.Assert(BooleanValue(result), Equals, false)
+}
+
+func (s *BuiltinsSuite) TestEqualToTrue(c *C) {
+    code, _ := Parse("(== 2 2)")
+    result, err := Eval(code)
+    c.Assert(err, IsNil)
+    c.Assert(result, NotNil)
+    c.Assert(TypeOf(result), Equals, BooleanType)
+    c.Assert(BooleanValue(result), Equals, true)
+}
+
+// !=
+
+func (s *BuiltinsSuite) TestNotEqualToWithNoArgs(c *C) {
+    code, _ := Parse("(!=)")
+    _, err := Eval(code)
+    c.Assert(err, NotNil)
+}
+
+func (s *BuiltinsSuite) TestNotEqualToWithOneArg(c *C) {
+    code, _ := Parse("(!= 5)")
+    _, err := Eval(code)
+    c.Assert(err, NotNil)
+}
+
+func (s *BuiltinsSuite) TestNotEqualToFalse(c *C) {
+    code, _ := Parse("(!= 2 2)")
+    result, err := Eval(code)
+    c.Assert(err, IsNil)
+    c.Assert(result, NotNil)
+    c.Assert(TypeOf(result), Equals, BooleanType)
+    c.Assert(BooleanValue(result), Equals, false)
+}
+
+func (s *BuiltinsSuite) TestNotEqualToTrue(c *C) {
+    code, _ := Parse("(!= 2 5)")
+    result, err := Eval(code)
+    c.Assert(err, IsNil)
+    c.Assert(result, NotNil)
+    c.Assert(TypeOf(result), Equals, BooleanType)
+    c.Assert(BooleanValue(result), Equals, true)
+}
+
+// <=
+
+func (s *BuiltinsSuite) TestLessThanEqualWithNoArgs(c *C) {
+    code, _ := Parse("(<=)")
+    _, err := Eval(code)
+    c.Assert(err, NotNil)
+}
+
+func (s *BuiltinsSuite) TestLessThanEqualWithOneArg(c *C) {
+    code, _ := Parse("(<= 5)")
+    _, err := Eval(code)
+    c.Assert(err, NotNil)
+}
+
+func (s *BuiltinsSuite) TestLessThanEqualFalse(c *C) {
+    code, _ := Parse("(<= 5 2)")
+    result, err := Eval(code)
+    c.Assert(err, IsNil)
+    c.Assert(result, NotNil)
+    c.Assert(TypeOf(result), Equals, BooleanType)
+    c.Assert(BooleanValue(result), Equals, false)
+}
+
+func (s *BuiltinsSuite) TestLessThanEqualTrue(c *C) {
+    code, _ := Parse("(<= 2 5)")
+    result, err := Eval(code)
+    c.Assert(err, IsNil)
+    c.Assert(result, NotNil)
+    c.Assert(TypeOf(result), Equals, BooleanType)
+    c.Assert(BooleanValue(result), Equals, true)
+}
+
+func (s *BuiltinsSuite) TestLessThanEqualBoundry(c *C) {
+    code, _ := Parse("(<= 2 2)")
+    result, err := Eval(code)
+    c.Assert(err, IsNil)
+    c.Assert(result, NotNil)
+    c.Assert(TypeOf(result), Equals, BooleanType)
+    c.Assert(BooleanValue(result), Equals, true)
+}
+
+// >=
+
+func (s *BuiltinsSuite) TestGreaterThanEqualWithNoArgs(c *C) {
+    code, _ := Parse("(>=)")
+    _, err := Eval(code)
+    c.Assert(err, NotNil)
+}
+
+func (s *BuiltinsSuite) TestGreaterThanEqualWithOneArg(c *C) {
+    code, _ := Parse("(>= 5)")
+    _, err := Eval(code)
+    c.Assert(err, NotNil)
+}
+
+func (s *BuiltinsSuite) TestGreaterThanEqualFalse(c *C) {
+    code, _ := Parse("(>= 2 5)")
+    result, err := Eval(code)
+    c.Assert(err, IsNil)
+    c.Assert(result, NotNil)
+    c.Assert(TypeOf(result), Equals, BooleanType)
+    c.Assert(BooleanValue(result), Equals, false)
+}
+
+func (s *BuiltinsSuite) TestGreaterThanEqualTrue(c *C) {
+    code, _ := Parse("(>= 5 2)")
+    result, err := Eval(code)
+    c.Assert(err, IsNil)
+    c.Assert(result, NotNil)
+    c.Assert(TypeOf(result), Equals, BooleanType)
+    c.Assert(BooleanValue(result), Equals, true)
+}
+
+func (s *BuiltinsSuite) TestGreaterThanEqualBoundry(c *C) {
+    code, _ := Parse("(>= 2 2)")
+    result, err := Eval(code)
+    c.Assert(err, IsNil)
+    c.Assert(result, NotNil)
+    c.Assert(TypeOf(result), Equals, BooleanType)
+    c.Assert(BooleanValue(result), Equals, true)
+}
+
+// !
+
+func (s *BuiltinsSuite) TestNotWithNoArgs(c *C) {
+    code, _ := Parse("(!)")
+    _, err := Eval(code)
+    c.Assert(err, NotNil)
+}
+
+func (s *BuiltinsSuite) TestNotWithFalse(c *C) {
+    code, _ := Parse("(! #f)")
+    result, err := Eval(code)
+    c.Assert(err, IsNil)
+    c.Assert(result, NotNil)
+    c.Assert(TypeOf(result), Equals, BooleanType)
+    c.Assert(BooleanValue(result), Equals, true)
+}
+
+func (s *BuiltinsSuite) TestNotWithTrue(c *C) {
+    code, _ := Parse("(! #t)")
+    result, err := Eval(code)
+    c.Assert(err, IsNil)
+    c.Assert(result, NotNil)
+    c.Assert(TypeOf(result), Equals, BooleanType)
+    c.Assert(BooleanValue(result), Equals, false)
+}
+
+func (s *BuiltinsSuite) TestDefine(c *C) {
+    code, _ := Parse("(define x 5)")
+    Eval(code)
+    sym := Intern("x")
+    v := ValueOf(sym)
+    c.Assert(v, NotNil)
+    c.Assert(TypeOf(v), Equals, NumberType)
+    c.Assert(IntValue(v), Equals, 5)
+}
+
+func (s *BuiltinsSuite) TestDefineNotSymbol(c *C) {
+    code, _ := Parse(`(define "x" 5)`)
+    _, err := Eval(code)
+    c.Assert(err, NotNil)
+}
+
+func (s *BuiltinsSuite) TestDefineFunction(c *C) {
+    code, _ := Parse("(define (foo y) (+ y y))")
+    _, err := Eval(code)
+    c.Assert(err, IsNil)
+
+    code, err = Parse("(foo 5)")
+    c.Assert(err, IsNil)
+    v, err := Eval(code)
+    c.Assert(err, IsNil)
+
+    c.Assert(v, NotNil)
+    c.Assert(TypeOf(v), Equals, NumberType)
+    c.Assert(IntValue(v), Equals, 10)
 }

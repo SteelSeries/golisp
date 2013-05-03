@@ -18,7 +18,7 @@ type SymbolTable struct {
 var symbolTable *SymbolTable
 
 func (self *SymbolTable) Dump() {
-    for frameNumber, frame := 0, self.Frames.Front(); frame != nil; frameNumber, frame = frameNumber+1, frame.Next() {
+    for frameNumber, frame := 0, self.Frames.Back(); frame != nil; frameNumber, frame = frameNumber+1, frame.Prev() {
         fmt.Printf("Frame %d\n", frameNumber)
         frame.Value.(*SymbolTableFrame).Dump()
     }
@@ -64,8 +64,26 @@ func Intern(name string) (sym *Data) {
     }
 }
 
+func InternSymbol(sym *Data) {
+    _, found := findSymbol(StringValue(sym))
+    if !found {
+        BindTo(sym, nil)
+    }
+}
+
 func BindTo(symbol *Data, value *Data) *Data {
     binding, found := findBindingFor(symbol)
+    if found {
+        binding.Val = value
+    } else {
+        binding := BindingWithSymbolAndValue(symbol, value)
+        localFrame().SetBindingAt(StringValue(symbol), binding)
+    }
+    return value
+}
+
+func BindLocallyTo(symbol *Data, value *Data) *Data {
+    binding, found := findBindingInLocalFrameFor(symbol)
     if found {
         binding.Val = value
     } else {

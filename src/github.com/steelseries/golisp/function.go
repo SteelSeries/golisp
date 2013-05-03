@@ -6,6 +6,7 @@
 package golisp
 
 import (
+    "errors"
     "fmt"
 )
 
@@ -15,30 +16,42 @@ type Function struct {
     Body   *Data
 }
 
-func MakeFunction(name string, args *Data, body *Data) *Function {
-    return &Function{Name: name, Params: args, Body: body}
+func MakeFunction(name string, params *Data, body *Data) *Function {
+    return &Function{Name: name, Params: params, Body: body}
 }
 
 func (self *Function) String() string {
     return fmt.Sprintf("<func: %s>", self.Name)
 }
 
-// func makeLocalBindings(args *Data) {
-//     argPairs := pairsFrom(self.Params, args)
-//     PushLocalBindings()
-//     for c := argPairs; NotNilP(c); c = Cdr(c) {
-//         BindTo(Caar(c), Cdar(c))
-//     }
-// }
+func (self *Function) makeLocalBindings(args *Data) (err error) {
+    if Length(args) != Length(self.Params) {
+        return errors.New("Number of args must equal number of params")
+    }
+    PushLocalBindings()
+    var data *Data
+    for p, a := self.Params, args; NotNilP(p); p, a = Cdr(p), Cdr(a) {
+        data, err = Eval(Car(a))
+        if err != nil {
+            return
+        }
+        BindLocallyTo(Car(p), data)
+    }
+    return nil
+}
 
 func (self *Function) Apply(args *Data) (result *Data, err error) {
-    // makeLocalBindings(args)
-    // for s := self.Body; NotNilP(s); s = Cdr(s) {
-    //     result, err = Eval(s)
-    //     if err != nil {
-    //         return
-    //     }
-    // }
-    // PopLocalBindings()
+    err = self.makeLocalBindings(args)
+    if err != nil {
+        return
+    }
+    symbolTable.Dump()
+    for s := self.Body; NotNilP(s); s = Cdr(s) {
+        result, err = Eval(Car(s))
+        if err != nil {
+            return
+        }
+    }
+    PopLocalBindings()
     return
 }

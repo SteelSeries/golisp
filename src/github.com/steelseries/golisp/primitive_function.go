@@ -36,7 +36,5 @@ func (self *PrimitiveFunction) Apply(args *Data) (result *Data, err error) {
         return
     }
 
-    PushLocalBindings()
-    defer PopLocalBindings()
     return (self.Body)(args)
 }
