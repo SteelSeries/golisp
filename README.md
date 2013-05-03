@@ -44,6 +44,7 @@ Builtin functions
 `(+ <number>...)`
 
 Adds a series of numbers, e.g.
+
     (+ 4) ==> 4
     (+ 4 2) ==> 6
     (+ 4 2 7) ==> 13
@@ -51,6 +52,7 @@ Adds a series of numbers, e.g.
 `(- <number>...)`
 
 Sequentially subtracts a sequence of numbers. With a single argument is a special case that negates the argument. E.g.
+
     (- 4) ==> -4
     (- 10 3) ==> 7
     (- 10 3 4) ==> 3
@@ -59,6 +61,7 @@ Sequentially subtracts a sequence of numbers. With a single argument is a specia
 `(* <number>...)`
 
 Multiplies a series of numbers, e.g.
+
     (+ 4) ==> 4
     (+ 4 2) ==> 6
     (+ 4 2 7) ==> 13
@@ -66,18 +69,21 @@ Multiplies a series of numbers, e.g.
 `(/ <number>...)`
 
 Sequentially divides a sequence of numbers. E.g.
+
     (/ 30 2) ==> 15
     (- 30 2 3 ) ==> 5
 
 `(% <number> <number>)`
 
 Returns the remainder of dividion. E.g.
+
     (% 4 2) ==> 0
     (% 4 3) ==> 1 
 
 `(< <number> <number>)`
 
 Returns whether the first argument is less than the second argument.
+
     (< 1 2) ==> #t
     (< 2 1) ==> #f
     (< 2 2) ==> #f
@@ -85,6 +91,7 @@ Returns whether the first argument is less than the second argument.
 `(> <number> <number>)`
 
 Returns whether the first argument is greater than the second argument.
+
     (> 1 2) ==> #f
     (> 2 1) ==> #t
     (> 2 2) ==> #f
@@ -92,18 +99,21 @@ Returns whether the first argument is greater than the second argument.
 `(== <number> <number>)`
 
 Returns whether the first argument is equal to the second argument.
+
     (== 1 2) ==> #f
     (== 1 1) ==> #t
 
 `(!= <number> <number>)`
 
 Returns whether the first argument is not equal to the second argument.
+
     (!= 1 2) ==> #t
     (!= 1 1) ==> #f
 
 `(<= <number> <number>)`
 
 Returns whether the first argument is less than or equal to the second argument.
+
     (<= 1 2) ==> #t
     (<= 2 1) ==> #f
     (<= 2 2) ==> #t
@@ -111,6 +121,7 @@ Returns whether the first argument is less than or equal to the second argument.
 `(>= <number> <number>)`
 
 Returns whether the first argument is greater than or equal to the second argument.
+
     (>= 1 2) ==> #f
     (>= 2 1) ==> #t
     (>= 2 2) ==> #t
@@ -118,6 +129,7 @@ Returns whether the first argument is greater than or equal to the second argume
 `(! <arg>)`
 
 Returns whether the boolean negation of the argument.
+
     (! #t) ==> #f
     (! #f) ==> #t
 
