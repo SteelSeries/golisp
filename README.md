@@ -14,7 +14,7 @@ Data Types
 
 **Numbers** are integers internally represented as `int` so their size reflects `int` on the build of Go being used. E.g. `5`, `9845376`. `-5`.
 
-**Booleans** represent true & false. `nil`\`()` is false, and false is false, everything else is true. Boolean literals are `#t` and `#f` for true and false, respectively.
+**Booleans** represent true & false. `nil` or `()` is false, and false is false, everything else is true. Boolean literals are `#t` and `#f` for true and false, respectively.
 
 **Functions** are user defined procedures. The basic function definition is the anonymous lambda form:
 
