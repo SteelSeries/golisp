@@ -287,7 +287,12 @@ func EqualTo(args *Data) (result *Data, err error) {
         return
     }
 
-    val := *arg1 == *arg2
+    var val bool
+    if arg1 == nil || arg2 == nil {
+        val = arg1 == nil && arg2 == nil
+    } else {
+        val = *arg1 == *arg2
+    }
     return BooleanWithValue(val), nil
 }
 
@@ -309,7 +314,14 @@ func NotEqual(args *Data) (result *Data, err error) {
         return
     }
 
-    val := *arg1 != *arg2
+    var val bool
+    if arg1 == nil {
+        val = arg2 != nil
+    } else if arg2 == nil {
+        val = arg1 != nil
+    } else {
+        val = *arg1 != *arg2
+    }
     return BooleanWithValue(val), nil
 }
 
@@ -419,7 +431,10 @@ func Define(args *Data) (result *Data, err error) {
     var value *Data
     thing := Car(args)
     if SymbolP(thing) {
-        value = Cadr(args)
+        value, err = Eval(Cadr(args))
+        if err != nil {
+            return
+        }
     } else if PairP(thing) {
         name := Car(thing)
         params := Cdr(thing)
