@@ -19,7 +19,6 @@ func (s *BuiltinsSuite) SetUpSuite(c *C) {
     symbolTable = &SymbolTable{list.New()}
     PushLocalBindings()
     InitBuiltins()
-    //    symbolTable.Dump()
 }
 
 // Add

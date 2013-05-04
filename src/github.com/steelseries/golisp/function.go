@@ -45,7 +45,6 @@ func (self *Function) Apply(args *Data) (result *Data, err error) {
     if err != nil {
         return
     }
-    symbolTable.Dump()
     for s := self.Body; NotNilP(s); s = Cdr(s) {
         result, err = Eval(Car(s))
         if err != nil {
