@@ -277,6 +277,8 @@ Other useful functions include:
     NilP(*Data) bool
     NotNilP(*Data) bool
 
+List accessors: `Car(*Data) *Data` and `Cdr(*Data) *Data)` vaients up to four a/d places as well as `First(*Data) *Data` to `Fifth(*Data) *Data` and `Nth(*Data, int) *Data`
+
 A useful integration function is Apply:
 
     Apply(function *Data, args *Data) (result *Data, err error)

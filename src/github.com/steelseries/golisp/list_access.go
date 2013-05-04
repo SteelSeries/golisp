@@ -148,3 +148,50 @@ func Cdddar(d *Data) *Data {
 func Cddddr(d *Data) *Data {
     return Cdr(Cdr(Cdr(Cdr(d))))
 }
+
+func Nth(d *Data, n int) *Data {
+    var c *Data = d
+    for i := n - 1; i > 0; c, i = Cdr(c), i-1 {
+    }
+    return Car(c)
+}
+
+func First(d *Data) *Data {
+    return Nth(d, 1)
+}
+
+func Second(d *Data) *Data {
+    return Nth(d, 2)
+}
+
+func Third(d *Data) *Data {
+    return Nth(d, 3)
+}
+
+func Fourth(d *Data) *Data {
+    return Nth(d, 4)
+}
+
+func Fifth(d *Data) *Data {
+    return Nth(d, 5)
+}
+
+func Sixth(d *Data) *Data {
+    return Nth(d, 6)
+}
+
+func Seventh(d *Data) *Data {
+    return Nth(d, 7)
+}
+
+func Eighth(d *Data) *Data {
+    return Nth(d, 8)
+}
+
+func Ninth(d *Data) *Data {
+    return Nth(d, 9)
+}
+
+func Tenth(d *Data) *Data {
+    return Nth(d, 10)
+}
