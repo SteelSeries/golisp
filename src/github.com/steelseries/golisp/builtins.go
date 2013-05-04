@@ -24,6 +24,8 @@ func init() {
 func InitBuiltins() {
     // MakePrimitiveFunction(<symbol>, <required # args, -1 means >= 1>, <function>)
     Intern("nil")
+
+    // math
     MakePrimitiveFunction("+", -1, Add)
     MakePrimitiveFunction("-", -1, Subtract)
     MakePrimitiveFunction("*", -1, Multiply)
@@ -36,12 +38,14 @@ func InitBuiltins() {
     MakePrimitiveFunction("<=", -1, LessThanOrEqualTo)
     MakePrimitiveFunction(">=", -1, GreaterThanOrEqualTo)
     MakePrimitiveFunction("!", 1, BooleanNot)
+
+    // special forms
     MakePrimitiveFunction("if", -1, If)
     MakePrimitiveFunction("lambda", -1, Lambda)
-    MakePrimitiveFunction("define", 2, Define)
-    MakePrimitiveFunction("dump", 0, DumpSymbolTable)
+    MakePrimitiveFunction("define", -1, Define)
     MakePrimitiveFunction("map", 2, Map)
     MakePrimitiveFunction("quote", 1, Quote)
+
     // list access
     MakePrimitiveFunction("car", 1, ExposedCar)
     MakePrimitiveFunction("cdr", 1, ExposedCdr)
@@ -84,6 +88,9 @@ func InitBuiltins() {
     MakePrimitiveFunction("fifth", 1, ExposedFifth)
 
     MakePrimitiveFunction("nth", 2, ExposedNth)
+
+    // system
+    MakePrimitiveFunction("dump", 0, DumpSymbolTable)
 }
 
 func Add(args *Data) (result *Data, err error) {
