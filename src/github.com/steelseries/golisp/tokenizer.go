@@ -32,4 +32,7 @@ func (self *Tokenizer) NextToken() (tok token.Token, lit string) {
 
 func (self *Tokenizer) ConsumeToken() {
     _, self.LookaheadToken, self.LookaheadLit = self.S.Scan()
+    for self.LookaheadToken == token.SEMICOLON {
+        _, self.LookaheadToken, self.LookaheadLit = self.S.Scan()
+    }
 }
