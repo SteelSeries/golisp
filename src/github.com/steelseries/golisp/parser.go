@@ -185,8 +185,7 @@ func parseExpression(s *Tokenizer) (sexpr *Data, eof bool, err error) {
                 if isBooleanConstant(lit) {
                     sexpr, err = parseBoolean(s)
                 } else {
-                    println("Illegal symbol: `" + lit + "`")
-                    err = errors.New("Illegal symbol: `" + lit + "`")
+                    //                    err = errors.New(fmt.Sprintf("Illegal symbol: `%s` with token: %d", lit, tok))
                 }
                 return
             }
