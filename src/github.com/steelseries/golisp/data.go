@@ -47,6 +47,10 @@ func SymbolP(d *Data) bool {
     return TypeOf(d) == SymbolType
 }
 
+func StringP(d *Data) bool {
+    return TypeOf(d) == StringType
+}
+
 func NumberP(d *Data) bool {
     return TypeOf(d) == NumberType
 }
