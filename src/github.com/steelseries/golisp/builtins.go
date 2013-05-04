@@ -90,6 +90,7 @@ func InitBuiltins() {
     MakePrimitiveFunction("nth", 2, ExposedNth)
 
     // system
+    MakePrimitiveFunction("load", 1, LoadFile)
     MakePrimitiveFunction("dump", 0, DumpSymbolTable)
 }
 
@@ -793,6 +794,16 @@ func ExposedNth(args *Data) (result *Data, err error) {
     }
 
     return Nth(col, IntValue(count)), nil
+}
+
+func LoadFile(args *Data) (result *Data, err error) {
+    filename := Car(args)
+    if !StringP(filename) {
+        err = errors.New("Filename must be a string")
+        return
+    }
+
+    return ProcessFile(StringValue(filename))
 }
 /// Function template
 // func <function>(args *Data) (result *Data, err error) {

@@ -10,6 +10,7 @@ import (
     "errors"
     "fmt"
     "go/token"
+    "os"
     "unicode"
 )
 
@@ -212,5 +213,49 @@ func parseExpression(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 func Parse(src string) (sexpr *Data, err error) {
     s := NewTokenizer(src)
     sexpr, _, err = parseExpression(s)
+    return
+}
+
+func ReadFile(filename string) (s string, err error) {
+    fin, err := os.Open(filename)
+    if err != nil {
+        return
+    }
+    defer fin.Close()
+
+    contents := make([]byte, 8192)
+    _, err = fin.Read(contents)
+    if err != nil {
+        return
+    }
+
+    s = string(contents)
+    return
+}
+
+func ProcessFile(filename string) (result *Data, err error) {
+    src, err := ReadFile(filename)
+    if err != nil {
+        return
+    }
+    s := NewTokenizer(src)
+    var sexpr *Data
+    var eof bool
+    for {
+        sexpr, eof, err = parseExpression(s)
+        if err != nil {
+            return
+        }
+        if eof {
+            return
+        }
+        if NilP(sexpr) {
+            return
+        }
+        result, err = Eval(sexpr)
+        if err != nil {
+            return
+        }
+    }
     return
 }
