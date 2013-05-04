@@ -14,70 +14,61 @@ var _ = Suite(&ParsingSuite{})
 // Atoms
 
 func (s *ParsingSuite) TestNumber(c *C) {
-    initScanner("5")
-    sexpr, _, err := parseExpression()
+    sexpr, err := Parse("5")
     c.Assert(err, IsNil)
     c.Assert(TypeOf(sexpr), Equals, NumberType)
     c.Assert(IntValue(sexpr), Equals, 5)
 }
 
 func (s *ParsingSuite) TestAnotherNumber(c *C) {
-    initScanner("476")
-    sexpr, _, err := parseExpression()
+    sexpr, err := Parse("476")
     c.Assert(err, IsNil)
     c.Assert(TypeOf(sexpr), FitsTypeOf, NumberType)
     c.Assert(IntValue(sexpr), Equals, 476)
 }
 
 func (s *ParsingSuite) TestString(c *C) {
-    initScanner(`"test"`)
-    sexpr, _, err := parseExpression()
+    sexpr, err := Parse(`"test"`)
     c.Assert(err, IsNil)
     c.Assert(TypeOf(sexpr), Equals, StringType)
     c.Assert(StringValue(sexpr), Equals, "test")
 }
 
 func (s *ParsingSuite) TestAnotherString(c *C) {
-    initScanner(`"Lots Of Stylish Parentheses"`)
-    sexpr, _, err := parseExpression()
+    sexpr, err := Parse(`"Lots Of Stylish Parentheses"`)
     c.Assert(err, IsNil)
     c.Assert(TypeOf(sexpr), Equals, StringType)
     c.Assert(StringValue(sexpr), Equals, "Lots Of Stylish Parentheses")
 }
 
 func (s *ParsingSuite) TestBooleanTrue(c *C) {
-    initScanner("#t")
-    sexpr, _, err := parseExpression()
+    sexpr, err := Parse("#t")
     c.Assert(err, IsNil)
     c.Assert(TypeOf(sexpr), Equals, BooleanType)
     c.Assert(BooleanValue(sexpr), Equals, true)
 }
 
 func (s *ParsingSuite) TestBooleanFalse(c *C) {
-    initScanner("#f")
-    sexpr, _, err := parseExpression()
+    sexpr, err := Parse("#f")
     c.Assert(err, IsNil)
     c.Assert(TypeOf(sexpr), Equals, BooleanType)
     c.Assert(BooleanValue(sexpr), Equals, false)
 }
 
 func (s *ParsingSuite) TestBooleanAnythingElseIsFalse(c *C) {
-    initScanner("#w")
-    _, _, err := parseExpression()
+    _, err := Parse("#w")
     c.Assert(err, NotNil)
 }
 
 func (s *ParsingSuite) TestSymbol(c *C) {
-    initScanner("test")
-    sexpr, _, err := parseExpression()
+    sexpr, err := Parse("test")
     c.Assert(err, IsNil)
     c.Assert(TypeOf(sexpr), Equals, SymbolType)
     c.Assert(StringValue(sexpr), Equals, "test")
 }
 
 func (s *ParsingSuite) TestAnotherSymbol(c *C) {
-    initScanner("defun")
-    sexpr, _, err := parseExpression()
+    sexpr, err := Parse("defun")
     c.Assert(err, IsNil)
     c.Assert(TypeOf(sexpr), Equals, SymbolType)
     c.Assert(StringValue(sexpr), Equals, "defun")
@@ -86,15 +77,13 @@ func (s *ParsingSuite) TestAnotherSymbol(c *C) {
 // compound structures
 
 func (s *ParsingSuite) TestNil(c *C) {
-    initScanner("()")
-    sexpr, _, err := parseExpression()
+    sexpr, err := Parse("()")
     c.Assert(err, IsNil)
     c.Assert(sexpr, IsNil)
 }
 
 func (s *ParsingSuite) TestNumberCar(c *C) {
-    initScanner("(1)")
-    sexpr, _, err := parseExpression()
+    sexpr, err := Parse("(1)")
     c.Assert(err, IsNil)
     c.Assert(TypeOf(sexpr), Equals, ConsCellType)
     c.Assert(TypeOf(Car(sexpr)), Equals, NumberType)
@@ -102,8 +91,7 @@ func (s *ParsingSuite) TestNumberCar(c *C) {
 }
 
 func (s *ParsingSuite) TestStringCar(c *C) {
-    initScanner(`("hello")`)
-    sexpr, _, err := parseExpression()
+    sexpr, err := Parse(`("hello")`)
     c.Assert(err, IsNil)
     c.Assert(TypeOf(sexpr), Equals, ConsCellType)
     c.Assert(TypeOf(Car(sexpr)), Equals, StringType)
@@ -111,8 +99,7 @@ func (s *ParsingSuite) TestStringCar(c *C) {
 }
 
 func (s *ParsingSuite) Test2ElementList(c *C) {
-    initScanner("(1 2)")
-    sexpr, _, err := parseExpression()
+    sexpr, err := Parse("(1 2)")
     c.Assert(err, IsNil)
     c.Assert(sexpr, FitsTypeOf, EmptyCons())
     c.Assert(TypeOf(Car(sexpr)), Equals, NumberType)
@@ -123,8 +110,7 @@ func (s *ParsingSuite) Test2ElementList(c *C) {
 }
 
 func (s *ParsingSuite) TestNestedList(c *C) {
-    initScanner("(1 (2 3) 4)")
-    sexpr, _, err := parseExpression()
+    sexpr, err := Parse("(1 (2 3) 4)")
     c.Assert(err, IsNil)
     c.Assert(TypeOf(sexpr), Equals, ConsCellType)
 
@@ -146,8 +132,7 @@ func (s *ParsingSuite) TestNestedList(c *C) {
 }
 
 func (s *ParsingSuite) TestDottedPair(c *C) {
-    initScanner("(1 . 2)")
-    sexpr, _, err := parseExpression()
+    sexpr, err := Parse("(1 . 2)")
     c.Assert(err, IsNil)
     c.Assert(TypeOf(sexpr), Equals, ConsCellType)
 
@@ -158,8 +143,7 @@ func (s *ParsingSuite) TestDottedPair(c *C) {
 }
 
 func (s *ParsingSuite) TestPrimitive(c *C) {
-    initScanner("(+ 1 2)")
-    sexpr, _, err := parseExpression()
+    sexpr, err := Parse("(+ 1 2)")
     c.Assert(err, IsNil)
     c.Assert(TypeOf(sexpr), Equals, ConsCellType)
 
