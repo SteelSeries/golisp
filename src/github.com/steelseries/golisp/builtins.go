@@ -92,6 +92,10 @@ func InitBuiltins() {
     // system
     MakePrimitiveFunction("load", 1, LoadFile)
     MakePrimitiveFunction("dump", 0, DumpSymbolTable)
+
+    // testing
+    MakePrimitiveFunction("describe", -1, Describe)
+
 }
 
 func Add(args *Data) (result *Data, err error) {
@@ -805,6 +809,30 @@ func LoadFile(args *Data) (result *Data, err error) {
 
     return ProcessFile(StringValue(filename))
 }
+
+func Describe(args *Data) (d *Data, e error) {
+    if !(StringP(Car(args)) || SymbolP(Car(args))) {
+        e = errors.New("The describe tag must be a string or symbol")
+        return
+    }
+    fmt.Printf("%s\n", StringValue(Car(args)))
+
+    for clauses := Cdr(args); NotNilP(clauses); clauses = Cdr(clauses) {
+        clause := Car(clauses)
+        result, err := Eval(clause)
+        if err != nil {
+            fmt.Printf("    Error occurred: %s\n", err)
+            return
+        }
+        if !BooleanValue(result) {
+            value, _ := Eval(Cadr(clause))
+            fmt.Printf("    Test clause failed: %s expr was %s\n", String(clause), String(value))
+            return
+        }
+    }
+    return
+}
+
 /// Function template
 // func <function>(args *Data) (result *Data, err error) {
 // }
