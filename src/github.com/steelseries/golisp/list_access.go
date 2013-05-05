@@ -150,8 +150,12 @@ func Cddddr(d *Data) *Data {
 }
 
 func Nth(d *Data, n int) *Data {
+    if d == nil || n < 1 || n > Length(d) {
+        return nil
+    }
+
     var c *Data = d
-    for i := n - 1; i > 0; c, i = Cdr(c), i-1 {
+    for i := n; i > 1; c, i = Cdr(c), i-1 {
     }
     return Car(c)
 }
