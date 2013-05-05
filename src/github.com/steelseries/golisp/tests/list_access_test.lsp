@@ -44,6 +44,22 @@
           (== (fifth '(1 2 3 4 5)') 5)
           (== (fifth l) 5))
 
+(describe nth
+          (== (nth nil 1) nil)
+          (== (nth '()' 1) nil)
+          (== (nth l 0) nil)
+          (== (nth l 1) 1)
+          (== (nth l 2) 2)
+          (== (nth l 3) 3)
+          (== (nth l 4) 4)
+          (== (nth l 5) 5)
+          (== (nth l 6) 6)
+          (== (nth l 7) 7)
+          (== (nth l 8) 8)
+          (== (nth l 9) 9)
+          (== (nth l 10) 10)
+          (== (nth l 11) nil))
+
 (describe car
           (== (car 'a') nil)
           (== (car nil) nil)
