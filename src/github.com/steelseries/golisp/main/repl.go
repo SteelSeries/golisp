@@ -7,6 +7,7 @@ package main
 
 import (
     "bufio"
+    "flag"
     "fmt"
     "github.com/steelseries/golisp"
     "os"
@@ -14,6 +15,15 @@ import (
 )
 
 func main() {
+    flag.Parse()
+    fmt.Printf("%d", flag.NArg())
+    for i := 0; i < flag.NArg(); i = i + 1 {
+        fmt.Printf("Loading %s\n", flag.Arg(i))
+        _, err := golisp.ProcessFile(flag.Arg(i))
+        if err != nil {
+            fmt.Printf("Error: %s\n", err)
+        }
+    }
     for true {
         in := bufio.NewReader(os.Stdin)
 
@@ -24,16 +34,18 @@ func main() {
                 panic(err)
             }
             input = strings.TrimRight(input, "\r\n")
-            code, err := golisp.Parse(input)
-            println(golisp.String(code))
-            if err != nil {
-                fmt.Printf("Error: %s\n", err)
-            } else {
-                d, err := golisp.Eval(code)
+            if input != "" {
+                code, err := golisp.Parse(input)
+                println(golisp.String(code))
                 if err != nil {
-                    fmt.Printf("Error in evaluation: %s\n", err)
+                    fmt.Printf("Error: %s\n", err)
                 } else {
-                    fmt.Printf("==> %s\n", golisp.String(d))
+                    d, err := golisp.Eval(code)
+                    if err != nil {
+                        fmt.Printf("Error in evaluation: %s\n", err)
+                    } else {
+                        fmt.Printf("==> %s\n", golisp.String(d))
+                    }
                 }
             }
         }
