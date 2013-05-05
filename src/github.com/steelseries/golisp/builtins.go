@@ -29,8 +29,8 @@ func InitBuiltins() {
 
     MakePrimitiveFunction("listp", 1, IsPair)
     MakePrimitiveFunction("pairp", 1, IsPair)
-    MakePrimitiveFunction("nilp", 1, IsNil)
-    MakePrimitiveFunction("notnilp", 1, IsNotNil)
+    MakePrimitiveFunction("nilp", 1, ExposedNilP)
+    MakePrimitiveFunction("notnilp", 1, ExposedNotNilP)
     MakePrimitiveFunction("symbolp", 1, IsSymbol)
     MakePrimitiveFunction("stringp", 1, IsString)
     MakePrimitiveFunction("numberp", 1, IsNumber)
@@ -115,11 +115,11 @@ func IsPair(args *Data) (result *Data, err error) {
     return BooleanWithValue(PairP(Car(args))), nil
 }
 
-func IsNil(args *Data) (result *Data, err error) {
+func ExposedNilP(args *Data) (result *Data, err error) {
     return BooleanWithValue(NilP(Car(args))), nil
 }
 
-func IsNotNil(args *Data) (result *Data, err error) {
+func ExposedNotNilP(args *Data) (result *Data, err error) {
     return BooleanWithValue(NotNilP(Car(args))), nil
 }
 
