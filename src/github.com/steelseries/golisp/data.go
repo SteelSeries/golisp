@@ -52,7 +52,7 @@ func NotNilP(d *Data) bool {
 }
 
 func PairP(d *Data) bool {
-    return TypeOf(d) == ConsCellType
+    return d == nil || TypeOf(d) == ConsCellType
 }
 
 func SymbolP(d *Data) bool {

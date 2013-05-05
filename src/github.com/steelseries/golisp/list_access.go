@@ -12,7 +12,7 @@ func Car(d *Data) *Data {
         return nil
     }
 
-    if d.Type == ConsCellType {
+    if PairP(d) {
         return d.Car
     }
 
