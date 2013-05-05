@@ -43,6 +43,18 @@ func TypeOf(d *Data) int {
     return d.Type
 }
 
+func NilP(d *Data) bool {
+    return d == nil
+}
+
+func NotNilP(d *Data) bool {
+    return d != nil
+}
+
+func PairP(d *Data) bool {
+    return TypeOf(d) == ConsCellType
+}
+
 func SymbolP(d *Data) bool {
     return TypeOf(d) == SymbolType
 }
@@ -53,10 +65,6 @@ func StringP(d *Data) bool {
 
 func NumberP(d *Data) bool {
     return TypeOf(d) == NumberType
-}
-
-func PairP(d *Data) bool {
-    return TypeOf(d) == ConsCellType
 }
 
 func FunctionP(d *Data) bool {
@@ -168,19 +176,31 @@ func Length(d *Data) int {
 }
 
 func IsEqual(d *Data, o *Data) bool {
-    return d == o || *d == *o
-}
+    if d == o {
+        return true
+    }
 
-func NilP(d *Data) bool {
-    return d == nil
-}
+    if d == nil || o == nil {
+        return false
+    }
 
-func NotNilP(d *Data) bool {
-    return d != nil
-}
+    if TypeOf(d) != TypeOf(o) {
+        return false
+    }
 
-func ListP(d *Data) bool {
-    return d.Type == ConsCellType
+    if PairP(d) {
+        if Length(d) != Length(o) {
+            return false
+        }
+        for a1, a2 := d, o; NotNilP(a1); a1, a2 = Cdr(a1), Cdr(a2) {
+            if !IsEqual(Car(a1), Car(a2)) {
+                return false
+            }
+        }
+        return true
+    }
+
+    return *d == *o
 }
 
 func String(d *Data) string {
@@ -195,13 +215,18 @@ func String(d *Data) string {
                 return "()"
             }
             var c *Data = d
+
             contents := make([]string, 0, Length(d))
-            for NotNilP(c) && ListP(c) {
+            for NotNilP(c) && PairP(c) {
                 contents = append(contents, String(Car(c)))
                 c = Cdr(c)
             }
             if NilP(c) {
-                return fmt.Sprintf("(%s)", strings.Join(contents, " "))
+                if SymbolP(Car(d)) && StringValue(Car(d)) == "quote" {
+                    return fmt.Sprintf("'%s'", contents[1])
+                } else {
+                    return fmt.Sprintf("(%s)", strings.Join(contents, " "))
+                }
             } else {
                 return fmt.Sprintf("(%s . %s)", strings.Join(contents, " "), String(c))
             }

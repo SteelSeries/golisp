@@ -25,6 +25,17 @@ func InitBuiltins() {
     // MakePrimitiveFunction(<symbol>, <required # args, -1 means >= 1>, <function>)
     Intern("nil")
 
+    // type tests
+
+    MakePrimitiveFunction("listp", 1, IsPair)
+    MakePrimitiveFunction("pairp", 1, IsPair)
+    MakePrimitiveFunction("nilp", 1, IsNil)
+    MakePrimitiveFunction("notnilp", 1, IsNotNil)
+    MakePrimitiveFunction("symbolp", 1, IsSymbol)
+    MakePrimitiveFunction("stringp", 1, IsString)
+    MakePrimitiveFunction("numberp", 1, IsNumber)
+    MakePrimitiveFunction("functionp", 1, IsFunction)
+
     // math
     MakePrimitiveFunction("+", -1, Add)
     MakePrimitiveFunction("-", -1, Subtract)
@@ -47,6 +58,8 @@ func InitBuiltins() {
     MakePrimitiveFunction("quote", 1, Quote)
 
     // list access
+    MakePrimitiveFunction("length", 1, ListLength)
+
     MakePrimitiveFunction("car", 1, ExposedCar)
     MakePrimitiveFunction("cdr", 1, ExposedCdr)
 
@@ -96,6 +109,34 @@ func InitBuiltins() {
     // testing
     MakePrimitiveFunction("describe", -1, Describe)
 
+}
+
+func IsPair(args *Data) (result *Data, err error) {
+    return BooleanWithValue(PairP(Car(args))), nil
+}
+
+func IsNil(args *Data) (result *Data, err error) {
+    return BooleanWithValue(NilP(Car(args))), nil
+}
+
+func IsNotNil(args *Data) (result *Data, err error) {
+    return BooleanWithValue(NotNilP(Car(args))), nil
+}
+
+func IsSymbol(args *Data) (result *Data, err error) {
+    return BooleanWithValue(SymbolP(Car(args))), nil
+}
+
+func IsString(args *Data) (result *Data, err error) {
+    return BooleanWithValue(StringP(Car(args))), nil
+}
+
+func IsNumber(args *Data) (result *Data, err error) {
+    return BooleanWithValue(NumberP(Car(args))), nil
+}
+
+func IsFunction(args *Data) (result *Data, err error) {
+    return BooleanWithValue(FunctionP(Car(args))), nil
 }
 
 func Add(args *Data) (result *Data, err error) {
@@ -292,13 +333,7 @@ func EqualTo(args *Data) (result *Data, err error) {
         return
     }
 
-    var val bool
-    if arg1 == nil || arg2 == nil {
-        val = arg1 == nil && arg2 == nil
-    } else {
-        val = *arg1 == *arg2
-    }
-    return BooleanWithValue(val), nil
+    return BooleanWithValue(IsEqual(arg1, arg2)), nil
 }
 
 func NotEqual(args *Data) (result *Data, err error) {
@@ -319,15 +354,7 @@ func NotEqual(args *Data) (result *Data, err error) {
         return
     }
 
-    var val bool
-    if arg1 == nil {
-        val = arg2 != nil
-    } else if arg2 == nil {
-        val = arg1 != nil
-    } else {
-        val = *arg1 != *arg2
-    }
-    return BooleanWithValue(val), nil
+    return BooleanWithValue(!IsEqual(arg1, arg2)), nil
 }
 
 func LessThanOrEqualTo(args *Data) (result *Data, err error) {
@@ -426,6 +453,14 @@ func If(args *Data) (result *Data, err error) {
     }
 }
 
+func ListLength(args *Data) (result *Data, err error) {
+    d, err := Eval(Car(args))
+    if err != nil {
+        return
+    }
+    return NumberWithValue(Length(d)), nil
+}
+
 func Lambda(args *Data) (result *Data, err error) {
     params := Car(args)
     body := Cdr(args)
@@ -477,7 +512,7 @@ func Map(args *Data) (result *Data, err error) {
     if err != nil {
         return
     }
-    if !ListP(col) {
+    if !PairP(col) {
         err = errors.New("Map needs a list as its second argument")
         return
     }
@@ -784,7 +819,7 @@ func ExposedNth(args *Data) (result *Data, err error) {
     if err != nil {
         return
     }
-    if !ListP(col) {
+    if !PairP(col) {
         err = errors.New("First arg to nth must be a list")
         return
     }
@@ -819,14 +854,17 @@ func Describe(args *Data) (d *Data, e error) {
 
     for clauses := Cdr(args); NotNilP(clauses); clauses = Cdr(clauses) {
         clause := Car(clauses)
+        fmt.Printf("   %s - ", String(clause))
         result, err := Eval(clause)
         if err != nil {
-            fmt.Printf("    Error occurred: %s\n", err)
+            fmt.Printf("error: %s\n", err)
             return
         }
-        if !BooleanValue(result) {
+        if BooleanValue(result) {
+            fmt.Printf("ok\n")
+        } else {
             value, _ := Eval(Cadr(clause))
-            fmt.Printf("    Test clause failed: %s expr was %s\n", String(clause), String(value))
+            fmt.Printf("failed: %s is %s\n", String(Cadr(clause)), String(value))
             return
         }
     }
