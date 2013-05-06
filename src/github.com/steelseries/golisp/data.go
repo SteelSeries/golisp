@@ -24,14 +24,15 @@ const (
 )
 
 type Data struct {
-    Type   int                // data type
-    Car    *Data              // ConsCellType
-    Cdr    *Data              // ConsCellType
-    String string             // StringType & SymbolType
-    Number int                // NumberType & BooleanType
-    Func   *Function          // FunctionType
-    Prim   *PrimitiveFunction // PrimitiveType
-    Obj    unsafe.Pointer     // ObjectType
+    Type    int                // data type
+    Car     *Data              // ConsCellType
+    Cdr     *Data              // ConsCellType
+    String  string             // StringType & SymbolType
+    Number  int                // NumberType & BooleanType
+    Func    *Function          // FunctionType
+    Prim    *PrimitiveFunction // PrimitiveType
+    ObjType string             // ObjectType
+    Obj     unsafe.Pointer     // ObjectType
 }
 
 // Boolean constants
@@ -65,6 +66,10 @@ func StringP(d *Data) bool {
 
 func NumberP(d *Data) bool {
     return TypeOf(d) == NumberType
+}
+
+func ObjectP(d *Data) bool {
+    return TypeOf(d) == ObjectType
 }
 
 func FunctionP(d *Data) bool {
@@ -107,8 +112,8 @@ func PrimitiveWithNameAndFunc(name string, f *PrimitiveFunction) *Data {
     return &Data{Type: PrimitiveType, Car: nil, Cdr: nil, String: "", Number: 0, Func: nil, Prim: f}
 }
 
-func ObjectWithValue(o unsafe.Pointer) *Data {
-    return &Data{Type: ObjectType, Car: nil, Cdr: nil, String: "", Number: 0, Func: nil, Prim: nil, Obj: o}
+func ObjectWithTypeAndValue(typeName string, o unsafe.Pointer) *Data {
+    return &Data{Type: ObjectType, Car: nil, Cdr: nil, String: "", Number: 0, Func: nil, Prim: nil, ObjType: typeName, Obj: o}
 }
 
 func IntValue(d *Data) int {

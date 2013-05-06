@@ -22,6 +22,7 @@ type TestStruct struct {
 
 func (s *ObjectAtomSuite) TestObject(c *C) {
     obj := &TestStruct{D: 5}
-    s.o = ObjectWithValue(unsafe.Pointer(obj))
+    s.o = ObjectWithTypeAndValue("TestStruct", unsafe.Pointer(obj))
+    c.Assert(s.o.ObjType, Equals, "TestStruct")
     c.Assert((*TestStruct)(ObjectValue(s.o)), Equals, obj)
 }
