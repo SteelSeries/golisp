@@ -57,23 +57,23 @@ func PairP(d *Data) bool {
 }
 
 func SymbolP(d *Data) bool {
-    return TypeOf(d) == SymbolType
+    return d != nil && TypeOf(d) == SymbolType
 }
 
 func StringP(d *Data) bool {
-    return TypeOf(d) == StringType
+    return d != nil && TypeOf(d) == StringType
 }
 
 func NumberP(d *Data) bool {
-    return TypeOf(d) == NumberType
+    return d != nil && TypeOf(d) == NumberType
 }
 
 func ObjectP(d *Data) bool {
-    return TypeOf(d) == ObjectType
+    return d != nil && TypeOf(d) == ObjectType
 }
 
 func FunctionP(d *Data) bool {
-    return TypeOf(d) == FunctionType || TypeOf(d) == PrimitiveType
+    return d != nil && TypeOf(d) == FunctionType || TypeOf(d) == PrimitiveType
 }
 
 func Cons(car *Data, cdr *Data) *Data {
@@ -274,6 +274,10 @@ func Eval(d *Data) (result *Data, err error) {
             }
             args := Cdr(d)
             result, err = Apply(function, args)
+            if err != nil {
+                err = errors.New(fmt.Sprintf("Evaling %s. %s", String(d), err))
+                return
+            }
             return
         }
     case SymbolType:
