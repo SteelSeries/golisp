@@ -16,7 +16,6 @@ import (
 
 func main() {
     flag.Parse()
-    fmt.Printf("%d", flag.NArg())
     for i := 0; i < flag.NArg(); i = i + 1 {
         fmt.Printf("Loading %s\n", flag.Arg(i))
         _, err := golisp.ProcessFile(flag.Arg(i))
