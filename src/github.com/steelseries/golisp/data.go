@@ -156,6 +156,18 @@ func BooleanValue(d *Data) bool {
     return true
 }
 
+func TypeOfObject(d *Data) (oType string) {
+    if d == nil {
+        return
+    }
+
+    if d.Type == ObjectType {
+        return d.ObjType
+    }
+
+    return
+}
+
 func ObjectValue(d *Data) (p unsafe.Pointer) {
     if d == nil {
         return
