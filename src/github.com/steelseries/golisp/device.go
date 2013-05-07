@@ -2,7 +2,11 @@ package golisp
 
 import (
     //    "reflect"
+    "encoding/json"
+    "errors"
     "fmt"
+    "strconv"
+    "strings"
 )
 
 type DeviceStructure struct {
@@ -88,6 +92,7 @@ type ExpandedStructure struct {
 
 type ExpandedField struct {
     FieldDefinition *DeviceField
+    Path            string
     Offset          int
     Value           uint32
     Size            int
@@ -120,8 +125,15 @@ func (self *DeviceField) TotalSize() int {
 
 // structure expansion
 
-func (self *ExpandedStructure) addExpandedField(f *DeviceField) {
-    for i := f.Count; i > 0; i = i - 1 {
+func (self *ExpandedStructure) addExpandedField(f *DeviceField, pathSoFar string) {
+    for i := 0; i < f.Count; i = i + 1 {
+        var pathPart string = ""
+        if f.Count > 1 {
+            pathPart = fmt.Sprintf("%s/%d", f.Name, i)
+        } else {
+            pathPart = f.Name
+        }
+        path := pathSoFar + "/" + pathPart
         if IsAtomic(f) {
             alignment := AlignmentOf(f.TypeName)
             var paddingRequired int
@@ -133,26 +145,26 @@ func (self *ExpandedStructure) addExpandedField(f *DeviceField) {
                 paddingRequired = alignment - self.Size%alignment
             }
             offset := self.Size + paddingRequired
-            newField := &ExpandedField{FieldDefinition: f, Offset: offset, Size: f.Size}
+            newField := &ExpandedField{FieldDefinition: f, Offset: offset, Size: f.Size, Path: path}
             self.Fields = append(self.Fields, newField)
             self.Size = offset + f.Size
-            //fmt.Printf("%s (%s)\n  size: %d\n  alignment: %d\n  padding: %d\n  offset: %d\n  total: %d\n\n", f.Name, f.TypeName, f.Size, alignment, paddingRequired, offset, self.Size)
+            //fmt.Printf("%s (%s)\n  size: %d\n  alignment: %d\n  padding: %d\n  offset: %d\n  total: %d\n  path: %s\n", f.Name, f.TypeName, f.Size, alignment, paddingRequired, offset, self.Size, path)
         } else {
             s := ValueOf(SymbolWithName(f.TypeName))
-            self.addExpandedFields((*DeviceStructure)(ObjectValue(s)).Fields)
+            self.addExpandedFields((*DeviceStructure)(ObjectValue(s)).Fields, path)
         }
     }
 }
 
-func (self *ExpandedStructure) addExpandedFields(fields []*DeviceField) {
+func (self *ExpandedStructure) addExpandedFields(fields []*DeviceField, pathSoFar string) {
     for _, f := range fields {
-        self.addExpandedField(f)
+        self.addExpandedField(f, pathSoFar)
     }
 }
 
 func (self *DeviceStructure) Expand() *ExpandedStructure {
     newStruct := &ExpandedStructure{Name: self.Name}
-    newStruct.addExpandedFields(self.Fields)
+    newStruct.addExpandedFields(self.Fields, "")
     return newStruct
 }
 
@@ -193,6 +205,42 @@ func (self *ExpandedStructure) ByteArray() *[]byte {
     return &bytes
 }
 
+// populating from JSON
+
+func ExtractFromJsonWithStep(json interface{}, steps []string) uint32 {
+    fmt.Printf("%v\n", steps)
+    if len(steps) == 0 {
+        return uint32(json.(float64))
+    } else {
+        step := steps[0]
+        i, err := strconv.ParseInt(step, 10, 32)
+        if err != nil {
+            // must be a key
+            return ExtractFromJsonWithStep((json.(map[string]interface{}))[step], steps[1:])
+        } else {
+            // must be an index
+            return ExtractFromJsonWithStep((json.([]interface{}))[i], steps[1:])
+        }
+    }
+}
+
+func ExtractFromJson(json interface{}, path string) uint32 {
+    steps := strings.Split(path, "/")[1:]
+    return ExtractFromJsonWithStep(json, steps)
+}
+
+func (self *ExpandedStructure) PopulateFromJson(jsonData string) {
+    b := []byte(jsonData)
+    var data interface{}
+    err := json.Unmarshal(b, &data)
+    if err != nil {
+        panic(errors.New("Badly formed json"))
+    }
+    for _, field := range self.Fields {
+        field.Value = ExtractFromJson(data, field.Path)
+    }
+}
+
 // dumping function implimentation
 
 func (self *DeviceStructure) Dump() {
@@ -211,7 +259,7 @@ func (self *DeviceStructure) DumpExpanded() {
     expanded := self.Expand()
     fmt.Printf("%s (%d bytes)\n", expanded.Name, expanded.Size)
     for _, f := range expanded.Fields {
-        fmt.Printf("  %s %s (offset: %d, size: %d bytes)\n", f.FieldDefinition.Name, f.FieldDefinition.TypeName, f.Offset, f.Size)
+        fmt.Printf("  %s %s (offset: %d, size: %d bytes) path: %s\n", f.FieldDefinition.Name, f.FieldDefinition.TypeName, f.Offset, f.Size, f.Path)
     }
     return
 }

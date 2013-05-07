@@ -7,6 +7,7 @@ package golisp
 
 import (
     . "launchpad.net/gocheck"
+    "unsafe"
 )
 
 type DeviceSuite struct {
@@ -120,4 +121,41 @@ func (s *DeviceSuite) TestUint8AndUint32Bytes(c *C) {
     c.Assert(bytes[5], Equals, byte(0x59))
     c.Assert(bytes[6], Equals, byte(0xE4))
     c.Assert(bytes[7], Equals, byte(0x29))
+}
+
+func (s *DeviceSuite) TestUint8AndUint8FromJson(c *C) {
+    st := NewStruct("test")
+    st.AddField(NewField("f1", "uint8", 1, 1, nil, nil))
+    st.AddField(NewField("f2", "uint8", 1, 1, nil, nil))
+    exp := st.Expand()
+
+    json := `{"f1": 47, "f2": 185}`
+
+    exp.PopulateFromJson(json)
+    c.Assert(exp.Fields[0].Value, Equals, uint32(47))
+    c.Assert(exp.Fields[1].Value, Equals, uint32(185))
+}
+
+func (s *DeviceSuite) TestComplexStructureFromJson(c *C) {
+
+    stMap := NewStruct("mapstruct")
+    BindTo(SymbolWithName("mapstruct"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stMap)))
+    stMap.AddField(NewField("f1", "uint8", 1, 2, nil, nil))
+    stMap.AddField(NewField("f2", "uint8", 1, 1, nil, nil))
+
+    stTest := NewStruct("test")
+    BindTo(SymbolWithName("test"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stTest)))
+
+    stTest.AddField(NewField("map", "mapstruct", 1, 1, nil, nil))
+    stTest.AddField(NewField("f3", "uint8", 1, 1, nil, nil))
+
+    exp := stTest.Expand()
+
+    json := `{"map": {"f1": [47, 75], "f2": 185}, "f3": 85}`
+
+    exp.PopulateFromJson(json)
+    c.Assert(exp.Fields[0].Value, Equals, uint32(47))
+    c.Assert(exp.Fields[1].Value, Equals, uint32(75))
+    c.Assert(exp.Fields[2].Value, Equals, uint32(185))
+    c.Assert(exp.Fields[3].Value, Equals, uint32(85))
 }
