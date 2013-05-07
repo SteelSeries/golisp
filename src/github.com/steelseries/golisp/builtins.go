@@ -19,6 +19,7 @@ func init() {
     symbolTable = &SymbolTable{list.New()}
     PushLocalBindings()
     InitBuiltins()
+    InitDeviceBuiltins()
 }
 
 func InitBuiltins() {
