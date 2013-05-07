@@ -1,0 +1,104 @@
+// (def_struct <name> <field>...)
+// (def_field <name> <type> [<count>] [<to json translation> <from json translation>])
+// (def_api <struct name> (read ) (write ))
+
+(def_struct led
+     (def_field red uint8)
+     (def_field green uint8)
+     (def_field blue uint8)
+     (def_field mode uint8))
+
+(def_struct lcd
+     (def_field contrast uint8)
+     (def_field brightness uint8))
+
+(def_struct cpi
+     (def_field unbind uint8)
+     (def_field x uint16)
+     (def_field y uint16)
+     (def_field led led))
+
+(def_struct lift
+     (def_field mode uint8)
+     (def_field detection_threshold uint8))
+
+(def_struct angle_snap
+     (def_field mode uint8)
+     (def_field degree uint16)
+     (def_field velocity_threshold uint8)
+     (def_field control uint16))
+
+(def_struct acceleration
+     (def_field mode uint8)
+     (def_field degree uint8)) 
+
+(def_struct deceleration
+     (def_field mode uint8)
+     (def_field degree uint8)) 
+
+(def_struct sensor
+     (def_field default_cpi uint8)
+     (def_field cpi cpi 2)
+     (def_field lift_detection lift)
+     (def_field angle_snap angle_snap)
+     (def_field acceleration acceleration)
+     (def_field deceleration deceleration))
+
+(def_struct bitmap
+     (def_field display uint8)
+     (def_field pixels uint8 512))
+
+
+(def_struct button
+     (def_field function uint8)
+     (def_field mapping uint8)
+     (def_field macro_address uint16)
+     (def_field number_of_events uint16)
+     (def_field debounce_count uint8))
+
+(def_struct wheel
+     (def_field function uint8)
+     (def_field mapping uint8)
+     (def_field macro_address uint16 )
+     (def_field number_of_events uint16) 
+     (def_field dummy uint8))
+
+(def_struct macro_event
+     (def_field type uint8)
+     (def_field action uint16)
+     (def_field make_or_break uint8)
+     (def_field delay uint32))
+
+(def_struct macro
+     (def_field number_of_events uint16)
+     (def_field address uint16)
+     (def_field loop_count uint8)
+     (def_field events macro_event 128
+                         (lambda (events macro)
+                              (take (get 'number_of_events' macro) events))
+                         (lambda (events macro)
+                              (append events 
+                                           (times (new macro_event) 
+                                                     (- 128 (get 'number_of_events' macro)))))))
+(def_struct profile
+     (def_field id uint8)
+     (def_field name uint8 16
+              (lambda (bytes)
+                    (to_string bytes))
+              (lambda (str)
+                    (to_byte_array s 16)))
+     (def_field size uint16)
+     (def_field checksum uint16)
+     (def_field polling_rate uint8)
+     (def_field orientation uint8)
+     (def_field sensor sensor)
+     (def_field buttons button 8)
+     (def_field wheels wheel 2)
+     (def_field wheel_led led)
+     (def_field lcd lcd)
+     (def_field logo_bitmap bitmap)
+     (def_field macros macro 10))
+
+//(def_api profile
+//         (read )
+//         (write ))
