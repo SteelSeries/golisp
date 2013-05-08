@@ -159,3 +159,100 @@ func (s *DeviceSuite) TestComplexStructureFromJson(c *C) {
     c.Assert(exp.Fields[2].Value, Equals, uint32(185))
     c.Assert(exp.Fields[3].Value, Equals, uint32(85))
 }
+
+func (s *DeviceSuite) TestComplexStructureFromBytes(c *C) {
+    bytes := []byte{47, 75, 185, 85}
+
+    stMap := NewStruct("mapstruct")
+    BindTo(SymbolWithName("mapstruct"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stMap)))
+    stMap.AddField(NewField("f1", "uint8", 1, 2, nil, nil))
+    stMap.AddField(NewField("f2", "uint8", 1, 1, nil, nil))
+
+    stTest := NewStruct("test")
+    BindTo(SymbolWithName("test"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stTest)))
+
+    stTest.AddField(NewField("map", "mapstruct", 1, 1, nil, nil))
+    stTest.AddField(NewField("f3", "uint8", 1, 1, nil, nil))
+
+    exp := stTest.Expand()
+
+    exp.PopulateFromBytes(&bytes)
+
+    c.Assert(exp.Fields[0].Value, Equals, uint32(47))
+    c.Assert(exp.Fields[1].Value, Equals, uint32(75))
+    c.Assert(exp.Fields[2].Value, Equals, uint32(185))
+    c.Assert(exp.Fields[3].Value, Equals, uint32(85))
+}
+
+func (s *DeviceSuite) TestComplexStructureWithMultipleTypesFromJson(c *C) {
+
+    stMap := NewStruct("mapstruct")
+    BindTo(SymbolWithName("mapstruct"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stMap)))
+    stMap.AddField(NewField("f1", "uint8", 1, 2, nil, nil))
+    stMap.AddField(NewField("f2", "uint32", 1, 1, nil, nil))
+
+    stTest := NewStruct("test")
+    BindTo(SymbolWithName("test"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stTest)))
+
+    stTest.AddField(NewField("map", "mapstruct", 1, 1, nil, nil))
+    stTest.AddField(NewField("f3", "uint8", 1, 1, nil, nil))
+
+    exp := stTest.Expand()
+
+    json := `{"map": {"f1": [47, 75], "f2": 185000}, "f3": 85}`
+
+    exp.PopulateFromJson(json)
+    c.Assert(exp.Fields[0].Value, Equals, uint32(47))
+    c.Assert(exp.Fields[1].Value, Equals, uint32(75))
+    c.Assert(exp.Fields[2].Value, Equals, uint32(185000))
+    c.Assert(exp.Fields[3].Value, Equals, uint32(85))
+}
+
+func (s *DeviceSuite) TestComplexStructureWithMultipleTypesFromBytes(c *C) {
+    bytes := []byte{0x2f, 0x4B, 0x00, 0x00, 0xA8, 0xD2, 0x02, 0x00, 0x55}
+
+    stMap := NewStruct("mapstruct")
+    BindTo(SymbolWithName("mapstruct"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stMap)))
+    stMap.AddField(NewField("f1", "uint8", 1, 2, nil, nil))
+    stMap.AddField(NewField("f2", "uint32", 4, 1, nil, nil))
+
+    stTest := NewStruct("test")
+    BindTo(SymbolWithName("test"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stTest)))
+
+    stTest.AddField(NewField("map", "mapstruct", 1, 1, nil, nil))
+    stTest.AddField(NewField("f3", "uint8", 1, 1, nil, nil))
+
+    exp := stTest.Expand()
+
+    exp.PopulateFromBytes(&bytes)
+
+    c.Assert(exp.Fields[0].Value, Equals, uint32(47))
+    c.Assert(exp.Fields[1].Value, Equals, uint32(75))
+    c.Assert(exp.Fields[2].Value, Equals, uint32(185000))
+    c.Assert(exp.Fields[3].Value, Equals, uint32(85))
+}
+
+func (s *DeviceSuite) TestGeneratingJson(c *C) {
+    bytes := []byte{0x2f, 0x4B, 0x00, 0x00, 0xA8, 0xD2, 0x02, 0x00, 0x55}
+
+    stMap := NewStruct("mapstruct")
+    BindTo(SymbolWithName("mapstruct"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stMap)))
+    stMap.AddField(NewField("f1", "uint8", 1, 2, nil, nil))
+    stMap.AddField(NewField("f2", "uint32", 4, 1, nil, nil))
+
+    stTest := NewStruct("test")
+    BindTo(SymbolWithName("test"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stTest)))
+
+    stTest.AddField(NewField("keyed", "mapstruct", 1, 1, nil, nil))
+    stTest.AddField(NewField("f3", "uint8", 1, 1, nil, nil))
+
+    exp := stTest.Expand()
+    exp.PopulateFromBytes(&bytes)
+    tree := exp.Json()
+    c.Assert((tree.(map[string]interface{}))["f3"], Equals, uint32(85))
+    branch := (tree.(map[string]interface{}))["keyed"]
+    c.Assert((branch.(map[string]interface{}))["f2"], Equals, uint32(185000))
+    array := (branch.(map[string]interface{}))["f1"]
+    c.Assert((array.([]interface{}))[0], Equals, uint32(47))
+    c.Assert((array.([]interface{}))[1], Equals, uint32(75))
+}

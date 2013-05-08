@@ -33,11 +33,7 @@ func IsValidType(typeName *Data) bool {
     }
 
     typeValue := ValueOf(typeName)
-    if !ObjectP(typeValue) {
-        return false
-    }
-
-    if typeValue.ObjType != "DeviceStructure" {
+    if !ObjectP(typeValue) || typeValue.ObjType != "DeviceStructure" {
         return false
     }
 
@@ -137,9 +133,7 @@ func (self *ExpandedStructure) addExpandedField(f *DeviceField, pathSoFar string
         if IsAtomic(f) {
             alignment := AlignmentOf(f.TypeName)
             var paddingRequired int
-            if self.Size == 0 {
-                paddingRequired = 0
-            } else if self.Size%alignment == 0 {
+            if self.Size == 0 || self.Size%alignment == 0 {
                 paddingRequired = 0
             } else {
                 paddingRequired = alignment - self.Size%alignment
@@ -148,7 +142,7 @@ func (self *ExpandedStructure) addExpandedField(f *DeviceField, pathSoFar string
             newField := &ExpandedField{FieldDefinition: f, Offset: offset, Size: f.Size, Path: path}
             self.Fields = append(self.Fields, newField)
             self.Size = offset + f.Size
-            //fmt.Printf("%s (%s)\n  size: %d\n  alignment: %d\n  padding: %d\n  offset: %d\n  total: %d\n  path: %s\n", f.Name, f.TypeName, f.Size, alignment, paddingRequired, offset, self.Size, path)
+            //            fmt.Printf("%s (%s)\n  size: %d\n  alignment: %d\n  padding: %d\n  offset: %d\n  total: %d\n  path: %s\n", f.Name, f.TypeName, newField.Size, alignment, paddingRequired, offset, self.Size, path)
         } else {
             s := ValueOf(SymbolWithName(f.TypeName))
             self.addExpandedFields((*DeviceStructure)(ObjectValue(s)).Fields, path)
@@ -208,17 +202,17 @@ func (self *ExpandedStructure) ByteArray() *[]byte {
 // populating from JSON
 
 func ExtractFromJsonWithStep(json interface{}, steps []string) uint32 {
-    fmt.Printf("%v\n", steps)
+    //    fmt.Printf("%v\n", steps)
     if len(steps) == 0 {
         return uint32(json.(float64))
     } else {
         step := steps[0]
         i, err := strconv.ParseInt(step, 10, 32)
         if err != nil {
-            // must be a key
+            // a hash key
             return ExtractFromJsonWithStep((json.(map[string]interface{}))[step], steps[1:])
         } else {
-            // must be an index
+            // an array index
             return ExtractFromJsonWithStep((json.([]interface{}))[i], steps[1:])
         }
     }
@@ -238,6 +232,77 @@ func (self *ExpandedStructure) PopulateFromJson(jsonData string) {
     }
     for _, field := range self.Fields {
         field.Value = ExtractFromJson(data, field.Path)
+    }
+}
+
+// generating json
+
+func (self *ExpandedField) insertIntoJson(steps []string, root interface{}) interface{} {
+    if len(steps) == 0 {
+        //        fmt.Printf("returning value: %d\n", self.Value)
+        return self.Value
+    } else {
+        step := steps[0]
+        //        fmt.Printf("formatting: %s\n", step)
+
+        _, err := strconv.ParseInt(step, 10, 32)
+        if err != nil { // a hash key
+            if root == nil {
+                root = make(map[string]interface{})
+            }
+            v, ok := (root.(map[string]interface{}))[step]
+            if !ok {
+                (root.(map[string]interface{}))[step] = self.insertIntoJson(steps[1:], nil)
+            } else {
+                (root.(map[string]interface{}))[step] = self.insertIntoJson(steps[1:], v)
+            }
+        } else { // an array index
+            if root == nil {
+                root = make([]interface{}, 0, 5)
+            }
+            //            fmt.Printf("appending value\n")
+            root = append(root.([]interface{}), self.insertIntoJson(steps[1:], nil))
+            //            fmt.Printf("array now: %v\n", root.([]interface{}))
+        }
+        //        fmt.Printf("Returning %v\n", root)
+        return root
+    }
+}
+
+func (self *ExpandedStructure) Json() interface{} {
+    root := make(map[string]interface{})
+    for _, f := range self.Fields {
+        steps := strings.Split(f.Path, "/")[1:]
+        f.insertIntoJson(steps, root)
+    }
+    return root
+}
+
+func (self *ExpandedStructure) JsonString() string {
+    root := self.Json()
+    j, err := json.Marshal(root)
+    if err == nil {
+        return string(j)
+    } else {
+        return ""
+    }
+}
+
+// populating from a byte arry
+
+func getValueForField(f *ExpandedField, bytes *[]byte) uint32 {
+    var b uint32 = 0
+    for index, count := f.Offset, 0; count < f.Size; index, count = index+1, count+1 {
+        //        fmt.Printf("index: %d, count: %d, b: %d\n", index, count, b)
+        b = b | (uint32((*bytes)[index])&0xff)<<(8*uint8(count))
+    }
+    return b
+}
+
+func (self *ExpandedStructure) PopulateFromBytes(bytes *[]byte) {
+    for _, f := range self.Fields {
+        val := getValueForField(f, bytes)
+        f.Value = val
     }
 }
 
