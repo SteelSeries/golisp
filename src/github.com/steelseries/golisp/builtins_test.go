@@ -625,7 +625,7 @@ func (s *BuiltinsSuite) TestQuote(c *C) {
 }
 
 func (s *BuiltinsSuite) TestQuoteShortcut(c *C) {
-    code, _ := Parse("'(1 2)")
+    code, _ := Parse("'(1 2) ")
     result, err := Eval(code)
     c.Assert(err, IsNil)
 

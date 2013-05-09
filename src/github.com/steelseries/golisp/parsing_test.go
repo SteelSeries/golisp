@@ -56,8 +56,10 @@ func (s *ParsingSuite) TestBooleanFalse(c *C) {
 }
 
 func (s *ParsingSuite) TestBooleanAnythingElseIsFalse(c *C) {
-    _, err := Parse("#w")
-    c.Assert(err, NotNil)
+    sexpr, err := Parse("#w")
+    c.Assert(err, IsNil)
+    c.Assert(TypeOf(sexpr), Equals, BooleanType)
+    c.Assert(BooleanValue(sexpr), Equals, false)
 }
 
 func (s *ParsingSuite) TestSymbol(c *C) {

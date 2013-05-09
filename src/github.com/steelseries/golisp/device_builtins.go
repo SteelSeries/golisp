@@ -12,6 +12,7 @@ package golisp
 import (
     "errors"
     //    . "github.com/steelseries/golisp"
+    "fmt"
     "unsafe"
 )
 
@@ -22,11 +23,11 @@ func init() {
 }
 
 func InitDeviceBuiltins() {
-    MakePrimitiveFunction("def_struct", -1, DefStruct)
-    MakePrimitiveFunction("def_field", -1, DefField)
-    MakePrimitiveFunction("def_api", -1, DefApi)
-    MakePrimitiveFunction("dump_struct", 1, DumpStructure)
-    MakePrimitiveFunction("dump_expanded", 1, DumpExpanded)
+    MakePrimitiveFunction("def-struct", -1, DefStruct)
+    MakePrimitiveFunction("def-field", -1, DefField)
+    MakePrimitiveFunction("def-api", -1, DefApi)
+    MakePrimitiveFunction("dump-struct", 1, DumpStructure)
+    MakePrimitiveFunction("dump-expanded", 1, DumpExpanded)
 }
 
 func DefStruct(args *Data) (result *Data, err error) {
@@ -41,6 +42,7 @@ func DefStruct(args *Data) (result *Data, err error) {
         return
     }
 
+    fmt.Printf("device structure: %s\n", StringValue(structName))
     structure := NewStruct(StringValue(structName))
     currentStructure = structure
 

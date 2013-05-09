@@ -240,7 +240,7 @@ func String(d *Data) string {
             }
             if NilP(c) {
                 if SymbolP(Car(d)) && StringValue(Car(d)) == "quote" {
-                    return fmt.Sprintf("'%s'", contents[1])
+                    return fmt.Sprintf("'%s", contents[1])
                 } else {
                     return fmt.Sprintf("(%s)", strings.Join(contents, " "))
                 }

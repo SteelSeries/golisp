@@ -28,14 +28,14 @@ func InitBuiltins() {
 
     // type tests
 
-    MakePrimitiveFunction("listp", 1, IsPair)
-    MakePrimitiveFunction("pairp", 1, IsPair)
-    MakePrimitiveFunction("nilp", 1, ExposedNilP)
-    MakePrimitiveFunction("notnilp", 1, ExposedNotNilP)
-    MakePrimitiveFunction("symbolp", 1, IsSymbol)
-    MakePrimitiveFunction("stringp", 1, IsString)
-    MakePrimitiveFunction("numberp", 1, IsNumber)
-    MakePrimitiveFunction("functionp", 1, IsFunction)
+    MakePrimitiveFunction("list?", 1, IsPair)
+    MakePrimitiveFunction("pair?", 1, IsPair)
+    MakePrimitiveFunction("nil?", 1, ExposedNilP)
+    MakePrimitiveFunction("notnil?", 1, ExposedNotNilP)
+    MakePrimitiveFunction("symbol?", 1, IsSymbol)
+    MakePrimitiveFunction("string?", 1, IsString)
+    MakePrimitiveFunction("number?", 1, IsNumber)
+    MakePrimitiveFunction("function?", 1, IsFunction)
 
     // math
     MakePrimitiveFunction("+", -1, Add)
