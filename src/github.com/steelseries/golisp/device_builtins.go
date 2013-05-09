@@ -28,6 +28,9 @@ func InitDeviceBuiltins() {
     MakePrimitiveFunction("def-api", -1, DefApi)
     MakePrimitiveFunction("dump-struct", 1, DumpStructure)
     MakePrimitiveFunction("dump-expanded", 1, DumpExpanded)
+
+    MakePrimitiveFunction("bytes-to-string", 1, BytesToString)
+    MakePrimitiveFunction("string-to-bytes", 1, StringToBytes)
 }
 
 func DefStruct(args *Data) (result *Data, err error) {
@@ -122,7 +125,7 @@ func DumpStructure(d *Data) (result *Data, err error) {
         structure := ((*DeviceStructure)(ObjectValue(structObj)))
         structure.Dump()
     } else {
-        err = errors.New("Expected DeviceStructure")
+        err = errors.New("dump-structure expected DeviceStructure")
     }
     return
 }
@@ -137,7 +140,44 @@ func DumpExpanded(d *Data) (result *Data, err error) {
         structure := ((*DeviceStructure)(ObjectValue(structObj)))
         structure.DumpExpanded()
     } else {
-        err = errors.New("Expected DeviceStructure")
+        err = errors.New("dump-expanded expected DeviceStructure")
+    }
+    return
+}
+
+func CharsToString(ca [16]uint8) string {
+    s := make([]byte, len(ca))
+    var lens int
+    for ; lens < len(ca); lens++ {
+        if ca[lens] == 0 {
+            break
+        }
+        s[lens] = uint8(ca[lens])
+    }
+    return string(s[0:lens])
+}
+
+func BytesToString(d *Data) (result *Data, err error) {
+    arg := Car(data)
+    if ObjectP(arg) && TypeOfObject(arg) == "[16]uint8" {
+        ary := (([16]uint8)(ObjectValue(arg)))
+        result = StringWithValue(CharsToString(ary))
+    } else {
+        err = errors.New("bytes-to-string expected [16]uint8")
+    }
+    return
+}
+
+func StringToBytes(d *Data) (result *Data, err error) {
+    arg := Car(data)
+    if ObjectP(arg) && TypeOfObject(arg) == "string" {
+        var name [16]byte
+        for i, b := range []byte(string(ObjectValue(arg))) {
+            name[i] = b
+        }
+        result = ObjectWithTypeAndValue("[16]uint8", unsafe.Pointer(name))
+    } else {
+        err = errors.New("bytes-to-string expected [16]uint8")
     }
     return
 }

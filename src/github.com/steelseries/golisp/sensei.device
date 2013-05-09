@@ -84,9 +84,9 @@
      (def-field id uint8)
      (def-field name uint8 16
               (lambda (bytes)
-                    (to-string bytes))
+                    (bytes-to-string bytes))
               (lambda (str)
-                    (to-byte-array s 16)))
+                    (stringto-bytes s 16)))
      (def-field size uint16)
      (def-field checksum uint16)
      (def-field polling-rate uint8)
