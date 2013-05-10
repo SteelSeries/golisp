@@ -22,3 +22,11 @@ _testmain.go
 *.exe
 
 src/launchpad.net/
+
+*.aux
+
+*.log
+
+*.pdf
+
+*.toc
