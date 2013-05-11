@@ -48,7 +48,6 @@
      (def-field display uint8)
      (def-field pixels uint8 512))
 
-
 (def-struct button
      (def-field function uint8)
      (def-field mapping uint8)
@@ -59,7 +58,7 @@
 (def-struct wheel
      (def-field function uint8)
      (def-field mapping uint8)
-     (def-field macro-address uint16 )
+     (def-field macro-address uint16)
      (def-field number-of-events uint16) 
      (def-field dummy uint8))
 

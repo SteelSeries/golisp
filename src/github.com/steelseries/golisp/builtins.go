@@ -57,6 +57,9 @@ func InitBuiltins() {
     MakePrimitiveFunction("define", -1, Define)
     MakePrimitiveFunction("map", 2, Map)
     MakePrimitiveFunction("quote", 1, Quote)
+    MakePrimitiveFunction("set!", 2, SetVar)
+    MakePrimitiveFunction("let", -1, Let)
+    MakePrimitiveFunction("begin", -1, Begin)
 
     // list access
     MakePrimitiveFunction("length", 1, ListLength)
@@ -148,7 +151,7 @@ func Add(args *Data) (result *Data, err error) {
         if err != nil {
             return
         } else if !NumberP(n) {
-            err = errors.New("Number expected")
+            err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
             return
         }
         acc += IntValue(n)
@@ -163,7 +166,7 @@ func Subtract(args *Data) (result *Data, err error) {
         return
     }
     if !NumberP(n) {
-        err = errors.New("Number expected")
+        err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
         return
     }
     var acc int = IntValue(n)
@@ -176,7 +179,7 @@ func Subtract(args *Data) (result *Data, err error) {
                 return
             }
             if !NumberP(n) {
-                err = errors.New("Number expected")
+                err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
                 return
             }
             acc -= IntValue(n)
@@ -193,7 +196,7 @@ func Multiply(args *Data) (result *Data, err error) {
         if err != nil {
             return
         } else if !NumberP(n) {
-            err = errors.New("Number expected")
+            err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
             return
         }
         acc *= IntValue(n)
@@ -208,7 +211,7 @@ func Quotient(args *Data) (result *Data, err error) {
         return
     }
     if !NumberP(n) {
-        err = errors.New("Number expected")
+        err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
         return
     }
     var acc int = IntValue(n)
@@ -218,7 +221,7 @@ func Quotient(args *Data) (result *Data, err error) {
             return
         }
         if !NumberP(n) {
-            err = errors.New("Number expected")
+            err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
             return
         }
         acc /= IntValue(n)
@@ -228,7 +231,7 @@ func Quotient(args *Data) (result *Data, err error) {
 
 func Remainder(args *Data) (result *Data, err error) {
     if Length(args) != 2 {
-        err = errors.New("2 args expected")
+        err = errors.New(fmt.Sprintf("2 args expected, %d received", Length(args)))
         return
     }
 
@@ -238,7 +241,7 @@ func Remainder(args *Data) (result *Data, err error) {
         return
     }
     if TypeOf(dividend) != NumberType {
-        err = errors.New("Number expected")
+        err = errors.New(fmt.Sprintf("Number expected, received %s", String(dividend)))
         return
     }
 
@@ -248,7 +251,7 @@ func Remainder(args *Data) (result *Data, err error) {
         return
     }
     if TypeOf(divisor) != NumberType {
-        err = errors.New("Number expected")
+        err = errors.New(fmt.Sprintf("Number expected, received %s", String(divisor)))
         return
     }
 
@@ -258,7 +261,7 @@ func Remainder(args *Data) (result *Data, err error) {
 
 func LessThan(args *Data) (result *Data, err error) {
     if Length(args) != 2 {
-        err = errors.New("2 args expected")
+        err = errors.New(fmt.Sprintf("2 args expected, %d received", Length(args)))
         return
     }
 
@@ -268,7 +271,7 @@ func LessThan(args *Data) (result *Data, err error) {
         return
     }
     if TypeOf(arg1) != NumberType {
-        err = errors.New("Number expected")
+        err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg1)))
         return
     }
 
@@ -278,7 +281,7 @@ func LessThan(args *Data) (result *Data, err error) {
         return
     }
     if TypeOf(arg2) != NumberType {
-        err = errors.New("Number expected")
+        err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg2)))
         return
     }
 
@@ -288,7 +291,7 @@ func LessThan(args *Data) (result *Data, err error) {
 
 func GreaterThan(args *Data) (result *Data, err error) {
     if Length(args) != 2 {
-        err = errors.New("2 args expected")
+        err = errors.New(fmt.Sprintf("2 args expected, %d received", Length(args)))
         return
     }
 
@@ -298,7 +301,7 @@ func GreaterThan(args *Data) (result *Data, err error) {
         return
     }
     if TypeOf(arg1) != NumberType {
-        err = errors.New("Number expected")
+        err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg1)))
         return
     }
 
@@ -308,7 +311,7 @@ func GreaterThan(args *Data) (result *Data, err error) {
         return
     }
     if TypeOf(arg2) != NumberType {
-        err = errors.New("Number expected")
+        err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg2)))
         return
     }
 
@@ -318,7 +321,7 @@ func GreaterThan(args *Data) (result *Data, err error) {
 
 func EqualTo(args *Data) (result *Data, err error) {
     if Length(args) != 2 {
-        err = errors.New("2 args expected")
+        err = errors.New(fmt.Sprintf("2 args expected, %d received", Length(args)))
         return
     }
 
@@ -339,7 +342,7 @@ func EqualTo(args *Data) (result *Data, err error) {
 
 func NotEqual(args *Data) (result *Data, err error) {
     if Length(args) != 2 {
-        err = errors.New("2 args expected")
+        err = errors.New(fmt.Sprintf("2 args expected, %d received", Length(args)))
         return
     }
 
@@ -360,7 +363,7 @@ func NotEqual(args *Data) (result *Data, err error) {
 
 func LessThanOrEqualTo(args *Data) (result *Data, err error) {
     if Length(args) != 2 {
-        err = errors.New("2 args expected")
+        err = errors.New(fmt.Sprintf("2 args expected, %d received", Length(args)))
         return
     }
 
@@ -370,7 +373,7 @@ func LessThanOrEqualTo(args *Data) (result *Data, err error) {
         return
     }
     if TypeOf(arg1) != NumberType {
-        err = errors.New("Number expected")
+        err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg1)))
         return
     }
 
@@ -380,7 +383,7 @@ func LessThanOrEqualTo(args *Data) (result *Data, err error) {
         return
     }
     if TypeOf(arg2) != NumberType {
-        err = errors.New("Number expected")
+        err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg2)))
         return
     }
 
@@ -390,7 +393,7 @@ func LessThanOrEqualTo(args *Data) (result *Data, err error) {
 
 func GreaterThanOrEqualTo(args *Data) (result *Data, err error) {
     if Length(args) != 2 {
-        err = errors.New("2 args expected")
+        err = errors.New(fmt.Sprintf("2 args expected, %d received", Length(args)))
         return
     }
 
@@ -400,7 +403,7 @@ func GreaterThanOrEqualTo(args *Data) (result *Data, err error) {
         return
     }
     if TypeOf(arg1) != NumberType {
-        err = errors.New("Number expected")
+        err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg1)))
         return
     }
 
@@ -410,7 +413,7 @@ func GreaterThanOrEqualTo(args *Data) (result *Data, err error) {
         return
     }
     if TypeOf(arg2) != NumberType {
-        err = errors.New("Number expected")
+        err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg2)))
         return
     }
 
@@ -866,6 +869,78 @@ func Describe(args *Data) (d *Data, e error) {
         } else {
             value, _ := Eval(Cadr(clause))
             fmt.Printf("failed: %s is %s\n", String(Cadr(clause)), String(value))
+            return
+        }
+    }
+    return
+}
+
+func SetVar(args *Data) (result *Data, err error) {
+    symbol, err := Eval(Car(args))
+    if err != nil {
+        return
+    }
+    value, err := Eval(Cadr(args))
+    if err != nil {
+        return
+    }
+    return SetTo(symbol, value)
+}
+
+func BindLetLocals(bindingForms *Data) (err error) {
+    var name *Data
+    var value *Data
+
+    for cell := bindingForms; NotNilP(cell); cell = Cdr(cell) {
+        bindingPair := Car(cell)
+        if !PairP(bindingPair) {
+            err = errors.New("Let requires a list of bindings (with are pairs) as it's first argument")
+            return
+        }
+        name = Car(bindingPair)
+        if !SymbolP(name) {
+            err = errors.New("First part of a let binding pair must be a symbol")
+        }
+        value, err = Eval(Cadr(bindingPair))
+        if err != nil {
+            return
+        }
+        BindLocallyTo(name, value)
+    }
+    return
+}
+
+func Let(args *Data) (result *Data, err error) {
+    if Length(args) < 1 {
+        err = errors.New("Let requires at least a list of bindings")
+        return
+    }
+
+    if !PairP(Car(args)) {
+        err = errors.New("Let requires a list of bindings as it's first argument")
+        return
+    }
+
+    PushLocalBindings()
+    BindLetLocals(Car(args))
+
+    for cell := Cdr(args); NotNilP(cell); cell = Cdr(cell) {
+        sexpr := Car(cell)
+        result, err = Eval(sexpr)
+        if err != nil {
+            return
+        }
+    }
+    PopLocalBindings()
+
+    return
+}
+
+func Begin(args *Data) (result *Data, err error) {
+    for cell := args; NotNilP(cell); cell = Cdr(cell) {
+        sexpr := Car(cell)
+        result, err = Eval(sexpr)
+        if err != nil {
             return
         }
     }

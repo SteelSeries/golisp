@@ -8,6 +8,7 @@ package golisp
 
 import (
     "container/list"
+    "errors"
     "fmt"
 )
 
@@ -80,6 +81,17 @@ func BindTo(symbol *Data, value *Data) *Data {
         localFrame().SetBindingAt(StringValue(symbol), binding)
     }
     return value
+}
+
+func SetTo(symbol *Data, value *Data) (result *Data, err error) {
+    binding, found := findBindingFor(symbol)
+    if found {
+        binding.Val = value
+        result = value
+    } else {
+        err = errors.New(fmt.Sprintf("%s is undefined", StringValue(symbol)))
+    }
+    return
 }
 
 func BindLocallyTo(symbol *Data, value *Data) *Data {

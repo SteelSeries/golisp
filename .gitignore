@@ -2,7 +2,7 @@
 *.o
 *.a
 *.so
-
+env.sh
 # Folders
 _obj
 _test

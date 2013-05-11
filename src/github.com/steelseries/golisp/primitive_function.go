@@ -31,8 +31,12 @@ func (self *PrimitiveFunction) Apply(args *Data) (result *Data, err error) {
     expectedArgs := self.NumberOfArgs
     atLeastOneArg := (expectedArgs == -1) && (argCount > 0)
     exactNumberOfArgs := self.NumberOfArgs == argCount
+    var stringArgCount string = fmt.Sprintf("%s", self.NumberOfArgs)
+    if self.NumberOfArgs == -1 {
+        stringArgCount = "at least 1"
+    }
     if !(atLeastOneArg || exactNumberOfArgs) {
-        err = errors.New(fmt.Sprintf("Wrong number of args to %s. Expected %d but got %d.\n", self.Name, expectedArgs, argCount))
+        err = errors.New(fmt.Sprintf("Wrong number of args to %s. Expected %s but got %d.\n", self.Name, stringArgCount, argCount))
         return
     }
 
