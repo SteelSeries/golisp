@@ -17,8 +17,9 @@
 \section{Overview}
 
 GoLisp is a simple Lisp implimented in Go for integrating into a Go
-application to provide runtime extension and scripting. The core of a basic Lisp in provided, but with limited
-special forms and primitive functions. More of these will be added as required.
+application to provide runtime extension and scripting. The core of a
+basic Lisp in provided, but with limited special forms and primitive
+functions. More of these will be added as required. 
 
 \section{Data types}
 
@@ -56,26 +57,32 @@ adding support for them to the parser.
 \item[Strings] are any sequence of characters other than \verb|"|
 enclosed by a pair of \verb|"|, e.g. \verb|"string"|.
 
-\item[Numbers] are integers internally represented as \verb|int| so their size reflects \verb|int| on the build of Go being used. E.g. \verb|5|, \verb|9845376|.
+\item[Numbers] are integers internally represented as \verb|int| so
+  their size reflects \verb|int| on the build of Go being used. E.g.
+  \verb|5|, \verb|9845376|. 
 
 \item[Booleans] represent true and false. \verb|nil|, \verb|()|, and
-false are all logically false, everything else is logically true. Boolean literals are \verb|#t| and \verb|#f| for true and false, respectively.
+false are all logically false, everything else is logically true.
+Boolean literals are \verb|#t| and \verb|#f| for true and false,
+respectively. 
 
 \item[Functions] are user defined procedures. They are covered in
 detail later.
 
 \item[Objects] allow you to encapsulate a Go object (struct) in a Lisp
-  data object. There is no way to do this from Lisp itself, but is useful when writing primitive functions (see below).
+  data object. There is no way to do this from Lisp itself, but is
+  useful when writing primitive functions (see below). 
 
 \item[Primitives] are just as they are in Lisp or Smalltalk: functions
   written in Go and exposed as functions in Lisp. The combination of
-  primitives and objects allow you to integrate with the underlying Go program.
+  primitives and objects allow you to integrate with the underlying Go
+  program. 
 
 \end{description}
 
 \section{Builtin functions}
 
-\noindent{\bf \verb|(+ <number>...)|}
+\noindent{\bf\verb|(+ <number>...)|}
 
 Adds a series of numbers, e.g.
 
@@ -85,9 +92,10 @@ Adds a series of numbers, e.g.
     (+ 4 2 7) ==> 13
 \end{verbatim}
 
-\noindent{\bf \verb|(- <number>...)|}
+\noindent{\bf\verb|(- <number>...)|}
 
-Sequentially subtracts a sequence of numbers. With a single argument is a special case that negates the argument. E.g.
+Sequentially subtracts a sequence of numbers. With a single argument
+is a special case that negates the argument. E.g. 
 
 \begin{verbatim}
     (- 4) ==> -4
@@ -96,7 +104,7 @@ Sequentially subtracts a sequence of numbers. With a single argument is a specia
     (- 10 3 4 5) ==> -2
 \end{verbatim}
 
-\noindent{\bf \verb|(* <number>...)|}
+\noindent{\bf\verb|(* <number>...)|}
 
 Multiplies a series of numbers, e.g.
 
@@ -106,7 +114,7 @@ Multiplies a series of numbers, e.g.
     (+ 4 2 7) ==> 13
 \end{verbatim}
 
-\noindent{\bf \verb|(/ <number>...)|}
+\noindent{\bf\verb|(/ <number>...)|}
 
 Sequentially divides a sequence of numbers. E.g.
 
@@ -115,7 +123,7 @@ Sequentially divides a sequence of numbers. E.g.
     (/ 30 2 3 ) ==> 5
 \end{verbatim}
 
-\noindent{\bf \verb|(% <number> <number>)|}
+\noindent{\bf\verb|(% <number> <number>)|}
 
 Returns the remainder of dividion. E.g.
 
@@ -124,7 +132,7 @@ Returns the remainder of dividion. E.g.
     (% 4 3) ==> 1 
 \end{verbatim}
 
-\noindent{\bf \verb|(< <number> <number>)|}
+\noindent{\bf\verb|(< <number> <number>)|}
 
 Returns whether the first argument is less than the second argument.
 
@@ -134,7 +142,7 @@ Returns whether the first argument is less than the second argument.
     (< 2 2) ==> #f
 \end{verbatim}
 
-\noindent{\bf \verb|(> <number> <number>)|}
+\noindent{\bf\verb|(> <number> <number>)|}
 
 Returns whether the first argument is greater than the second argument.
 
@@ -144,7 +152,7 @@ Returns whether the first argument is greater than the second argument.
     (> 2 2) ==> #f
 \end{verbatim}
 
-\noindent{\bf \verb|(== <number> <number>)|}
+\noindent{\bf\verb|(== <number> <number>)|}
 
 Returns whether the first argument is equal to the second argument.
 
@@ -153,7 +161,7 @@ Returns whether the first argument is equal to the second argument.
     (== 1 1) ==> #t
 \end{verbatim}
 
-\noindent{\bf \verb|(!= <number> <number>)|}
+\noindent{\bf\verb|(!= <number> <number>)|}
 
 Returns whether the first argument is not equal to the second argument.
 
@@ -162,9 +170,10 @@ Returns whether the first argument is not equal to the second argument.
     (!= 1 1) ==> #f
 \end{verbatim}
 
-\noindent{\bf \verb|(<= <number> <number>)|}
+\noindent{\bf\verb|(<= <number> <number>)|}
 
-Returns whether the first argument is less than or equal to the second argument.
+Returns whether the first argument is less than or equal to the second
+argument. 
 
 \begin{verbatim}
     (<= 1 2) ==> #t
@@ -172,9 +181,10 @@ Returns whether the first argument is less than or equal to the second argument.
     (<= 2 2) ==> #t
 \end{verbatim}
 
-\noindent{\bf \verb|(>= <number> <number>)|}
+\noindent{\bf\verb|(>= <number> <number>)|}
 
-Returns whether the first argument is greater than or equal to the second argument.
+Returns whether the first argument is greater than or equal to the
+second argument. 
 
 \begin{verbatim}
     (>= 1 2) ==> #f
@@ -182,7 +192,7 @@ Returns whether the first argument is greater than or equal to the second argume
     (>= 2 2) ==> #t
 \end{verbatim}
 
-\noindent{\bf \verb|(! <arg>)|}
+\noindent{\bf\verb|(! <arg>)|}
 
 Returns whether the boolean negation of the argument.
 
@@ -193,58 +203,84 @@ Returns whether the boolean negation of the argument.
 
 \section{Special forms}
 
-\noindent{\bf \verb|(if <condition> <true clause>)|}
+\noindent{\bf\verb|(if <condition> <true clause>)|}
 
-If the condition evaluates to logically true, the true clause is evaluated and the result is the result of the if form, otherwise nil is the result of the if form.
-
-\begin{verbatim}
-    (if (< 1 2) "less") ==> "less"
-    (if (< 2 2) "less") ==> nil
-\end{verbatim}
-
-\noindent{\bf \verb|(if <condition> <true clause> <else clause>)|}
-
-If the condition evaluates to logically true, the true clause is evaluated and the result is the result of the if form, otherwise the else clause is evaluated and is the result of the if form.
+If the condition evaluates to logically true, the true clause is
+evaluated and the result is the result of the if form, otherwise nil
+is the result of the if form. 
 
 \begin{verbatim}
-    (if (< 1 2) "less" "not less") ==> "less"
-    (if (< 2 2) "less" "not less") ==> "not less"
+    (if (< 1 2) 
+        "less") ==> "less"
+    (if (< 2 2) 
+        "less") ==> nil
 \end{verbatim}
 
-\noindent{\bf \verb|(lambda (<param>...) <expr>...)|}
+\noindent{\bf\verb|(if <condition> <true clause> <else clause>)|}
+
+If the condition evaluates to logically true, the true clause is
+evaluated and the result is the result of the if form, otherwise the
+else clause is evaluated and is the result of the if form. 
+
+\begin{verbatim}
+    (if (< 1 2) 
+        "less" 
+        "not less") ==> "less"
+    (if (< 2 2) 
+        "less" 
+        "not less") ==> "not less"
+\end{verbatim}
+
+\noindent{\bf\verb|(lambda (<param>...) <expr>...)|}
 
 Creates an anonymous function. This can then be used in a function call.
 
 \begin{verbatim}
-    ((lamdba (x) (+ x x)) 5) ==> 10
+    ((lamdba (x) 
+       (+ x x)) 
+     5) ==> 10
 \end{verbatim}
 
-\noindent{\bf \verb|(define <symbol> <value>)|}
+\noindent{\bf\verb|(define <symbol> <value>)|}
 
-Evaluates the value expression and binds it to the symbol, returning the value.
+Evaluates the value expression and binds it to the symbol, returning
+the value. 
 
 \begin{verbatim}
     (define x (+ 2 3)) ==> 5
     x ==> 5
 \end{verbatim}
 
-\noindent{\bf \verb|(define (<symbol> <param>...) <body>)|}
+Functions can be named (i.e. bound to a symbol) and later referred to
+by using define:
 
-Define a function:
+\begin{verbatim}
+  (define foo (lamdba (x) 
+                (+ x x)))
+  (foo 5) ==> 10  
+\end{verbatim}
+
+
+\noindent{\bf\verb|(define (<symbol> <param>...) <body>)|}
+
+A syntacticly cleaner way to name a function:
 
 \verb|<symbol>| specifies the name (how you reference the function)
 
-\verb|<param>...| parameters of the function, these are bound to the respective arguments when the function is called.
+\verb|<param>...| parameters of the function, these are bound to the
+respective arguments when the function is called. 
 
-\verb|<body>| the sequence of expressions that are evaluated in order when the function is called. The final evaluation result becomes the value of evaluation of the function.
+\verb|<body>| the sequence of expressions that are evaluated in order
+when the function is called. The final evaluation result becomes the
+value of evaluation of the function. 
 
 \begin{verbatim}
     (define (double x)
-            (+ x x))
+       (+ x x))
     (double 5) ==> 10
 \end{verbatim}
 
-\noindent{\bf \verb|(quote <expr>)|}
+\noindent{\bf\verb|(quote <expr>)|}
 
 Surpresses evaluation of the expression.
 
@@ -258,27 +294,81 @@ There is a shortcut for quote that uses the single quote:
     '(+ 1 2) ==> (+ 1 2)
 \end{verbatim}
 
-\noindent{\bf \verb|(map <function> <list>)|}
+\noindent{\bf\verb|(map <function> <list>)|}
 
-Applies \verb|function| (which has to be of a single argument) to each element in \verb|list| in order, returning the list of the results.
+Applies \verb|function| (which has to be of a single argument) to each
+element in \verb|list| in order, returning the list of the results. 
 
 \begin{verbatim}
     (map - '(1 2 3 4)')) ==> (-1 -2 -3 -4)
 
     (map (lambda (x)
                  (* x x))
-         '(1 2 3 4)')
-    ==> (1 4 9 16)
+         '(1 2 3 4)') ==> (1 4 9 16)
+\end{verbatim}
+
+\noindent{\bf\verb|(being <sexpr>...)|}
+
+Evaluates the each \verb|sexpr| in order, returning the result of the
+last one evaluated. Used in a context that allows a single
+\verb|sexpr| but you need multiple. E.g.
+
+\begin{verbatim}
+  (if (predicate)
+      (begin
+        (do-something)
+        (do-something-else)))
+\end{verbatim}
+
+\noindent{\bf\verb|(let ((<name> <value>)...) <sexpr>...)|}
+
+Create a local scope and bindings for evaluating a body of code. The
+first argument is a list of bindings. Each binding is a raw symbol
+(doesn't get evaluated) that is the name to be bound, and a value
+(which is evaluated). These bindings are added to a scope that is
+local to the let. The body is evaluated in this local scope. The value
+of the \verb|let| is the last evaluation result. E.g.
+
+\begin{verbatim}
+  (let ((x 1)
+        (y 2))
+       (+ x y)) ==> 3
+\end{verbatim}
+
+Bindings cascade. I.e. each binding's value is evaluated in the
+context of the local scope. E.g.
+
+\begin{verbatim}
+  (let ((x 1)
+        (y (+ x 2)))
+       (+ x y)) ==> 4
+\end{verbatim}
+
+As mentioned above, \verb|let| takes a sequence of sexprs as it's
+body. In effect the body of the \verb|let| is an implicit
+\verb|begin|.
+
+\begin{verbatim}
+  (let ((x 1)
+        (y (+ x 2)))
+       (do-something)
+       (+ x y)) ==> 4
 \end{verbatim}
 
 \section{Defining primitives}
 
-The Go function \verb|MakePrimitiveFunction| allows you to create primitive functions. This takes three arguments:
+The Go function \verb|MakePrimitiveFunction| allows you to create
+primitive functions. This takes three arguments:
 
 \begin{enumerate}
-\item The function name. This is the name of a standard symbol which will be used to reference the function.
-\item The number of expected arguments. Using a -1 for this denotes any number of arguments. In the function definition you can enforce further constraints on argument counts and types.
-\item The Go function which impliments the primitive. This function {\bf must} have the signature \verb|func <Name>(args *Data) (result *Data, err error)|
+\item The function name. This is the name of a symbol which will be
+  used to reference the function. 
+\item The number of expected arguments. Using a -1 for this denotes
+  any number of arguments. In the function definition you can enforce
+  further constraints on argument counts and types. 
+\item The Go function which impliments the primitive. This function
+  {\bf must} have the signature
+  \verb|func <Name>(args *Data) (result *Data, err error)| 
 \end{enumerate}
 
 \noindent An example:
@@ -302,7 +392,11 @@ The Go function \verb|MakePrimitiveFunction| allows you to create primitive func
      }
 \end{verbatim}
 
-\noindent The core lisp data element is the data type which logically contains a type tag and a value. The type tags are defined by the constants:
+\subsection{Data}
+
+The core lisp data element is the data type which logically
+contains a type tag and a value. The type tags are defined by the
+constants: 
 
 \begin{description}
 \item[ConsCellType] 
@@ -315,7 +409,11 @@ The Go function \verb|MakePrimitiveFunction| allows you to create primitive func
 \item[ObjectType]
 \end{description}
 
-\noindent The types are described earlier. If you need to check the type of a piece of data you can fetch it's type using the \verb|TypeOf(*Data) int| fuction and then compare it to a type tag constant. Additionally there are predicate functions for the most common types:
+\noindent The types are described earlier. If you need to check the
+type of a piece of data you can fetch it's type using the
+\verb|TypeOf(*Data) int| fuction and then compare it to a type tag
+constant. Additionally there are predicate functions for the most
+common types: 
 
 \begin{description}
 \item [{\tt StringP(*Data) bool}] returns whether the data is a string
@@ -323,7 +421,8 @@ The Go function \verb|MakePrimitiveFunction| allows you to create primitive func
 \item [{\tt NumberP(*Data) bool}] returns whether the data is a number
 \item [{\tt PairP(*Data) bool}] returns whether the data is a cons cenn
   (aka pair)
-\item [{\tt ObjectP(*Data) bool}] returns whether the data is an encapsulated Go object
+\item [{\tt ObjectP(*Data) bool}] returns whether the data is an
+  encapsulated Go object 
 \item [{\tt FunctionP(*Data) bool}] returns whether the data is either
   a user defined or primitive function
 \end{description}
@@ -335,7 +434,7 @@ The Go function \verb|MakePrimitiveFunction| allows you to create primitive func
 \item [{\tt NotNilP(*Data) bool}] returns whether the data is non-nil
 \end{description}
 
-\section{Creating data}
+\section{Creating and accessing data}
 
 There are various convience functions that you can use to create data:
 
@@ -350,13 +449,13 @@ There are various convience functions that you can use to create data:
   the provided value
 \item [{\tt SymbolWithName(s string) *Data}] creates a symbol with the
   provided name
-\item [{\tt ObjectWithTypeAndValue(thpeName string, o unsafe.Pointer)
-    *Data}] creates an encapsulated Go object with the given type tag
-  \footnote{a string eqivalent to the Go type of the value}
-  and value
+\item [{\tt ObjectWithTypeAndValue(thpeName string, o unsafe.Pointer) *Data}]
+  creates an encapsulated Go object with the given type tag\footnote{a
+    string eqivalent to the Go type of the value} and value 
 \end{description}
 
-\noindent Similarly there are functions for extracting information from data elements:
+\noindent Similarly there are functions for extracting information
+from data elements: 
 
 \begin{description}
 \item [{\tt IntValue(*Data) int}] extracts the primitive integer value
@@ -368,8 +467,9 @@ There are various convience functions that you can use to create data:
     encapsulated Go object
 \item [{\tt ObjectValue(*Data) unsafe.Pointer}] extracts the
   primitive object value
-\item [{\tt String(*Data) string}] returns a human readable string representation of the data
-\item [{\tt Length(*Data) int}] returns the length of a piece of Lisp
+\item [{\tt String(*Data) string}] returns a human readable string
+  representation of the data 
+\item [{\tt Length(*Data) int}] returns the length of a piece of Lisp 
   data. This will be 0 in all cases except lists, when it will be the
   number of elements in the list.
 \item [{\tt IsEqual(*Data, o *Data) bool}] compares two expressions:
@@ -383,10 +483,11 @@ There are various convience functions that you can use to create data:
   \end{itemize}
 \end{description}
 
-\noindent Any of the above \verb|...Value| functions return the corresponding zero value if the data is
+\noindent Any of the above \verb|...Value| functions return the
+corresponding zero value if the data is 
 not of the appropriate type.
 
-\noindent List accessors:
+\subsection{Working with lists}
 
 \begin{description}
 \item [{\tt Car(*Data) *Data}] return the \verb|car| pointer from a cons
@@ -413,8 +514,7 @@ add primitives.
   expression in \verb|d| and returns the result along with any error
   that occurred during evaluation. If an error is returned, the value
   of the data result is indeterminant.
-\item [{\tt Apply(function *Data, args *Data) (result *Data, err
-  error)}]
+\item [{\tt Apply(function *Data, args *Data) (result *Data, err error)}]
   This takes a function elemment, either user defined or
   primitive, and applies it to the provided arguments. This is actually
   how \verb|Eval| deals with a list: the \verb|car| of the list is the
