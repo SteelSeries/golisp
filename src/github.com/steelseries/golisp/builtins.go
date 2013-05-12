@@ -43,6 +43,7 @@ func InitBuiltins() {
     MakePrimitiveFunction("*", -1, Multiply)
     MakePrimitiveFunction("/", -1, Quotient)
     MakePrimitiveFunction("%", 2, Remainder)
+
     MakePrimitiveFunction("<", -1, LessThan)
     MakePrimitiveFunction(">", -1, GreaterThan)
     MakePrimitiveFunction("==", 2, EqualTo)
@@ -50,6 +51,8 @@ func InitBuiltins() {
     MakePrimitiveFunction("<=", -1, LessThanOrEqualTo)
     MakePrimitiveFunction(">=", -1, GreaterThanOrEqualTo)
     MakePrimitiveFunction("!", 1, BooleanNot)
+    MakePrimitiveFunction("and", -1, BooleanAnd)
+    MakePrimitiveFunction("or", -1, BooleanOr)
 
     // special forms
     MakePrimitiveFunction("if", -1, If)
@@ -435,6 +438,28 @@ func BooleanNot(args *Data) (result *Data, err error) {
 
     val := BooleanValue(arg)
     return BooleanWithValue(!val), nil
+}
+
+func BooleanAnd(args *Data) (result *Data, err error) {
+    for c := args; NotNilP(c); c = Cdr(c) {
+        result, err = Eval(Car(c))
+        if !BooleanValue(result) {
+            return
+        }
+    }
+    result = True
+    return
+}
+
+func BooleanOr(args *Data) (result *Data, err error) {
+    for c := args; NotNilP(c); c = Cdr(c) {
+        result, err = Eval(Car(c))
+        if BooleanValue(result) {
+            return
+        }
+    }
+    result = False
+    return
 }
 
 func If(args *Data) (result *Data, err error) {
