@@ -21,6 +21,24 @@ application to provide runtime extension and scripting. The core of a
 basic Lisp in provided, but with limited special forms and primitive
 functions. More of these will be added as required. 
 
+GoLisp is a lexically scoped Lisp-1:
+
+\begin{description}
+\item[Lexically scoped:] The scope of definitions are determined by
+  where they are made in the lexical structure of the code. Each
+  function and let creates a new lexical scope. From~\cite{lisp}:
+
+  \begin{quotation}
+    A parameter has lexical scope if its binding is associated with
+    the text interval bounded by the parentheses that delineate a
+    parameter-binding form.
+  \end{quotation}
+
+\item[Lisp-1:] A Lisp where functions and variables share a single
+  namespace. This differs from a Lisp-2 in which functions and
+  variables have separate namespaces.
+\end{description}
+
 \section{Data types}
 
 \begin{description}
@@ -82,7 +100,9 @@ detail later.
 
 \section{Builtin functions}
 
-\noindent{\bf\verb|(+ <number>...)|}
+\subsection{Arithmetic}
+
+\noindent{\bf\large\verb|(+ <number>...)|}
 
 Adds a series of numbers, e.g.
 
@@ -92,7 +112,7 @@ Adds a series of numbers, e.g.
     (+ 4 2 7) ==> 13
 \end{verbatim}
 
-\noindent{\bf\verb|(- <number>...)|}
+\noindent{\bf\large\verb|(- <number>...)|}
 
 Sequentially subtracts a sequence of numbers. With a single argument
 is a special case that negates the argument. E.g. 
@@ -104,7 +124,7 @@ is a special case that negates the argument. E.g.
     (- 10 3 4 5) ==> -2
 \end{verbatim}
 
-\noindent{\bf\verb|(* <number>...)|}
+\noindent{\bf\large\verb|(* <number>...)|}
 
 Multiplies a series of numbers, e.g.
 
@@ -114,7 +134,7 @@ Multiplies a series of numbers, e.g.
     (+ 4 2 7) ==> 13
 \end{verbatim}
 
-\noindent{\bf\verb|(/ <number>...)|}
+\noindent{\bf\large\verb|(/ <number>...)|}
 
 Sequentially divides a sequence of numbers. E.g.
 
@@ -123,7 +143,7 @@ Sequentially divides a sequence of numbers. E.g.
     (/ 30 2 3 ) ==> 5
 \end{verbatim}
 
-\noindent{\bf\verb|(% <number> <number>)|}
+\noindent{\bf\large\verb|(% <number> <number>)|}
 
 Returns the remainder of dividion. E.g.
 
@@ -132,7 +152,9 @@ Returns the remainder of dividion. E.g.
     (% 4 3) ==> 1 
 \end{verbatim}
 
-\noindent{\bf\verb|(< <number> <number>)|}
+\subsection{Comparisons}
+
+\noindent{\bf\large\verb|(< <number> <number>)|}
 
 Returns whether the first argument is less than the second argument.
 
@@ -142,7 +164,7 @@ Returns whether the first argument is less than the second argument.
     (< 2 2) ==> #f
 \end{verbatim}
 
-\noindent{\bf\verb|(> <number> <number>)|}
+\noindent{\bf\large\verb|(> <number> <number>)|}
 
 Returns whether the first argument is greater than the second argument.
 
@@ -152,7 +174,7 @@ Returns whether the first argument is greater than the second argument.
     (> 2 2) ==> #f
 \end{verbatim}
 
-\noindent{\bf\verb|(== <number> <number>)|}
+\noindent{\bf\large\verb|(== <number> <number>)|}
 
 Returns whether the first argument is equal to the second argument.
 
@@ -161,7 +183,7 @@ Returns whether the first argument is equal to the second argument.
     (== 1 1) ==> #t
 \end{verbatim}
 
-\noindent{\bf\verb|(!= <number> <number>)|}
+\noindent{\bf\large\verb|(!= <number> <number>)|}
 
 Returns whether the first argument is not equal to the second argument.
 
@@ -170,7 +192,7 @@ Returns whether the first argument is not equal to the second argument.
     (!= 1 1) ==> #f
 \end{verbatim}
 
-\noindent{\bf\verb|(<= <number> <number>)|}
+\noindent{\bf\large\verb|(<= <number> <number>)|}
 
 Returns whether the first argument is less than or equal to the second
 argument. 
@@ -181,7 +203,7 @@ argument.
     (<= 2 2) ==> #t
 \end{verbatim}
 
-\noindent{\bf\verb|(>= <number> <number>)|}
+\noindent{\bf\large\verb|(>= <number> <number>)|}
 
 Returns whether the first argument is greater than or equal to the
 second argument. 
@@ -192,7 +214,10 @@ second argument.
     (>= 2 2) ==> #t
 \end{verbatim}
 
-\noindent{\bf\verb|(! <arg>)|}
+\subsection{Logical}
+
+\noindent{\bf\large\verb|(! <arg>)|}
+\noindent{\bf\large\verb|(not <arg>)|}
 
 Returns whether the boolean negation of the argument.
 
@@ -201,9 +226,112 @@ Returns whether the boolean negation of the argument.
     (! #f) ==> #t
 \end{verbatim}
 
+\noindent{\bf\large\verb|(and <arg>)|}
+
+Computes a logical and of the arguments (which are evaluated first),
+with shortcutting. I.e. each argument is evaluated in order until one
+evaluates to false or the end of the list is reached. If all evaluate
+to true the result of the \verb|and| is true, otherwise it is false.
+If an argument evaluates to false, subsequent arguments are not
+evaluated. \verb|and| with no arguments evaluates to true.
+
+\begin{verbatim}
+  
+\end{verbatim}
+
+\noindent{\bf\large\verb|(or <arg>)|}
+
+Computes a logical or of the arguments (which are evaluated first),
+with shortcutting. I.e. each argument is evaluated in order until one
+evaluates to true or the end of the list is reached. If all evaluate
+to false the result of the \verb|or| is false, otherwise it is true.
+If an argument evaluates to true, subsequent arguments are not
+evaluated. \verb|or| with no arguments evaluates to false.
+
+\begin{verbatim}
+  
+\end{verbatim}
+
+\subsection{Lists}
+
+\noindent{\bf\large\verb|(list <arg>...)|}
+
+Creates a list out of a sequence of values.
+
+\begin{verbatim}
+  (list 1 2 3) ==> (1 2 3)
+  (list (+ 1 1) (+ 2 2) (+ 3 3)) ==> (2 4 6)
+\end{verbatim}
+
+\noindent{\bf\large\verb|(car <list>)|}
+
+Returns the first item in the list, i.e. the car pointer of the first
+conscell in the chain referenced by \verb|<list>|.
+
+\begin{verbatim}
+  (car nil) ==> nil
+  (car '(a)) ==> a
+  (car '(a b c)) ==> a
+  (car (list (+ 1 1) (+ 2 2))) ==> 2
+\end{verbatim}
+
+\noindent{\bf\large\verb|(cdr <list>)|}
+
+Returns the rest of the list, i.e. the cdr pointer of the first
+conscell in the chain referenced by \verb|<list>|.
+
+\begin{verbatim}
+  (cdr nil) ==> nil
+  (cdr '(a)) ==> nil
+  (cdr '(a b c)) ==> (b c)  
+  (cdr (list (+ 1 1) (+ 2 2))) ==> (2)
+\end{verbatim}
+
+The above \verb|car| and \verb|cdr| functions are the fundamental list
+decomposition operations. There are more that are based on these two.
+First there are a series of functions explicitly using \verb|car| and
+\verb|cdr| such as \verb|caddr| which is equivalent to
+\verb|(car (cdr (cdr <list>)))|. Up to \verb|cddddr| is supported.
+
+\begin{verbatim}
+  (caddr '(1 2 3 4 5)) ==> 3
+  (cdddr '(1 2 3 4 5)) ==> (4 5)
+\end{verbatim}
+
+\noindent{\bf\large\verb|(first <list>)|}\\
+\noindent{\bf\large\verb|(second <list>)|}\\
+\noindent{\bf\large\verb|(third <list>)|}\\
+\noindent{\bf\large\verb|(fourth <list>)|}\\
+\noindent{\bf\large\verb|(fifth <list>)|}
+
+These do exactly what you'd think: return the first, second, etc item
+from the list.
+
+\noindent{\bf\large\verb|(nth <list> n)|}
+
+Returns the nth element, starting with 1.
+
+\begin{verbatim}
+  (nth '(1 2 3 4) 3) ==> 3
+\end{verbatim}
+
 \section{Special forms}
 
-\noindent{\bf\verb|(if <condition> <true clause>)|}
+\noindent{\bf\large\verb|(quote <expr>)|}
+
+Surpresses evaluation of the expression.
+
+\begin{verbatim}
+     (quote (+ 1 2)) ==> (+ 1 2)
+\end{verbatim}
+
+There is a shortcut for quote that uses the single quote:
+
+\begin{verbatim}
+    '(+ 1 2) ==> (+ 1 2)
+\end{verbatim}
+
+\noindent{\bf\large\verb|(if <condition> <true clause>)|}
 
 If the condition evaluates to logically true, the true clause is
 evaluated and the result is the result of the if form, otherwise nil
@@ -216,7 +344,7 @@ is the result of the if form.
         "less") ==> nil
 \end{verbatim}
 
-\noindent{\bf\verb|(if <condition> <true clause> <else clause>)|}
+\noindent{\bf\large\verb|(if <condition> <true clause> <else clause>)|}
 
 If the condition evaluates to logically true, the true clause is
 evaluated and the result is the result of the if form, otherwise the
@@ -231,7 +359,7 @@ else clause is evaluated and is the result of the if form.
         "not less") ==> "not less"
 \end{verbatim}
 
-\noindent{\bf\verb|(lambda (<param>...) <expr>...)|}
+\noindent{\bf\large\verb|(lambda (<param>...) <expr>...)|}
 
 Creates an anonymous function. This can then be used in a function call.
 
@@ -241,7 +369,7 @@ Creates an anonymous function. This can then be used in a function call.
      5) ==> 10
 \end{verbatim}
 
-\noindent{\bf\verb|(define <symbol> <value>)|}
+\noindent{\bf\large\verb|(define <symbol> <value>)|}
 
 Evaluates the value expression and binds it to the symbol, returning
 the value. 
@@ -261,7 +389,7 @@ by using define:
 \end{verbatim}
 
 
-\noindent{\bf\verb|(define (<symbol> <param>...) <body>)|}
+\noindent{\bf\large\verb|(define (<symbol> <param>...) <body>)|}
 
 A syntacticly cleaner way to name a function:
 
@@ -280,34 +408,61 @@ value of evaluation of the function.
     (double 5) ==> 10
 \end{verbatim}
 
-\noindent{\bf\verb|(quote <expr>)|}
+\noindent{\bf\large\verb|(set! <name> <new-value>)|}
 
-Surpresses evaluation of the expression.
+The way to assign (i.e. rebind) a symbol. \verb|name| is an sexpr that is evaluated
+to arrive at the symbol to be rebound. This means that if you want to
+use a plain symbol, you need to quote it. The \verb|new-value| sexpr is
+evaluated to arrive at the new value to be bound to. Use of
+\verb|set!| is frowned upon, and should not be used without thought.
+See Chapter 3 of Structure and Interpretation of Computer Programs (by
+Harold Abelson and Gerald Jay Sussman) for a discussion of the pros
+and cons of assignment.
 
 \begin{verbatim}
-     (quote (+ 1 2)) ==> (+ 1 2)
+  (define x 5)
+  (set! 'x 10)
+  x ==> 10
 \end{verbatim}
 
-There is a shortcut for quote that uses the single quote:
+Assigning takes action in the closest scope in which the symbol is
+bound. In the following example, that's the global scope, so when the
+let exits, \verb|x| still has the rebound value of \verb|10|.
 
 \begin{verbatim}
-    '(+ 1 2) ==> (+ 1 2)
+  (define x 5)
+  (let ()
+    (set! 'x 10)
+    x) ==> 10
+  x ==> 10
 \end{verbatim}
 
-\noindent{\bf\verb|(map <function> <list>)|}
+In this example, \verb|x| is bound by the let, i.e. in the local
+context of the let, so the rebinding is done in the scope of the let
+and doesn't extend beyond it.
+
+\begin{verbatim}
+  (define x 5)
+  (let ((x 1))
+    (set! 'x 10)
+    x) ==> 10
+  x ==> 5
+\end{verbatim}
+
+\noindent{\bf\large\verb|(map <function> <list>)|}
 
 Applies \verb|function| (which has to be of a single argument) to each
 element in \verb|list| in order, returning the list of the results. 
 
 \begin{verbatim}
-    (map - '(1 2 3 4)')) ==> (-1 -2 -3 -4)
+    (map - '(1 2 3 4))) ==> (-1 -2 -3 -4)
 
     (map (lambda (x)
                  (* x x))
-         '(1 2 3 4)') ==> (1 4 9 16)
+         '(1 2 3 4)) ==> (1 4 9 16)
 \end{verbatim}
 
-\noindent{\bf\verb|(being <sexpr>...)|}
+\noindent{\bf\large\verb|(being <sexpr>...)|}
 
 Evaluates the each \verb|sexpr| in order, returning the result of the
 last one evaluated. Used in a context that allows a single
@@ -320,7 +475,7 @@ last one evaluated. Used in a context that allows a single
         (do-something-else)))
 \end{verbatim}
 
-\noindent{\bf\verb|(let ((<name> <value>)...) <sexpr>...)|}
+\noindent{\bf\large\verb|(let ((<name> <value>)...) <sexpr>...)|}
 
 Create a local scope and bindings for evaluating a body of code. The
 first argument is a list of bindings. Each binding is a raw symbol
@@ -396,18 +551,9 @@ primitive functions. This takes three arguments:
 
 The core lisp data element is the data type which logically
 contains a type tag and a value. The type tags are defined by the
-constants: 
-
-\begin{description}
-\item[ConsCellType] 
-\item[NumberType]
-\item[BooleanType]
-\item[StringType]
-\item[SymbolType]
-\item[FunctionType]
-\item[PrimitiveType]
-\item[ObjectType]
-\end{description}
+constants: \verb|ConsCellType|, \verb|NumberType|, \verb|BooleanType|,
+\verb|StringType|, \verb|SymbolType|, \verb|FunctionType|,
+\verb|PrimitiveType|, \verb|ObjectType|.
 
 \noindent The types are described earlier. If you need to check the
 type of a piece of data you can fetch it's type using the
@@ -501,13 +647,15 @@ not of the appropriate type.
 \item [{\tt Fifth(*Data) *Data}] return the fifth item in a list
 \item [{\tt Nth(*Data, int) *Data}] return the nth item in a list
   (starting at 1)
+\item [{\tt ArrayToList(sexprs []*Data) *Data}] converts an array of
+  Lisp data objects to a Lisp list.
 \end{description}
 
 \section{Evaluation}
 
-These function are the entry points into evaluating code. There will be
-very few reasons to use these directly. Typically you'll just need to
-add primitives.
+These functions are the entry points into code evaluation. The main
+reason to use these, and especially \verb|Eval|, is to evaluate
+arguments to primitives as required.
 
 \begin{description}
 \item [{\tt Eval(d *Data) (result *Data, err error)}] evaluates the
@@ -517,10 +665,37 @@ add primitives.
 \item [{\tt Apply(function *Data, args *Data) (result *Data, err error)}]
   This takes a function elemment, either user defined or
   primitive, and applies it to the provided arguments. This is actually
-  how \verb|Eval| deals with a list: the \verb|car| of the list is the
-  function, the \verb|cdr| is the list of arguments.
+  how \verb|Eval| deals with a list: the evaluation of the \verb|car| of the list is the
+  function, the \verb|cdr| is the list of arguments. It's up to the
+  primitive implimentation to evaluate arguments as required.
 \end{description}
 
+The implimentation of \verb|if| serves as an example:
 
+\begin{verbatim}
+  func If(args *Data) (result *Data, err error) {
+    if Length(args) < 2 || Length(args) > 3 {
+        msg := fmt.Sprintf("IF requires 2 or 3 arguments. Received %d.", 
+                           Length(args))
+        err = errors.New(msg)
+        return
+    }
+
+    c, err := Eval(Car(args))
+    if err != nil {
+        return
+    }
+    condition := BooleanValue(c)
+    thenClause := Cadr(args)
+    elseClause := Caddr(args)
+
+    if condition {
+        return Eval(thenClause)
+    } else {
+        return Eval(elseClause)
+    }
+}
+
+\end{verbatim}
 
 \end{document}
