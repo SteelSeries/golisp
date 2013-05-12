@@ -2,6 +2,10 @@
 
 (define l '(1 2 3 4 5 6 7 8 9 10))
 
+(describe list
+          (== (list 'a) '(a))
+          (== (list (+ 1 1) (+ 1 2)) '(2 3)))
+
 (describe length
           (== (length nil) 0)
           (== (length '()) 0)
@@ -93,4 +97,5 @@
           (== (cddr nil) nil)
           (== (cddr '(1)) nil)
           (== (cddr '(1 2 3)) '(3)))
+
 

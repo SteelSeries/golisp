@@ -21,7 +21,8 @@
                 y)
               2))
 
+
 (describe let-binding-scope
-          (== (begin (let ((x 2)) x)
-                     x)
+          (== (begin (let ((z 2)) z)
+                     z)
               nil))
