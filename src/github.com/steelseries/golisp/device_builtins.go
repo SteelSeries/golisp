@@ -33,7 +33,7 @@ func InitDeviceBuiltins() {
     //    MakePrimitiveFunction("string-to-bytes", 1, StringToBytes)
 }
 
-func DefStruct(args *Data) (result *Data, err error) {
+func DefStruct(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     structName := Car(args)
     if TypeOf(structName) != SymbolType {
         err = errors.New("Struct name must be a symbol")
@@ -51,7 +51,7 @@ func DefStruct(args *Data) (result *Data, err error) {
 
     var field *Data
     for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-        field, err = Eval(Car(c))
+        field, err = Eval(Car(c), env)
         if err != nil {
             return
         }
@@ -62,10 +62,10 @@ func DefStruct(args *Data) (result *Data, err error) {
         }
     }
     currentStructure = nil
-    return BindTo(structName, ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(structure))), nil
+    return env.BindTo(structName, ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(structure))), nil
 }
 
-func DefField(args *Data) (field *Data, err error) {
+func DefField(args *Data, env *SymbolTableFrame) (field *Data, err error) {
     fieldName := First(args)
     if TypeOf(fieldName) != SymbolType {
         err = errors.New("Field name must be a symbol")
@@ -111,12 +111,12 @@ func DefField(args *Data) (field *Data, err error) {
     return
 }
 
-func DefApi(args *Data) (result *Data, err error) {
+func DefApi(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return
 }
 
-func DumpStructure(d *Data) (result *Data, err error) {
-    structObj, err := Eval(Car(d))
+func DumpStructure(d *Data, env *SymbolTableFrame) (result *Data, err error) {
+    structObj, err := Eval(Car(d), env)
     if err != nil {
         return
     }
@@ -130,8 +130,8 @@ func DumpStructure(d *Data) (result *Data, err error) {
     return
 }
 
-func DumpExpanded(d *Data) (result *Data, err error) {
-    structObj, err := Eval(Car(d))
+func DumpExpanded(d *Data, env *SymbolTableFrame) (result *Data, err error) {
+    structObj, err := Eval(Car(d), env)
     if err != nil {
         return
     }
@@ -157,7 +157,7 @@ func CharsToString(ca [16]uint8) string {
     return string(s[0:lens])
 }
 
-// func BytesToString(d *Data) (result *Data, err error) {
+// func BytesToString(d *Data, env *SymbolTableFrame) (result *Data, err error) {
 //     arg := Car(data)
 //     if ObjectP(arg) && TypeOfObject(arg) == "[16]uint8" {
 //         ary := (([16]uint8)(ObjectValue(arg)))
@@ -168,7 +168,7 @@ func CharsToString(ca [16]uint8) string {
 //     return
 // }
 
-// func StringToBytes(d *Data) (result *Data, err error) {
+// func StringToBytes(d *Data, env *SymbolTableFrame) (result *Data, err error) {
 //     arg := Car(data)
 //     if ObjectP(arg) && TypeOfObject(arg) == "string" {
 //         var name [16]byte

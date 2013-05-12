@@ -51,7 +51,7 @@ func repl() {
                 if err != nil {
                     fmt.Printf("Error: %s\n", err)
                 } else {
-                    d, err := golisp.Eval(code)
+                    d, err := golisp.Eval(code, golisp.Global)
                     if err != nil {
                         fmt.Printf("Error in evaluation: %s\n", err)
                     } else {

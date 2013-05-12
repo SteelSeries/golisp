@@ -32,7 +32,7 @@ func IsValidType(typeName *Data) bool {
         return true
     }
 
-    typeValue := ValueOf(typeName)
+    typeValue := Global.ValueOf(typeName)
     if !ObjectP(typeValue) || typeValue.ObjType != "DeviceStructure" {
         return false
     }
@@ -51,7 +51,7 @@ func FieldSizeOf(typeName *Data) int {
         return 4
     default:
         {
-            typeValue := ValueOf(typeName)
+            typeValue := Global.ValueOf(typeName)
             fieldType := (*DeviceStructure)(ObjectValue(typeValue))
             return fieldType.SizeOf()
         }
@@ -144,7 +144,7 @@ func (self *ExpandedStructure) addExpandedField(f *DeviceField, pathSoFar string
             self.Size = offset + f.Size
             //            fmt.Printf("%s (%s)\n  size: %d\n  alignment: %d\n  padding: %d\n  offset: %d\n  total: %d\n  path: %s\n", f.Name, f.TypeName, newField.Size, alignment, paddingRequired, offset, self.Size, path)
         } else {
-            s := ValueOf(SymbolWithName(f.TypeName))
+            s := Global.ValueOf(SymbolWithName(f.TypeName))
             self.addExpandedFields((*DeviceStructure)(ObjectValue(s)).Fields, path)
         }
     }

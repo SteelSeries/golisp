@@ -13,25 +13,25 @@ import (
 type PrimitiveFunction struct {
     Name         string
     NumberOfArgs int
-    Body         func(d *Data) (*Data, error)
+    Body         func(d *Data, env *SymbolTableFrame) (*Data, error)
 }
 
-func MakePrimitiveFunction(name string, argCount int, function func(d *Data) (*Data, error)) {
+func MakePrimitiveFunction(name string, argCount int, function func(*Data, *SymbolTableFrame) (*Data, error)) {
     f := &PrimitiveFunction{Name: name, NumberOfArgs: argCount, Body: function}
-    sym := Intern(name)
-    BindTo(sym, PrimitiveWithNameAndFunc(name, f))
+    sym := Global.Intern(name)
+    Global.BindTo(sym, PrimitiveWithNameAndFunc(name, f))
 }
 
 func (self *PrimitiveFunction) String() string {
     return fmt.Sprintf("<prim: %s, %v>", self.Name, self.Body)
 }
 
-func (self *PrimitiveFunction) Apply(args *Data) (result *Data, err error) {
+func (self *PrimitiveFunction) Apply(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     argCount := Length(args)
     expectedArgs := self.NumberOfArgs
     atLeastOneArg := (expectedArgs == -1) && (argCount > 0)
     exactNumberOfArgs := self.NumberOfArgs == argCount
-    var stringArgCount string = fmt.Sprintf("%s", self.NumberOfArgs)
+    var stringArgCount string = fmt.Sprintf("%d", self.NumberOfArgs)
     if self.NumberOfArgs == -1 {
         stringArgCount = "at least 1"
     }
@@ -40,5 +40,5 @@ func (self *PrimitiveFunction) Apply(args *Data) (result *Data, err error) {
         return
     }
 
-    return (self.Body)(args)
+    return (self.Body)(args, env)
 }

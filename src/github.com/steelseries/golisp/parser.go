@@ -193,7 +193,7 @@ func ProcessFile(filename string) (result *Data, err error) {
         if NilP(sexpr) {
             return
         }
-        result, err = Eval(sexpr)
+        result, err = Eval(sexpr, Global)
         if err != nil {
             return
         }

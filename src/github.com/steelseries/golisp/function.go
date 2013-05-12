@@ -14,10 +14,11 @@ type Function struct {
     Name   string
     Params *Data
     Body   *Data
+    Env    *SymbolTableFrame
 }
 
-func MakeFunction(name string, params *Data, body *Data) *Function {
-    return &Function{Name: name, Params: params, Body: body}
+func MakeFunction(name string, params *Data, body *Data, parentEnv *SymbolTableFrame) *Function {
+    return &Function{Name: name, Params: params, Body: body, Env: NewSymbolTableFrameBelow(parentEnv)}
 }
 
 func (self *Function) String() string {
@@ -28,29 +29,28 @@ func (self *Function) makeLocalBindings(args *Data) (err error) {
     if Length(args) != Length(self.Params) {
         return errors.New("Number of args must equal number of params")
     }
-    PushLocalBindings()
+
     var data *Data
     for p, a := self.Params, args; NotNilP(p); p, a = Cdr(p), Cdr(a) {
-        data, err = Eval(Car(a))
+        data, err = Eval(Car(a), self.Env)
         if err != nil {
             return
         }
-        BindLocallyTo(Car(p), data)
+        self.Env.BindLocallyTo(Car(p), data)
     }
     return nil
 }
 
-func (self *Function) Apply(args *Data) (result *Data, err error) {
+func (self *Function) Apply(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     err = self.makeLocalBindings(args)
     if err != nil {
         return
     }
     for s := self.Body; NotNilP(s); s = Cdr(s) {
-        result, err = Eval(Car(s))
+        result, err = Eval(Car(s), self.Env)
         if err != nil {
             return
         }
     }
-    PopLocalBindings()
     return
 }

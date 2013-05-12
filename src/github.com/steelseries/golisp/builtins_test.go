@@ -16,8 +16,7 @@ type BuiltinsSuite struct {
 var _ = Suite(&BuiltinsSuite{})
 
 func (s *BuiltinsSuite) SetUpSuite(c *C) {
-    symbolTable = &SymbolTable{list.New()}
-    PushLocalBindings()
+    symbolTable = NewSymbolTableFrameBelow(nil)
     InitBuiltins()
 }
 

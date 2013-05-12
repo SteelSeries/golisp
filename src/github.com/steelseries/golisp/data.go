@@ -104,8 +104,8 @@ func SymbolWithName(s string) *Data {
     return &Data{Type: SymbolType, Car: nil, Cdr: nil, String: s, Number: 0, Func: nil, Prim: nil}
 }
 
-func FunctionWithNameParamsAndBody(name string, params *Data, body *Data) *Data {
-    return &Data{Type: FunctionType, Car: nil, Cdr: nil, String: "", Number: 0, Func: MakeFunction(name, params, body), Prim: nil}
+func FunctionWithNameParamsBodyAndParent(name string, params *Data, body *Data, parentEnv *SymbolTableFrame) *Data {
+    return &Data{Type: FunctionType, Car: nil, Cdr: nil, String: "", Number: 0, Func: MakeFunction(name, params, body, parentEnv), Prim: nil}
 }
 
 func PrimitiveWithNameAndFunc(name string, f *PrimitiveFunction) *Data {
@@ -271,7 +271,7 @@ func String(d *Data) string {
     return ""
 }
 
-func Eval(d *Data) (result *Data, err error) {
+func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
     if d == nil {
         return
     }
@@ -280,12 +280,12 @@ func Eval(d *Data) (result *Data, err error) {
     case ConsCellType:
         {
             var function *Data
-            function, err = Eval(Car(d))
+            function, err = Eval(Car(d), env)
             if err != nil {
                 return
             }
             args := Cdr(d)
-            result, err = Apply(function, args)
+            result, err = Apply(function, args, env)
             if err != nil {
                 err = errors.New(fmt.Sprintf("Evaling %s. %s", String(d), err))
                 return
@@ -293,23 +293,23 @@ func Eval(d *Data) (result *Data, err error) {
             return
         }
     case SymbolType:
-        result = ValueOf(d)
+        result = env.ValueOf(d)
         return
     }
 
     return d, nil
 }
 
-func Apply(function *Data, args *Data) (result *Data, err error) {
+func Apply(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if function == nil {
         err = errors.New("Nil when function expected.\n")
         return
     }
     switch function.Type {
     case FunctionType:
-        return function.Func.Apply(args)
+        return function.Func.Apply(args, env)
     case PrimitiveType:
-        return function.Prim.Apply(args)
+        return function.Prim.Apply(args, env)
     }
     return
 }

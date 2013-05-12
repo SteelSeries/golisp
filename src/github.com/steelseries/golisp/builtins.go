@@ -10,21 +10,19 @@
 package golisp
 
 import (
-    "container/list"
     "errors"
     "fmt"
 )
 
 func init() {
-    symbolTable = &SymbolTable{list.New()}
-    PushLocalBindings()
+    Global = NewSymbolTableFrameBelow(nil)
     InitBuiltins()
     InitDeviceBuiltins()
 }
 
 func InitBuiltins() {
     // MakePrimitiveFunction(<symbol>, <required # args, -1 means >= 1>, <function>)
-    Intern("nil")
+    Global.Intern("nil")
 
     // type tests
 
@@ -119,39 +117,39 @@ func InitBuiltins() {
 
 }
 
-func IsPair(args *Data) (result *Data, err error) {
+func IsPair(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return BooleanWithValue(PairP(Car(args))), nil
 }
 
-func ExposedNilP(args *Data) (result *Data, err error) {
+func ExposedNilP(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return BooleanWithValue(NilP(Car(args))), nil
 }
 
-func ExposedNotNilP(args *Data) (result *Data, err error) {
+func ExposedNotNilP(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return BooleanWithValue(NotNilP(Car(args))), nil
 }
 
-func IsSymbol(args *Data) (result *Data, err error) {
+func IsSymbol(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return BooleanWithValue(SymbolP(Car(args))), nil
 }
 
-func IsString(args *Data) (result *Data, err error) {
+func IsString(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return BooleanWithValue(StringP(Car(args))), nil
 }
 
-func IsNumber(args *Data) (result *Data, err error) {
+func IsNumber(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return BooleanWithValue(NumberP(Car(args))), nil
 }
 
-func IsFunction(args *Data) (result *Data, err error) {
+func IsFunction(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return BooleanWithValue(FunctionP(Car(args))), nil
 }
 
-func Add(args *Data) (result *Data, err error) {
+func Add(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var acc int = 0
     var n *Data
     for c := args; NotNilP(c); c = Cdr(c) {
-        n, err = Eval(Car(c))
+        n, err = Eval(Car(c), env)
         if err != nil {
             return
         } else if !NumberP(n) {
@@ -163,9 +161,9 @@ func Add(args *Data) (result *Data, err error) {
     return NumberWithValue(acc), nil
 }
 
-func Subtract(args *Data) (result *Data, err error) {
+func Subtract(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var n *Data
-    n, err = Eval(Car(args))
+    n, err = Eval(Car(args), env)
     if err != nil {
         return
     }
@@ -178,7 +176,7 @@ func Subtract(args *Data) (result *Data, err error) {
         acc = -acc
     } else {
         for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-            n, err = Eval(Car(c))
+            n, err = Eval(Car(c), env)
             if err != nil {
                 return
             }
@@ -192,11 +190,11 @@ func Subtract(args *Data) (result *Data, err error) {
     return NumberWithValue(acc), nil
 }
 
-func Multiply(args *Data) (result *Data, err error) {
+func Multiply(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var n *Data
     var acc int = 1
     for c := args; NotNilP(c); c = Cdr(c) {
-        n, err = Eval(Car(c))
+        n, err = Eval(Car(c), env)
         if err != nil {
             return
         } else if !NumberP(n) {
@@ -208,9 +206,9 @@ func Multiply(args *Data) (result *Data, err error) {
     return NumberWithValue(acc), nil
 }
 
-func Quotient(args *Data) (result *Data, err error) {
+func Quotient(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var n *Data
-    n, err = Eval(Car(args))
+    n, err = Eval(Car(args), env)
     if err != nil {
         return
     }
@@ -220,7 +218,7 @@ func Quotient(args *Data) (result *Data, err error) {
     }
     var acc int = IntValue(n)
     for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-        n, err = Eval(Car(c))
+        n, err = Eval(Car(c), env)
         if err != nil {
             return
         }
@@ -233,14 +231,14 @@ func Quotient(args *Data) (result *Data, err error) {
     return NumberWithValue(acc), nil
 }
 
-func Remainder(args *Data) (result *Data, err error) {
+func Remainder(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) != 2 {
         err = errors.New(fmt.Sprintf("2 args expected, %d received", Length(args)))
         return
     }
 
     var dividend *Data
-    dividend, err = Eval(Car(args))
+    dividend, err = Eval(Car(args), env)
     if err != nil {
         return
     }
@@ -250,7 +248,7 @@ func Remainder(args *Data) (result *Data, err error) {
     }
 
     var divisor *Data
-    divisor, err = Eval(Cadr(args))
+    divisor, err = Eval(Cadr(args), env)
     if err != nil {
         return
     }
@@ -263,14 +261,14 @@ func Remainder(args *Data) (result *Data, err error) {
     return NumberWithValue(val), nil
 }
 
-func LessThan(args *Data) (result *Data, err error) {
+func LessThan(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) != 2 {
         err = errors.New(fmt.Sprintf("2 args expected, %d received", Length(args)))
         return
     }
 
     var arg1 *Data
-    arg1, err = Eval(Car(args))
+    arg1, err = Eval(Car(args), env)
     if err != nil {
         return
     }
@@ -280,7 +278,7 @@ func LessThan(args *Data) (result *Data, err error) {
     }
 
     var arg2 *Data
-    arg2, err = Eval(Cadr(args))
+    arg2, err = Eval(Cadr(args), env)
     if err != nil {
         return
     }
@@ -293,14 +291,14 @@ func LessThan(args *Data) (result *Data, err error) {
     return BooleanWithValue(val), nil
 }
 
-func GreaterThan(args *Data) (result *Data, err error) {
+func GreaterThan(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) != 2 {
         err = errors.New(fmt.Sprintf("2 args expected, %d received", Length(args)))
         return
     }
 
     var arg1 *Data
-    arg1, err = Eval(Car(args))
+    arg1, err = Eval(Car(args), env)
     if err != nil {
         return
     }
@@ -310,7 +308,7 @@ func GreaterThan(args *Data) (result *Data, err error) {
     }
 
     var arg2 *Data
-    arg2, err = Eval(Cadr(args))
+    arg2, err = Eval(Cadr(args), env)
     if err != nil {
         return
     }
@@ -323,20 +321,20 @@ func GreaterThan(args *Data) (result *Data, err error) {
     return BooleanWithValue(val), nil
 }
 
-func EqualTo(args *Data) (result *Data, err error) {
+func EqualTo(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) != 2 {
         err = errors.New(fmt.Sprintf("2 args expected, %d received", Length(args)))
         return
     }
 
     var arg1 *Data
-    arg1, err = Eval(Car(args))
+    arg1, err = Eval(Car(args), env)
     if err != nil {
         return
     }
 
     var arg2 *Data
-    arg2, err = Eval(Cadr(args))
+    arg2, err = Eval(Cadr(args), env)
     if err != nil {
         return
     }
@@ -344,20 +342,20 @@ func EqualTo(args *Data) (result *Data, err error) {
     return BooleanWithValue(IsEqual(arg1, arg2)), nil
 }
 
-func NotEqual(args *Data) (result *Data, err error) {
+func NotEqual(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) != 2 {
         err = errors.New(fmt.Sprintf("2 args expected, %d received", Length(args)))
         return
     }
 
     var arg1 *Data
-    arg1, err = Eval(Car(args))
+    arg1, err = Eval(Car(args), env)
     if err != nil {
         return
     }
 
     var arg2 *Data
-    arg2, err = Eval(Cadr(args))
+    arg2, err = Eval(Cadr(args), env)
     if err != nil {
         return
     }
@@ -365,14 +363,14 @@ func NotEqual(args *Data) (result *Data, err error) {
     return BooleanWithValue(!IsEqual(arg1, arg2)), nil
 }
 
-func LessThanOrEqualTo(args *Data) (result *Data, err error) {
+func LessThanOrEqualTo(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) != 2 {
         err = errors.New(fmt.Sprintf("2 args expected, %d received", Length(args)))
         return
     }
 
     var arg1 *Data
-    arg1, err = Eval(Car(args))
+    arg1, err = Eval(Car(args), env)
     if err != nil {
         return
     }
@@ -382,7 +380,7 @@ func LessThanOrEqualTo(args *Data) (result *Data, err error) {
     }
 
     var arg2 *Data
-    arg2, err = Eval(Cadr(args))
+    arg2, err = Eval(Cadr(args), env)
     if err != nil {
         return
     }
@@ -395,14 +393,14 @@ func LessThanOrEqualTo(args *Data) (result *Data, err error) {
     return BooleanWithValue(val), nil
 }
 
-func GreaterThanOrEqualTo(args *Data) (result *Data, err error) {
+func GreaterThanOrEqualTo(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) != 2 {
         err = errors.New(fmt.Sprintf("2 args expected, %d received", Length(args)))
         return
     }
 
     var arg1 *Data
-    arg1, err = Eval(Car(args))
+    arg1, err = Eval(Car(args), env)
     if err != nil {
         return
     }
@@ -412,7 +410,7 @@ func GreaterThanOrEqualTo(args *Data) (result *Data, err error) {
     }
 
     var arg2 *Data
-    arg2, err = Eval(Cadr(args))
+    arg2, err = Eval(Cadr(args), env)
     if err != nil {
         return
     }
@@ -425,13 +423,13 @@ func GreaterThanOrEqualTo(args *Data) (result *Data, err error) {
     return BooleanWithValue(val), nil
 }
 
-func BooleanNot(args *Data) (result *Data, err error) {
+func BooleanNot(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) != 1 {
         err = errors.New(fmt.Sprintf("! requires 1 argument. Received %d.", Length(args)))
         return
     }
 
-    arg, err := Eval(Car(args))
+    arg, err := Eval(Car(args), env)
     if err != nil {
         return
     }
@@ -440,9 +438,9 @@ func BooleanNot(args *Data) (result *Data, err error) {
     return BooleanWithValue(!val), nil
 }
 
-func BooleanAnd(args *Data) (result *Data, err error) {
+func BooleanAnd(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     for c := args; NotNilP(c); c = Cdr(c) {
-        result, err = Eval(Car(c))
+        result, err = Eval(Car(c), env)
         if !BooleanValue(result) {
             return
         }
@@ -451,9 +449,9 @@ func BooleanAnd(args *Data) (result *Data, err error) {
     return
 }
 
-func BooleanOr(args *Data) (result *Data, err error) {
+func BooleanOr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     for c := args; NotNilP(c); c = Cdr(c) {
-        result, err = Eval(Car(c))
+        result, err = Eval(Car(c), env)
         if BooleanValue(result) {
             return
         }
@@ -462,13 +460,13 @@ func BooleanOr(args *Data) (result *Data, err error) {
     return
 }
 
-func If(args *Data) (result *Data, err error) {
+func If(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) < 2 || Length(args) > 3 {
         err = errors.New(fmt.Sprintf("IF requires 2 or 3 arguments. Received %d.", Length(args)))
         return
     }
 
-    c, err := Eval(Car(args))
+    c, err := Eval(Car(args), env)
     if err != nil {
         return
     }
@@ -477,31 +475,31 @@ func If(args *Data) (result *Data, err error) {
     elseClause := Caddr(args)
 
     if condition {
-        return Eval(thenClause)
+        return Eval(thenClause, env)
     } else {
-        return Eval(elseClause)
+        return Eval(elseClause, env)
     }
 }
 
-func ListLength(args *Data) (result *Data, err error) {
-    d, err := Eval(Car(args))
+func ListLength(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    d, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return NumberWithValue(Length(d)), nil
 }
 
-func Lambda(args *Data) (result *Data, err error) {
+func Lambda(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     params := Car(args)
     body := Cdr(args)
-    return FunctionWithNameParamsAndBody("", params, body), nil
+    return FunctionWithNameParamsBodyAndParent("", params, body, env), nil
 }
 
-func Define(args *Data) (result *Data, err error) {
+func Define(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var value *Data
     thing := Car(args)
     if SymbolP(thing) {
-        value, err = Eval(Cadr(args))
+        value, err = Eval(Cadr(args), env)
         if err != nil {
             return
         }
@@ -514,22 +512,22 @@ func Define(args *Data) (result *Data, err error) {
             return
         }
         body := Cdr(args)
-        value = FunctionWithNameParamsAndBody(StringValue(name), params, body)
+        value = FunctionWithNameParamsBodyAndParent(StringValue(name), params, body, env)
     } else {
         err = errors.New("Invalid definition")
         return
     }
-    BindLocallyTo(thing, value)
+    env.BindLocallyTo(thing, value)
     return value, nil
 }
 
-func DumpSymbolTable(args *Data) (result *Data, err error) {
-    symbolTable.Dump()
+func DumpSymbolTable(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    env.Dump()
     return
 }
 
-func Map(args *Data) (result *Data, err error) {
-    f, err := Eval(Car(args))
+func Map(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    f, err := Eval(Car(args), env)
     if err != nil {
         return
     }
@@ -538,7 +536,7 @@ func Map(args *Data) (result *Data, err error) {
         return
     }
 
-    col, err := Eval(Cadr(args))
+    col, err := Eval(Cadr(args), env)
     if err != nil {
         return
     }
@@ -550,7 +548,7 @@ func Map(args *Data) (result *Data, err error) {
     var d []*Data = make([]*Data, 0, Length(col))
     var v *Data
     for c := col; NotNilP(c); c = Cdr(c) {
-        v, err = Apply(f, Cons(Car(c), nil))
+        v, err = Apply(f, Cons(Car(c), nil), env)
         if err != nil {
             return
         }
@@ -560,15 +558,15 @@ func Map(args *Data) (result *Data, err error) {
     return ArrayToList(d), nil
 }
 
-func Quote(args *Data) (result *Data, err error) {
+func Quote(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return Car(args), nil
 }
 
-func MakeList(args *Data) (result *Data, err error) {
+func MakeList(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var items []*Data = make([]*Data, 0, Length(args))
     var item *Data
     for cell := args; NotNilP(cell); cell = Cdr(cell) {
-        item, err = Eval(Car(cell))
+        item, err = Eval(Car(cell), env)
         if err != nil {
             return
         }
@@ -578,288 +576,288 @@ func MakeList(args *Data) (result *Data, err error) {
     return
 }
 
-func ExposedCar(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Car(a), nil
 }
 
-func ExposedCdr(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCdr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Cdr(a), nil
 }
 
-func ExposedCaar(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCaar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Caar(a), nil
 }
 
-func ExposedCadr(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCadr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Cadr(a), nil
 }
 
-func ExposedCdar(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCdar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Cdar(a), nil
 }
 
-func ExposedCddr(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCddr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Cddr(a), nil
 }
 
-func ExposedCaaar(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCaaar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Caaar(a), nil
 }
 
-func ExposedCaadr(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCaadr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Caadr(a), nil
 }
 
-func ExposedCadar(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCadar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Cadar(a), nil
 }
 
-func ExposedCaddr(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCaddr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Caddr(a), nil
 }
 
-func ExposedCdaar(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCdaar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Cdaar(a), nil
 }
 
-func ExposedCdadr(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCdadr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Cdadr(a), nil
 }
 
-func ExposedCddar(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCddar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Cddar(a), nil
 }
 
-func ExposedCdddr(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCdddr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Cdddr(a), nil
 }
 
-func ExposedCaaaar(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCaaaar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Caaaar(a), nil
 }
 
-func ExposedCaaadr(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCaaadr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Caaadr(a), nil
 }
 
-func ExposedCaadar(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCaadar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Caadar(a), nil
 }
 
-func ExposedCaaddr(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCaaddr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Caaddr(a), nil
 }
 
-func ExposedCadaar(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCadaar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Cadaar(a), nil
 }
 
-func ExposedCadadr(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCadadr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Cadadr(a), nil
 }
 
-func ExposedCaddar(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCaddar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Caddar(a), nil
 }
 
-func ExposedCadddr(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCadddr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Cadddr(a), nil
 }
 
-func ExposedCdaaar(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCdaaar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Cdaaar(a), nil
 }
 
-func ExposedCdaadr(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCdaadr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Cdaadr(a), nil
 }
 
-func ExposedCdadar(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCdadar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Cdadar(a), nil
 }
 
-func ExposedCdaddr(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCdaddr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Cdaddr(a), nil
 }
 
-func ExposedCddaar(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCddaar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Cddaar(a), nil
 }
 
-func ExposedCddadr(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCddadr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Cddadr(a), nil
 }
 
-func ExposedCdddar(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCdddar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Cdddar(a), nil
 }
 
-func ExposedCddddr(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedCddddr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Cddddr(a), nil
 }
 
-func ExposedFirst(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedFirst(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return First(a), nil
 }
 
-func ExposedSecond(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedSecond(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Second(a), nil
 }
 
-func ExposedThird(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedThird(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Third(a), nil
 }
 
-func ExposedFourth(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedFourth(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Fourth(a), nil
 }
 
-func ExposedFifth(args *Data) (result *Data, err error) {
-    a, err := Eval(Car(args))
+func ExposedFifth(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    a, err := Eval(Car(args), env)
     if err != nil {
         return
     }
     return Fifth(a), nil
 }
 
-func ExposedNth(args *Data) (result *Data, err error) {
-    col, err := Eval(Car(args))
+func ExposedNth(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    col, err := Eval(Car(args), env)
     if err != nil {
         return
     }
@@ -867,7 +865,7 @@ func ExposedNth(args *Data) (result *Data, err error) {
         err = errors.New("First arg to nth must be a list")
         return
     }
-    count, err := Eval(Cadr(args))
+    count, err := Eval(Cadr(args), env)
     if err != nil {
         return
     }
@@ -879,7 +877,7 @@ func ExposedNth(args *Data) (result *Data, err error) {
     return Nth(col, IntValue(count)), nil
 }
 
-func LoadFile(args *Data) (result *Data, err error) {
+func LoadFile(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     filename := Car(args)
     if !StringP(filename) {
         err = errors.New("Filename must be a string")
@@ -889,7 +887,7 @@ func LoadFile(args *Data) (result *Data, err error) {
     return ProcessFile(StringValue(filename))
 }
 
-func Describe(args *Data) (d *Data, e error) {
+func Describe(args *Data, env *SymbolTableFrame) (d *Data, e error) {
     if !(StringP(Car(args)) || SymbolP(Car(args))) {
         e = errors.New("The describe tag must be a string or symbol")
         return
@@ -899,7 +897,7 @@ func Describe(args *Data) (d *Data, e error) {
     for clauses := Cdr(args); NotNilP(clauses); clauses = Cdr(clauses) {
         clause := Car(clauses)
         fmt.Printf("   %s - ", String(clause))
-        result, err := Eval(clause)
+        result, err := Eval(clause, env)
         if err != nil {
             fmt.Printf("error: %s\n", err)
             return
@@ -907,7 +905,7 @@ func Describe(args *Data) (d *Data, e error) {
         if BooleanValue(result) {
             fmt.Printf("ok\n")
         } else {
-            value, _ := Eval(Cadr(clause))
+            value, _ := Eval(Cadr(clause), env)
             fmt.Printf("failed: %s is %s\n", String(Cadr(clause)), String(value))
             return
         }
@@ -915,19 +913,19 @@ func Describe(args *Data) (d *Data, e error) {
     return
 }
 
-func SetVar(args *Data) (result *Data, err error) {
-    symbol, err := Eval(Car(args))
+func SetVar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    symbol, err := Eval(Car(args), env)
     if err != nil {
         return
     }
-    value, err := Eval(Cadr(args))
+    value, err := Eval(Cadr(args), env)
     if err != nil {
         return
     }
-    return SetTo(symbol, value)
+    return env.SetTo(symbol, value)
 }
 
-func BindLetLocals(bindingForms *Data) (err error) {
+func BindLetLocals(bindingForms *Data, env *SymbolTableFrame) (err error) {
     var name *Data
     var value *Data
 
@@ -941,16 +939,16 @@ func BindLetLocals(bindingForms *Data) (err error) {
         if !SymbolP(name) {
             err = errors.New("First part of a let binding pair must be a symbol")
         }
-        value, err = Eval(Cadr(bindingPair))
+        value, err = Eval(Cadr(bindingPair), env)
         if err != nil {
             return
         }
-        BindLocallyTo(name, value)
+        env.BindLocallyTo(name, value)
     }
     return
 }
 
-func Let(args *Data) (result *Data, err error) {
+func Let(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) < 1 {
         err = errors.New("Let requires at least a list of bindings")
         return
@@ -961,25 +959,24 @@ func Let(args *Data) (result *Data, err error) {
         return
     }
 
-    PushLocalBindings()
-    BindLetLocals(Car(args))
+    localFrame := NewSymbolTableFrameBelow(env)
+    BindLetLocals(Car(args), localFrame)
 
     for cell := Cdr(args); NotNilP(cell); cell = Cdr(cell) {
         sexpr := Car(cell)
-        result, err = Eval(sexpr)
+        result, err = Eval(sexpr, localFrame)
         if err != nil {
             return
         }
     }
-    PopLocalBindings()
 
     return
 }
 
-func Begin(args *Data) (result *Data, err error) {
+func Begin(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     for cell := args; NotNilP(cell); cell = Cdr(cell) {
         sexpr := Car(cell)
-        result, err = Eval(sexpr)
+        result, err = Eval(sexpr, env)
         if err != nil {
             return
         }
@@ -988,5 +985,5 @@ func Begin(args *Data) (result *Data, err error) {
 }
 
 /// Function template
-// func <function>(args *Data) (result *Data, err error) {
+// func <function>(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 // }
