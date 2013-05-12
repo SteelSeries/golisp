@@ -62,6 +62,7 @@ func InitBuiltins() {
     MakePrimitiveFunction("begin", -1, Begin)
 
     // list access
+    MakePrimitiveFunction("list", -1, MakeList)
     MakePrimitiveFunction("length", 1, ListLength)
 
     MakePrimitiveFunction("car", 1, ExposedCar)
@@ -536,6 +537,20 @@ func Map(args *Data) (result *Data, err error) {
 
 func Quote(args *Data) (result *Data, err error) {
     return Car(args), nil
+}
+
+func MakeList(args *Data) (result *Data, err error) {
+    var items []*Data = make([]*Data, 0, Length(args))
+    var item *Data
+    for cell := args; NotNilP(cell); cell = Cdr(cell) {
+        item, err = Eval(Car(cell))
+        if err != nil {
+            return
+        }
+        items = append(items, item)
+    }
+    result = ArrayToList(items)
+    return
 }
 
 func ExposedCar(args *Data) (result *Data, err error) {
