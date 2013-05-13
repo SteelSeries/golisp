@@ -940,9 +940,9 @@ func Describe(args *Data, env *SymbolTableFrame) (d *Data, e error) {
 }
 
 func SetVar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    symbol, err := Eval(Car(args), env)
-    if err != nil {
-        return
+    symbol := Car(args)
+    if !SymbolP(symbol) {
+        err = errors.New("set! requires a raw (unevaluated) symbol as it's first argument.")
     }
     value, err := Eval(Cadr(args), env)
     if err != nil {
