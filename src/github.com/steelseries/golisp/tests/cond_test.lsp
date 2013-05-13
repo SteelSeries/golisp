@@ -1,0 +1,20 @@
+(describe basic-cond
+          (== (cond (#t 1)
+                    (#f 2))
+              1)
+          (== (cond (#f 1)
+                    (#t 2))
+              2)
+          (== (cond (#f 1)
+                    (#f 2)
+                    (else 3))
+              3))
+
+(describe multi-expr-cond
+          (== (cond (#f 1)
+                    (#t 1 2 3))
+              3)
+          (== (cond (#f 1 2 3)
+                    (#f 4 5 6)
+                    (else 7 8 9))
+              9))

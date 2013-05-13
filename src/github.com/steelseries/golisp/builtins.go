@@ -53,6 +53,7 @@ func InitBuiltins() {
     MakePrimitiveFunction("or", -1, BooleanOr)
 
     // special forms
+    MakePrimitiveFunction("cond", -1, Cond)
     MakePrimitiveFunction("if", -1, If)
     MakePrimitiveFunction("lambda", -1, Lambda)
     MakePrimitiveFunction("define", -1, Define)
@@ -457,6 +458,31 @@ func BooleanOr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         }
     }
     result = False
+    return
+}
+
+func Cond(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    var condition *Data
+    for c := args; NotNilP(c); c = Cdr(c) {
+        clause := Car(c)
+        if !PairP(clause) {
+            err = errors.New("Cond expect a sequence of clauses that are lists")
+            return
+        }
+        condition, err = Eval(Car(clause), env)
+        if err != nil {
+            return
+        }
+        if BooleanValue(condition) || StringValue(Car(clause)) == "else" {
+            for e := Cdr(clause); NotNilP(e); e = Cdr(e) {
+                result, err = Eval(Car(e), env)
+                if err != nil {
+                    return
+                }
+            }
+            return
+        }
+    }
     return
 }
 

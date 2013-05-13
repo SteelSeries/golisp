@@ -330,9 +330,33 @@ There is a shortcut for quote that uses the single quote:
     '(+ 1 2) ==> (+ 1 2)
 \end{verbatim}
 
+\noindent{\bf\large\verb|(cond (<predicate> <sexpr>...)...)|}
+
+Each predicate is evaluated in order until one results in true value.
+The expressions associated with this predicate are then evaluated in order,
+and the result of the \verb|cond| is the result of the last
+evaluation. If all predicates evaluate to false values, the value of
+cond in indeterminate. If, however, the final predicate is the symbol
+\verb|else| the expressions associated with it are evaluated, and the
+value of \verb|cond| is the value of the last evaluation.
+
+\begin{verbatim}
+  (cond ((> 3 2) 'greater)
+        ((< 3 2) 'less)) ==> greater
+
+  (cond ((> 3 3) 'greater)
+        ((< 3 3) 'less)
+        (else 'equal)) ==> equal
+\end{verbatim}
+
 \noindent{\bf\large\verb|(if <condition> <true clause>)|}
 
-If the condition evaluates to logically true, the true clause is
+This is a special case of \verb|cond| that is more familiar to
+programmers used to Algol style languages. \verb|if| has two forms,
+one that conditionally evaluates a single sexpr (see below about
+\verb|begin| which provides a way to use multiple sexprs in this context).
+
+Iff the condition evaluates to logically true, the true clause is
 evaluated and the result is the result of the if form, otherwise nil
 is the result of the if form. 
 
