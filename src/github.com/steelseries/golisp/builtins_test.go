@@ -6,7 +6,6 @@
 package golisp
 
 import (
-    "container/list"
     . "launchpad.net/gocheck"
 )
 
@@ -16,7 +15,7 @@ type BuiltinsSuite struct {
 var _ = Suite(&BuiltinsSuite{})
 
 func (s *BuiltinsSuite) SetUpSuite(c *C) {
-    symbolTable = NewSymbolTableFrameBelow(nil)
+    Global = NewSymbolTableFrameBelow(nil)
     InitBuiltins()
 }
 
@@ -24,7 +23,7 @@ func (s *BuiltinsSuite) SetUpSuite(c *C) {
 
 func (s *BuiltinsSuite) TestUnaryAdd(c *C) {
     code, _ := Parse("(+ 1)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, NumberType)
@@ -33,7 +32,7 @@ func (s *BuiltinsSuite) TestUnaryAdd(c *C) {
 
 func (s *BuiltinsSuite) TestBinaryAdd(c *C) {
     code, _ := Parse("(+ 1 2)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, NumberType)
@@ -42,7 +41,7 @@ func (s *BuiltinsSuite) TestBinaryAdd(c *C) {
 
 func (s *BuiltinsSuite) TestTrinaryAdd(c *C) {
     code, _ := Parse("(+ 1 2 3)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, NumberType)
@@ -53,7 +52,7 @@ func (s *BuiltinsSuite) TestTrinaryAdd(c *C) {
 
 func (s *BuiltinsSuite) TestNegate(c *C) {
     code, _ := Parse("(- 1)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, NumberType)
@@ -62,7 +61,7 @@ func (s *BuiltinsSuite) TestNegate(c *C) {
 
 func (s *BuiltinsSuite) TestBinarySubtract(c *C) {
     code, _ := Parse("(- 2 1)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, NumberType)
@@ -71,7 +70,7 @@ func (s *BuiltinsSuite) TestBinarySubtract(c *C) {
 
 func (s *BuiltinsSuite) TestTrinarySubtract(c *C) {
     code, _ := Parse("(- 3 2 1)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, NumberType)
@@ -80,7 +79,7 @@ func (s *BuiltinsSuite) TestTrinarySubtract(c *C) {
 
 func (s *BuiltinsSuite) TestNegativeResult(c *C) {
     code, _ := Parse("(- 2 4)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, NumberType)
@@ -91,7 +90,7 @@ func (s *BuiltinsSuite) TestNegativeResult(c *C) {
 
 func (s *BuiltinsSuite) TestUnaryMultiply(c *C) {
     code, _ := Parse("(* 2)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, NumberType)
@@ -100,7 +99,7 @@ func (s *BuiltinsSuite) TestUnaryMultiply(c *C) {
 
 func (s *BuiltinsSuite) TestBinaryMultiplty(c *C) {
     code, _ := Parse("(* 2 3)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, NumberType)
@@ -109,7 +108,7 @@ func (s *BuiltinsSuite) TestBinaryMultiplty(c *C) {
 
 func (s *BuiltinsSuite) TestTrinaryMultiply(c *C) {
     code, _ := Parse("(* 2 3 4)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, NumberType)
@@ -120,7 +119,7 @@ func (s *BuiltinsSuite) TestTrinaryMultiply(c *C) {
 
 func (s *BuiltinsSuite) TestUnaryQuotient(c *C) {
     code, _ := Parse("(/ 24)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, NumberType)
@@ -129,7 +128,7 @@ func (s *BuiltinsSuite) TestUnaryQuotient(c *C) {
 
 func (s *BuiltinsSuite) TestBinaryQuotient(c *C) {
     code, _ := Parse("(/ 24 2)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, NumberType)
@@ -138,7 +137,7 @@ func (s *BuiltinsSuite) TestBinaryQuotient(c *C) {
 
 func (s *BuiltinsSuite) TestTrinaryQuotient(c *C) {
     code, _ := Parse("(/ 24 2 3)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, NumberType)
@@ -149,7 +148,7 @@ func (s *BuiltinsSuite) TestTrinaryQuotient(c *C) {
 
 func (s *BuiltinsSuite) TestCompoundMath(c *C) {
     code, _ := Parse("(+ 1 (* 2 3))")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, NumberType)
@@ -160,7 +159,7 @@ func (s *BuiltinsSuite) TestCompoundMath(c *C) {
 
 func (s *BuiltinsSuite) TestIfTrueWithThen(c *C) {
     code, _ := Parse("(if #t 5)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, NumberType)
@@ -169,14 +168,14 @@ func (s *BuiltinsSuite) TestIfTrueWithThen(c *C) {
 
 func (s *BuiltinsSuite) TestIfFalseWithThen(c *C) {
     code, _ := Parse("(if #f 5)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, IsNil)
 }
 
 func (s *BuiltinsSuite) TestIfTrueWithThenAndElse(c *C) {
     code, _ := Parse("(if #t 5 10)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, NumberType)
@@ -185,7 +184,7 @@ func (s *BuiltinsSuite) TestIfTrueWithThenAndElse(c *C) {
 
 func (s *BuiltinsSuite) TestIfFalseWithThenAndElse(c *C) {
     code, _ := Parse("(if #f 5 10)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, NumberType)
@@ -194,35 +193,35 @@ func (s *BuiltinsSuite) TestIfFalseWithThenAndElse(c *C) {
 
 func (s *BuiltinsSuite) TestIfTrueWithNoClauses(c *C) {
     code, _ := Parse("(if #t)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, NotNil)
     c.Assert(result, IsNil)
 }
 
 func (s *BuiltinsSuite) TestIfFalseWithNoClauses(c *C) {
     code, _ := Parse("(if #f)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, NotNil)
     c.Assert(result, IsNil)
 }
 
 func (s *BuiltinsSuite) TestIfWithNoArgs(c *C) {
     code, _ := Parse("(if)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, NotNil)
     c.Assert(result, IsNil)
 }
 
 func (s *BuiltinsSuite) TestWithTooManyArgs(c *C) {
     code, _ := Parse("(if #f 2 3 4)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, NotNil)
     c.Assert(result, IsNil)
 }
 
 func (s *BuiltinsSuite) TestIfTrueWithMoreInvolvedArgs(c *C) {
     code, _ := Parse("(if #t (+ 3 2) (- 3 2))")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, NumberType)
@@ -231,7 +230,7 @@ func (s *BuiltinsSuite) TestIfTrueWithMoreInvolvedArgs(c *C) {
 
 func (s *BuiltinsSuite) TestIfFalseWithMoreInvolvedArgs(c *C) {
     code, _ := Parse("(if #f (+ 3 2) (- 3 2))")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, NumberType)
@@ -242,19 +241,19 @@ func (s *BuiltinsSuite) TestIfFalseWithMoreInvolvedArgs(c *C) {
 
 func (s *BuiltinsSuite) TestRemainderWithNoArgs(c *C) {
     code, _ := Parse("(%)")
-    _, err := Eval(code)
+    _, err := Eval(code, Global)
     c.Assert(err, NotNil)
 }
 
 func (s *BuiltinsSuite) TestRemainderWithOneArg(c *C) {
     code, _ := Parse("(% 5)")
-    _, err := Eval(code)
+    _, err := Eval(code, Global)
     c.Assert(err, NotNil)
 }
 
 func (s *BuiltinsSuite) TestRemainder1(c *C) {
     code, _ := Parse("(% 5 2)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, NumberType)
@@ -263,7 +262,7 @@ func (s *BuiltinsSuite) TestRemainder1(c *C) {
 
 func (s *BuiltinsSuite) TestRemainder3(c *C) {
     code, _ := Parse("(% 7 4)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, NumberType)
@@ -272,7 +271,7 @@ func (s *BuiltinsSuite) TestRemainder3(c *C) {
 
 func (s *BuiltinsSuite) TestRemainder0(c *C) {
     code, _ := Parse("(% 7 7)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, NumberType)
@@ -283,19 +282,19 @@ func (s *BuiltinsSuite) TestRemainder0(c *C) {
 
 func (s *BuiltinsSuite) TestLessThanWithNoArgs(c *C) {
     code, _ := Parse("(<)")
-    _, err := Eval(code)
+    _, err := Eval(code, Global)
     c.Assert(err, NotNil)
 }
 
 func (s *BuiltinsSuite) TestLessThanWithOneArg(c *C) {
     code, _ := Parse("(< 5)")
-    _, err := Eval(code)
+    _, err := Eval(code, Global)
     c.Assert(err, NotNil)
 }
 
 func (s *BuiltinsSuite) TestLessThanFalse(c *C) {
     code, _ := Parse("(< 5 2)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, BooleanType)
@@ -304,7 +303,7 @@ func (s *BuiltinsSuite) TestLessThanFalse(c *C) {
 
 func (s *BuiltinsSuite) TestLessThanTrue(c *C) {
     code, _ := Parse("(< 2 5)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, BooleanType)
@@ -313,7 +312,7 @@ func (s *BuiltinsSuite) TestLessThanTrue(c *C) {
 
 func (s *BuiltinsSuite) TestLessThanBoundry(c *C) {
     code, _ := Parse("(< 2 2)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, BooleanType)
@@ -324,19 +323,19 @@ func (s *BuiltinsSuite) TestLessThanBoundry(c *C) {
 
 func (s *BuiltinsSuite) TestGreaterThanWithNoArgs(c *C) {
     code, _ := Parse("(>)")
-    _, err := Eval(code)
+    _, err := Eval(code, Global)
     c.Assert(err, NotNil)
 }
 
 func (s *BuiltinsSuite) TestGreaterThanWithOneArg(c *C) {
     code, _ := Parse("(> 5)")
-    _, err := Eval(code)
+    _, err := Eval(code, Global)
     c.Assert(err, NotNil)
 }
 
 func (s *BuiltinsSuite) TestGreaterThanFalse(c *C) {
     code, _ := Parse("(> 2 5)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, BooleanType)
@@ -345,7 +344,7 @@ func (s *BuiltinsSuite) TestGreaterThanFalse(c *C) {
 
 func (s *BuiltinsSuite) TestGreaterThanTrue(c *C) {
     code, _ := Parse("(> 5 2)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, BooleanType)
@@ -354,7 +353,7 @@ func (s *BuiltinsSuite) TestGreaterThanTrue(c *C) {
 
 func (s *BuiltinsSuite) TestGreaterThanBoundry(c *C) {
     code, _ := Parse("(> 2 2)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, BooleanType)
@@ -365,19 +364,19 @@ func (s *BuiltinsSuite) TestGreaterThanBoundry(c *C) {
 
 func (s *BuiltinsSuite) TestEqualToWithNoArgs(c *C) {
     code, _ := Parse("(==)")
-    _, err := Eval(code)
+    _, err := Eval(code, Global)
     c.Assert(err, NotNil)
 }
 
 func (s *BuiltinsSuite) TestEqualToWithOneArg(c *C) {
     code, _ := Parse("(== 5)")
-    _, err := Eval(code)
+    _, err := Eval(code, Global)
     c.Assert(err, NotNil)
 }
 
 func (s *BuiltinsSuite) TestEqualToFalse(c *C) {
     code, _ := Parse("(== 2 5)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, BooleanType)
@@ -386,7 +385,7 @@ func (s *BuiltinsSuite) TestEqualToFalse(c *C) {
 
 func (s *BuiltinsSuite) TestEqualToTrue(c *C) {
     code, _ := Parse("(== 2 2)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, BooleanType)
@@ -397,19 +396,19 @@ func (s *BuiltinsSuite) TestEqualToTrue(c *C) {
 
 func (s *BuiltinsSuite) TestNotEqualToWithNoArgs(c *C) {
     code, _ := Parse("(!=)")
-    _, err := Eval(code)
+    _, err := Eval(code, Global)
     c.Assert(err, NotNil)
 }
 
 func (s *BuiltinsSuite) TestNotEqualToWithOneArg(c *C) {
     code, _ := Parse("(!= 5)")
-    _, err := Eval(code)
+    _, err := Eval(code, Global)
     c.Assert(err, NotNil)
 }
 
 func (s *BuiltinsSuite) TestNotEqualToFalse(c *C) {
     code, _ := Parse("(!= 2 2)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, BooleanType)
@@ -418,7 +417,7 @@ func (s *BuiltinsSuite) TestNotEqualToFalse(c *C) {
 
 func (s *BuiltinsSuite) TestNotEqualToTrue(c *C) {
     code, _ := Parse("(!= 2 5)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, BooleanType)
@@ -429,19 +428,19 @@ func (s *BuiltinsSuite) TestNotEqualToTrue(c *C) {
 
 func (s *BuiltinsSuite) TestLessThanEqualWithNoArgs(c *C) {
     code, _ := Parse("(<=)")
-    _, err := Eval(code)
+    _, err := Eval(code, Global)
     c.Assert(err, NotNil)
 }
 
 func (s *BuiltinsSuite) TestLessThanEqualWithOneArg(c *C) {
     code, _ := Parse("(<= 5)")
-    _, err := Eval(code)
+    _, err := Eval(code, Global)
     c.Assert(err, NotNil)
 }
 
 func (s *BuiltinsSuite) TestLessThanEqualFalse(c *C) {
     code, _ := Parse("(<= 5 2)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, BooleanType)
@@ -450,7 +449,7 @@ func (s *BuiltinsSuite) TestLessThanEqualFalse(c *C) {
 
 func (s *BuiltinsSuite) TestLessThanEqualTrue(c *C) {
     code, _ := Parse("(<= 2 5)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, BooleanType)
@@ -459,7 +458,7 @@ func (s *BuiltinsSuite) TestLessThanEqualTrue(c *C) {
 
 func (s *BuiltinsSuite) TestLessThanEqualBoundry(c *C) {
     code, _ := Parse("(<= 2 2)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, BooleanType)
@@ -470,19 +469,19 @@ func (s *BuiltinsSuite) TestLessThanEqualBoundry(c *C) {
 
 func (s *BuiltinsSuite) TestGreaterThanEqualWithNoArgs(c *C) {
     code, _ := Parse("(>=)")
-    _, err := Eval(code)
+    _, err := Eval(code, Global)
     c.Assert(err, NotNil)
 }
 
 func (s *BuiltinsSuite) TestGreaterThanEqualWithOneArg(c *C) {
     code, _ := Parse("(>= 5)")
-    _, err := Eval(code)
+    _, err := Eval(code, Global)
     c.Assert(err, NotNil)
 }
 
 func (s *BuiltinsSuite) TestGreaterThanEqualFalse(c *C) {
     code, _ := Parse("(>= 2 5)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, BooleanType)
@@ -491,7 +490,7 @@ func (s *BuiltinsSuite) TestGreaterThanEqualFalse(c *C) {
 
 func (s *BuiltinsSuite) TestGreaterThanEqualTrue(c *C) {
     code, _ := Parse("(>= 5 2)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, BooleanType)
@@ -500,7 +499,7 @@ func (s *BuiltinsSuite) TestGreaterThanEqualTrue(c *C) {
 
 func (s *BuiltinsSuite) TestGreaterThanEqualBoundry(c *C) {
     code, _ := Parse("(>= 2 2)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, BooleanType)
@@ -511,13 +510,13 @@ func (s *BuiltinsSuite) TestGreaterThanEqualBoundry(c *C) {
 
 func (s *BuiltinsSuite) TestNotWithNoArgs(c *C) {
     code, _ := Parse("(!)")
-    _, err := Eval(code)
+    _, err := Eval(code, Global)
     c.Assert(err, NotNil)
 }
 
 func (s *BuiltinsSuite) TestNotWithFalse(c *C) {
     code, _ := Parse("(! #f)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, BooleanType)
@@ -526,7 +525,7 @@ func (s *BuiltinsSuite) TestNotWithFalse(c *C) {
 
 func (s *BuiltinsSuite) TestNotWithTrue(c *C) {
     code, _ := Parse("(! #t)")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, BooleanType)
@@ -535,9 +534,9 @@ func (s *BuiltinsSuite) TestNotWithTrue(c *C) {
 
 func (s *BuiltinsSuite) TestDefine(c *C) {
     code, _ := Parse("(define x 5)")
-    Eval(code)
-    sym := Intern("x")
-    v := ValueOf(sym)
+    Eval(code, Global)
+    sym := SymbolWithName("x")
+    v := Global.ValueOf(sym)
     c.Assert(v, NotNil)
     c.Assert(TypeOf(v), Equals, NumberType)
     c.Assert(IntValue(v), Equals, 5)
@@ -545,18 +544,18 @@ func (s *BuiltinsSuite) TestDefine(c *C) {
 
 func (s *BuiltinsSuite) TestDefineNotSymbol(c *C) {
     code, _ := Parse(`(define "x" 5)`)
-    _, err := Eval(code)
+    _, err := Eval(code, Global)
     c.Assert(err, NotNil)
 }
 
 func (s *BuiltinsSuite) TestDefineFunction(c *C) {
     code, _ := Parse("(define (foo y) (+ y y))")
-    _, err := Eval(code)
+    _, err := Eval(code, Global)
     c.Assert(err, IsNil)
 
     code, err = Parse("(foo 5)")
     c.Assert(err, IsNil)
-    v, err := Eval(code)
+    v, err := Eval(code, Global)
     c.Assert(err, IsNil)
 
     c.Assert(v, NotNil)
@@ -566,7 +565,7 @@ func (s *BuiltinsSuite) TestDefineFunction(c *C) {
 
 func (s *BuiltinsSuite) TestMapSingleCollection(c *C) {
     code, _ := Parse("(map (lambda (x) (* x 2)) (quote (1 2 3)))")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
 
     c.Assert(result, NotNil)
@@ -587,7 +586,7 @@ func (s *BuiltinsSuite) TestMapSingleCollection(c *C) {
 
 // func (s *BuiltinsSuite) TestMapMultipleCollection(c *C) {
 //     code, _ := Parse("(map (lambda (x y) (* x y)) (quote (1 2 3)) (quote (4 5 6)))")
-//     result, err := Eval(code)
+//     result, err := Eval(code, Global)
 //     c.Assert(err, IsNil)
 
 //     c.Assert(result, NotNil)
@@ -608,7 +607,7 @@ func (s *BuiltinsSuite) TestMapSingleCollection(c *C) {
 
 func (s *BuiltinsSuite) TestQuote(c *C) {
     code, _ := Parse("(quote (1 2))")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
 
     c.Assert(result, NotNil)
@@ -625,7 +624,7 @@ func (s *BuiltinsSuite) TestQuote(c *C) {
 
 func (s *BuiltinsSuite) TestQuoteShortcut(c *C) {
     code, _ := Parse("'(1 2) ")
-    result, err := Eval(code)
+    result, err := Eval(code, Global)
     c.Assert(err, IsNil)
 
     c.Assert(result, NotNil)

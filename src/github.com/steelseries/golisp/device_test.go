@@ -139,12 +139,12 @@ func (s *DeviceSuite) TestUint8AndUint8FromJson(c *C) {
 func (s *DeviceSuite) TestComplexStructureFromJson(c *C) {
 
     stMap := NewStruct("mapstruct")
-    BindTo(SymbolWithName("mapstruct"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stMap)))
+    Global.BindTo(SymbolWithName("mapstruct"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stMap)))
     stMap.AddField(NewField("f1", "uint8", 1, 2, nil, nil))
     stMap.AddField(NewField("f2", "uint8", 1, 1, nil, nil))
 
     stTest := NewStruct("test")
-    BindTo(SymbolWithName("test"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stTest)))
+    Global.BindTo(SymbolWithName("test"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stTest)))
 
     stTest.AddField(NewField("map", "mapstruct", 1, 1, nil, nil))
     stTest.AddField(NewField("f3", "uint8", 1, 1, nil, nil))
@@ -164,12 +164,12 @@ func (s *DeviceSuite) TestComplexStructureFromBytes(c *C) {
     bytes := []byte{47, 75, 185, 85}
 
     stMap := NewStruct("mapstruct")
-    BindTo(SymbolWithName("mapstruct"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stMap)))
+    Global.BindTo(SymbolWithName("mapstruct"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stMap)))
     stMap.AddField(NewField("f1", "uint8", 1, 2, nil, nil))
     stMap.AddField(NewField("f2", "uint8", 1, 1, nil, nil))
 
     stTest := NewStruct("test")
-    BindTo(SymbolWithName("test"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stTest)))
+    Global.BindTo(SymbolWithName("test"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stTest)))
 
     stTest.AddField(NewField("map", "mapstruct", 1, 1, nil, nil))
     stTest.AddField(NewField("f3", "uint8", 1, 1, nil, nil))
@@ -187,12 +187,12 @@ func (s *DeviceSuite) TestComplexStructureFromBytes(c *C) {
 func (s *DeviceSuite) TestComplexStructureWithMultipleTypesFromJson(c *C) {
 
     stMap := NewStruct("mapstruct")
-    BindTo(SymbolWithName("mapstruct"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stMap)))
+    Global.BindTo(SymbolWithName("mapstruct"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stMap)))
     stMap.AddField(NewField("f1", "uint8", 1, 2, nil, nil))
     stMap.AddField(NewField("f2", "uint32", 1, 1, nil, nil))
 
     stTest := NewStruct("test")
-    BindTo(SymbolWithName("test"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stTest)))
+    Global.BindTo(SymbolWithName("test"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stTest)))
 
     stTest.AddField(NewField("map", "mapstruct", 1, 1, nil, nil))
     stTest.AddField(NewField("f3", "uint8", 1, 1, nil, nil))
@@ -212,12 +212,12 @@ func (s *DeviceSuite) TestComplexStructureWithMultipleTypesFromBytes(c *C) {
     bytes := []byte{0x2f, 0x4B, 0x00, 0x00, 0xA8, 0xD2, 0x02, 0x00, 0x55}
 
     stMap := NewStruct("mapstruct")
-    BindTo(SymbolWithName("mapstruct"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stMap)))
+    Global.BindTo(SymbolWithName("mapstruct"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stMap)))
     stMap.AddField(NewField("f1", "uint8", 1, 2, nil, nil))
     stMap.AddField(NewField("f2", "uint32", 4, 1, nil, nil))
 
     stTest := NewStruct("test")
-    BindTo(SymbolWithName("test"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stTest)))
+    Global.BindTo(SymbolWithName("test"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stTest)))
 
     stTest.AddField(NewField("map", "mapstruct", 1, 1, nil, nil))
     stTest.AddField(NewField("f3", "uint8", 1, 1, nil, nil))
@@ -236,12 +236,12 @@ func (s *DeviceSuite) TestGeneratingJson(c *C) {
     bytes := []byte{0x2f, 0x4B, 0x00, 0x00, 0xA8, 0xD2, 0x02, 0x00, 0x55}
 
     stMap := NewStruct("mapstruct")
-    BindTo(SymbolWithName("mapstruct"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stMap)))
+    Global.BindTo(SymbolWithName("mapstruct"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stMap)))
     stMap.AddField(NewField("f1", "uint8", 1, 2, nil, nil))
     stMap.AddField(NewField("f2", "uint32", 4, 1, nil, nil))
 
     stTest := NewStruct("test")
-    BindTo(SymbolWithName("test"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stTest)))
+    Global.BindTo(SymbolWithName("test"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stTest)))
 
     stTest.AddField(NewField("keyed", "mapstruct", 1, 1, nil, nil))
     stTest.AddField(NewField("f3", "uint8", 1, 1, nil, nil))

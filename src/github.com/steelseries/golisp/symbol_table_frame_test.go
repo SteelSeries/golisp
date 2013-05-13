@@ -16,7 +16,7 @@ type SymbolTableFrameSuite struct {
 var _ = Suite(&SymbolTableFrameSuite{})
 
 func (s *SymbolTableFrameSuite) SetUpTest(c *C) {
-    s.frame = NewSymbolTableFrame()
+    s.frame = NewSymbolTableFrameBelow(nil)
 }
 
 func (s *SymbolTableFrameSuite) TestFetching(c *C) {
@@ -30,4 +30,30 @@ func (s *SymbolTableFrameSuite) TestFetching(c *C) {
 
     c.Assert(StringValue(fetched.Sym), Equals, "test")
     c.Assert(IntValue(fetched.Val), Equals, 42)
+}
+
+func (s *SymbolTableFrameSuite) TestInterning(c *C) {
+    s.frame.Intern("test")
+    sym, found := s.frame.findSymbol("test")
+    c.Assert(found, Equals, true)
+    c.Assert(TypeOf(sym), Equals, SymbolType)
+    c.Assert(StringValue(sym), Equals, "test")
+}
+
+func (s *SymbolTableFrameSuite) TestBinding(c *C) {
+    sym := s.frame.Intern("test")
+    s.frame.BindTo(sym, NumberWithValue(42))
+
+    binding, found := s.frame.Bindings["test"]
+    c.Assert(found, Equals, true)
+    c.Assert(binding, NotNil)
+}
+
+func (s *SymbolTableFrameSuite) TestSymbolValue(c *C) {
+    sym := s.frame.Intern("test")
+    s.frame.BindTo(sym, NumberWithValue(42))
+    val := s.frame.ValueOf(sym)
+    c.Assert(val, NotNil)
+    c.Assert(TypeOf(val), Equals, NumberType)
+    c.Assert(IntValue(val), Equals, 42)
 }

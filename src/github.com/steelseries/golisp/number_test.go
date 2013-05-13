@@ -27,7 +27,7 @@ func (s *NumberAtomSuite) TestString(c *C) {
 }
 
 func (s *NumberAtomSuite) TestEval(c *C) {
-    n, err := Eval(s.n)
+    n, err := Eval(s.n, Global)
     c.Assert(err, IsNil)
     c.Assert(n, Equals, s.n)
 }
