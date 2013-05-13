@@ -36,3 +36,5 @@ src/launchpad.net/
 *.blg
 
 *.bib
+
+.DS_Store
