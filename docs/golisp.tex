@@ -65,7 +65,7 @@ Symbols follow the follow simple rules:
 
 Typically, \verb|-| is used to seperate words in a symbol, \verb|?| is
 used at the end of the name of a predicate function, and \verb|!| is
-used at the end of the name of a fucntion that changes some state as a
+used at the end of the name of a function that changes some state as a
 side effect (\verb|set!| is a canonical example).
 
 Some builtin function names violate these rules (e.g. arithmetic and
@@ -408,6 +408,25 @@ example, consider the following code (from~\cite{sicp}, \S~3.2.2):
      (sum-of-squares (+ a 1) (* a 2)))
 \end{verbatim}
 
+Each of the three functions have their own associated environment that
+points back to the global environment.
+
+\begin{figure}[htbp] %  figure placement: here, top, bottom, or page
+   \centering
+   \includegraphics[width=5in]{function_declarations.png} 
+\caption{Procedure objects in the global frame.}
+\label{fig:funcdefs}
+\end{figure}
+
+\begin{figure}[htbp] %  figure placement: here, top, bottom, or page
+   \centering
+   \includegraphics[width=5in]{function_invocations.png} 
+\caption[Invocation Environments]{Environments created by evaluating
+  {\tt (f 5)} using the procedures in Figure~\ref{fig:funcdefs}.}
+\label{fig:funcinvocations}
+\end{figure}
+
+
 \noindent{\bf\large\verb|(define <symbol> <value>)|}
 
 Evaluates the value expression and binds it to the symbol, returning
@@ -449,9 +468,7 @@ value of evaluation of the function.
 
 \noindent{\bf\large\verb|(set! <name> <new-value>)|}
 
-The way to assign (i.e. rebind) a symbol. \verb|name| is an sexpr that is evaluated
-to arrive at the symbol to be rebound. This means that if you want to
-use a plain symbol, you need to quote it. The \verb|new-value| sexpr is
+The way to assign (i.e. rebind) a symbol. \verb|name| is the symbol to be rebound. The \verb|new-value| sexpr is
 evaluated to arrive at the new value to be bound to. Use of
 \verb|set!| is frowned upon, and should not be used without thought.
 See Chapter 3 of Structure and Interpretation of Computer Programs (by
@@ -460,7 +477,7 @@ and cons of assignment.
 
 \begin{verbatim}
   (define x 5)
-  (set! 'x 10)
+  (set! x 10)
   x ==> 10
 \end{verbatim}
 
@@ -471,7 +488,7 @@ let exits, \verb|x| still has the rebound value of \verb|10|.
 \begin{verbatim}
   (define x 5)
   (let ()
-    (set! 'x 10)
+    (set! x 10)
     x) ==> 10
   x ==> 10
 \end{verbatim}
@@ -483,7 +500,7 @@ and doesn't extend beyond it.
 \begin{verbatim}
   (define x 5)
   (let ((x 1))
-    (set! 'x 10)
+    (set! x 10)
     x) ==> 10
   x ==> 5
 \end{verbatim}
