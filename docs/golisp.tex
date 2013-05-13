@@ -94,8 +94,7 @@ detail later.
 \item[Primitives] are just as they are in Lisp or Smalltalk: functions
   written in Go and exposed as functions in Lisp. The combination of
   primitives and objects allow you to integrate with the underlying Go
-  program. 
-
+  program.
 \end{description}
 
 \section{Builtin functions}
@@ -369,6 +368,22 @@ Creates an anonymous function. This can then be used in a function call.
      5) ==> 10
 \end{verbatim}
 
+\verb|lambda| creates a local environment at the point of it's
+evaluation. This environment is attached to the resulting function,
+and any binding or symbol lookup starts in this local environment. For
+example, consider the following code (from~\cite{sicp}, \S~3.2.2):
+
+\begin{verbatim}
+  (define (square x)
+     (* x x))
+
+   (define (sum-of-squares x y)
+     (+ (square x) (square y)))
+
+   (define (f a)
+     (sum-of-squares (+ a 1) (* a 2)))
+\end{verbatim}
+
 \noindent{\bf\large\verb|(define <symbol> <value>)|}
 
 Evaluates the value expression and binds it to the symbol, returning
@@ -391,7 +406,7 @@ by using define:
 
 \noindent{\bf\large\verb|(define (<symbol> <param>...) <body>)|}
 
-A syntacticly cleaner way to name a function:
+A syntacticly cleaner way to create a named function:
 
 \verb|<symbol>| specifies the name (how you reference the function)
 
@@ -523,7 +538,16 @@ primitive functions. This takes three arguments:
   further constraints on argument counts and types. 
 \item The Go function which impliments the primitive. This function
   {\bf must} have the signature
-  \verb|func <Name>(args *Data) (result *Data, err error)| 
+  \verb|func <Name>(*Data, *SymbolTableFrame) (*Data, error)| 
+\end{enumerate}
+
+\noindent The implimenting function takes two parameters as seen
+above:
+
+\begin{enumerate}
+\item A Lisp list containing the arguments
+\item The environment in which the primitive
+  is being evaluated. This is used when calling \verb|Eval| or \verb|Apply|.
 \end{enumerate}
 
 \noindent An example:
@@ -531,13 +555,16 @@ primitive functions. This takes three arguments:
 \begin{verbatim}
     MakePrimitiveFunction("!", 1, BooleanNot)
 
-    func BooleanNot(args *Data) (result *Data, err error) {
+    func BooleanNot(args *Data, env *SymbolTableFrame) 
+                   (result *Data, err error) {
         if Length(args) != 1 {
-            err = errors.New(fmt.Sprintf("! requires 1 argument. Received %d.", Length(args)))
+            msg := fmt.Sprintf("! requires 1 argument. Received %d.", 
+                               Length(args)
+            err = errors.New(msg))
             return
         }
 
-        arg, err := Eval(Car(args))
+        arg, err := Eval(Car(args), env)
         if err != nil {
             return
         }
@@ -697,5 +724,8 @@ The implimentation of \verb|if| serves as an example:
 }
 
 \end{verbatim}
+
+\bibliographystyle{plain}
+\bibliography{lisp}
 
 \end{document}
