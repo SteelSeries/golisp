@@ -1,3 +1,9 @@
+// Copyright 2013 SteelSeries ApS. All rights reserved.
+// No license is given for the use of this source code.
+
+// This package impliments a basic LISP interpretor for embedding in a go program for scripting.
+// This file implements the device interface.
+
 package golisp
 
 import (
@@ -199,28 +205,32 @@ func (self *ExpandedStructure) ByteArray() *[]byte {
     return &bytes
 }
 
+func stepsFromPath(path string) (steps []string) {
+    return strings.Split(path, "/")[1:]
+}
+
 // populating from JSON
 
-func ExtractFromJsonWithStep(json interface{}, steps []string) uint32 {
+func (self *ExpandedField) extractValueFromJsonWithStepAndParent(json interface{}, steps []string, parentNode interface{}) {
+    // do transformation
     //    fmt.Printf("%v\n", steps)
     if len(steps) == 0 {
-        return uint32(json.(float64))
+        self.Value = uint32(json.(float64))
     } else {
         step := steps[0]
         i, err := strconv.ParseInt(step, 10, 32)
         if err != nil {
             // a hash key
-            return ExtractFromJsonWithStep((json.(map[string]interface{}))[step], steps[1:])
+            self.extractValueFromJsonWithStepAndParent((json.(map[string]interface{}))[step], steps[1:], json)
         } else {
             // an array index
-            return ExtractFromJsonWithStep((json.([]interface{}))[i], steps[1:])
+            self.extractValueFromJsonWithStepAndParent((json.([]interface{}))[i], steps[1:], json)
         }
     }
 }
 
-func ExtractFromJson(json interface{}, path string) uint32 {
-    steps := strings.Split(path, "/")[1:]
-    return ExtractFromJsonWithStep(json, steps)
+func (self *ExpandedField) extractValueFromJson(json interface{}) {
+    self.extractValueFromJsonWithStepAndParent(json, stepsFromPath(self.Path), nil)
 }
 
 func (self *ExpandedStructure) PopulateFromJson(jsonData string) {
@@ -230,8 +240,9 @@ func (self *ExpandedStructure) PopulateFromJson(jsonData string) {
     if err != nil {
         panic(errors.New("Badly formed json"))
     }
+
     for _, field := range self.Fields {
-        field.Value = ExtractFromJson(data, field.Path)
+        field.extractValueFromJson(data)
     }
 }
 
