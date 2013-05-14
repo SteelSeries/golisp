@@ -2,7 +2,7 @@
 
 (describe set-in-global-context
           (== x 4)
-          (== (begin (set! 'x 10)
+          (== (begin (set! x 10)
                      x)
               10)
           (== x 10))
@@ -12,7 +12,7 @@
 (describe set-in-local-context
           (== y 5)
           (== (let ((y 2))
-                (set! 'y 15)
+                (set! y 15)
                 y)
               15)
           (== y 5))

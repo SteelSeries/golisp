@@ -9,8 +9,10 @@
 
 (describe assoc
           (== (assoc 'a '((a.1) (b.2) (c.3))) '(a.1))
-          (== (assoc 'b '((a.1) (b.2) (c.3))) '(b.2)))
+          (== (assoc 'b '((a.1) (b.2) (c.3))) '(b.2))
+          (== (assoc 'c '((a.1) (b.2))) '()))
 
 (describe rassoc
           (== (rassoc '1 '((a.1) (b.2) (c.3))) '(a.1))
-          (== (rassoc '2 '((a.1) (b.2) (c.3))) '(b.2)))
+          (== (rassoc '2 '((a.1) (b.2) (c.3))) '(b.2))
+          (== (rassoc '3 '((a.1) (b.2))) '()))
