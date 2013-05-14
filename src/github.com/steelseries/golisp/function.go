@@ -18,36 +18,37 @@ type Function struct {
 }
 
 func MakeFunction(name string, params *Data, body *Data, parentEnv *SymbolTableFrame) *Function {
-    return &Function{Name: name, Params: params, Body: body, Env: NewSymbolTableFrameBelow(parentEnv)}
+    return &Function{Name: name, Params: params, Body: body, Env: parentEnv}
 }
 
 func (self *Function) String() string {
     return fmt.Sprintf("<func: %s>", self.Name)
 }
 
-func (self *Function) makeLocalBindings(args *Data) (err error) {
+func (self *Function) makeLocalBindings(args *Data, argEnv *SymbolTableFrame, localEnv *SymbolTableFrame) (err error) {
     if Length(args) != Length(self.Params) {
         return errors.New("Number of args must equal number of params")
     }
 
     var data *Data
     for p, a := self.Params, args; NotNilP(p); p, a = Cdr(p), Cdr(a) {
-        data, err = Eval(Car(a), self.Env)
+        data, err = Eval(Car(a), argEnv)
         if err != nil {
             return
         }
-        self.Env.BindLocallyTo(Car(p), data)
+        localEnv.BindLocallyTo(Car(p), data)
     }
     return nil
 }
 
-func (self *Function) Apply(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    err = self.makeLocalBindings(args)
+func (self *Function) Apply(args *Data, argEnv *SymbolTableFrame) (result *Data, err error) {
+    localEnv := NewSymbolTableFrameBelow(self.Env)
+    err = self.makeLocalBindings(args, argEnv, localEnv)
     if err != nil {
         return
     }
     for s := self.Body; NotNilP(s); s = Cdr(s) {
-        result, err = Eval(Car(s), self.Env)
+        result, err = Eval(Car(s), localEnv)
         if err != nil {
             return
         }

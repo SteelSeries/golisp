@@ -525,7 +525,7 @@ func ListLength(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 func Lambda(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     params := Car(args)
     body := Cdr(args)
-    return FunctionWithNameParamsBodyAndParent("", params, body, env), nil
+    return FunctionWithNameParamsBodyAndParent("anonymous", params, body, env), nil
 }
 
 func Define(args *Data, env *SymbolTableFrame) (result *Data, err error) {

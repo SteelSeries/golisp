@@ -9,7 +9,7 @@
                 (+ x (foo (- x 1))))))
 
 (describe named-lambda
-          (== (foo 0) 0)
+         (== (foo 0) 0)
           (== (foo 1) 1)
           (== (foo 2) 3)
           (== (foo 3) 6)

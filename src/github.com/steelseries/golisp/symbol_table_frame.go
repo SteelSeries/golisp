@@ -30,6 +30,7 @@ func (self *SymbolTableFrame) InternalDump(frameNumber int) {
 }
 
 func (self *SymbolTableFrame) Dump() {
+    println()
     self.InternalDump(0)
 }
 
