@@ -109,6 +109,13 @@ func InitBuiltins() {
 
     MakePrimitiveFunction("nth", 2, ExposedNth)
 
+    // associatioon lists
+
+    MakePrimitiveFunction("acons", 3, Acons)
+    MakePrimitiveFunction("pairlis", -1, Pairlis)
+    MakePrimitiveFunction("assoc", 2, Assoc)
+    MakePrimitiveFunction("rassoc", 2, Rassoc)
+
     // system
     MakePrimitiveFunction("load", 1, LoadFile)
     MakePrimitiveFunction("dump", 0, DumpSymbolTable)
@@ -901,6 +908,148 @@ func ExposedNth(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     }
 
     return Nth(col, IntValue(count)), nil
+}
+
+func Acons(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    var key *Data
+    var value *Data
+    var alist *Data
+
+    key, err = Eval(Car(args), env)
+    if err != nil {
+        return
+    }
+
+    if PairP(key) {
+        err = errors.New("Alist key can not be a list")
+        return
+    }
+
+    value, err = Eval(Cadr(args), env)
+    if err != nil {
+        return
+    }
+
+    alist, err = Eval(Caddr(args), env)
+    if err != nil {
+        return
+    }
+
+    newCell := Cons(key, value)
+    result = Cons(newCell, alist)
+    return
+}
+
+func Pairlis(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    var keys *Data
+    var values *Data
+    if Length(args) > 3 {
+        err = errors.New("pairlis takes at most three arguments")
+        return
+    }
+
+    keys, err = Eval(Car(args), env)
+    if err != nil {
+        return
+    }
+    if !PairP(keys) {
+        err = errors.New("First arg of pairlis must be a list")
+        return
+    }
+
+    values, err = Eval(Cadr(args), env)
+    if err != nil {
+        return
+    }
+
+    if !PairP(values) {
+        err = errors.New("Second arg of Pairlis must be a list")
+        return
+    }
+
+    if Length(keys) != Length(values) {
+        err = errors.New("Pairlis requires the same number of keys and values")
+        return
+    }
+
+    result, err = Eval(Caddr(args), env)
+    if err != nil {
+        return
+    }
+
+    if NotNilP(result) {
+        if !PairP(result) {
+            err = errors.New("Third arg of pairlis must be an association list (if provided)")
+            return
+        }
+    }
+
+    for keyCell, valueCell := keys, values; NotNilP(keyCell); keyCell, valueCell = Cdr(keyCell), Cdr(valueCell) {
+        key := Car(keyCell)
+        if NilP(keyCell) {
+            err = errors.New("Assoc list keys can not be nil")
+        }
+        value := Car(valueCell)
+        result = Cons(Cons(key, value), result)
+    }
+
+    return
+}
+
+func Assoc(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    var key *Data
+    var list *Data
+
+    key, err = Eval(Car(args), env)
+    if err != nil {
+        return
+    }
+
+    list, err = Eval(Cadr(args), env)
+    if err != nil {
+        return
+    }
+
+    for c := list; NotNilP(c); c = Cdr(c) {
+        pair := Car(c)
+        if !PairP(pair) {
+            err = errors.New("Assoc list must consit of dotted pairs")
+            return
+        }
+        if IsEqual(Car(pair), key) {
+            result = pair
+            return
+        }
+    }
+    return
+}
+
+func Rassoc(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    var value *Data
+    var list *Data
+
+    value, err = Eval(Car(args), env)
+    if err != nil {
+        return
+    }
+
+    list, err = Eval(Cadr(args), env)
+    if err != nil {
+        return
+    }
+
+    for c := list; NotNilP(c); c = Cdr(c) {
+        pair := Car(c)
+        if !PairP(pair) {
+            err = errors.New("Assoc list must consit of dotted pairs")
+            return
+        }
+        if IsEqual(Cdr(pair), value) {
+            result = pair
+            return
+        }
+    }
+    return
 }
 
 func LoadFile(args *Data, env *SymbolTableFrame) (result *Data, err error) {
