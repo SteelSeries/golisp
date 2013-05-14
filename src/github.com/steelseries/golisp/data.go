@@ -45,11 +45,17 @@ func TypeOf(d *Data) int {
 }
 
 func NilP(d *Data) bool {
-    return d == nil
+    if d == nil {
+        return true
+    }
+    if PairP(d) && Car(d) == nil && Cdr(d) == nil {
+        return true
+    }
+    return false
 }
 
 func NotNilP(d *Data) bool {
-    return d != nil
+    return !NilP(d)
 }
 
 func PairP(d *Data) bool {
@@ -238,7 +244,7 @@ func String(d *Data) string {
                 contents = append(contents, String(Car(c)))
                 c = Cdr(c)
             }
-            if NilP(c) {
+            if c == nil {
                 if SymbolP(Car(d)) && StringValue(Car(d)) == "quote" {
                     return fmt.Sprintf("'%s", contents[1])
                 } else {
