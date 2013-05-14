@@ -314,6 +314,44 @@ Returns the nth element, starting with 1.
   (nth '(1 2 3 4) 3) ==> 3
 \end{verbatim}
 
+\subsection{Association lists}
+
+Association lists (aka a-lists) are a classic Lisp way to handle associating a value
+with a key. Implimentation is a list of dotted pairs: the \verb|car|
+is the key, and the \verb|cdr| is the value.
+
+\noindent{\bf\large\verb|(acons <key> <value> <a-list>)|}
+
+This returns the result of adding a pair \verb|(<key> . <value>)| to
+<a-list>. \verb|<key>|, \verb|<value>|, and \verb|<a-list>| are
+evaluated.
+
+\begin{verbatim}
+  (acons 'a 1 '()) ==> ((a . 1))
+  (acons 'a 1 '((b . 2) (c . 3))) ==> ((a . 1) (b . 2) (c . 3)))
+\end{verbatim}
+
+\noindent{\bf\large\verb|(pairlis <keys> <values>)|}
+\noindent{\bf\large\verb|(pairlis <keys> <values> <a-list>)|}
+
+Creates an a-list from lists of keys and values. A third argument can
+be provided which is an exicting a-list that the new pairs will be
+added to.
+
+\begin{verbatim}
+  (pairlis '(a b) '(1 2)) ==> ((b.2) (a.1)))
+  (pairlis '(a b) '(1 2) '((c.3) (d.4))) ==>((b.2) (a.1) (c.3) (d.4))))
+\end{verbatim}
+
+Now that we have a way to create a-lists, we have a couple functions
+to get data out of them.
+
+\noindent{\bf\large\verb|(assoc <key> <a-list>)|}
+
+Return the pair 
+\noindent{\bf\large\verb|(rassoc <value> <a-list>)|}
+
+
 \section{Special forms}
 
 \noindent{\bf\large\verb|(quote <expr>)|}
