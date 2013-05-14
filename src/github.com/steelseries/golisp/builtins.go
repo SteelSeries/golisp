@@ -1062,32 +1062,6 @@ func LoadFile(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return ProcessFile(StringValue(filename))
 }
 
-func Describe(args *Data, env *SymbolTableFrame) (d *Data, e error) {
-    if !(StringP(Car(args)) || SymbolP(Car(args))) {
-        e = errors.New("The describe tag must be a string or symbol")
-        return
-    }
-    fmt.Printf("%s\n", StringValue(Car(args)))
-
-    for clauses := Cdr(args); NotNilP(clauses); clauses = Cdr(clauses) {
-        clause := Car(clauses)
-        fmt.Printf("   %s - ", String(clause))
-        result, err := Eval(clause, env)
-        if err != nil {
-            fmt.Printf("error: %s\n", err)
-            return
-        }
-        if BooleanValue(result) {
-            fmt.Printf("ok\n")
-        } else {
-            value, _ := Eval(Cadr(clause), env)
-            fmt.Printf("failed: %s is %s\n", String(Cadr(clause)), String(value))
-            return
-        }
-    }
-    return
-}
-
 func SetVar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     symbol := Car(args)
     if !SymbolP(symbol) {
@@ -1157,6 +1131,50 @@ func Begin(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         }
     }
     return
+}
+
+// testing
+
+var (
+    numberOfTests  int = 0
+    numberOfFails  int = 0
+    numberOfPasses int = 0
+    numberOfErrors int = 0
+)
+
+func Describe(args *Data, env *SymbolTableFrame) (d *Data, e error) {
+    if !(StringP(Car(args)) || SymbolP(Car(args))) {
+        e = errors.New("The describe tag must be a string or symbol")
+        return
+    }
+    fmt.Printf("%s\n", StringValue(Car(args)))
+
+    for clauses := Cdr(args); NotNilP(clauses); clauses = Cdr(clauses) {
+        clause := Car(clauses)
+        fmt.Printf("   %s - ", String(clause))
+        numberOfTests++
+        result, err := Eval(clause, env)
+        if err != nil {
+            numberOfErrors++
+            fmt.Printf("error: %s\n", err)
+            break
+        } else if BooleanValue(result) {
+            numberOfPasses++
+            fmt.Printf("ok\n")
+        } else {
+            numberOfFails++
+            value, _ := Eval(Cadr(clause), env)
+            fmt.Printf("failed: %s is %s\n", String(Cadr(clause)), String(value))
+        }
+    }
+
+    return
+}
+
+func PrintTestResults() {
+    fmt.Printf("\nDone.\n")
+    fmt.Printf("%d Tests\n", numberOfTests)
+    fmt.Printf("%d Passes, %d failures, %d errors\n", numberOfPasses, numberOfFails, numberOfErrors)
 }
 
 /// Function template

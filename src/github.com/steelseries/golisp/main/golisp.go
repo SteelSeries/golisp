@@ -26,6 +26,7 @@ func test() {
             fmt.Printf("Error: %s\n", err)
         }
     }
+    golisp.PrintTestResults()
 }
 
 func repl() {
