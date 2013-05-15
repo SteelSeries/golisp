@@ -256,3 +256,17 @@ func (s *DeviceSuite) TestGeneratingJson(c *C) {
     c.Assert((array.([]interface{}))[0], Equals, uint32(47))
     c.Assert((array.([]interface{}))[1], Equals, uint32(75))
 }
+
+func (s *DeviceSuite) TestBytesToString(c *C) {
+    var data []uint8 = []uint8{48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 65, 66, 67, 68, 69, 70}
+    i := make([]interface{}, 0, 16)
+    for _, d := range data {
+        i = append(i, d)
+    }
+    var o *Data = Cons(ObjectWithTypeAndValue("json", unsafe.Pointer(&i)), nil)
+    result, err := BytesToString(o, Global)
+    c.Assert(err, IsNil)
+    c.Assert(result, NotNil)
+    c.Assert(TypeOf(result), Equals, StringType)
+    c.Assert(StringValue(result), Equals, "0123456789ABCDEF")
+}

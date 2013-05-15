@@ -25,4 +25,5 @@ func (s *ObjectAtomSuite) TestObject(c *C) {
     s.o = ObjectWithTypeAndValue("TestStruct", unsafe.Pointer(obj))
     c.Assert(s.o.ObjType, Equals, "TestStruct")
     c.Assert((*TestStruct)(ObjectValue(s.o)), Equals, obj)
+    c.Assert((*TestStruct)(ObjectValue(s.o)).D, Equals, 5)
 }

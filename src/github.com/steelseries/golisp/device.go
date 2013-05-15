@@ -13,6 +13,7 @@ import (
     "fmt"
     "strconv"
     "strings"
+    "unsafe"
 )
 
 type DeviceStructure struct {
@@ -212,7 +213,21 @@ func stepsFromPath(path string) (steps []string) {
 // populating from JSON
 
 func (self *ExpandedField) extractValueFromJsonWithStepAndParent(json interface{}, steps []string, parentNode interface{}) {
-    // do transformation
+    if self.FieldDefinition.FromJsonTransform != nil {
+        // do transformation
+        jsonObject := ObjectWithTypeAndValue("json", unsafe.Pointer(&json))
+        parentObject := ObjectWithTypeAndValue("json", unsafe.Pointer(&parentNode))
+        args := InternalMakeList(jsonObject, parentObject)
+        transformFunction, err := Eval(self.FieldDefinition.FromJsonTransform, Global)
+        if err != nil {
+            panic(err)
+        }
+        newData, err := Apply(transformFunction, args, Global)
+        if err != nil {
+            panic(err)
+        }
+        println(String(newData))
+    }
     //    fmt.Printf("%v\n", steps)
     if len(steps) == 0 {
         self.Value = uint32(json.(float64))

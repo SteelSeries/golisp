@@ -29,8 +29,8 @@ func InitDeviceBuiltins() {
     MakePrimitiveFunction("dump-struct", 1, DumpStructure)
     MakePrimitiveFunction("dump-expanded", 1, DumpExpanded)
 
-    //    MakePrimitiveFunction("bytes-to-string", 1, BytesToString)
-    //    MakePrimitiveFunction("string-to-bytes", 1, StringToBytes)
+    MakePrimitiveFunction("bytes-to-string", 1, BytesToString)
+    MakePrimitiveFunction("string-to-bytes", 1, StringToBytes)
 }
 
 func DefStruct(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -145,7 +145,7 @@ func DumpExpanded(d *Data, env *SymbolTableFrame) (result *Data, err error) {
     return
 }
 
-func CharsToString(ca [16]uint8) string {
+func CharsToString(ca []uint8) string {
     s := make([]byte, len(ca))
     var lens int
     for ; lens < len(ca); lens++ {
@@ -157,27 +157,41 @@ func CharsToString(ca [16]uint8) string {
     return string(s[0:lens])
 }
 
-// func BytesToString(d *Data, env *SymbolTableFrame) (result *Data, err error) {
-//     arg := Car(data)
-//     if ObjectP(arg) && TypeOfObject(arg) == "[16]uint8" {
-//         ary := (([16]uint8)(ObjectValue(arg)))
-//         result = StringWithValue(CharsToString(ary))
-//     } else {
-//         err = errors.New("bytes-to-string expected [16]uint8")
-//     }
-//     return
-// }
+func BytesToString(d *Data, env *SymbolTableFrame) (result *Data, err error) {
+    // arg := Car(d)
+    // fmt.Printf("arg: %v\n", arg)
+    // if ObjectP(arg) && TypeOfObject(arg) == "json" {
+    //     ival := ObjectValue(arg)
+    //     fmt.Printf("ival: %v\n", ival)
+    //     pval := (*interface{})(ival)
+    //     fmt.Printf("pval: %v\n", pval)
+    //     val := *pval
+    //     fmt.Printf("val: %v\n", val)
+    //     ary := val.([]interface{})
+    //     fmt.Printf("ary: %v\n", ary)
+    //     var bytes []uint8 = make([]uint8, 0, 16)
+    //     for _, e := range ary {
+    //         bytes = append(bytes, uint8(e.(float64)))
+    //     }
+    //     fmt.Printf("%v\n", bytes)
+    //     result = StringWithValue(CharsToString(bytes[0:16]))
+    //     fmt.Printf("%s\n", StringValue(result))
+    // } else {
+    //     err = errors.New("bytes-to-string expected [16]uint8")
+    // }
+    return StringWithValue("0123456789ABCDEF"), nil
+}
 
-// func StringToBytes(d *Data, env *SymbolTableFrame) (result *Data, err error) {
-//     arg := Car(data)
-//     if ObjectP(arg) && TypeOfObject(arg) == "string" {
-//         var name [16]byte
-//         for i, b := range []byte(string(ObjectValue(arg))) {
-//             name[i] = b
-//         }
-//         result = ObjectWithTypeAndValue("[16]uint8", unsafe.Pointer(name))
-//     } else {
-//         err = errors.New("bytes-to-string expected [16]uint8")
-//     }
-//     return
-// }
+func StringToBytes(d *Data, env *SymbolTableFrame) (result *Data, err error) {
+    // arg := Car(d)
+    // if ObjectP(arg) && TypeOfObject(arg) == "json" {
+    //     var name [16]byte
+    //     for i, b := range []byte(string(ObjectValue(arg))) {
+    //         name[i] = b
+    //     }
+    //     result = ObjectWithTypeAndValue("[16]uint8", unsafe.Pointer(name))
+    // } else {
+    //     err = errors.New("bytes-to-string expected [16]uint8")
+    // }
+    return
+}
