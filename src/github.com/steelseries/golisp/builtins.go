@@ -66,6 +66,8 @@ func InitBuiltins() {
     // list access
     MakePrimitiveFunction("list", -1, MakeList)
     MakePrimitiveFunction("length", 1, ListLength)
+    MakePrimitiveFunction("cons", 2, ExposedCons)
+    MakePrimitiveFunction("reverse", 1, ExposedReverse)
 
     MakePrimitiveFunction("car", 1, ExposedCar)
     MakePrimitiveFunction("cdr", 1, ExposedCdr)
@@ -111,9 +113,9 @@ func InitBuiltins() {
 
     // associatioon lists
 
-    MakePrimitiveFunction("acons", 3, Acons)
+    MakePrimitiveFunction("acons", 3, ExposedAcons)
     MakePrimitiveFunction("pairlis", -1, Pairlis)
-    MakePrimitiveFunction("assoc", 2, Assoc)
+    MakePrimitiveFunction("assoc", 2, ExposedAssoc)
     MakePrimitiveFunction("rassoc", 2, Rassoc)
 
     // system
@@ -522,6 +524,33 @@ func ListLength(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return NumberWithValue(Length(d)), nil
 }
 
+func ExposedCons(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    var car *Data
+    car, err = Eval(Car(args), env)
+    if err != nil {
+        return
+    }
+
+    var cdr *Data
+    cdr, err = Eval(Cadr(args), env)
+    if err != nil {
+        return
+    }
+
+    result = Cons(car, cdr)
+    return
+}
+
+func ExposedReverse(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    var val *Data
+    val, err = Eval(Car(args), env)
+    if err != nil {
+        return
+    }
+    result = Reverse(val)
+    return
+}
+
 func Lambda(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     params := Car(args)
     body := Cdr(args)
@@ -910,7 +939,7 @@ func ExposedNth(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return Nth(col, IntValue(count)), nil
 }
 
-func Acons(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func ExposedAcons(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var key *Data
     var value *Data
     var alist *Data
@@ -935,8 +964,7 @@ func Acons(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         return
     }
 
-    newCell := Cons(key, value)
-    result = Cons(newCell, alist)
+    result = Acons(key, value, alist)
     return
 }
 
@@ -990,13 +1018,13 @@ func Pairlis(args *Data, env *SymbolTableFrame) (result *Data, err error) {
             err = errors.New("Assoc list keys can not be nil")
         }
         value := Car(valueCell)
-        result = Cons(Cons(key, value), result)
+        result = Acons(key, value, result)
     }
 
     return
 }
 
-func Assoc(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func ExposedAssoc(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var key *Data
     var list *Data
 
@@ -1010,16 +1038,9 @@ func Assoc(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         return
     }
 
-    for c := list; NotNilP(c); c = Cdr(c) {
-        pair := Car(c)
-        if !PairP(pair) {
-            err = errors.New("Assoc list must consit of dotted pairs")
-            return
-        }
-        if IsEqual(Car(pair), key) {
-            result = pair
-            return
-        }
+    result = Assoc(key, list)
+    if result == nil {
+        err = errors.New("Assoc list must consit of dotted pairs")
     }
     return
 }

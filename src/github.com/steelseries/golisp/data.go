@@ -14,6 +14,8 @@ import (
 
 const (
     ConsCellType = iota
+    AlistType
+    AlistCellType
     NumberType
     BooleanType
     StringType
@@ -25,8 +27,8 @@ const (
 
 type Data struct {
     Type    int                // data type
-    Car     *Data              // ConsCellType
-    Cdr     *Data              // ConsCellType
+    Car     *Data              // ConsCellType & AlistType
+    Cdr     *Data              // ConsCellType & AlistType
     String  string             // StringType & SymbolType
     Number  int                // NumberType & BooleanType
     Func    *Function          // FunctionType
@@ -48,18 +50,26 @@ func NilP(d *Data) bool {
     if d == nil {
         return true
     }
-    if PairP(d) && Car(d) == nil && Cdr(d) == nil {
+    if (PairP(d) || AlistP(d) || DottedPairP(d)) && Car(d) == nil && Cdr(d) == nil {
         return true
     }
     return false
 }
 
 func NotNilP(d *Data) bool {
-    return !NilP(d)
+    return d != nil
 }
 
 func PairP(d *Data) bool {
     return d == nil || TypeOf(d) == ConsCellType
+}
+
+func DottedPairP(d *Data) bool {
+    return d == nil || TypeOf(d) == AlistCellType
+}
+
+func AlistP(d *Data) bool {
+    return d == nil || TypeOf(d) == AlistType
 }
 
 func SymbolP(d *Data) bool {
@@ -84,6 +94,15 @@ func FunctionP(d *Data) bool {
 
 func Cons(car *Data, cdr *Data) *Data {
     return &Data{Type: ConsCellType, Car: car, Cdr: cdr, String: "", Number: 0, Func: nil, Prim: nil}
+}
+
+func Acons(car *Data, cdr *Data, alist *Data) *Data {
+    cell := &Data{Type: AlistCellType, Car: car, Cdr: cdr, String: "", Number: 0, Func: nil, Prim: nil}
+    return &Data{Type: AlistType, Car: cell, Cdr: alist, String: "", Number: 0, Func: nil, Prim: nil}
+}
+
+func InternalMakeList(c ...*Data) *Data {
+    return ArrayToList(c)
 }
 
 func EmptyCons() *Data {
@@ -191,11 +210,42 @@ func Length(d *Data) int {
         return 0
     }
 
-    if d.Type == ConsCellType {
+    if d.Type == ConsCellType || d.Type == AlistType {
         return 1 + Length(d.Cdr)
     }
 
     return 0
+}
+
+func Reverse(d *Data) (result *Data) {
+    if d == nil {
+        return nil
+    }
+
+    if !PairP(d) {
+        return d
+    }
+
+    var l *Data = nil
+    for c := d; NotNilP(c); c = Cdr(c) {
+        l = Cons(Car(c), l)
+    }
+
+    return l
+}
+
+func Assoc(key *Data, alist *Data) (result *Data) {
+    for c := alist; NotNilP(c); c = Cdr(c) {
+        pair := Car(c)
+        if !DottedPairP(pair) {
+            return nil
+        }
+        if IsEqual(Car(pair), key) {
+            result = pair
+            return
+        }
+    }
+    return
 }
 
 func IsEqual(d *Data, o *Data) bool {
@@ -217,6 +267,19 @@ func IsEqual(d *Data, o *Data) bool {
         }
         for a1, a2 := d, o; NotNilP(a1); a1, a2 = Cdr(a1), Cdr(a2) {
             if !IsEqual(Car(a1), Car(a2)) {
+                return false
+            }
+        }
+        return true
+    }
+
+    if AlistP(d) {
+        if Length(d) != Length(o) {
+            return false
+        }
+        for c := d; NotNilP(c); c = Cdr(c) {
+            otherPair := Assoc(Caar(c), o)
+            if NilP(otherPair) || !IsEqual(Cdar(c), Cdr(otherPair)) {
                 return false
             }
         }
@@ -246,7 +309,11 @@ func String(d *Data) string {
             }
             if c == nil {
                 if SymbolP(Car(d)) && StringValue(Car(d)) == "quote" {
-                    return fmt.Sprintf("'%s", contents[1])
+                    if len(contents) == 1 {
+                        return fmt.Sprintf("'()")
+                    } else {
+                        return fmt.Sprintf("'%s", contents[1])
+                    }
                 } else {
                     return fmt.Sprintf("(%s)", strings.Join(contents, " "))
                 }
@@ -254,6 +321,19 @@ func String(d *Data) string {
                 return fmt.Sprintf("(%s . %s)", strings.Join(contents, " "), String(c))
             }
         }
+    case AlistType:
+        {
+            if NilP(Car(d)) && NilP(Cdr(d)) {
+                return "()"
+            }
+            contents := make([]string, 0, Length(d))
+            for c := d; NotNilP(c); c = Cdr(c) {
+                contents = append(contents, String(Car(c)))
+            }
+            return fmt.Sprintf("(%s)", strings.Join(contents, " "))
+        }
+    case AlistCellType:
+        return fmt.Sprintf("(%s . %s)", String(Car(d)), String(Cdr(d)))
     case NumberType:
         return fmt.Sprintf("%d", d.Number)
     case BooleanType:

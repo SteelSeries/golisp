@@ -12,7 +12,7 @@ func Car(d *Data) *Data {
         return nil
     }
 
-    if PairP(d) {
+    if PairP(d) || AlistP(d) || DottedPairP(d) {
         return d.Car
     }
 
@@ -24,7 +24,7 @@ func Cdr(d *Data) *Data {
         return nil
     }
 
-    if PairP(d) {
+    if PairP(d) || AlistP(d) || DottedPairP(d) {
         return d.Cdr
     }
 

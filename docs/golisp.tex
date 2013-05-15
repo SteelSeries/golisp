@@ -340,17 +340,32 @@ added to.
 
 \begin{verbatim}
   (pairlis '(a b) '(1 2)) ==> ((b.2) (a.1)))
-  (pairlis '(a b) '(1 2) '((c.3) (d.4))) ==>((b.2) (a.1) (c.3) (d.4))))
+  (pairlis '(a b) '(1 2) '((c.3) (d.4))) ==> ((b.2) (a.1) (c.3) (d.4))))
 \end{verbatim}
 
 Now that we have a way to create a-lists, we have a couple functions
-to get data out of them.
+to get data out of them.\\
 
 \noindent{\bf\large\verb|(assoc <key> <a-list>)|}
 
-Return the pair 
+Return the pair from \verb|<a-list>| whose \verb|car| is equal to
+\verb|<key>|. The empty pair is returned is \verb|<key>| isn't found.
+
+\begin{verbatim}
+  (assoc 'a '((a.1) (b.2) (c.3))) ==> (a.1)
+  (assoc 'c '((a.1) (b.2))) ==> ()
+\end{verbatim}
+
 \noindent{\bf\large\verb|(rassoc <value> <a-list>)|}
 
+Return the pair from \verb|<a-list>| whose \verb|cdr| is equal to
+\verb|<value>|. The empty pair is returned is \verb|<value>| isn't found.
+
+\begin{verbatim}
+  (rassoc '1 '((a.1) (b.2) (c.3))) ==> (a.1)
+  (rassoc '3 '((a.1) (b.2))) ==> ()
+
+\end{verbatim}
 
 \section{Special forms}
 
@@ -556,7 +571,7 @@ element in \verb|list| in order, returning the list of the results.
          '(1 2 3 4)) ==> (1 4 9 16)
 \end{verbatim}
 
-\noindent{\bf\large\verb|(being <sexpr>...)|}
+\noindent{\bf\large\verb|(begin <sexpr>...)|}
 
 Evaluates the each \verb|sexpr| in order, returning the result of the
 last one evaluated. Used in a context that allows a single
