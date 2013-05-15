@@ -12,18 +12,31 @@ import (
 )
 
 func JsonToLisp(json interface{}) (result *Data) {
-    // mapValue, ok := json.(map[string]interface{})
-    // if ok {
-    // }
+    mapValue, ok := json.(map[string]interface{})
+    if ok {
+        var alist *Data
+        for key, val := range mapValue {
+            value := JsonToLisp(val)
+            alist = Acons(StringWithValue(key), value, alist)
+        }
+        return alist
+    }
 
-    // arrayValue, ok := json.([]interface{})
-    // if ok {
-    // }
+    arrayValue, ok := json.([]interface{})
+    if ok {
+        var ary *Data
+        for _, val := range arrayValue {
+            value := JsonToLisp(val)
+            ary = Cons(value, ary)
+        }
+        return Reverse(ary)
+    }
 
-    // intValue, ok := json.(float64)
-    // if ok {
-    //     return NumberWithValue(int(intValue))
-    // }
+    intValue, ok := json.(float64)
+    if ok {
+        return NumberWithValue(int(intValue))
+    }
+
     return
 }
 
