@@ -37,9 +37,43 @@ func JsonToLisp(json interface{}) (result *Data) {
         return NumberWithValue(int(intValue))
     }
 
+    strValue, ok := json.(string)
+    if ok {
+        return StringWithValue(strValue)
+    }
+
     return
 }
 
 func LispToJson(d *Data) (result interface{}) {
-    return
+    if NilP(d) && !AlistP(d) && !PairP(d) {
+        return ""
+    }
+
+    if NumberP(d) {
+        return IntValue(d)
+    }
+
+    if StringP(d) {
+        return StringValue(d)
+    }
+
+    if PairP(d) {
+        ary := make([]interface{}, 0, Length(d))
+        for c := d; NotNilP(c); c = Cdr(c) {
+            ary = append(ary, LispToJson(Car(c)))
+        }
+        return ary
+    }
+
+    if AlistP(d) {
+        dict := make(map[string]interface{}, Length(d))
+        for c := d; NotNilP(c); c = Cdr(c) {
+            pair := Car(c)
+            dict[StringValue(Car(pair))] = LispToJson(Cdr(pair))
+        }
+        return dict
+    }
+
+    return ""
 }
