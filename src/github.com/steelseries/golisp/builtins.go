@@ -117,6 +117,7 @@ func InitBuiltins() {
     MakePrimitiveFunction("pairlis", -1, Pairlis)
     MakePrimitiveFunction("assoc", 2, ExposedAssoc)
     MakePrimitiveFunction("rassoc", 2, Rassoc)
+    MakePrimitiveFunction("alist", 1, ExposedAlist)
 
     // system
     MakePrimitiveFunction("load", 1, LoadFile)
@@ -939,6 +940,15 @@ func ExposedNth(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return Nth(col, IntValue(count)), nil
 }
 
+func ExposedAlist(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    l, err := Eval(Car(args), env)
+    if err != nil {
+        return
+    }
+    result = Alist(l)
+    return
+}
+
 func ExposedAcons(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var key *Data
     var value *Data
@@ -1038,10 +1048,7 @@ func ExposedAssoc(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         return
     }
 
-    result = Assoc(key, list)
-    if result == nil {
-        err = errors.New("Assoc list must consit of dotted pairs")
-    }
+    result, err = Assoc(key, list)
     return
 }
 
@@ -1061,8 +1068,8 @@ func Rassoc(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
     for c := list; NotNilP(c); c = Cdr(c) {
         pair := Car(c)
-        if !PairP(pair) {
-            err = errors.New("Assoc list must consit of dotted pairs")
+        if !PairP(pair) && !DottedPairP(pair) {
+            err = errors.New("Assoc list must consist of dotted pairs")
             return
         }
         if IsEqual(Cdr(pair), value) {

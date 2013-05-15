@@ -101,6 +101,18 @@ func Acons(car *Data, cdr *Data, alist *Data) *Data {
     return &Data{Type: AlistType, Car: cell, Cdr: alist, String: "", Number: 0, Func: nil, Prim: nil}
 }
 
+func Alist(d *Data) *Data {
+    if NilP(d) {
+        return nil
+    }
+
+    if PairP(d) {
+        return Acons(Caar(d), Cdar(d), Alist(Cdr(d)))
+    }
+
+    return d
+}
+
 func InternalMakeList(c ...*Data) *Data {
     return ArrayToList(c)
 }
@@ -234,11 +246,12 @@ func Reverse(d *Data) (result *Data) {
     return l
 }
 
-func Assoc(key *Data, alist *Data) (result *Data) {
+func Assoc(key *Data, alist *Data) (result *Data, err error) {
     for c := alist; NotNilP(c); c = Cdr(c) {
         pair := Car(c)
-        if !DottedPairP(pair) {
-            return nil
+        if !DottedPairP(pair) && !PairP(pair) {
+            err = errors.New("Alist key can not be a list")
+            return
         }
         if IsEqual(Car(pair), key) {
             result = pair
@@ -257,7 +270,15 @@ func IsEqual(d *Data, o *Data) bool {
         return false
     }
 
-    if TypeOf(d) != TypeOf(o) {
+    if AlistP(d) {
+        if !AlistP(o) && !PairP(o) {
+            return false
+        }
+    } else if TypeOf(d) == AlistCellType {
+        if TypeOf(o) != ConsCellType && TypeOf(o) != AlistCellType {
+            return false
+        }
+    } else if TypeOf(o) != TypeOf(d) {
         return false
     }
 
@@ -278,12 +299,16 @@ func IsEqual(d *Data, o *Data) bool {
             return false
         }
         for c := d; NotNilP(c); c = Cdr(c) {
-            otherPair := Assoc(Caar(c), o)
-            if NilP(otherPair) || !IsEqual(Cdar(c), Cdr(otherPair)) {
+            otherPair, err := Assoc(Caar(c), o)
+            if err != nil || NilP(otherPair) || !IsEqual(Cdar(c), Cdr(otherPair)) {
                 return false
             }
         }
         return true
+    }
+
+    if TypeOf(d) == AlistCellType {
+        return IsEqual(Car(d), Car(o)) && IsEqual(Cdr(d), Cdr(o))
     }
 
     return *d == *o
