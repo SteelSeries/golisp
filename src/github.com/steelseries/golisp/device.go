@@ -13,7 +13,6 @@ import (
     "fmt"
     "strconv"
     "strings"
-    "unsafe"
 )
 
 type DeviceStructure struct {
@@ -212,12 +211,10 @@ func stepsFromPath(path string) (steps []string) {
 
 // populating from JSON
 
-func (self *ExpandedField) extractValueFromJsonWithStepAndParent(json interface{}, steps []string, parentNode interface{}) {
+func (self *ExpandedField) extractValueFromJsonWithStepAndParent(json *Data, steps []string, parentNode *Data) {
     if self.FieldDefinition.FromJsonTransform != nil {
         // do transformation
-        jsonObject := ObjectWithTypeAndValue("json", unsafe.Pointer(&json))
-        parentObject := ObjectWithTypeAndValue("json", unsafe.Pointer(&parentNode))
-        args := InternalMakeList(jsonObject, parentObject)
+        args := InternalMakeList(json, parentNode)
         transformFunction, err := Eval(self.FieldDefinition.FromJsonTransform, Global)
         if err != nil {
             panic(err)
@@ -228,24 +225,27 @@ func (self *ExpandedField) extractValueFromJsonWithStepAndParent(json interface{
         }
         println(String(newData))
     }
-    //    fmt.Printf("%v\n", steps)
+
     if len(steps) == 0 {
-        self.Value = uint32(json.(float64))
+        self.Value = uint32(IntValue(json))
     } else {
         step := steps[0]
         i, err := strconv.ParseInt(step, 10, 32)
         if err != nil {
             // a hash key
-            self.extractValueFromJsonWithStepAndParent((json.(map[string]interface{}))[step], steps[1:], json)
+            value, err := Assoc(StringWithValue(step), json)
+            if err == nil {
+                self.extractValueFromJsonWithStepAndParent(Cdr(value), steps[1:], json)
+            }
         } else {
             // an array index
-            self.extractValueFromJsonWithStepAndParent((json.([]interface{}))[i], steps[1:], json)
+            self.extractValueFromJsonWithStepAndParent(Nth(json, int(i)+1), steps[1:], json)
         }
     }
 }
 
-func (self *ExpandedField) extractValueFromJson(json interface{}) {
-    self.extractValueFromJsonWithStepAndParent(json, stepsFromPath(self.Path), nil)
+func (self *ExpandedField) extractValueFromJson(alist *Data) {
+    self.extractValueFromJsonWithStepAndParent(alist, stepsFromPath(self.Path), nil)
 }
 
 func (self *ExpandedStructure) PopulateFromJson(jsonData string) {
@@ -256,56 +256,49 @@ func (self *ExpandedStructure) PopulateFromJson(jsonData string) {
         panic(errors.New("Badly formed json"))
     }
 
+    alist := JsonToLisp(data)
     for _, field := range self.Fields {
-        field.extractValueFromJson(data)
+        field.extractValueFromJson(alist)
     }
 }
 
 // generating json
 
-func (self *ExpandedField) insertIntoJson(steps []string, root interface{}) interface{} {
+func (self *ExpandedField) insertIntoJson(steps []string, root *Data) *Data {
     if len(steps) == 0 {
-        //        fmt.Printf("returning value: %d\n", self.Value)
-        return self.Value
+        return NumberWithValue(int(self.Value))
     } else {
-        step := steps[0]
-        //        fmt.Printf("formatting: %s\n", step)
-
-        _, err := strconv.ParseInt(step, 10, 32)
+        step := StringWithValue(steps[0])
+        _, err := strconv.ParseInt(steps[0], 10, 32)
         if err != nil { // a hash key
             if root == nil {
-                root = make(map[string]interface{})
+                root = Alist(EmptyCons())
             }
-            v, ok := (root.(map[string]interface{}))[step]
-            if !ok {
-                (root.(map[string]interface{}))[step] = self.insertIntoJson(steps[1:], nil)
+            pair, _ := Assoc(step, root)
+            if pair == nil {
+                root = Acons(step, self.insertIntoJson(steps[1:], nil), root)
             } else {
-                (root.(map[string]interface{}))[step] = self.insertIntoJson(steps[1:], v)
+                root = Acons(step, self.insertIntoJson(steps[1:], Cdr(pair)), root)
             }
         } else { // an array index
-            if root == nil {
-                root = make([]interface{}, 0, 5)
-            }
-            //            fmt.Printf("appending value\n")
-            root = append(root.([]interface{}), self.insertIntoJson(steps[1:], nil))
-            //            fmt.Printf("array now: %v\n", root.([]interface{}))
+            root = Append(root, self.insertIntoJson(steps[1:], nil))
         }
-        //        fmt.Printf("Returning %v\n", root)
         return root
     }
 }
 
-func (self *ExpandedStructure) Json() interface{} {
-    root := make(map[string]interface{})
+func (self *ExpandedStructure) Json() *Data {
+    root := Alist(EmptyCons())
     for _, f := range self.Fields {
         steps := strings.Split(f.Path, "/")[1:]
-        f.insertIntoJson(steps, root)
+        root = f.insertIntoJson(steps, root)
     }
     return root
 }
 
 func (self *ExpandedStructure) JsonString() string {
-    root := self.Json()
+    alist := self.Json()
+    root := LispToJson(alist)
     j, err := json.Marshal(root)
     if err == nil {
         return string(j)

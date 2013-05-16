@@ -249,12 +249,19 @@ func (s *DeviceSuite) TestGeneratingJson(c *C) {
     exp := stTest.Expand()
     exp.PopulateFromBytes(&bytes)
     tree := exp.Json()
-    c.Assert((tree.(map[string]interface{}))["f3"], Equals, uint32(85))
-    branch := (tree.(map[string]interface{}))["keyed"]
-    c.Assert((branch.(map[string]interface{}))["f2"], Equals, uint32(185000))
-    array := (branch.(map[string]interface{}))["f1"]
-    c.Assert((array.([]interface{}))[0], Equals, uint32(47))
-    c.Assert((array.([]interface{}))[1], Equals, uint32(75))
+    data, _ := Assoc(StringWithValue("f3"), tree)
+    c.Assert(data, NotNil)
+    c.Assert(IntValue(Cdr(data)), Equals, int(85))
+    branch, _ := Assoc(StringWithValue("keyed"), tree)
+    c.Assert(branch, NotNil)
+    data, _ = Assoc(StringWithValue("f2"), Cdr(branch))
+    c.Assert(data, NotNil)
+    c.Assert(IntValue(Cdr(data)), Equals, int(185000))
+    arrayPair, _ := Assoc(StringWithValue("f1"), Cdr(branch))
+    c.Assert(arrayPair, NotNil)
+    array := Cdr(arrayPair)
+    c.Assert(IntValue(Nth(array, 1)), Equals, int(47))
+    c.Assert(IntValue(Nth(array, 2)), Equals, int(75))
 }
 
 func (s *DeviceSuite) TestBytesToString(c *C) {
