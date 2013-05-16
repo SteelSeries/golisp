@@ -1,7 +1,9 @@
 (describe acons
           (== (acons 'a 1 '()) (alist'((a.1))))
-          (== (acons 'a 1 '((b.2) (c.3)))
-              (alist'((a.1) (b.2) (c.3)))))
+          (== (acons 'a 1 (alist'((b.2) (c.3))))
+              (alist'((a.1) (b.2) (c.3))))
+          (== (acons 'a 5 (alist'((a.1) (b.2) (c.3))))
+              (alist'((a.5) (b.2) (c.3)))))
 
 (describe pairlis
           (== (pairlis '(a b) '(1 2)) (alist'((b.2) (a.1))))
