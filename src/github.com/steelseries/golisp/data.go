@@ -96,9 +96,29 @@ func Cons(car *Data, cdr *Data) *Data {
     return &Data{Type: ConsCellType, Car: car, Cdr: cdr, String: "", Number: 0, Func: nil, Prim: nil}
 }
 
+func Append(l *Data, value *Data) *Data {
+    if NilP(l) {
+        return Cons(value, nil)
+    }
+
+    if Cdr(l) == nil {
+        l.Cdr = Cons(value, nil)
+    } else {
+        Append(Cdr(l), value)
+    }
+
+    return l
+}
+
 func Acons(car *Data, cdr *Data, alist *Data) *Data {
-    cell := &Data{Type: AlistCellType, Car: car, Cdr: cdr, String: "", Number: 0, Func: nil, Prim: nil}
-    return &Data{Type: AlistType, Car: cell, Cdr: alist, String: "", Number: 0, Func: nil, Prim: nil}
+    pair, _ := Assoc(car, alist)
+    if NilP(pair) {
+        cell := &Data{Type: AlistCellType, Car: car, Cdr: cdr, String: "", Number: 0, Func: nil, Prim: nil}
+        return &Data{Type: AlistType, Car: cell, Cdr: alist, String: "", Number: 0, Func: nil, Prim: nil}
+    } else {
+        pair.Cdr = cdr
+        return alist
+    }
 }
 
 func Alist(d *Data) *Data {
