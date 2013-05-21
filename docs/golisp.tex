@@ -7,7 +7,7 @@
 
 % See the ``Article customise'' template for come common customisations
 
-\title{GoLisp}
+\title{SteelSeries GoLisp 0.1}
 \author{Dave Astels}
 
 \begin{document}
@@ -320,14 +320,14 @@ Association lists (aka a-lists) are a classic Lisp way to handle associating a v
 with a key. Implimentation is a list of dotted pairs: the \verb|car|
 is the key, and the \verb|cdr| is the value.
 
-\noindent{\bf\large\verb|(acons <key> <value> <a-list>)|}
+\noindent{\bf\large\verb|(acons <key> <value> [<a-list>])|}
 
 This returns the result of adding a pair \verb|(<key> . <value>)| to
 <a-list>. \verb|<key>|, \verb|<value>|, and \verb|<a-list>| are
-evaluated.
+evaluated. If \verb|<a-list>| is ommitted, it defaults to \verb|nil|.
 
 \begin{verbatim}
-  (acons 'a 1 '()) ==> ((a . 1))
+  (acons 'a 1) ==> ((a . 1))
   (acons 'a 1 '((b . 2) (c . 3))) ==> ((a . 1) (b . 2) (c . 3)))
 \end{verbatim}
 
@@ -402,6 +402,24 @@ value of \verb|cond| is the value of the last evaluation.
         (else 'equal)) ==> equal
 \end{verbatim}
 
+\noindent{\bf\large\verb|(case <variable> (<value> <sexpr...>) [<default sexpr>]|}
+
+\begin{verbatim}
+(define (test-func x)
+  (case x
+    (0 "zero")
+    (1 "one")
+    (2 "two")
+    (3 "three")
+    "unknown"))
+
+(test-func 0) ==> "zero"
+(test-func 1) ==> "one"
+(test-func 2) ==> "two"
+(test-func 3) ==> "three"
+(test-func 5) ==> "unknown"
+\end{verbatim}
+
 \noindent{\bf\large\verb|(if <condition> <true clause>)|}
 
 This is a special case of \verb|cond| that is more familiar to
@@ -461,8 +479,13 @@ example, consider the following code (from~\cite{sicp}, \S~3.2.2):
      (sum-of-squares (+ a 1) (* a 2)))
 \end{verbatim}
 
-Each of the three functions have their own associated environment that
-points back to the global environment.
+Each of the three functions have their own associated definition
+environment pointer that points back to the global environment.
+
+When a fucntion is executed, the implicit \verb|lambda| creates a new
+envroment frame for the evaluation that (in this case) points back to
+the global environment. This scoping approach is what is described in
+\S~3 of \cite{sicp}.
 
 \begin{figure}[htbp] %  figure placement: here, top, bottom, or page
    \centering
@@ -619,6 +642,76 @@ body. In effect the body of the \verb|let| is an implicit
        (+ x y)) ==> 4
 \end{verbatim}
 
+\section{Testing}
+
+Golisp has a simple builtin testing framwork.
+
+The primary function is \verb|describe| which takes a name (as a raw
+symbol) as it's first argument, followed by a sequence of expressions.
+The expressions are of the form:
+
+\begin{verbatim}
+  (== <actual> <expected>)
+\end{verbatim}
+
+Generally you should create a test file for each feature you are
+testing. The file is a plain lisp file and can contain any lisp code,
+including global variable and function definitions.
+
+For example, here is the test file for scoping:
+
+\begin{verbatim}
+(define a 5)
+
+(define (foo a)
+  (lambda (x) (+ a x)))
+
+(describe global-env
+          (== a 5))
+
+(describe lambda-env
+          (== ((foo 1) 5) 6)
+          (== ((foo 2) 5) 7)
+          (== ((foo 10) 7) 17))
+\end{verbatim}
+
+Running a test results in a stream of status output for each test,
+followed at teh very end by a summary.  Running the above results in
+the following:
+
+\begin{verbatim}
+Loading tests/scope_test.lsp
+global-env
+   (== a 5) - ok
+lambda-env
+   (== ((foo 1) 5) 6) - ok
+   (== ((foo 2) 5) 7) - ok
+   (== ((foo 10) 7) 17) - ok
+
+Done.
+
+4 Tests
+4 Passes, 0 failures, 0 errors
+\end{verbatim}
+
+If we introduce a fialure, the output would be:
+
+\begin{verbatim}
+Loading tests/scope_test.lsp
+global-env
+   (== a 5) - ok
+lambda-env
+   (== ((foo 1) 5) 6) - ok
+   (== ((foo 2) 5) 8) - failed: ((foo 2) 5) is 7
+   (== ((foo 10) 7) 17) - ok
+
+Done.
+Failures:
+  failed: ((foo 2) 5) is 7
+
+4 Tests
+3 Passes, 1 failures, 0 errors
+\end{verbatim}
 \section{Defining primitives}
 
 The Go function \verb|MakePrimitiveFunction| allows you to create
