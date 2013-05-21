@@ -21,11 +21,22 @@ type DeviceStructure struct {
     Size   int // size of the struct, in buyes
 }
 
+type Range struct {
+    Lo  uint32
+    Hi  uint32
+}
+
+type Values struct {
+    Vals []uint32
+}
+
 type DeviceField struct {
     Name              string
     TypeName          string
     Size              int // size of a single element, in bytes
-    Count             int // number of elements
+    RepeatCount       int // number of elements
+    ValidRange        Range
+    ValidValues       Values
     ToJsonTransform   *Data
     FromJsonTransform *Data
 }

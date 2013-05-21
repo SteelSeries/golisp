@@ -25,6 +25,12 @@ func init() {
 func InitDeviceBuiltins() {
     MakePrimitiveFunction("def-struct", -1, DefStruct)
     MakePrimitiveFunction("def-field", -1, DefField)
+    MakePrimitiveFunction("range", 2, DefRange)
+    MakePrimitiveFunction("values", -1, DefValues)
+    MakePrimitiveFunction("repeat", 1, DefRepeat)
+    MakePrimitiveFunction("to-json", 1, DefToJson)
+    MakePrimitiveFunction("to-from", 1, DefFromJson)
+
     MakePrimitiveFunction("def-api", -1, DefApi)
     MakePrimitiveFunction("dump-struct", 1, DumpStructure)
     MakePrimitiveFunction("dump-expanded", 1, DumpExpanded)
@@ -186,4 +192,30 @@ func StringToBytes(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     Acons(StringWithValue("name"), ary, parent)
 
     return
+}
+
+func DefRange(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    if Length(args) != 2 {
+        err := errors.New(fmt.Sprintf("range requires 2 arguments, %d found", Length(args)))
+        return
+    }
+
+    if !NumberP(Car(args)) || !NumberP(Cadr(args)) {
+        err := errors.New("range requires numeric arguments")
+        return
+    }
+
+    currentField.ValidRange = Range{Lo: IntValue(Car(args)), Hi: IntValue(Cadr(args))}
+}
+
+func DefValues(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+}
+
+func DefRepeat(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+}
+
+func DefToJson(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+}
+
+func DefFromJson(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
