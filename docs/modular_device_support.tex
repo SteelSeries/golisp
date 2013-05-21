@@ -69,7 +69,33 @@ device. The need to be added to the \verb|configurations| table.
 
 \section{Device interaction}
 
+\subsection{Overview}
 
+The device data flow has three endpoints:
+\begin{enumerate}
+\item a Lisp file that define the payloads and API calls,
+\item the device itself (at least as embodied by the driver layer),
+\item json representation of the payloads that goes to/from the application.
+\end{enumerate}
+
+This will be discussed in detail below. Figure~\ref{fig:todevice}
+shows the data flow of the process of sending settings from the app to a device
+while Figure~\ref{fig:fromdevice} shows the flow of data from a device
+to the app.
+
+\begin{figure}[htbp] %  figure placement: here, top, bottom, or page
+   \centering
+   \includegraphics[width=5in]{todevice.png} 
+\caption{Overview of modular device support.}
+\label{fig:todevice}
+\end{figure}
+
+\begin{figure}[htbp] %  figure placement: here, top, bottom, or page
+   \centering
+   \includegraphics[width=5in]{fromdevice.png} 
+\caption{Overview of modular device support.}
+\label{fig:fromdevice}
+\end{figure}
 
 \subsection{Data definition}
 \label{sec:datadefinition}
@@ -171,9 +197,11 @@ shown in Figure~\ref{fig:repeatingbytearray}.
 \label{fig:repeatingbytearray}
 \end{figure}
 
+\subsection{Json}
+
 Now that we've covered the data interaction with the device firmware,
 let us turn to the communication to the \SSEnext application. \SSEnext
-deals in json, specifically json that parallel to the structure we've
+deals in json, specifically json that is parallel to the structure we've
 declared. Going back to the structure declaration at the beginning of
 \S~\ref{sec:datadefinition}, we will want json of the form:
 
@@ -192,6 +220,23 @@ declared. Going back to the structure declaration at the beginning of
   }
 }
 \end{verbatim}
+
+When this jason is received by the device support layer, it gets processed and converted to a Lisp structure:
+
+\begin{verbatim}
+(("cpi" . (("unbind" . 1)
+           ("x" . 1200)
+           ("y" . 1400)
+           ("led" . (("red" . 255)
+                     ("green" . 255)
+                     ("blue" . 100)
+                     ("mode". 2))))))
+\end{verbatim}
+
+Numbers stay numbers (integers to be specific), key strings stay
+strings, arrays become lists (e.g. \verb|[1, 2, 3]| $\Rightarrow$
+\verb|(1 2 3)|, and maps being association lists (e.g.
+\verb|{"a": 3, "b": 4}| $\Rightarrow$ \verb|(("a" . 3)("b" . 4))|).
 
 When using json to populate the values in the fields, the paths from
 the fields are used to traverse the json to find the corresponding
@@ -213,20 +258,63 @@ generation of json from the field. Note that the repeat count is still
 optional. If the third arguemnt (if any) is a number, it's assumed
 that you are providing a repeat count.
 
-These two arguments are Lisp functions that are used to transform the
-niave conversion to/from json. They can be either the name of a Lisp
-function or a lambda expression. This function can take either one or
-two arguments. The first is always the value from the json node
+These two additional arguments are Lisp functions (either named or
+anonymous lambdas) that are used to transform the json as it is on
+it's way to th app, or on its way from the app. They can be either the name of a Lisp
+function or a lambda expression. These functions takes two arguments. The first is the value from the json node
 corresponding to the field. The second is the json node containing it.
-The function returns nothing but can modify or replace the
-corresponding value value in the json. The first is used when
-generating json from the field. The second is used on the json value
-before it is used to set the value of the field.
+The functions return nothing but can modify or replace the
+corresponding value value in the json.
+
+As an example here's how to handle the name field on a Sensei. In the
+structure it is an array of 16 \verb|uint8|s, while in json it should be
+a string. This assumes functions \verb|(bytes-to-string bytes)| and
+\verb|(string-to-bytes string)|
+
+
+\begin{verbatim} 
+(def-struct profile
+     (def-field id uint8)
+     (def-field name uint8 16
+                (lambda (bytes parent)
+                  (acons "name" (bytes-to-string bytes) parent)
+                (lambda (str parent)
+                  (acons "name" (string-to-bytes str) parent))
+     (def-field size uint16)
+     ...)
+\end{verbatim}
+
+\noindent For this declaraion, given the json derived from the
+bytearray read from the device looks like:
+
+\begin{verbatim}
+  ("profile" . (("id" . 3)
+                ("name" . (48 49 50 51 52 53 54 55 56 57 
+                           00 00 00 00 00 00))
+                ...))
+\end{verbatim}
+
+\noindent it would be transformed to the following before being sent
+to the app:
+
+\begin{verbatim}
+  ("profile" . (("id" . 3)
+                ("name" . "0123456789")
+                ...))
+ 
+\end{verbatim}
+
+\noindent The other transform would change the json in the opposite
+direcion, right padding the bytearray with \verb|0|s to make the
+required 16 bytes.
 
 \subsection{API definition}
 
 \begin{verbatim}
-  
+  (def-api
+    (structure 'profile)
+    (read-command 02)
+    (write-command 12))
 \end{verbatim}
 
 \end{document}
