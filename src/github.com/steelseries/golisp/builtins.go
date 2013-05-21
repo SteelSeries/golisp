@@ -4,7 +4,6 @@
 // This package impliments a basic LISP interpretor for embedding in a go program for scripting.
 // This file pre-loads primitive builtin functions
 
-// Basic arithmetic is implimented, with skeletons for the rest of the "special" symbols.
 // Flesh out as required. Remember to add tests to builtins_test.go
 
 package golisp
@@ -54,6 +53,7 @@ func InitBuiltins() {
 
     // special forms
     MakePrimitiveFunction("cond", -1, Cond)
+    MakePrimitiveFunction("case", -1, Case)
     MakePrimitiveFunction("if", -1, If)
     MakePrimitiveFunction("lambda", -1, Lambda)
     MakePrimitiveFunction("define", -1, Define)
@@ -113,7 +113,7 @@ func InitBuiltins() {
 
     // associatioon lists
 
-    MakePrimitiveFunction("acons", 3, ExposedAcons)
+    MakePrimitiveFunction("acons", -1, ExposedAcons)
     MakePrimitiveFunction("pairlis", -1, Pairlis)
     MakePrimitiveFunction("assoc", 2, ExposedAssoc)
     MakePrimitiveFunction("rassoc", 2, Rassoc)
@@ -493,6 +493,31 @@ func Cond(args *Data, env *SymbolTableFrame) (result *Data, err error) {
             return
         }
     }
+    return
+}
+
+func Case(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    var keyValue *Data
+    var targetValue *Data
+
+    keyValue, err = Eval(Car(args), env)
+    if err != nil {
+        return
+    }
+
+    for clauseCell := Cdr(args); NotNilP(clauseCell); clauseCell = Cdr(clauseCell) {
+        clause := Car(clauseCell)
+        if PairP(clause) {
+            targetValue, err = Eval(Car(clause), env)
+            if IsEqual(targetValue, keyValue) {
+                result, err = Eval(Cadr(clause), env)
+                return
+            }
+        } else {
+            return Eval(clause, env)
+        }
+    }
+
     return
 }
 
@@ -954,6 +979,11 @@ func ExposedAcons(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var value *Data
     var alist *Data
 
+    if Length(args) < 2 || Length(args) > 3 {
+        err = errors.New("acons must have 2 or 3 arguments")
+        return
+    }
+
     key, err = Eval(Car(args), env)
     if err != nil {
         return
@@ -969,9 +999,11 @@ func ExposedAcons(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         return
     }
 
-    alist, err = Eval(Caddr(args), env)
-    if err != nil {
-        return
+    if Length(args) == 3 {
+        alist, err = Eval(Caddr(args), env)
+        if err != nil {
+            return
+        }
     }
 
     result = Acons(key, value, alist)
@@ -1159,50 +1191,6 @@ func Begin(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         }
     }
     return
-}
-
-// testing
-
-var (
-    numberOfTests  int = 0
-    numberOfFails  int = 0
-    numberOfPasses int = 0
-    numberOfErrors int = 0
-)
-
-func Describe(args *Data, env *SymbolTableFrame) (d *Data, e error) {
-    if !(StringP(Car(args)) || SymbolP(Car(args))) {
-        e = errors.New("The describe tag must be a string or symbol")
-        return
-    }
-    fmt.Printf("%s\n", StringValue(Car(args)))
-
-    for clauses := Cdr(args); NotNilP(clauses); clauses = Cdr(clauses) {
-        clause := Car(clauses)
-        fmt.Printf("   %s - ", String(clause))
-        numberOfTests++
-        result, err := Eval(clause, env)
-        if err != nil {
-            numberOfErrors++
-            fmt.Printf("error: %s\n", err)
-            break
-        } else if BooleanValue(result) {
-            numberOfPasses++
-            fmt.Printf("ok\n")
-        } else {
-            numberOfFails++
-            value, _ := Eval(Cadr(clause), env)
-            fmt.Printf("failed: %s is %s\n", String(Cadr(clause)), String(value))
-        }
-    }
-
-    return
-}
-
-func PrintTestResults() {
-    fmt.Printf("\nDone.\n")
-    fmt.Printf("%d Tests\n", numberOfTests)
-    fmt.Printf("%d Passes, %d failures, %d errors\n", numberOfPasses, numberOfFails, numberOfErrors)
 }
 
 /// Function template
