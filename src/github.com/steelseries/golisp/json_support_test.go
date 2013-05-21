@@ -81,3 +81,54 @@ func (s *JsonLispSuite) TestLispToJsonMixed(c *C) {
     c.Assert(err, IsNil)
     c.Assert(string(bytes), Equals, `{"f3":85,"map":{"f1":[47,75],"f2":185}}`)
 }
+
+func (s *JsonLispSuite) TestSimpleJsonTransformation(c *C) {
+    jsonData := Acons(StringWithValue("map"), Acons(StringWithValue("f1"), InternalMakeList(NumberWithValue(47), NumberWithValue(75)), Acons(StringWithValue("f2"), NumberWithValue(185), nil)), Acons(StringWithValue("f3"), NumberWithValue(85), nil))
+
+    xform, err := Parse(`(lambda (node parent) (acons "f3" 42 parent))`)
+    c.Assert(err, IsNil)
+    parent := jsonData
+    pair, _ := Assoc(StringWithValue("f3"), jsonData)
+    _, err = TransformJson(xform, Cdr(pair), parent)
+    c.Assert(err, IsNil)
+
+    var newNode *Data
+    newNode, err = Assoc(StringWithValue("f3"), jsonData)
+    c.Assert(err, IsNil)
+    c.Assert(IntValue(Cdr(newNode)), Equals, 42)
+}
+
+func (s *JsonLispSuite) TestMoreComplexJsonTransformation(c *C) {
+    jsonData := Acons(StringWithValue("map"), Acons(StringWithValue("f1"), InternalMakeList(NumberWithValue(47), NumberWithValue(75)), Acons(StringWithValue("f2"), NumberWithValue(185), nil)), Acons(StringWithValue("f3"), NumberWithValue(85), nil))
+
+    xform, err := Parse(`(lambda (node parent) (acons "f3" '(1 2 3) parent))`)
+    c.Assert(err, IsNil)
+    parent := jsonData
+    pair, _ := Assoc(StringWithValue("f3"), jsonData)
+    _, err = TransformJson(xform, Cdr(pair), parent)
+    c.Assert(err, IsNil)
+
+    var newNode *Data
+    newNode, err = Assoc(StringWithValue("f3"), jsonData)
+    c.Assert(err, IsNil)
+    c.Assert(IsEqual(Cdr(newNode), InternalMakeList(NumberWithValue(1), NumberWithValue(2), NumberWithValue(3))), Equals, true)
+}
+
+func (s *JsonLispSuite) TestEvenMoreComplexJsonTransformation(c *C) {
+    jsonData := Acons(StringWithValue("map"), Acons(StringWithValue("f1"), InternalMakeList(NumberWithValue(47), NumberWithValue(75)), Acons(StringWithValue("f2"), NumberWithValue(185), nil)), Acons(StringWithValue("f3"), NumberWithValue(85), nil))
+
+    xform, err := Parse(`(lambda (node parent) (acons "f3" (acons "a" 1 nil) parent))`)
+    c.Assert(err, IsNil)
+    parent := jsonData
+    pair, _ := Assoc(StringWithValue("f3"), jsonData)
+    _, err = TransformJson(xform, Cdr(pair), parent)
+    c.Assert(err, IsNil)
+
+    var newNode *Data
+    var newerNode *Data
+    newNode, err = Assoc(StringWithValue("f3"), jsonData)
+    c.Assert(err, IsNil)
+    newerNode, err = Assoc(StringWithValue("a"), Cdr(newNode))
+    c.Assert(err, IsNil)
+    c.Assert(IntValue(Cdr(newerNode)), Equals, 1)
+}

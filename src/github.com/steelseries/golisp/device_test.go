@@ -6,6 +6,7 @@
 package golisp
 
 import (
+    //"fmt"
     . "launchpad.net/gocheck"
     "unsafe"
 )
@@ -265,15 +266,63 @@ func (s *DeviceSuite) TestGeneratingJson(c *C) {
 }
 
 func (s *DeviceSuite) TestBytesToString(c *C) {
-    var data []uint8 = []uint8{48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 65, 66, 67, 68, 69, 70}
-    i := make([]interface{}, 0, 16)
-    for _, d := range data {
-        i = append(i, d)
-    }
-    var o *Data = Cons(ObjectWithTypeAndValue("json", unsafe.Pointer(&i)), nil)
-    result, err := BytesToString(o, Global)
+    src := `(acons "name" '(48 49 50 51 52 53 54 55 56 57 65 66 67 68 69 70))`
+    code, err := Parse(src)
     c.Assert(err, IsNil)
-    c.Assert(result, NotNil)
-    c.Assert(TypeOf(result), Equals, StringType)
-    c.Assert(StringValue(result), Equals, "0123456789ABCDEF")
+    alist, err := Eval(code, Global)
+    pair, err := Assoc(StringWithValue("name"), alist)
+    _, err = BytesToString(InternalMakeList(Cdr(pair), alist), Global)
+    c.Assert(err, IsNil)
+    pair, err = Assoc(StringWithValue("name"), alist)
+    c.Assert(err, IsNil)
+    c.Assert(StringValue(Cdr(pair)), Equals, "0123456789ABCDEF")
+}
+
+func (s *DeviceSuite) TestBytesToStringForShortName(c *C) {
+    src := `(acons "name" '(48 49 50 51 52 53 54 55 56 57 00 00 00 00 00 00))`
+    code, err := Parse(src)
+    c.Assert(err, IsNil)
+    alist, err := Eval(code, Global)
+    pair, err := Assoc(StringWithValue("name"), alist)
+    _, err = BytesToString(InternalMakeList(Cdr(pair), alist), Global)
+    c.Assert(err, IsNil)
+    pair, err = Assoc(StringWithValue("name"), alist)
+    c.Assert(err, IsNil)
+    c.Assert(StringValue(Cdr(pair)), Equals, "0123456789")
+}
+
+func (s *DeviceSuite) TestStringToBytes(c *C) {
+    src := `(acons "name" "0123456789ABCDEF")`
+    code, err := Parse(src)
+    c.Assert(err, IsNil)
+    alist, err := Eval(code, Global)
+    pair, err := Assoc(StringWithValue("name"), alist)
+    _, err = StringToBytes(InternalMakeList(Cdr(pair), alist), Global)
+    c.Assert(err, IsNil)
+    pair, err = Assoc(StringWithValue("name"), alist)
+    c.Assert(err, IsNil)
+    c.Assert(TypeOf(Cdr(pair)), Equals, ConsCellType)
+    c.Assert(Length(Cdr(pair)), Equals, 16)
+    bytes := [16]int{48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 65, 66, 67, 68, 69, 70}
+    for cell, i := Cdr(pair), 0; NotNilP(cell); cell, i = Cdr(cell), i+1 {
+        c.Assert(IntValue(Car(cell)), Equals, bytes[i])
+    }
+}
+
+func (s *DeviceSuite) TestStringToBytesForShortName(c *C) {
+    src := `(acons "name" "0123456789")`
+    code, err := Parse(src)
+    c.Assert(err, IsNil)
+    alist, err := Eval(code, Global)
+    pair, err := Assoc(StringWithValue("name"), alist)
+    _, err = StringToBytes(InternalMakeList(Cdr(pair), alist), Global)
+    c.Assert(err, IsNil)
+    pair, err = Assoc(StringWithValue("name"), alist)
+    c.Assert(err, IsNil)
+    c.Assert(TypeOf(Cdr(pair)), Equals, ConsCellType)
+    c.Assert(Length(Cdr(pair)), Equals, 16)
+    bytes := [16]int{48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 00, 00, 00, 00, 00, 00}
+    for cell, i := Cdr(pair), 0; NotNilP(cell); cell, i = Cdr(cell), i+1 {
+        c.Assert(IntValue(Car(cell)), Equals, bytes[i])
+    }
 }

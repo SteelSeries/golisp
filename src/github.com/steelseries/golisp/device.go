@@ -213,17 +213,7 @@ func stepsFromPath(path string) (steps []string) {
 
 func (self *ExpandedField) extractValueFromJsonWithStepAndParent(json *Data, steps []string, parentNode *Data) {
     if self.FieldDefinition.FromJsonTransform != nil {
-        // do transformation
-        args := InternalMakeList(json, parentNode)
-        transformFunction, err := Eval(self.FieldDefinition.FromJsonTransform, Global)
-        if err != nil {
-            panic(err)
-        }
-        newData, err := Apply(transformFunction, args, Global)
-        if err != nil {
-            panic(err)
-        }
-        println(String(newData))
+        TransformJson(self.FieldDefinition.FromJsonTransform, json, parentNode)
     }
 
     if len(steps) == 0 {

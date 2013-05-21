@@ -6,11 +6,6 @@
 
 package golisp
 
-import (
-//    "errors"
-//    "fmt"
-)
-
 func JsonToLisp(json interface{}) (result *Data) {
     mapValue, ok := json.(map[string]interface{})
     if ok {
@@ -76,4 +71,21 @@ func LispToJson(d *Data) (result interface{}) {
     }
 
     return ""
+}
+
+func TransformJson(xform *Data, jsonNode *Data, parentNode *Data) (xformedJson *Data, err error) {
+    var transformFunction *Data
+    var newData *Data
+
+    args := InternalMakeList(jsonNode, parentNode)
+    transformFunction, err = Eval(xform, Global)
+    if err != nil {
+        return
+    }
+    _, err = Apply(transformFunction, args, Global)
+    if err != nil {
+        return
+    }
+    xformedJson = newData
+    return
 }
