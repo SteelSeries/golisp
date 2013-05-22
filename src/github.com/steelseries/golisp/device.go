@@ -21,6 +21,10 @@ type DeviceStructure struct {
     Size   int // size of the struct, in buyes
 }
 
+type Validation interface {
+    Validate() bool
+}
+
 type Range struct {
     Lo  uint32
     Hi  uint32
@@ -31,14 +35,15 @@ type Values struct {
 }
 
 type DeviceField struct {
-    Name              string
-    TypeName          string
-    Size              int // size of a single element, in bytes
-    RepeatCount       int // number of elements
-    ValidRange        *Range
-    ValidValues       *Values
-    ToJsonTransform   *Data
-    FromJsonTransform *Data
+    Name                   string
+    TypeName               string
+    Size                   int // size of a single element, in bytes
+    RepeatCount            int // number of elements
+    ValidRange             *Range
+    ValidValues            *Values
+    DeferredValidationCode *Data
+    ToJsonTransform        *Data
+    FromJsonTransform      *Data
 }
 
 // helper functions
@@ -155,18 +160,6 @@ func NewField(name string, typeName string, size int) (f *DeviceField) {
 
 func (self *DeviceField) TotalSize() int {
     return self.Size * self.RepeatCount
-}
-
-func (self *DeviceField) Validate(value uint32) bool {
-    if self.ValidRange != nil {
-        return self.ValidRange.Validate(value)
-    }
-
-    if self.ValidValues != nil {
-        return self.ValidValues.Validate(value)
-    }
-
-    return true
 }
 
 // structure expansion
@@ -294,6 +287,44 @@ func (self *ExpandedStructure) PopulateFromJson(jsonData string) {
     for _, field := range self.Fields {
         field.extractValueFromJson(alist)
     }
+}
+
+// validation
+
+func (self *ExpandedField) Validate(env *SymbolTableFrame) bool {
+    fieldDef := self.FieldDefinition
+    if fieldDef.ValidRange != nil {
+        return fieldDef.ValidRange.Validate(self.Value)
+    }
+
+    if fieldDef.ValidValues != nil {
+        return fieldDef.ValidValues.Validate(self.Value)
+    }
+
+    if fieldDef.DeferredValidationCode != nil {
+        CurrentField = fieldDef
+        _, err := Eval(fieldDef.DeferredValidationCode, env)
+        if err != nil {
+            return false
+        }
+        result := self.Validate(env)
+        fieldDef.ValidRange = nil
+        fieldDef.ValidValues = nil
+        return result
+    }
+
+    return true
+}
+
+func (self *ExpandedStructure) Validate() bool {
+    env := NewSymbolTableFrameBelow(Global)
+    for _, field := range self.Fields {
+        env.BindLocallyTo(SymbolWithName(field.FieldDefinition.Name), NumberWithValue(field.Value))
+        if !field.Validate(env) {
+            return false
+        }
+    }
+    return true
 }
 
 // generating json

@@ -67,14 +67,14 @@
      (def-field function uint8
                 (values 0 1 2 3 6 8 255))
      (def-field mapping uint8
-                (case function
-                      (0 (values 1 2 4 8 10))
-                      (1 (values 1 255))
-                      (2 (range 0 255))
-                      (3 (values 0))
-                      (6 (values 1 255))
-                      (8 (range 0 4))
-                      (255 (range 0 255))))
+                (deferred-validation (case function
+                                           (0 (values 1 2 4 8 10))
+                                           (1 (values 1 255))
+                                           (2 (range 0 255))
+                                           (3 (values 0))
+                                           (6 (values 1 255))
+                                           (8 (range 0 4))
+                                           (255 (range 0 255)))))
      (def-field macro-address uint16
                 (range 0 2047))
      (def-field number-of-events uint16

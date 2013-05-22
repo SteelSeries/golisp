@@ -16,8 +16,8 @@ import (
     "unsafe"
 )
 
-var currentStructure *DeviceStructure
-var currentField *DeviceField
+var CurrentStructure *DeviceStructure
+var CurrentField *DeviceField
 
 func init() {
     //    InitDeviceBuiltins()
@@ -28,6 +28,7 @@ func InitDeviceBuiltins() {
     MakePrimitiveFunction("def-field", -1, DefField)
     MakePrimitiveFunction("range", 2, DefRange)
     MakePrimitiveFunction("values", -1, DefValues)
+    MakePrimitiveFunction("deferred-validation", -1, DefDeferredValidation)
     MakePrimitiveFunction("repeat", 1, DefRepeat)
     MakePrimitiveFunction("to-json", 1, DefToJson)
     MakePrimitiveFunction("to-from", 1, DefFromJson)
@@ -54,8 +55,8 @@ func DefStruct(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
     fmt.Printf("device structure: %s\n", StringValue(structName))
     structure := NewStruct(StringValue(structName))
-    currentStructure = structure
-    currentField = nil
+    CurrentStructure = structure
+    CurrentField = nil
 
     var field *Data
     for c := Cdr(args); NotNilP(c); c = Cdr(c) {
@@ -69,7 +70,7 @@ func DefStruct(args *Data, env *SymbolTableFrame) (result *Data, err error) {
             errors.New("Expected DeviceField")
         }
     }
-    currentStructure = nil
+    CurrentStructure = nil
     return env.BindTo(structName, ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(structure))), nil
 }
 
@@ -96,7 +97,7 @@ func DefField(args *Data, env *SymbolTableFrame) (field *Data, err error) {
         return
     }
 
-    currentField = NewField(StringValue(fieldName), StringValue(fieldType), FieldSizeOf(fieldType))
+    CurrentField = NewField(StringValue(fieldName), StringValue(fieldType), FieldSizeOf(fieldType))
 
     for c := Cddr(args); NotNilP(c); c = Cdr(c) {
         field, err = Eval(Car(c), env)
@@ -105,8 +106,8 @@ func DefField(args *Data, env *SymbolTableFrame) (field *Data, err error) {
         }
     }
 
-    field = ObjectWithTypeAndValue("DeviceField", unsafe.Pointer(currentField))
-    currentField = nil
+    field = ObjectWithTypeAndValue("DeviceField", unsafe.Pointer(CurrentField))
+    CurrentField = nil
     return
 }
 
@@ -121,7 +122,7 @@ func DefRange(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         return
     }
 
-    currentField.ValidRange = &Range{Lo: uint32(NumericValue(Car(args))), Hi: uint32(NumericValue(Cadr(args)))}
+    CurrentField.ValidRange = &Range{Lo: uint32(NumericValue(Car(args))), Hi: uint32(NumericValue(Cadr(args)))}
     return
 }
 
@@ -131,7 +132,7 @@ func DefValues(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         return
     }
 
-    currentField.ValidValues = &Values{Vals: make([]uint32, 0, 5)}
+    CurrentField.ValidValues = &Values{Vals: make([]uint32, 0, 5)}
 
     var l *Data
     if PairP(Car(args)) {
@@ -147,8 +148,13 @@ func DefValues(args *Data, env *SymbolTableFrame) (result *Data, err error) {
             err = errors.New("values requires numeric arguments")
             return
         }
-        currentField.ValidValues.AddValue(uint32(NumericValue(Car(c))))
+        CurrentField.ValidValues.AddValue(uint32(NumericValue(Car(c))))
     }
+    return
+}
+
+func DefDeferredValidation(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    CurrentField.DeferredValidationCode = Car(args)
     return
 }
 
@@ -163,7 +169,7 @@ func DefRepeat(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         return
     }
 
-    currentField.RepeatCount = int(NumericValue(Car(args)))
+    CurrentField.RepeatCount = int(NumericValue(Car(args)))
     return
 }
 
@@ -178,7 +184,7 @@ func DefToJson(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         return
     }
 
-    currentField.ToJsonTransform = Car(args)
+    CurrentField.ToJsonTransform = Car(args)
     return
 }
 
@@ -193,7 +199,7 @@ func DefFromJson(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         return
     }
 
-    currentField.FromJsonTransform = Car(args)
+    CurrentField.FromJsonTransform = Car(args)
     return
 }
 
