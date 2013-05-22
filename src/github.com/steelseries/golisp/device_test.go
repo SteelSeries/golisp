@@ -18,7 +18,7 @@ var _ = Suite(&DeviceSuite{})
 
 func (s *DeviceSuite) TestSingleUint8(c *C) {
     st := NewStruct("test")
-    df := NewField("f1", "uint8", 1, 1, nil, nil)
+    df := NewField("f1", "uint8", 1)
     st.AddField(df)
     exp := st.Expand()
     f := exp.Fields[0]
@@ -30,8 +30,8 @@ func (s *DeviceSuite) TestSingleUint8(c *C) {
 
 func (s *DeviceSuite) TestUint8AndUint8(c *C) {
     st := NewStruct("test")
-    st.AddField(NewField("f1", "uint8", 1, 1, nil, nil))
-    st.AddField(NewField("f2", "uint8", 1, 1, nil, nil))
+    st.AddField(NewField("f1", "uint8", 1))
+    st.AddField(NewField("f2", "uint8", 1))
     exp := st.Expand()
     f1 := exp.Fields[0]
     c.Assert(f1.Offset, Equals, 0)
@@ -44,8 +44,8 @@ func (s *DeviceSuite) TestUint8AndUint8(c *C) {
 
 func (s *DeviceSuite) TestUint8AndUint16(c *C) {
     st := NewStruct("test")
-    st.AddField(NewField("f1", "uint8", 1, 1, nil, nil))
-    st.AddField(NewField("f2", "uint16", 2, 1, nil, nil))
+    st.AddField(NewField("f1", "uint8", 1))
+    st.AddField(NewField("f2", "uint16", 2))
     exp := st.Expand()
     f1 := exp.Fields[0]
     c.Assert(f1.Offset, Equals, 0)
@@ -58,8 +58,8 @@ func (s *DeviceSuite) TestUint8AndUint16(c *C) {
 
 func (s *DeviceSuite) TestUint8AndUint32(c *C) {
     st := NewStruct("test")
-    st.AddField(NewField("f1", "uint8", 1, 1, nil, nil))
-    st.AddField(NewField("f2", "uint32", 4, 1, nil, nil))
+    st.AddField(NewField("f1", "uint8", 1))
+    st.AddField(NewField("f2", "uint32", 4))
     exp := st.Expand()
     f1 := exp.Fields[0]
     c.Assert(f1.Offset, Equals, 0)
@@ -72,7 +72,7 @@ func (s *DeviceSuite) TestUint8AndUint32(c *C) {
 
 func (s *DeviceSuite) TestSingleUint8Bytes(c *C) {
     st := NewStruct("test")
-    st.AddField(NewField("f1", "uint8", 1, 1, nil, nil))
+    st.AddField(NewField("f1", "uint8", 1))
     exp := st.Expand()
     f := exp.Fields[0]
     f.Value = 5
@@ -82,8 +82,8 @@ func (s *DeviceSuite) TestSingleUint8Bytes(c *C) {
 
 func (s *DeviceSuite) TestUint8AndUint8Bytes(c *C) {
     st := NewStruct("test")
-    st.AddField(NewField("f1", "uint8", 1, 1, nil, nil))
-    st.AddField(NewField("f2", "uint8", 1, 1, nil, nil))
+    st.AddField(NewField("f1", "uint8", 1))
+    st.AddField(NewField("f2", "uint8", 1))
     exp := st.Expand()
     exp.Fields[0].Value = 47
     exp.Fields[1].Value = 185
@@ -94,8 +94,8 @@ func (s *DeviceSuite) TestUint8AndUint8Bytes(c *C) {
 
 func (s *DeviceSuite) TestUint8AndUint16Bytes(c *C) {
     st := NewStruct("test")
-    st.AddField(NewField("f1", "uint8", 1, 1, nil, nil))
-    st.AddField(NewField("f2", "uint16", 2, 1, nil, nil))
+    st.AddField(NewField("f1", "uint8", 1))
+    st.AddField(NewField("f2", "uint16", 2))
     exp := st.Expand()
     exp.Fields[0].Value = 47
     exp.Fields[1].Value = 22970
@@ -108,8 +108,8 @@ func (s *DeviceSuite) TestUint8AndUint16Bytes(c *C) {
 
 func (s *DeviceSuite) TestUint8AndUint32Bytes(c *C) {
     st := NewStruct("test")
-    st.AddField(NewField("f1", "uint8", 1, 1, nil, nil))
-    st.AddField(NewField("f2", "uint32", 4, 1, nil, nil))
+    st.AddField(NewField("f1", "uint8", 1))
+    st.AddField(NewField("f2", "uint32", 4))
     exp := st.Expand()
     exp.Fields[0].Value = 47
     exp.Fields[1].Value = 702831034
@@ -126,8 +126,8 @@ func (s *DeviceSuite) TestUint8AndUint32Bytes(c *C) {
 
 func (s *DeviceSuite) TestUint8AndUint8FromJson(c *C) {
     st := NewStruct("test")
-    st.AddField(NewField("f1", "uint8", 1, 1, nil, nil))
-    st.AddField(NewField("f2", "uint8", 1, 1, nil, nil))
+    st.AddField(NewField("f1", "uint8", 1))
+    st.AddField(NewField("f2", "uint8", 1))
     exp := st.Expand()
 
     json := `{"f1": 47, "f2": 185}`
@@ -141,14 +141,14 @@ func (s *DeviceSuite) TestComplexStructureFromJson(c *C) {
 
     stMap := NewStruct("mapstruct")
     Global.BindTo(SymbolWithName("mapstruct"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stMap)))
-    stMap.AddField(NewField("f1", "uint8", 1, 2, nil, nil))
-    stMap.AddField(NewField("f2", "uint8", 1, 1, nil, nil))
+    stMap.AddField(NewFieldWithCount("f1", "uint8", 1, 2))
+    stMap.AddField(NewField("f2", "uint8", 1))
 
     stTest := NewStruct("test")
     Global.BindTo(SymbolWithName("test"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stTest)))
 
-    stTest.AddField(NewField("map", "mapstruct", 1, 1, nil, nil))
-    stTest.AddField(NewField("f3", "uint8", 1, 1, nil, nil))
+    stTest.AddField(NewField("map", "mapstruct", 1))
+    stTest.AddField(NewField("f3", "uint8", 1))
 
     exp := stTest.Expand()
 
@@ -166,14 +166,14 @@ func (s *DeviceSuite) TestComplexStructureFromBytes(c *C) {
 
     stMap := NewStruct("mapstruct")
     Global.BindTo(SymbolWithName("mapstruct"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stMap)))
-    stMap.AddField(NewField("f1", "uint8", 1, 2, nil, nil))
-    stMap.AddField(NewField("f2", "uint8", 1, 1, nil, nil))
+    stMap.AddField(NewFieldWithCount("f1", "uint8", 1, 2))
+    stMap.AddField(NewField("f2", "uint8", 1))
 
     stTest := NewStruct("test")
     Global.BindTo(SymbolWithName("test"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stTest)))
 
-    stTest.AddField(NewField("map", "mapstruct", 1, 1, nil, nil))
-    stTest.AddField(NewField("f3", "uint8", 1, 1, nil, nil))
+    stTest.AddField(NewField("map", "mapstruct", 1))
+    stTest.AddField(NewField("f3", "uint8", 1))
 
     exp := stTest.Expand()
 
@@ -189,14 +189,14 @@ func (s *DeviceSuite) TestComplexStructureWithMultipleTypesFromJson(c *C) {
 
     stMap := NewStruct("mapstruct")
     Global.BindTo(SymbolWithName("mapstruct"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stMap)))
-    stMap.AddField(NewField("f1", "uint8", 1, 2, nil, nil))
-    stMap.AddField(NewField("f2", "uint32", 1, 1, nil, nil))
+    stMap.AddField(NewFieldWithCount("f1", "uint8", 1, 2))
+    stMap.AddField(NewField("f2", "uint32", 1))
 
     stTest := NewStruct("test")
     Global.BindTo(SymbolWithName("test"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stTest)))
 
-    stTest.AddField(NewField("map", "mapstruct", 1, 1, nil, nil))
-    stTest.AddField(NewField("f3", "uint8", 1, 1, nil, nil))
+    stTest.AddField(NewField("map", "mapstruct", 1))
+    stTest.AddField(NewField("f3", "uint8", 1))
 
     exp := stTest.Expand()
 
@@ -214,14 +214,14 @@ func (s *DeviceSuite) TestComplexStructureWithMultipleTypesFromBytes(c *C) {
 
     stMap := NewStruct("mapstruct")
     Global.BindTo(SymbolWithName("mapstruct"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stMap)))
-    stMap.AddField(NewField("f1", "uint8", 1, 2, nil, nil))
-    stMap.AddField(NewField("f2", "uint32", 4, 1, nil, nil))
+    stMap.AddField(NewFieldWithCount("f1", "uint8", 1, 2))
+    stMap.AddField(NewField("f2", "uint32", 4))
 
     stTest := NewStruct("test")
     Global.BindTo(SymbolWithName("test"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stTest)))
 
-    stTest.AddField(NewField("map", "mapstruct", 1, 1, nil, nil))
-    stTest.AddField(NewField("f3", "uint8", 1, 1, nil, nil))
+    stTest.AddField(NewField("map", "mapstruct", 1))
+    stTest.AddField(NewField("f3", "uint8", 1))
 
     exp := stTest.Expand()
 
@@ -238,14 +238,14 @@ func (s *DeviceSuite) TestGeneratingJson(c *C) {
 
     stMap := NewStruct("mapstruct")
     Global.BindTo(SymbolWithName("mapstruct"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stMap)))
-    stMap.AddField(NewField("f1", "uint8", 1, 2, nil, nil))
-    stMap.AddField(NewField("f2", "uint32", 4, 1, nil, nil))
+    stMap.AddField(NewFieldWithCount("f1", "uint8", 1, 2))
+    stMap.AddField(NewField("f2", "uint32", 4))
 
     stTest := NewStruct("test")
     Global.BindTo(SymbolWithName("test"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stTest)))
 
-    stTest.AddField(NewField("keyed", "mapstruct", 1, 1, nil, nil))
-    stTest.AddField(NewField("f3", "uint8", 1, 1, nil, nil))
+    stTest.AddField(NewField("keyed", "mapstruct", 1))
+    stTest.AddField(NewField("f3", "uint8", 1))
 
     exp := stTest.Expand()
     exp.PopulateFromBytes(&bytes)
