@@ -176,15 +176,14 @@ shows the bytearray that this structure corresponds to.
 
 Fields within a data declaration can be arrayed. When the structure
 gets processed/flattened multiple copies of these fields will be
-placed in the result. To do this you provide a third arument that
-specifies a repeat count. As an example, here's a declaration that
+placed in the result. To do this you provide a count using a \verb|repeat| clause. As an example, here's a declaration that
 contains once simple repeated field and one complex repeated field
 (see the previous structure declaration at the beginning of \S~\ref{sec:datadefinition}).
 
 \begin{verbatim}
   (def-struct sensor
-     (def-field a uint8 4)
-     (def-field cpi cpi 2))
+     (def-field a uint8 (repeat 4))
+     (def-field cpi cpi (repeat 2)))
 \end{verbatim}
 
 Once this is processed and flattened, it corresponds to the byte array
@@ -196,6 +195,22 @@ shown in Figure~\ref{fig:repeatingbytearray}.
 \caption{Bytearray with repeating fields}
 \label{fig:repeatingbytearray}
 \end{figure}
+
+\subsection{Validation}
+
+All leaf field are a number with a valid range given by it's size: 0x00-0xFF for uint8, 0x0000-0xFFFF for uint16, and 0x00000000-0xFFFFFFFF for uint32. For some fields the entire range isn't valid. To enforce this, we introduce validation clauses to the field definition. These take two types: ranges and values. A range is specified by lower and upper bounds, which are inclusive. A set of values is just that: a list of valid values for the field.
+
+\begin{verbatim}
+(def-struct cpi
+     (def-field unbind uint8
+                (values 0 1)
+     (def-field x uint16
+                (range 0 5670)
+     (def-field y uint16
+                (range 0 5670))
+     (def-field led led))
+\end{verbatim}
+
 
 \subsection{Json}
 
@@ -275,11 +290,12 @@ a string. This assumes functions \verb|(bytes-to-string bytes)| and
 \begin{verbatim} 
 (def-struct profile
      (def-field id uint8)
-     (def-field name uint8 16
-                (lambda (bytes parent)
-                  (acons "name" (bytes-to-string bytes) parent)
-                (lambda (str parent)
-                  (acons "name" (string-to-bytes str) parent))
+     (def-field name uint8 
+                (repeat 16)
+                (to-json (lambda (bytes parent)
+                           (acons "name" (bytes-to-string bytes) parent)))
+                (from-json (lambda (str parent)
+                             (acons "name" (string-to-bytes str) parent))))
      (def-field size uint16)
      ...)
 \end{verbatim}
