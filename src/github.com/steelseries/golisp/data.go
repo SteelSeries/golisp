@@ -433,7 +433,7 @@ func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func Apply(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if function == nil {
-        err = errors.New("Nil when function expected.\n")
+        err = errors.New("Nil when function expected.")
         return
     }
     switch function.Type {

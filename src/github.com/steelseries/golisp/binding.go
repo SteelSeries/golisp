@@ -16,7 +16,7 @@ type Binding struct {
 }
 
 func (self *Binding) Dump() {
-    fmt.Printf("   %s => %v\n", StringValue(self.Sym), self.Val)
+    fmt.Printf("   %s => %s\n", StringValue(self.Sym), String(self.Val))
 }
 
 func BindingWithSymbolAndValue(sym *Data, val *Data) *Binding {
