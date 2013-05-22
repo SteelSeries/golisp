@@ -30,7 +30,7 @@ type Data struct {
     Car     *Data              // ConsCellType & AlistType
     Cdr     *Data              // ConsCellType & AlistType
     String  string             // StringType & SymbolType
-    Number  int                // NumberType & BooleanType
+    Number  uint32             // NumberType & BooleanType
     Func    *Function          // FunctionType
     Prim    *PrimitiveFunction // PrimitiveType
     ObjType string             // ObjectType
@@ -141,7 +141,7 @@ func EmptyCons() *Data {
     return Cons(nil, nil)
 }
 
-func NumberWithValue(n int) *Data {
+func NumberWithValue(n uint32) *Data {
     return &Data{Type: NumberType, Car: nil, Cdr: nil, String: "", Number: n, Func: nil, Prim: nil}
 }
 
@@ -150,7 +150,7 @@ func BooleanWithValue(b bool) *Data {
     if b {
         num = 1
     }
-    return &Data{Type: BooleanType, Car: nil, Cdr: nil, String: "", Number: num, Func: nil, Prim: nil}
+    return &Data{Type: BooleanType, Car: nil, Cdr: nil, String: "", Number: uint32(num), Func: nil, Prim: nil}
 }
 
 func StringWithValue(s string) *Data {
@@ -173,7 +173,7 @@ func ObjectWithTypeAndValue(typeName string, o unsafe.Pointer) *Data {
     return &Data{Type: ObjectType, Car: nil, Cdr: nil, String: "", Number: 0, Func: nil, Prim: nil, ObjType: typeName, Obj: o}
 }
 
-func IntValue(d *Data) int {
+func NumericValue(d *Data) uint32 {
     if d == nil {
         return 0
     }

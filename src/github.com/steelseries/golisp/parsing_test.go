@@ -17,14 +17,14 @@ func (s *ParsingSuite) TestNumber(c *C) {
     sexpr, err := Parse("5")
     c.Assert(err, IsNil)
     c.Assert(TypeOf(sexpr), Equals, NumberType)
-    c.Assert(IntValue(sexpr), Equals, 5)
+    c.Assert(NumericValue(sexpr), Equals, uint32(5))
 }
 
 func (s *ParsingSuite) TestAnotherNumber(c *C) {
     sexpr, err := Parse("476")
     c.Assert(err, IsNil)
     c.Assert(TypeOf(sexpr), FitsTypeOf, NumberType)
-    c.Assert(IntValue(sexpr), Equals, 476)
+    c.Assert(NumericValue(sexpr), Equals, uint32(476))
 }
 
 func (s *ParsingSuite) TestString(c *C) {
@@ -89,7 +89,7 @@ func (s *ParsingSuite) TestNumberCar(c *C) {
     c.Assert(err, IsNil)
     c.Assert(TypeOf(sexpr), Equals, ConsCellType)
     c.Assert(TypeOf(Car(sexpr)), Equals, NumberType)
-    c.Assert(IntValue(Car(sexpr)), Equals, 1)
+    c.Assert(NumericValue(Car(sexpr)), Equals, uint32(1))
 }
 
 func (s *ParsingSuite) TestStringCar(c *C) {
@@ -105,9 +105,9 @@ func (s *ParsingSuite) Test2ElementList(c *C) {
     c.Assert(err, IsNil)
     c.Assert(sexpr, FitsTypeOf, EmptyCons())
     c.Assert(TypeOf(Car(sexpr)), Equals, NumberType)
-    c.Assert(IntValue(Car(sexpr)), Equals, 1)
+    c.Assert(NumericValue(Car(sexpr)), Equals, uint32(1))
     c.Assert(TypeOf(Car(Cdr(sexpr))), Equals, NumberType)
-    c.Assert(IntValue(Car(Cdr(sexpr))), Equals, 2)
+    c.Assert(NumericValue(Car(Cdr(sexpr))), Equals, uint32(2))
     c.Assert(Cdr(Cdr(sexpr)), IsNil)
 }
 
@@ -117,18 +117,18 @@ func (s *ParsingSuite) TestNestedList(c *C) {
     c.Assert(TypeOf(sexpr), Equals, ConsCellType)
 
     c.Assert(TypeOf(Car(sexpr)), Equals, NumberType)
-    c.Assert(IntValue(Car(sexpr)), Equals, 1)
+    c.Assert(NumericValue(Car(sexpr)), Equals, uint32(1))
 
     c.Assert(TypeOf(Cadr(sexpr)), Equals, ConsCellType)
 
     c.Assert(TypeOf(Caadr(sexpr)), Equals, NumberType)
-    c.Assert(IntValue(Caadr(sexpr)), Equals, 2)
+    c.Assert(NumericValue(Caadr(sexpr)), Equals, uint32(2))
 
     c.Assert(TypeOf(Cadadr(sexpr)), Equals, NumberType)
-    c.Assert(IntValue(Cadadr(sexpr)), Equals, 3)
+    c.Assert(NumericValue(Cadadr(sexpr)), Equals, uint32(3))
 
     c.Assert(TypeOf(Caddr(sexpr)), Equals, NumberType)
-    c.Assert(IntValue(Caddr(sexpr)), Equals, 4)
+    c.Assert(NumericValue(Caddr(sexpr)), Equals, uint32(4))
 
     c.Assert(Cdr(Cddr(sexpr)), IsNil)
 }
@@ -139,9 +139,9 @@ func (s *ParsingSuite) TestDottedPair(c *C) {
     c.Assert(TypeOf(sexpr), Equals, ConsCellType)
 
     c.Assert(TypeOf(Car(sexpr)), Equals, NumberType)
-    c.Assert(IntValue(Car(sexpr)), Equals, 1)
+    c.Assert(NumericValue(Car(sexpr)), Equals, uint32(1))
     c.Assert(TypeOf(Cdr(sexpr)), Equals, NumberType)
-    c.Assert(IntValue(Cdr(sexpr)), Equals, 2)
+    c.Assert(NumericValue(Cdr(sexpr)), Equals, uint32(2))
 }
 
 func (s *ParsingSuite) TestPrimitive(c *C) {
@@ -153,8 +153,8 @@ func (s *ParsingSuite) TestPrimitive(c *C) {
     c.Assert(StringValue(Car(sexpr)), Equals, "+")
 
     c.Assert(TypeOf(Cadr(sexpr)), Equals, NumberType)
-    c.Assert(IntValue(Cadr(sexpr)), Equals, 1)
+    c.Assert(NumericValue(Cadr(sexpr)), Equals, uint32(1))
 
     c.Assert(TypeOf(Caddr(sexpr)), Equals, NumberType)
-    c.Assert(IntValue(Caddr(sexpr)), Equals, 2)
+    c.Assert(NumericValue(Caddr(sexpr)), Equals, uint32(2))
 }

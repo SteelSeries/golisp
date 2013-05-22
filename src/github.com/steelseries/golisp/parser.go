@@ -13,7 +13,7 @@ import (
 )
 
 func makeNumber(str string) (n *Data, err error) {
-    var i int
+    var i uint32
     _, err = fmt.Sscanf(str, "%d", &i)
     if err != nil {
         return

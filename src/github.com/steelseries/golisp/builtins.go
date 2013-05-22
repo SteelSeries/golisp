@@ -157,7 +157,7 @@ func IsFunction(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func Add(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    var acc int = 0
+    var acc uint32 = 0
     var n *Data
     for c := args; NotNilP(c); c = Cdr(c) {
         n, err = Eval(Car(c), env)
@@ -167,7 +167,7 @@ func Add(args *Data, env *SymbolTableFrame) (result *Data, err error) {
             err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
             return
         }
-        acc += IntValue(n)
+        acc += NumericValue(n)
     }
     return NumberWithValue(acc), nil
 }
@@ -182,28 +182,24 @@ func Subtract(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
         return
     }
-    var acc int = IntValue(n)
-    if Length(args) == 1 { //negation
-        acc = -acc
-    } else {
-        for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-            n, err = Eval(Car(c), env)
-            if err != nil {
-                return
-            }
-            if !NumberP(n) {
-                err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
-                return
-            }
-            acc -= IntValue(n)
+    var acc uint32 = NumericValue(n)
+    for c := Cdr(args); NotNilP(c); c = Cdr(c) {
+        n, err = Eval(Car(c), env)
+        if err != nil {
+            return
         }
+        if !NumberP(n) {
+            err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
+            return
+        }
+        acc -= NumericValue(n)
     }
     return NumberWithValue(acc), nil
 }
 
 func Multiply(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var n *Data
-    var acc int = 1
+    var acc uint32 = 1
     for c := args; NotNilP(c); c = Cdr(c) {
         n, err = Eval(Car(c), env)
         if err != nil {
@@ -212,7 +208,7 @@ func Multiply(args *Data, env *SymbolTableFrame) (result *Data, err error) {
             err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
             return
         }
-        acc *= IntValue(n)
+        acc *= NumericValue(n)
     }
     return NumberWithValue(acc), nil
 }
@@ -227,7 +223,7 @@ func Quotient(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
         return
     }
-    var acc int = IntValue(n)
+    var acc uint32 = NumericValue(n)
     for c := Cdr(args); NotNilP(c); c = Cdr(c) {
         n, err = Eval(Car(c), env)
         if err != nil {
@@ -237,7 +233,7 @@ func Quotient(args *Data, env *SymbolTableFrame) (result *Data, err error) {
             err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
             return
         }
-        acc /= IntValue(n)
+        acc /= NumericValue(n)
     }
     return NumberWithValue(acc), nil
 }
@@ -268,7 +264,7 @@ func Remainder(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         return
     }
 
-    val := IntValue(dividend) % IntValue(divisor)
+    val := NumericValue(dividend) % NumericValue(divisor)
     return NumberWithValue(val), nil
 }
 
@@ -298,7 +294,7 @@ func LessThan(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         return
     }
 
-    val := IntValue(arg1) < IntValue(arg2)
+    val := NumericValue(arg1) < NumericValue(arg2)
     return BooleanWithValue(val), nil
 }
 
@@ -328,7 +324,7 @@ func GreaterThan(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         return
     }
 
-    val := IntValue(arg1) > IntValue(arg2)
+    val := NumericValue(arg1) > NumericValue(arg2)
     return BooleanWithValue(val), nil
 }
 
@@ -400,7 +396,7 @@ func LessThanOrEqualTo(args *Data, env *SymbolTableFrame) (result *Data, err err
         return
     }
 
-    val := IntValue(arg1) <= IntValue(arg2)
+    val := NumericValue(arg1) <= NumericValue(arg2)
     return BooleanWithValue(val), nil
 }
 
@@ -430,7 +426,7 @@ func GreaterThanOrEqualTo(args *Data, env *SymbolTableFrame) (result *Data, err 
         return
     }
 
-    val := IntValue(arg1) >= IntValue(arg2)
+    val := NumericValue(arg1) >= NumericValue(arg2)
     return BooleanWithValue(val), nil
 }
 
@@ -547,7 +543,7 @@ func ListLength(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if err != nil {
         return
     }
-    return NumberWithValue(Length(d)), nil
+    return NumberWithValue(uint32(Length(d))), nil
 }
 
 func ExposedCons(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -962,7 +958,7 @@ func ExposedNth(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         return
     }
 
-    return Nth(col, IntValue(count)), nil
+    return Nth(col, int(NumericValue(count))), nil
 }
 
 func ExposedAlist(args *Data, env *SymbolTableFrame) (result *Data, err error) {

@@ -21,22 +21,75 @@ func (s *DeviceBuiltinsSuite) SetUpSuite(c *C) {
     InitDeviceBuiltins()
 }
 
-func GetField(source string) (field *DeviceField, err error) {
+func GetField(source string, c *C) (field *DeviceField) {
     code, err := Parse(source)
-    if err != nil {
-        return
-    }
+    c.Assert(err, IsNil)
+    c.Assert(code, NotNil)
     fieldObj, err := Eval(code, Global)
-    if err != nil {
-        return
-    }
-    return (*DeviceField)(ObjectValue(fieldObj)), nil
+    c.Assert(err, IsNil)
+    c.Assert(fieldObj, NotNil)
+    return (*DeviceField)(ObjectValue(fieldObj))
 }
 
 func (s *DeviceBuiltinsSuite) TestBasicField(c *C) {
-    field, err := GetField("(def-field test uint8)")
-    c.Assert(err, IsNil)
-    c.Assert(field, NotNil)
+    field := GetField("(def-field test uint8)", c)
     c.Assert(field.Name, Equals, "test")
     c.Assert(field.TypeName, Equals, "uint8")
+}
+
+func (s *DeviceBuiltinsSuite) TestFieldWithRepeat(c *C) {
+    field := GetField("(def-field test uint8 (repeat 3))", c)
+    c.Assert(field.RepeatCount, Equals, 3)
+}
+
+func (s *DeviceBuiltinsSuite) TestFieldWithRange(c *C) {
+    field := GetField("(def-field test uint8 (range 3 5))", c)
+    c.Assert(field.Validate(uint32(2)), Equals, false)
+    c.Assert(field.Validate(uint32(3)), Equals, true)
+    c.Assert(field.Validate(uint32(4)), Equals, true)
+    c.Assert(field.Validate(uint32(5)), Equals, true)
+    c.Assert(field.Validate(uint32(6)), Equals, false)
+    c.Assert(field.Validate(uint32(42)), Equals, false)
+}
+
+func (s *DeviceBuiltinsSuite) TestFieldWithValues(c *C) {
+    field := GetField("(def-field test uint8 (values 3 5 7 9))", c)
+    c.Assert(field.Validate(uint32(2)), Equals, false)
+    c.Assert(field.Validate(uint32(3)), Equals, true)
+    c.Assert(field.Validate(uint32(4)), Equals, false)
+    c.Assert(field.Validate(uint32(5)), Equals, true)
+    c.Assert(field.Validate(uint32(6)), Equals, false)
+    c.Assert(field.Validate(uint32(7)), Equals, true)
+    c.Assert(field.Validate(uint32(8)), Equals, false)
+    c.Assert(field.Validate(uint32(9)), Equals, true)
+    c.Assert(field.Validate(uint32(10)), Equals, false)
+    c.Assert(field.Validate(uint32(42)), Equals, false)
+}
+
+func (s *DeviceBuiltinsSuite) TestFieldWithListOfValues(c *C) {
+    field := GetField("(def-field test uint8 (values '(3 5 7 9)))", c)
+    c.Assert(field.Validate(uint32(2)), Equals, false)
+    c.Assert(field.Validate(uint32(3)), Equals, true)
+    c.Assert(field.Validate(uint32(4)), Equals, false)
+    c.Assert(field.Validate(uint32(5)), Equals, true)
+    c.Assert(field.Validate(uint32(6)), Equals, false)
+    c.Assert(field.Validate(uint32(7)), Equals, true)
+    c.Assert(field.Validate(uint32(8)), Equals, false)
+    c.Assert(field.Validate(uint32(9)), Equals, true)
+    c.Assert(field.Validate(uint32(10)), Equals, false)
+    c.Assert(field.Validate(uint32(42)), Equals, false)
+}
+
+func (s *DeviceBuiltinsSuite) TestFieldReferencingPreviousField(c *C) {
+    field := GetField("(def-field test uint8 (values '(3 5 7 9)))", c)
+    c.Assert(field.Validate(uint32(2)), Equals, false)
+    c.Assert(field.Validate(uint32(3)), Equals, true)
+    c.Assert(field.Validate(uint32(4)), Equals, false)
+    c.Assert(field.Validate(uint32(5)), Equals, true)
+    c.Assert(field.Validate(uint32(6)), Equals, false)
+    c.Assert(field.Validate(uint32(7)), Equals, true)
+    c.Assert(field.Validate(uint32(8)), Equals, false)
+    c.Assert(field.Validate(uint32(9)), Equals, true)
+    c.Assert(field.Validate(uint32(10)), Equals, false)
+    c.Assert(field.Validate(uint32(42)), Equals, false)
 }

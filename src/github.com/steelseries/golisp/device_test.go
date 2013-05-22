@@ -252,17 +252,17 @@ func (s *DeviceSuite) TestGeneratingJson(c *C) {
     tree := exp.Json()
     data, _ := Assoc(StringWithValue("f3"), tree)
     c.Assert(data, NotNil)
-    c.Assert(IntValue(Cdr(data)), Equals, int(85))
+    c.Assert(NumericValue(Cdr(data)), Equals, uint32(85))
     branch, _ := Assoc(StringWithValue("keyed"), tree)
     c.Assert(branch, NotNil)
     data, _ = Assoc(StringWithValue("f2"), Cdr(branch))
     c.Assert(data, NotNil)
-    c.Assert(IntValue(Cdr(data)), Equals, int(185000))
+    c.Assert(NumericValue(Cdr(data)), Equals, uint32(185000))
     arrayPair, _ := Assoc(StringWithValue("f1"), Cdr(branch))
     c.Assert(arrayPair, NotNil)
     array := Cdr(arrayPair)
-    c.Assert(IntValue(Nth(array, 1)), Equals, int(47))
-    c.Assert(IntValue(Nth(array, 2)), Equals, int(75))
+    c.Assert(NumericValue(Nth(array, 1)), Equals, uint32(47))
+    c.Assert(NumericValue(Nth(array, 2)), Equals, uint32(75))
 }
 
 func (s *DeviceSuite) TestBytesToString(c *C) {
@@ -305,7 +305,7 @@ func (s *DeviceSuite) TestStringToBytes(c *C) {
     c.Assert(Length(Cdr(pair)), Equals, 16)
     bytes := [16]int{48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 65, 66, 67, 68, 69, 70}
     for cell, i := Cdr(pair), 0; NotNilP(cell); cell, i = Cdr(cell), i+1 {
-        c.Assert(IntValue(Car(cell)), Equals, bytes[i])
+        c.Assert(NumericValue(Car(cell)), Equals, uint32(bytes[i]))
     }
 }
 
@@ -323,6 +323,6 @@ func (s *DeviceSuite) TestStringToBytesForShortName(c *C) {
     c.Assert(Length(Cdr(pair)), Equals, 16)
     bytes := [16]int{48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 00, 00, 00, 00, 00, 00}
     for cell, i := Cdr(pair), 0; NotNilP(cell); cell, i = Cdr(cell), i+1 {
-        c.Assert(IntValue(Car(cell)), Equals, bytes[i])
+        c.Assert(NumericValue(Car(cell)), Equals, uint32(bytes[i]))
     }
 }

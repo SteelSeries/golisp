@@ -26,13 +26,17 @@ type Range struct {
     Hi  uint32
 }
 
+type Values struct {
+    Vals []uint32
+}
+
 type DeviceField struct {
     Name              string
     TypeName          string
     Size              int // size of a single element, in bytes
     RepeatCount       int // number of elements
-    ValidRange        Range
-    ValidValues       []uint32
+    ValidRange        *Range
+    ValidValues       *Values
     ToJsonTransform   *Data
     FromJsonTransform *Data
 }
@@ -122,6 +126,23 @@ func (self *DeviceStructure) SizeOf() int {
     return self.Size
 }
 
+func (self *Range) Validate(value uint32) bool {
+    return value >= self.Lo && value <= self.Hi
+}
+
+func (self *Values) AddValue(value uint32) {
+    self.Vals = append(self.Vals, value)
+}
+
+func (self *Values) Validate(value uint32) bool {
+    for _, v := range self.Vals {
+        if v == value {
+            return true
+        }
+    }
+    return false
+}
+
 // DeviceField functions
 
 func NewFieldWithCount(name string, typeName string, size int, count int) (f *DeviceField) {
@@ -134,6 +155,18 @@ func NewField(name string, typeName string, size int) (f *DeviceField) {
 
 func (self *DeviceField) TotalSize() int {
     return self.Size * self.RepeatCount
+}
+
+func (self *DeviceField) Validate(value uint32) bool {
+    if self.ValidRange != nil {
+        return self.ValidRange.Validate(value)
+    }
+
+    if self.ValidValues != nil {
+        return self.ValidValues.Validate(value)
+    }
+
+    return true
 }
 
 // structure expansion
@@ -228,7 +261,7 @@ func (self *ExpandedField) extractValueFromJsonWithStepAndParent(json *Data, ste
     }
 
     if len(steps) == 0 {
-        self.Value = uint32(IntValue(json))
+        self.Value = uint32(NumericValue(json))
     } else {
         step := steps[0]
         i, err := strconv.ParseInt(step, 10, 32)
@@ -267,7 +300,7 @@ func (self *ExpandedStructure) PopulateFromJson(jsonData string) {
 
 func (self *ExpandedField) insertIntoJson(steps []string, root *Data) *Data {
     if len(steps) == 0 {
-        return NumberWithValue(int(self.Value))
+        return NumberWithValue(self.Value)
     } else {
         step := StringWithValue(steps[0])
         _, err := strconv.ParseInt(steps[0], 10, 32)

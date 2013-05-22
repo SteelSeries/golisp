@@ -121,7 +121,7 @@ func DefRange(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         return
     }
 
-    currentField.ValidRange = Range{Lo: uint32(IntValue(Car(args))), Hi: uint32(IntValue(Cadr(args)))}
+    currentField.ValidRange = &Range{Lo: uint32(NumericValue(Car(args))), Hi: uint32(NumericValue(Cadr(args)))}
     return
 }
 
@@ -131,14 +131,23 @@ func DefValues(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         return
     }
 
-    currentField.ValidValues = make([]uint32, 0, Length(args))
+    currentField.ValidValues = &Values{Vals: make([]uint32, 0, 5)}
+
+    var l *Data
+    if PairP(Car(args)) {
+        l, err = Eval(Car(args), env)
+        if err != nil {
+            return
+        }
+        args = l
+    }
+
     for c := args; NotNilP(c); c = Cdr(c) {
         if !NumberP(Car(c)) {
             err = errors.New("values requires numeric arguments")
             return
         }
-
-        currentField.ValidValues = append(currentField.ValidValues, uint32(IntValue(Car(c))))
+        currentField.ValidValues.AddValue(uint32(NumericValue(Car(c))))
     }
     return
 }
@@ -154,7 +163,7 @@ func DefRepeat(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         return
     }
 
-    currentField.RepeatCount = int(IntValue(Car(args)))
+    currentField.RepeatCount = int(NumericValue(Car(args)))
     return
 }
 
@@ -240,7 +249,7 @@ func BytesToString(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 
     var bytes [16]uint8
     for c, i := node, 0; NotNilP(c); c, i = Cdr(c), i+1 {
-        bytes[i] = uint8(IntValue(Car(c)))
+        bytes[i] = uint8(NumericValue(Car(c)))
     }
 
     str := CharsToString(bytes[0:16])
@@ -253,7 +262,7 @@ func StringToBytes(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     parent := Cadr(args)
     var name [16]*Data
     for i, b := range []byte(StringValue(node)) {
-        name[i] = NumberWithValue(int(b))
+        name[i] = NumberWithValue(uint32(b))
     }
     for j := len(StringValue(node)); j < 16; j++ {
         name[j] = NumberWithValue(0)

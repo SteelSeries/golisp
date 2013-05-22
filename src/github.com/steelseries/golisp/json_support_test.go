@@ -95,7 +95,7 @@ func (s *JsonLispSuite) TestSimpleJsonTransformation(c *C) {
     var newNode *Data
     newNode, err = Assoc(StringWithValue("f3"), jsonData)
     c.Assert(err, IsNil)
-    c.Assert(IntValue(Cdr(newNode)), Equals, 42)
+    c.Assert(NumericValue(Cdr(newNode)), Equals, uint32(42))
 }
 
 func (s *JsonLispSuite) TestMoreComplexJsonTransformation(c *C) {
@@ -130,5 +130,5 @@ func (s *JsonLispSuite) TestEvenMoreComplexJsonTransformation(c *C) {
     c.Assert(err, IsNil)
     newerNode, err = Assoc(StringWithValue("a"), Cdr(newNode))
     c.Assert(err, IsNil)
-    c.Assert(IntValue(Cdr(newerNode)), Equals, 1)
+    c.Assert(NumericValue(Cdr(newerNode)), Equals, uint32(1))
 }

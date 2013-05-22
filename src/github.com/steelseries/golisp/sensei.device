@@ -51,7 +51,8 @@
 (def-struct sensor
      (def-field default-cpi uint8
                 (values 0 1))
-     (def-field cpi cpi 2)
+     (def-field cpi cpi 
+                (repeat 2))
      (def-field lift-detection lift)
      (def-field angle-snap angle-snap)
      (def-field acceleration acceleration)
@@ -110,8 +111,7 @@
                       (0x13 (range 0x0000 0xFFFF))))
      (def-field make-or-break uint8
                 (values 0x00 0x01))
-     (def-field delay uint32
-                (range 0x00000000 0xFFFFFFFF)))
+     (def-field delay uint32))
 
 (def-struct macro
      (def-field number-of-events uint16

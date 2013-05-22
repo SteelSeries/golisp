@@ -19,7 +19,7 @@ func (s *NumberAtomSuite) SetUpTest(c *C) {
 }
 
 func (s *NumberAtomSuite) TestNumericValue(c *C) {
-    c.Assert(IntValue(s.n), Equals, 5)
+    c.Assert(NumericValue(s.n), Equals, uint32(5))
 }
 
 func (s *NumberAtomSuite) TestString(c *C) {
