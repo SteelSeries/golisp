@@ -192,7 +192,12 @@ func Subtract(args *Data, env *SymbolTableFrame) (result *Data, err error) {
             err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
             return
         }
-        acc -= NumericValue(n)
+        if NumericValue(n) > acc {
+            return NumberWithValue(0), nil
+        } else {
+            acc -= NumericValue(n)
+        }
+
     }
     return NumberWithValue(acc), nil
 }

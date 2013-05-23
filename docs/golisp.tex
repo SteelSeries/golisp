@@ -75,7 +75,7 @@ adding support for them to the parser.
 \item[Strings] are any sequence of characters other than \verb|"|
 enclosed by a pair of \verb|"|, e.g. \verb|"string"|.
 
-\item[Numbers] are integers internally represented as \verb|int| so
+\item[Numbers] are non-negative integers internally represented as \verb|uint32| so
   their size reflects \verb|int| on the build of Go being used. E.g.
   \verb|5|, \verb|9845376|. 
 
@@ -113,14 +113,13 @@ Adds a series of numbers, e.g.
 
 \noindent{\bf\large\verb|(- <number>...)|}
 
-Sequentially subtracts a sequence of numbers. With a single argument
-is a special case that negates the argument. E.g. 
+Sequentially subtracts a sequence of numbers. Negative results become
+0. E.g. 
 
 \begin{verbatim}
-    (- 4) ==> -4
     (- 10 3) ==> 7
     (- 10 3 4) ==> 3
-    (- 10 3 4 5) ==> -2
+    (- 10 3 4 5) ==> 0
 \end{verbatim}
 
 \noindent{\bf\large\verb|(* <number>...)|}
