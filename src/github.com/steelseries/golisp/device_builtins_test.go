@@ -141,3 +141,40 @@ func (s *DeviceBuiltinsSuite) TestFieldWithDeferredValues(c *C) {
     field.Value = uint32(4)
     c.Assert(field.Validate(Global), Equals, false)
 }
+
+func (s *DeviceBuiltinsSuite) TestFieldWithDeferredValuesReferencingPreviousFields(c *C) {
+    source := "(def-struct test-struct" +
+        "(def-field f1 uint8)" +
+        "(def-field f2 uint8 (deferred-validation (case f1 (0 (values 1)) (1 (range 10 11))))))"
+
+    code, err := Parse(source)
+    c.Assert(err, IsNil)
+    c.Assert(code, NotNil)
+    _, err = Eval(code, Global)
+    c.Assert(err, IsNil)
+
+    structObj := Global.ValueOf(SymbolWithName("test-struct"))
+    ds := (*DeviceStructure)(ObjectValue(structObj))
+    es := ds.Expand()
+    f1 := es.Fields[0]
+    f2 := es.Fields[1]
+
+    f1.Value = uint32(0)
+    f2.Value = uint32(0)
+    c.Assert(es.Validate(), Equals, false)
+    f2.Value = uint32(1)
+    c.Assert(es.Validate(), Equals, true)
+    f2.Value = uint32(2)
+    c.Assert(es.Validate(), Equals, false)
+
+    f1.Value = uint32(1)
+    f2.Value = uint32(9)
+    c.Assert(es.Validate(), Equals, false)
+    f2.Value = uint32(10)
+    c.Assert(es.Validate(), Equals, true)
+    f2.Value = uint32(11)
+    c.Assert(es.Validate(), Equals, true)
+    f2.Value = uint32(12)
+    c.Assert(es.Validate(), Equals, false)
+
+}
