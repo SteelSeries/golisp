@@ -232,18 +232,23 @@ declaration is evaluated. The validation for each field is
 independant. Sometimes this isn't good enough. Conside the following:
 
 \begin{verbatim}
-(def-struct button
-     (def-field function uint8
-                (values 0 1 2 3 6 8 255))
-     (def-field mapping uint8
-                (deferred-validation (case function
-                                           (0 (values 1 2 4 8 10))
-                                           (1 (values 1 255))
-                                           (2 (range 0 255))
-                                           (3 (values 0))
-                                           (6 (values 1 255))
-                                           (8 (range 0 4))
-                                           (255 (range 0 255))))))
+  (def-struct button
+    (def-field function uint8
+      (values 0 1 2 3 6 8 255))
+    (def-field mapping uint8
+      (deferred-validation (case function
+                             (0 (values 1 2 4 8 10))
+                             (1 (values 1 255))
+                             (2 (range 0 255))
+                             (3 (values 0))
+                             (6 (values 1 255))
+                             (8 (range 0 4))
+                             (255 (range 0 255)))))
+    (def-field macro-address uint16
+      (range 0 2047))
+    (def-field number-of-events uint16
+      (range 0 164))
+    (def-field debounce-count uint8))
 \end{verbatim}
 
 Here we need the validation of the \verb|mapping| field to be
@@ -321,15 +326,16 @@ that you are providing a repeat count.
 
 These two additional arguments are Lisp functions (either named or
 anonymous lambdas) that are used to transform the json as it is on
-it's way to th app, or on its way from the app. They can be either the name of a Lisp
-function or a lambda expression. These functions takes two arguments. The first is the value from the json node
-corresponding to the field. The second is the json node containing it.
-The functions return nothing but can modify or replace the
-corresponding value value in the json.
+it's way to th app, or on its way from the app. They can be either the
+name of a Lisp function or a lambda expression. These functions takes
+two arguments. The first is the value from the json node corresponding
+to the field. The second is the json node containing it. The functions
+return nothing but can modify or replace the corresponding value value
+in the json.
 
 As an example here's how to handle the name field on a Sensei. In the
-structure it is an array of 16 \verb|uint8|s, while in json it should be
-a string. This assumes functions \verb|(bytes-to-string bytes)| and
+structure it is an array of 16 \verb|uint8|s, while in json it should
+be a string. This assumes functions \verb|(bytes-to-string bytes)| and
 \verb|(string-to-bytes string)|
 
 
@@ -375,7 +381,7 @@ required 16 bytes.
 \begin{verbatim}
   (def-api profile
     (read 0x02 (lambda (payload) ))
-    (write 12))
+    (write 0x12 ))
 \end{verbatim}
 
 \end{document}
