@@ -34,7 +34,6 @@ func InitDeviceBuiltins() {
     MakePrimitiveFunction("repeat", 1, DefRepeat)
     MakePrimitiveFunction("to-json", 1, DefToJson)
     MakePrimitiveFunction("to-from", 1, DefFromJson)
-
     MakePrimitiveFunction("def-api", -1, DefApi)
     MakePrimitiveFunction("dump-struct", 1, DumpStructure)
     MakePrimitiveFunction("dump-expanded", 1, DumpExpanded)
@@ -57,14 +56,16 @@ func DefDevice(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
     CurrentDevice := NewDeviceNamed(StringValue(deviceName))
 
-    var structure *Data
+    var thing *Data
     for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-        structure, err = Eval(Car(c), env)
+        thing, err = Eval(Car(c), env)
         if err != nil {
             return
         }
-        if ObjectP(structure) && TypeOfObject(structure) == "DeviceStructure" {
-            CurrentDevice.AddStructure((*DeviceStructure)(ObjectValue(structure)))
+        if ObjectP(thing) && TypeOfObject(thing) == "DeviceStructure" {
+            CurrentDevice.AddStructure((*DeviceStructure)(ObjectValue(thing)))
+        } else if ObjectP(thing) && TypeOfObject(thing) == "DeviceApi" {
+            CurrentDevice.AddApi((*DeviceApi)(ObjectValue(thing)))
         } else {
             errors.New("Expected structure declaration or api declaration")
         }
