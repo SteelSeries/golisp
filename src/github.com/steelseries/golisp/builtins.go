@@ -511,7 +511,12 @@ func Case(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         if PairP(clause) {
             targetValue, err = Eval(Car(clause), env)
             if IsEqual(targetValue, keyValue) {
-                result, err = Eval(Cadr(clause), env)
+                for sexpr := Cdr(clause); NotNilP(sexpr); sexpr = Cdr(sexpr) {
+                    result, err = Eval(Car(sexpr), env)
+                    if err != nil {
+                        return
+                    }
+                }
                 return
             }
         } else {

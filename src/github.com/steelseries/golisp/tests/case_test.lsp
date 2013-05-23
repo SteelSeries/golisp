@@ -12,3 +12,15 @@
           (== (test-func 2) "two")
           (== (test-func 3) "three")
           (== (test-func 5) "unknown"))
+
+(define (complex-func x)
+  (let ((y 1))
+    (case x
+      (0 (set! y 2)
+         (+ y 1))
+      (1 (set! y 5)
+         (+ y 2)))))
+
+(describe complex-case
+          (== (complex-func 0) 3)
+          (== (complex-func 1) 7))
