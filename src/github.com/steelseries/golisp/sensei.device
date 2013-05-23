@@ -2,161 +2,164 @@
 ;;; (def-field <name> <type> [<count>] [<to json translation> <from json translation>])
 ;;; (def-api <struct name> (read ) (write ))
 
-(def-struct led
-     (def-field red uint8)
-     (def-field green uint8)
-     (def-field blue uint8)
-     (def-field mode uint8))
-
-(def-struct lcd
+(def-device sensei
+  (def-struct led
+    (def-field red uint8)
+    (def-field green uint8)
+    (def-field blue uint8)
+    (def-field mode uint8))
+  
+  (def-struct lcd
      (def-field contrast uint8
-                (range 1 10))
+       (range 1 10))
      (def-field brightness uint8
-                (range 0 10)))
+       (range 0 10)))
+  
+  (def-struct cpi
+    (def-field unbind uint8
+      (values 0 1))
+    (def-field x uint16
+      (range 0 5670))
+    (def-field y uint16
+      (range 0 5670))
+    (def-field led led))
+  
+  (def-struct lift
+    (def-field mode uint8
+      (values 0 1))
+    (def-field detection-threshold uint8
+      (range 8 15)))
+    
+  (def-struct angle-snap
+    (def-field mode uint8
+      (values 0 1))
+    (def-field degree uint16
+      (range 0 10))
+    (def-field velocity-threshold uint8)
+    (def-field control uint16))
+  
+  (def-struct acceleration
+    (def-field mode uint8
+      (values 0))
+    (def-field degree uint8)) 
+  
+  (def-struct deceleration
+    (def-field mode uint8
+      (values 0))
+    (def-field degree uint8
+      (range 0 10))) 
+  
+  (def-struct sensor
+    (def-field default-cpi uint8
+      (values 0 1))
+    (def-field cpi cpi 
+      (repeat 2))
+    (def-field lift-detection lift)
+    (def-field angle-snap angle-snap)
+    (def-field acceleration acceleration)
+    (def-field deceleration deceleration))
+  
+  (def-struct bitmap
+    (def-field display uint8
+      (values 0 1))
+    (def-field pixels uint8 512))
+  
+  (def-struct button
+    (def-field function uint8
+      (values 0 1 2 3 6 8 255))
+    (def-field mapping uint8
+      (deferred-validation (case function
+                             (0 (values 1 2 4 8 10))
+                             (1 (values 1 255))
+                             (2 (range 0 255))
+                             (3 (values 0))
+                             (6 (values 1 255))
+                             (8 (range 0 4))
+                             (255 (range 0 255)))))
+    (def-field macro-address uint16
+      (range 0 2047))
+    (def-field number-of-events uint16
+      (range 0 164))
+    (def-field debounce-count uint8))
+  
+  (def-struct wheel
+    (def-field function uint8
+      (values 0 1 2 3 6 8 255))
+    (def-field mapping uint8
+      (case function
+        (0 (values 1 2 4 8 10))
+        (1 (values 1 255))
+        (2 (range 0 255))
+        (3 (values 0))
+        (6 (values 1 255))
+        (8 (range 0 4))
+        (255 (range 0 255))))
+    (def-field macro-address uint16
+      (range 0 2047))
+    (def-field number-of-events uint16
+      (range 0 164)) 
+    (def-field dummy uint8))
+  
+  (def-struct macro-event
+    (def-field type uint8
+      (values 0x00 0x01 0x10 0x11 0x12 0x13))
+    (def-field action uint16
+      (case type
+        (0x01 (range 0x0000 0x00FF))
+        (0x10 (values 0x0001 0x0002 0x0004 0x0008 0x0010))
+        (0x11 (values 0x0001 0x00FF))
+        (0x12 (values 0x0001 0x00FF))
+        (0x13 (range 0x0000 0xFFFF))))
+    (def-field make-or-break uint8
+      (values 0x00 0x01))
+    (def-field delay uint32))
+  
+  (def-struct macro
+    (def-field number-of-events uint16
+      (range 0 128))
+    (def-field address uint16
+      (range 0x0400 0x0780))
+    (def-field loop-count uint8)
+    (def-field events macro-event 
+      (repeat 128)
+      (to-json (lambda (events macro)
+                 (acons "events"
+                        (take (get 'number-of-events macro) events))
+                 macro))
+      (from-json (lambda (events macro)
+                   (acons "events"
+                          (append events 
+                                  (times (new macro-event) 
+                                         (- 128 (assoc "number-of-events" macro))))
+                          macro)))))
+  (def-struct profile
+    (def-field id uint8
+      (range 0 4))
+    (def-field name uint8 
+      (repeat 16)
+      (to-json (lambda (bytes)
+                 (bytes-to-string bytes)))
+      (from-json (lambda (str)
+                   (string-to-bytes s 16))))
+    (def-field size uint16)
+    (def-field checksum uint16)
+    (def-field polling-rate uint8
+      (values 0x01 0x02 0x04 0x08))
+    (def-field orientation uint8
+      (values 0x01 0x02 0x03))
+    (def-field sensor sensor)
+    (def-field buttons button 
+      (repeat 8))
+    (def-field wheels wheel 
+      (repeat 2))
+    (def-field wheel-led led)
+    (def-field lcd lcd)
+    (def-field logo-bitmap bitmap)
+    (def-field macros macro 
+      (repeat 10)))
+  
+  ;; (def-api profile
+  ;;   (read cmd )
+  ;;   (write cmd))
 
-(def-struct cpi
-     (def-field unbind uint8
-                (values 0 1)
-     (def-field x uint16
-                (range 0 5670)
-     (def-field y uint16
-                (range 0 5670))
-     (def-field led led))
-
-(def-struct lift
-     (def-field mode uint8
-                (values 0 1)
-     (def-field detection-threshold uint8
-                (range 8 15))
-
-(def-struct angle-snap
-     (def-field mode uint8
-                (values 0 1))
-     (def-field degree uint16
-                (range 0 10))
-     (def-field velocity-threshold uint8)
-     (def-field control uint16))
-
-(def-struct acceleration
-     (def-field mode uint8
-                (values 0))
-     (def-field degree uint8)) 
-
-(def-struct deceleration
-     (def-field mode uint8
-                (values 0))
-     (def-field degree uint8
-                (range 0 10))) 
-
-(def-struct sensor
-     (def-field default-cpi uint8
-                (values 0 1))
-     (def-field cpi cpi 
-                (repeat 2))
-     (def-field lift-detection lift)
-     (def-field angle-snap angle-snap)
-     (def-field acceleration acceleration)
-     (def-field deceleration deceleration))
-
-(def-struct bitmap
-     (def-field display uint8
-                (values 0 1)
-     (def-field pixels uint8 512))
-
-(def-struct button
-     (def-field function uint8
-                (values 0 1 2 3 6 8 255))
-     (def-field mapping uint8
-                (deferred-validation (case function
-                                           (0 (values 1 2 4 8 10))
-                                           (1 (values 1 255))
-                                           (2 (range 0 255))
-                                           (3 (values 0))
-                                           (6 (values 1 255))
-                                           (8 (range 0 4))
-                                           (255 (range 0 255)))))
-     (def-field macro-address uint16
-                (range 0 2047))
-     (def-field number-of-events uint16
-                (range 0 164))
-     (def-field debounce-count uint8))
-
-(def-struct wheel
-     (def-field function uint8
-                (values 0 1 2 3 6 8 255))
-     (def-field mapping uint8
-                (case function
-                      (0 (values 1 2 4 8 10))
-                      (1 (values 1 255))
-                      (2 (range 0 255))
-                      (3 (values 0))
-                      (6 (values 1 255))
-                      (8 (range 0 4))
-                      (255 (range 0 255))))
-     (def-field macro-address uint16
-                (range 0 2047))
-     (def-field number-of-events uint16
-                (range 0 164)) 
-     (def-field dummy uint8))
-
-(def-struct macro-event
-     (def-field type uint8
-                (values 0x00 0x01 0x10 0x11 0x12 0x13))
-     (def-field action uint16
-                (case type
-                      (0x01 (range 0x0000 0x00FF))
-                      (0x10 (values 0x0001 0x0002 0x0004 0x0008 0x0010))
-                      (0x11 (values 0x0001 0x00FF))
-                      (0x12 (values 0x0001 0x00FF))
-                      (0x13 (range 0x0000 0xFFFF))))
-     (def-field make-or-break uint8
-                (values 0x00 0x01))
-     (def-field delay uint32))
-
-(def-struct macro
-     (def-field number-of-events uint16
-                (range 0 128))
-     (def-field address uint16
-                (range 0x0400 0x0780))
-     (def-field loop-count uint8)
-     (def-field events macro-event 
-                       (repeat 128)
-                       (to-json (lambda (events macro)
-                                        (acons "events"
-                                               (take (get 'number-of-events macro) events))
-                                               macro))
-                       (from-json (lambda (events macro)
-                                          (acons "events"
-                                                 (append events 
-                                                         (times (new macro-event) 
-                                                                (- 128 (assoc "number-of-events" macro))))
-                                                 macro)))))
-(def-struct profile
-     (def-field id uint8
-                (range 0 4))
-     (def-field name uint8 
-                (repeat 16)
-                (to-json (lambda (bytes)
-                                 (bytes-to-string bytes)))
-                (from-json (lambda (str)
-                                   (string-to-bytes s 16))))
-     (def-field size uint16)
-     (def-field checksum uint16)
-     (def-field polling-rate uint8
-                (values 0x01 0x02 0x04 0x08))
-     (def-field orientation uint8
-                (values 0x01 0x02 0x03))
-     (def-field sensor sensor)
-     (def-field buttons button 
-                (repeat 8))
-     (def-field wheels wheel 
-                (repeat 2))
-     (def-field wheel-led led)
-     (def-field lcd lcd)
-     (def-field logo-bitmap bitmap)
-     (def-field macros macro 
-                (repeat 10)))
-
-//(def-api profile
-//         (read cmd )
-//         (write cmd))
+)

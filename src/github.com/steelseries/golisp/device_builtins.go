@@ -16,6 +16,7 @@ import (
     "unsafe"
 )
 
+var CurrentDevice *Device
 var CurrentStructure *DeviceStructure
 var CurrentField *DeviceField
 
@@ -24,6 +25,7 @@ func init() {
 }
 
 func InitDeviceBuiltins() {
+    MakePrimitiveFunction("def-device", -1, DefDevice)
     MakePrimitiveFunction("def-struct", -1, DefStruct)
     MakePrimitiveFunction("def-field", -1, DefField)
     MakePrimitiveFunction("range", 2, DefRange)
@@ -41,6 +43,36 @@ func InitDeviceBuiltins() {
     MakePrimitiveFunction("string-to-bytes", 2, StringToBytes)
 }
 
+func DefDevice(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    deviceName := Car(args)
+    if TypeOf(deviceName) != SymbolType {
+        err = errors.New("Device name must be a symbol")
+        return
+    }
+
+    if NilP(Cdr(args)) {
+        err = errors.New("Device must have at least one structure")
+        return
+    }
+
+    CurrentDevice := NewDeviceNamed(StringValue(deviceName))
+
+    var structure *Data
+    for c := Cdr(args); NotNilP(c); c = Cdr(c) {
+        structure, err = Eval(Car(c), env)
+        if err != nil {
+            return
+        }
+        if ObjectP(structure) && TypeOfObject(structure) == "DeviceStructure" {
+            CurrentDevice.AddStructure((*DeviceStructure)(ObjectValue(structure)))
+        } else {
+            errors.New("Expected structure declaration or api declaration")
+        }
+    }
+    CurrentStructure = nil
+    return env.BindTo(deviceName, ObjectWithTypeAndValue("Device", unsafe.Pointer(CurrentDevice))), nil
+}
+
 func DefStruct(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     structName := Car(args)
     if TypeOf(structName) != SymbolType {
@@ -53,8 +85,7 @@ func DefStruct(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         return
     }
 
-    fmt.Printf("device structure: %s\n", StringValue(structName))
-    structure := NewStruct(StringValue(structName))
+    structure := NewStructNamed(StringValue(structName))
     CurrentStructure = structure
     CurrentField = nil
 
@@ -65,7 +96,7 @@ func DefStruct(args *Data, env *SymbolTableFrame) (result *Data, err error) {
             return
         }
         if ObjectP(field) && TypeOfObject(field) == "DeviceField" {
-            structure.AddField((*DeviceField)(ObjectValue(field)))
+            CurrentStructure.AddField((*DeviceField)(ObjectValue(field)))
         } else {
             errors.New("Expected DeviceField")
         }

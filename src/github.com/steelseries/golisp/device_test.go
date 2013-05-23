@@ -17,10 +17,10 @@ type DeviceSuite struct {
 var _ = Suite(&DeviceSuite{})
 
 func (s *DeviceSuite) TestSingleUint8(c *C) {
-    st := NewStruct("test")
+    st := NewStructNamed("test")
     df := NewField("f1", "uint8", 1)
     st.AddField(df)
-    exp := st.Expand()
+    exp := st.Expand(nil)
     f := exp.Fields[0]
     c.Assert(f.FieldDefinition, Equals, df)
     c.Assert(f.Offset, Equals, 0)
@@ -29,10 +29,10 @@ func (s *DeviceSuite) TestSingleUint8(c *C) {
 }
 
 func (s *DeviceSuite) TestUint8AndUint8(c *C) {
-    st := NewStruct("test")
+    st := NewStructNamed("test")
     st.AddField(NewField("f1", "uint8", 1))
     st.AddField(NewField("f2", "uint8", 1))
-    exp := st.Expand()
+    exp := st.Expand(nil)
     f1 := exp.Fields[0]
     c.Assert(f1.Offset, Equals, 0)
     c.Assert(f1.Size, Equals, 1)
@@ -43,10 +43,10 @@ func (s *DeviceSuite) TestUint8AndUint8(c *C) {
 }
 
 func (s *DeviceSuite) TestUint8AndUint16(c *C) {
-    st := NewStruct("test")
+    st := NewStructNamed("test")
     st.AddField(NewField("f1", "uint8", 1))
     st.AddField(NewField("f2", "uint16", 2))
-    exp := st.Expand()
+    exp := st.Expand(nil)
     f1 := exp.Fields[0]
     c.Assert(f1.Offset, Equals, 0)
     c.Assert(f1.Size, Equals, 1)
@@ -57,10 +57,10 @@ func (s *DeviceSuite) TestUint8AndUint16(c *C) {
 }
 
 func (s *DeviceSuite) TestUint8AndUint32(c *C) {
-    st := NewStruct("test")
+    st := NewStructNamed("test")
     st.AddField(NewField("f1", "uint8", 1))
     st.AddField(NewField("f2", "uint32", 4))
-    exp := st.Expand()
+    exp := st.Expand(nil)
     f1 := exp.Fields[0]
     c.Assert(f1.Offset, Equals, 0)
     c.Assert(f1.Size, Equals, 1)
@@ -71,9 +71,9 @@ func (s *DeviceSuite) TestUint8AndUint32(c *C) {
 }
 
 func (s *DeviceSuite) TestSingleUint8Bytes(c *C) {
-    st := NewStruct("test")
+    st := NewStructNamed("test")
     st.AddField(NewField("f1", "uint8", 1))
-    exp := st.Expand()
+    exp := st.Expand(nil)
     f := exp.Fields[0]
     f.Value = 5
     bytes := *exp.ByteArray()
@@ -81,10 +81,10 @@ func (s *DeviceSuite) TestSingleUint8Bytes(c *C) {
 }
 
 func (s *DeviceSuite) TestUint8AndUint8Bytes(c *C) {
-    st := NewStruct("test")
+    st := NewStructNamed("test")
     st.AddField(NewField("f1", "uint8", 1))
     st.AddField(NewField("f2", "uint8", 1))
-    exp := st.Expand()
+    exp := st.Expand(nil)
     exp.Fields[0].Value = 47
     exp.Fields[1].Value = 185
     bytes := *exp.ByteArray()
@@ -93,10 +93,10 @@ func (s *DeviceSuite) TestUint8AndUint8Bytes(c *C) {
 }
 
 func (s *DeviceSuite) TestUint8AndUint16Bytes(c *C) {
-    st := NewStruct("test")
+    st := NewStructNamed("test")
     st.AddField(NewField("f1", "uint8", 1))
     st.AddField(NewField("f2", "uint16", 2))
-    exp := st.Expand()
+    exp := st.Expand(nil)
     exp.Fields[0].Value = 47
     exp.Fields[1].Value = 22970
     bytes := *exp.ByteArray()
@@ -107,10 +107,10 @@ func (s *DeviceSuite) TestUint8AndUint16Bytes(c *C) {
 }
 
 func (s *DeviceSuite) TestUint8AndUint32Bytes(c *C) {
-    st := NewStruct("test")
+    st := NewStructNamed("test")
     st.AddField(NewField("f1", "uint8", 1))
     st.AddField(NewField("f2", "uint32", 4))
-    exp := st.Expand()
+    exp := st.Expand(nil)
     exp.Fields[0].Value = 47
     exp.Fields[1].Value = 702831034
     bytes := *exp.ByteArray()
@@ -125,10 +125,10 @@ func (s *DeviceSuite) TestUint8AndUint32Bytes(c *C) {
 }
 
 func (s *DeviceSuite) TestUint8AndUint8FromJson(c *C) {
-    st := NewStruct("test")
+    st := NewStructNamed("test")
     st.AddField(NewField("f1", "uint8", 1))
     st.AddField(NewField("f2", "uint8", 1))
-    exp := st.Expand()
+    exp := st.Expand(nil)
 
     json := `{"f1": 47, "f2": 185}`
 
@@ -139,18 +139,18 @@ func (s *DeviceSuite) TestUint8AndUint8FromJson(c *C) {
 
 func (s *DeviceSuite) TestComplexStructureFromJson(c *C) {
 
-    stMap := NewStruct("mapstruct")
+    stMap := NewStructNamed("mapstruct")
     Global.BindTo(SymbolWithName("mapstruct"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stMap)))
     stMap.AddField(NewFieldWithCount("f1", "uint8", 1, 2))
     stMap.AddField(NewField("f2", "uint8", 1))
 
-    stTest := NewStruct("test")
+    stTest := NewStructNamed("test")
     Global.BindTo(SymbolWithName("test"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stTest)))
 
     stTest.AddField(NewField("map", "mapstruct", 1))
     stTest.AddField(NewField("f3", "uint8", 1))
 
-    exp := stTest.Expand()
+    exp := stTest.Expand(nil)
 
     json := `{"map": {"f1": [47, 75], "f2": 185}, "f3": 85}`
 
@@ -164,18 +164,18 @@ func (s *DeviceSuite) TestComplexStructureFromJson(c *C) {
 func (s *DeviceSuite) TestComplexStructureFromBytes(c *C) {
     bytes := []byte{47, 75, 185, 85}
 
-    stMap := NewStruct("mapstruct")
+    stMap := NewStructNamed("mapstruct")
     Global.BindTo(SymbolWithName("mapstruct"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stMap)))
     stMap.AddField(NewFieldWithCount("f1", "uint8", 1, 2))
     stMap.AddField(NewField("f2", "uint8", 1))
 
-    stTest := NewStruct("test")
+    stTest := NewStructNamed("test")
     Global.BindTo(SymbolWithName("test"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stTest)))
 
     stTest.AddField(NewField("map", "mapstruct", 1))
     stTest.AddField(NewField("f3", "uint8", 1))
 
-    exp := stTest.Expand()
+    exp := stTest.Expand(nil)
 
     exp.PopulateFromBytes(&bytes)
 
@@ -187,18 +187,18 @@ func (s *DeviceSuite) TestComplexStructureFromBytes(c *C) {
 
 func (s *DeviceSuite) TestComplexStructureWithMultipleTypesFromJson(c *C) {
 
-    stMap := NewStruct("mapstruct")
+    stMap := NewStructNamed("mapstruct")
     Global.BindTo(SymbolWithName("mapstruct"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stMap)))
     stMap.AddField(NewFieldWithCount("f1", "uint8", 1, 2))
     stMap.AddField(NewField("f2", "uint32", 1))
 
-    stTest := NewStruct("test")
+    stTest := NewStructNamed("test")
     Global.BindTo(SymbolWithName("test"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stTest)))
 
     stTest.AddField(NewField("map", "mapstruct", 1))
     stTest.AddField(NewField("f3", "uint8", 1))
 
-    exp := stTest.Expand()
+    exp := stTest.Expand(nil)
 
     json := `{"map": {"f1": [47, 75], "f2": 185000}, "f3": 85}`
 
@@ -212,18 +212,18 @@ func (s *DeviceSuite) TestComplexStructureWithMultipleTypesFromJson(c *C) {
 func (s *DeviceSuite) TestComplexStructureWithMultipleTypesFromBytes(c *C) {
     bytes := []byte{0x2f, 0x4B, 0x00, 0x00, 0xA8, 0xD2, 0x02, 0x00, 0x55}
 
-    stMap := NewStruct("mapstruct")
+    stMap := NewStructNamed("mapstruct")
     Global.BindTo(SymbolWithName("mapstruct"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stMap)))
     stMap.AddField(NewFieldWithCount("f1", "uint8", 1, 2))
     stMap.AddField(NewField("f2", "uint32", 4))
 
-    stTest := NewStruct("test")
+    stTest := NewStructNamed("test")
     Global.BindTo(SymbolWithName("test"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stTest)))
 
     stTest.AddField(NewField("map", "mapstruct", 1))
     stTest.AddField(NewField("f3", "uint8", 1))
 
-    exp := stTest.Expand()
+    exp := stTest.Expand(nil)
 
     exp.PopulateFromBytes(&bytes)
 
@@ -236,18 +236,18 @@ func (s *DeviceSuite) TestComplexStructureWithMultipleTypesFromBytes(c *C) {
 func (s *DeviceSuite) TestGeneratingJson(c *C) {
     bytes := []byte{0x2f, 0x4B, 0x00, 0x00, 0xA8, 0xD2, 0x02, 0x00, 0x55}
 
-    stMap := NewStruct("mapstruct")
+    stMap := NewStructNamed("mapstruct")
     Global.BindTo(SymbolWithName("mapstruct"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stMap)))
     stMap.AddField(NewFieldWithCount("f1", "uint8", 1, 2))
     stMap.AddField(NewField("f2", "uint32", 4))
 
-    stTest := NewStruct("test")
+    stTest := NewStructNamed("test")
     Global.BindTo(SymbolWithName("test"), ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(stTest)))
 
     stTest.AddField(NewField("keyed", "mapstruct", 1))
     stTest.AddField(NewField("f3", "uint8", 1))
 
-    exp := stTest.Expand()
+    exp := stTest.Expand(nil)
     exp.PopulateFromBytes(&bytes)
     tree := exp.Json()
     data, _ := Assoc(StringWithValue("f3"), tree)

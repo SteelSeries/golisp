@@ -15,10 +15,21 @@ import (
     "strings"
 )
 
+type Device struct {
+    Name               string
+    Structures         []*DeviceStructure
+    ExpandedStructures []*ExpandedStructure
+    Apis               []*DeviceApi
+}
+
 type DeviceStructure struct {
     Name   string
+    Parent *Device
     Fields []*DeviceField
     Size   int // size of the struct, in buyes
+}
+
+type DeviceApi struct {
 }
 
 type Validation interface {
@@ -104,6 +115,7 @@ func AlignmentOf(fieldType string) int {
 
 type ExpandedStructure struct {
     Name   string
+    Parent *Device
     Fields []*ExpandedField
     Size   int // size of the struct, in bytes
 }
@@ -116,10 +128,23 @@ type ExpandedField struct {
     Size            int
 }
 
+// Device functions
+func NewDeviceNamed(n string) (d *Device) {
+    return &Device{Name: n, Structures: make([]*DeviceStructure, 0, 10), ExpandedStructures: make([]*ExpandedStructure, 0, 10)}
+}
+
+func (self *Device) AddStructure(s *DeviceStructure) {
+    self.Structures = append(self.Structures, s)
+}
+
+func (self *Device) AddApi(a *DeviceApi) {
+    self.Apis = append(self.Apis, a)
+}
+
 // DeviceStructure functions
 
-func NewStruct(n string) (s *DeviceStructure) {
-    return &DeviceStructure{Name: n, Fields: make([]*DeviceField, 0, 5), Size: 0}
+func NewStructNamed(n string) (s *DeviceStructure) {
+    return &DeviceStructure{Name: n, Parent: CurrentDevice, Fields: make([]*DeviceField, 0, 5), Size: 0}
 }
 
 func (self *DeviceStructure) AddField(f *DeviceField) {
@@ -199,10 +224,16 @@ func (self *ExpandedStructure) addExpandedFields(fields []*DeviceField, pathSoFa
     }
 }
 
-func (self *DeviceStructure) Expand() *ExpandedStructure {
-    newStruct := &ExpandedStructure{Name: self.Name}
+func (self *DeviceStructure) Expand(parent *Device) *ExpandedStructure {
+    newStruct := &ExpandedStructure{Name: self.Name, Parent: parent}
     newStruct.addExpandedFields(self.Fields, "")
     return newStruct
+}
+
+func (self *Device) Expand() {
+    for _, s := range self.Structures {
+        self.ExpandedStructures = append(self.ExpandedStructures, s.Expand(self))
+    }
 }
 
 // serialization into byte array
@@ -246,6 +277,44 @@ func stepsFromPath(path string) (steps []string) {
     return strings.Split(path, "/")[1:]
 }
 
+// validation
+
+func (self *ExpandedField) Validate(env *SymbolTableFrame) bool {
+    fieldDef := self.FieldDefinition
+    if fieldDef.ValidRange != nil {
+        return fieldDef.ValidRange.Validate(self.Value)
+    }
+
+    if fieldDef.ValidValues != nil {
+        return fieldDef.ValidValues.Validate(self.Value)
+    }
+
+    if fieldDef.DeferredValidationCode != nil {
+        CurrentField = fieldDef
+        _, err := Eval(fieldDef.DeferredValidationCode, env)
+        if err != nil {
+            return false
+        }
+        result := self.Validate(env)
+        fieldDef.ValidRange = nil
+        fieldDef.ValidValues = nil
+        return result
+    }
+
+    return true
+}
+
+func (self *ExpandedStructure) Validate() bool {
+    env := NewSymbolTableFrameBelow(Global)
+    for _, field := range self.Fields {
+        env.BindLocallyTo(SymbolWithName(field.FieldDefinition.Name), NumberWithValue(field.Value))
+        if !field.Validate(env) {
+            return false
+        }
+    }
+    return true
+}
+
 // populating from JSON
 
 func (self *ExpandedField) extractValueFromJsonWithStepAndParent(json *Data, steps []string, parentNode *Data) {
@@ -287,44 +356,6 @@ func (self *ExpandedStructure) PopulateFromJson(jsonData string) {
     for _, field := range self.Fields {
         field.extractValueFromJson(alist)
     }
-}
-
-// validation
-
-func (self *ExpandedField) Validate(env *SymbolTableFrame) bool {
-    fieldDef := self.FieldDefinition
-    if fieldDef.ValidRange != nil {
-        return fieldDef.ValidRange.Validate(self.Value)
-    }
-
-    if fieldDef.ValidValues != nil {
-        return fieldDef.ValidValues.Validate(self.Value)
-    }
-
-    if fieldDef.DeferredValidationCode != nil {
-        CurrentField = fieldDef
-        _, err := Eval(fieldDef.DeferredValidationCode, env)
-        if err != nil {
-            return false
-        }
-        result := self.Validate(env)
-        fieldDef.ValidRange = nil
-        fieldDef.ValidValues = nil
-        return result
-    }
-
-    return true
-}
-
-func (self *ExpandedStructure) Validate() bool {
-    env := NewSymbolTableFrameBelow(Global)
-    for _, field := range self.Fields {
-        env.BindLocallyTo(SymbolWithName(field.FieldDefinition.Name), NumberWithValue(field.Value))
-        if !field.Validate(env) {
-            return false
-        }
-    }
-    return true
 }
 
 // generating json
@@ -405,10 +436,14 @@ func (self *DeviceStructure) Dump() {
 }
 
 func (self *DeviceStructure) DumpExpanded() {
-    expanded := self.Expand()
+    expanded := self.Expand(self.Parent)
     fmt.Printf("%s (%d bytes)\n", expanded.Name, expanded.Size)
     for _, f := range expanded.Fields {
         fmt.Printf("  %s %s (offset: %d, size: %d bytes) path: %s\n", f.FieldDefinition.Name, f.FieldDefinition.TypeName, f.Offset, f.Size, f.Path)
     }
     return
+}
+
+func LoadDeviceDeclaration(deviceName string) {
+    //    _, err := ProcessFile(deviceName + ".device")
 }

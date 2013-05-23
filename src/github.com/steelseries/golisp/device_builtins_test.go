@@ -155,7 +155,7 @@ func (s *DeviceBuiltinsSuite) TestFieldWithDeferredValuesReferencingPreviousFiel
 
     structObj := Global.ValueOf(SymbolWithName("test-struct"))
     ds := (*DeviceStructure)(ObjectValue(structObj))
-    es := ds.Expand()
+    es := ds.Expand(nil)
     f1 := es.Fields[0]
     f2 := es.Fields[1]
 
