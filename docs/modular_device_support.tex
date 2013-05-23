@@ -176,14 +176,16 @@ shows the bytearray that this structure corresponds to.
 
 Fields within a data declaration can be arrayed. When the structure
 gets processed/flattened multiple copies of these fields will be
-placed in the result. To do this you provide a count using a \verb|repeat| clause. As an example, here's a declaration that
-contains once simple repeated field and one complex repeated field
-(see the previous structure declaration at the beginning of \S~\ref{sec:datadefinition}).
+placed in the result. To do this you provide a count using a
+\verb|repeat| clause. As an example, here's a declaration that 
+contains one simple repeated field and one complex repeated field 
+(see the previous structure declaration at the beginning of
+\S~\ref{sec:datadefinition}). 
 
 \begin{verbatim}
   (def-struct sensor
      (def-field a uint8 (repeat 4))
-     (def-field cpi cpi (repeat 2)))
+     (def-field cpis cpi (repeat 2)))
 \end{verbatim}
 
 Once this is processed and flattened, it corresponds to the byte array
@@ -198,7 +200,13 @@ shown in Figure~\ref{fig:repeatingbytearray}.
 
 \subsection{Validation}
 
-All leaf field are a number with a valid range given by it's size: 0x00-0xFF for uint8, 0x0000-0xFFFF for uint16, and 0x00000000-0xFFFFFFFF for uint32. For some fields the entire range isn't valid. To enforce this, we introduce validation clauses to the field definition. These take two types: ranges and values. A range is specified by lower and upper bounds, which are inclusive. A set of values is just that: a list of valid values for the field.
+All leafs field are a numbers with a valid range given by it's size:
+0x00-0xFF for uint8, 0x0000-0xFFFF for uint16, and
+0x00000000-0xFFFFFFFF for uint32. For some fields the entire range
+isn't valid. To enforce this, we introduce validation clauses to the
+field definition. There are two types: ranges and values. A range is
+specified by lower and upper bounds, which are inclusive. A set of
+values is just that: a list of valid values for the field. 
 
 \begin{verbatim}
 (def-struct cpi
@@ -211,6 +219,43 @@ All leaf field are a number with a valid range given by it's size: 0x00-0xFF for
      (def-field led led))
 \end{verbatim}
 
+A \verb|range| validation does no processing on it's arguments; they
+are expected to be two non-negative integers in ascending order.
+
+A \verb|values| validation is more flexible in that it can be given an
+arbitrary expression that will be evaluated with the expectation that
+the result is a list of values. That list is then used as the set of
+valid values for the field.
+
+What was discussed above all happens at the time the structure
+declaration is evaluated. The validation for each field is
+independant. Sometimes this isn't good enough. Conside the following:
+
+\begin{verbatim}
+(def-struct button
+     (def-field function uint8
+                (values 0 1 2 3 6 8 255))
+     (def-field mapping uint8
+                (deferred-validation (case function
+                                           (0 (values 1 2 4 8 10))
+                                           (1 (values 1 255))
+                                           (2 (range 0 255))
+                                           (3 (values 0))
+                                           (6 (values 1 255))
+                                           (8 (range 0 4))
+                                           (255 (range 0 255))))))
+\end{verbatim}
+
+Here we need the validation of the \verb|mapping| field to be
+dependant on the the value of the \verb|function| field. This is done
+by using the \verb|deferred-validation| function. The argument is an
+arbitrary piece of code that evaluates a \verb|range| or \verb|values|
+clause in the end.
+
+In the above example, a \verb|case| form is used to select the
+appropriate \verb|range| or \verb|values| based on the value of the
+\verb|function| field. Note that only fields previous in the structure
+can be referenced.
 
 \subsection{Json}
 
@@ -236,7 +281,8 @@ declared. Going back to the structure declaration at the beginning of
 }
 \end{verbatim}
 
-When this jason is received by the device support layer, it gets processed and converted to a Lisp structure:
+When this jason is received by the device support layer, it gets
+processed and converted to a Lisp structure: 
 
 \begin{verbatim}
 (("cpi" . (("unbind" . 1)
@@ -327,10 +373,9 @@ required 16 bytes.
 \subsection{API definition}
 
 \begin{verbatim}
-  (def-api
-    (structure 'profile)
-    (read-command 02)
-    (write-command 12))
+  (def-api profile
+    (read 0x02 (lambda (payload) ))
+    (write 12))
 \end{verbatim}
 
 \end{document}
