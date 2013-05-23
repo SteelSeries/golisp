@@ -86,14 +86,14 @@
     (def-field function uint8
       (values 0 1 2 3 6 8 255))
     (def-field mapping uint8
-      (case function
-        (0 (values 1 2 4 8 10))
-        (1 (values 1 255))
-        (2 (range 0 255))
-        (3 (values 0))
-        (6 (values 1 255))
-        (8 (range 0 4))
-        (255 (range 0 255))))
+      (deferred-validation (case function
+                             (0 (values 1 2 4 8 10))
+                             (1 (values 1 255))
+                             (2 (range 0 255))
+                             (3 (values 0))
+                             (6 (values 1 255))
+                             (8 (range 0 4))
+                             (255 (range 0 255)))))
     (def-field macro-address uint16
       (range 0 2047))
     (def-field number-of-events uint16
@@ -104,12 +104,12 @@
     (def-field type uint8
       (values 0x00 0x01 0x10 0x11 0x12 0x13))
     (def-field action uint16
-      (case type
-        (0x01 (range 0x0000 0x00FF))
-        (0x10 (values 0x0001 0x0002 0x0004 0x0008 0x0010))
-        (0x11 (values 0x0001 0x00FF))
-        (0x12 (values 0x0001 0x00FF))
-        (0x13 (range 0x0000 0xFFFF))))
+      (deferred-validation (case type
+                             (0x01 (range 0x0000 0x00FF))
+                             (0x10 (values 0x0001 0x0002 0x0004 0x0008 0x0010))
+                             (0x11 (values 0x0001 0x00FF))
+                             (0x12 (values 0x0001 0x00FF))
+                             (0x13 (range 0x0000 0xFFFF)))))
     (def-field make-or-break uint8
       (values 0x00 0x01))
     (def-field delay uint32))
