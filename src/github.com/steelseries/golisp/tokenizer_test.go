@@ -70,6 +70,20 @@ func (s *TokenizerSuite) TestLongNumber(c *C) {
     c.Assert(lit, Equals, "1234567")
 }
 
+func (s *TokenizerSuite) TestHexNumber(c *C) {
+    t := NewMyTokenizer("0x1f a")
+    tok, lit := t.NextToken()
+    c.Assert(tok, Equals, HEXNUMBER)
+    c.Assert(lit, Equals, "0x1f")
+}
+
+func (s *TokenizerSuite) TestUppercaseHexNumber(c *C) {
+    t := NewMyTokenizer("0x1F a")
+    tok, lit := t.NextToken()
+    c.Assert(tok, Equals, HEXNUMBER)
+    c.Assert(lit, Equals, "0x1F")
+}
+
 func (s *TokenizerSuite) TestString(c *C) {
     t := NewMyTokenizer(`"hi" a`)
     tok, lit := t.NextToken()

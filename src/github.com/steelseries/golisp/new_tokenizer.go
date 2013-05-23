@@ -14,6 +14,7 @@ const (
     ILLEGAL = iota
     SYMBOL
     NUMBER
+    HEXNUMBER
     STRING
     QUOTE
     LPAREN
@@ -54,12 +55,39 @@ func (self *MyTokenizer) readSymbol() (token int, lit string) {
     return SYMBOL, self.Source[start:self.Position]
 }
 
+func isHex(ch rune) bool {
+    switch ch {
+    case 'a', 'b', 'c', 'd', 'e', 'f', 'A', 'B', 'C', 'D', 'E', 'F':
+        return true
+    default:
+        return false
+    }
+}
+
 func (self *MyTokenizer) readNumber() (token int, lit string) {
     start := self.Position
-    for !self.isEof() && unicode.IsNumber(rune(self.Source[self.Position])) || ((start == self.Position) && rune(self.Source[self.Position]) == '-') {
-        self.Position++
+    hex := false
+    for !self.isEof() {
+        ch := rune(self.Source[self.Position])
+        if (start == self.Position) && unicode.IsNumber(ch) {
+            self.Position++
+        } else if unicode.IsNumber(ch) {
+            self.Position++
+        } else if (start == self.Position-1) && ch == 'x' {
+            hex = true
+            self.Position++
+        } else if hex && isHex(ch) {
+            self.Position++
+        } else {
+            break
+        }
     }
-    return NUMBER, self.Source[start:self.Position]
+
+    if hex {
+        return HEXNUMBER, self.Source[start:self.Position]
+    } else {
+        return NUMBER, self.Source[start:self.Position]
+    }
 }
 
 func (self *MyTokenizer) readString() (token int, lit string) {

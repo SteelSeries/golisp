@@ -27,6 +27,27 @@ func (s *ParsingSuite) TestAnotherNumber(c *C) {
     c.Assert(NumericValue(sexpr), Equals, uint32(476))
 }
 
+func (s *ParsingSuite) TestHexNumber(c *C) {
+    sexpr, err := Parse("0xa5")
+    c.Assert(err, IsNil)
+    c.Assert(TypeOf(sexpr), Equals, NumberType)
+    c.Assert(NumericValue(sexpr), Equals, uint32(165))
+}
+
+func (s *ParsingSuite) TestUppercaseHexNumber(c *C) {
+    sexpr, err := Parse("0xA5")
+    c.Assert(err, IsNil)
+    c.Assert(TypeOf(sexpr), Equals, NumberType)
+    c.Assert(NumericValue(sexpr), Equals, uint32(165))
+}
+
+func (s *ParsingSuite) TestMixedCaseHexNumber(c *C) {
+    sexpr, err := Parse("0xAf")
+    c.Assert(err, IsNil)
+    c.Assert(TypeOf(sexpr), Equals, NumberType)
+    c.Assert(NumericValue(sexpr), Equals, uint32(175))
+}
+
 func (s *ParsingSuite) TestString(c *C) {
     sexpr, err := Parse(`"test"`)
     c.Assert(err, IsNil)

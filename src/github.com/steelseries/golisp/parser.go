@@ -22,6 +22,16 @@ func makeNumber(str string) (n *Data, err error) {
     return
 }
 
+func makeHexNumber(str string) (n *Data, err error) {
+    var i uint32
+    _, err = fmt.Sscanf(str, "%v", &i)
+    if err != nil {
+        return
+    }
+    n = NumberWithValue(i)
+    return
+}
+
 func makeString(str string) (s *Data, err error) {
     s = StringWithValue(str[1 : len(str)-1])
     return
@@ -114,6 +124,10 @@ func parseExpression(s *MyTokenizer) (sexpr *Data, eof bool, err error) {
         case NUMBER:
             s.ConsumeToken()
             sexpr, err = makeNumber(lit)
+            return
+        case HEXNUMBER:
+            s.ConsumeToken()
+            sexpr, err = makeHexNumber(lit)
             return
         case STRING:
             s.ConsumeToken()
