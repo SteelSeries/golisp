@@ -4,7 +4,7 @@
     (1 "one")
     (2 "two")
     (3 "three")
-    "unknown"))
+    (else "unknown")))
 
 (describe case
           (== (test-func 0) "zero")
@@ -19,8 +19,11 @@
       (0 (set! y 2)
          (+ y 1))
       (1 (set! y 5)
-         (+ y 2)))))
+         (+ y 2))
+      (else (set! y 10)
+            (+ y 16)))))
 
 (describe complex-case
           (== (complex-func 0) 3)
-          (== (complex-func 1) 7))
+          (== (complex-func 1) 7)
+          (== (complex-func 42) 26))
