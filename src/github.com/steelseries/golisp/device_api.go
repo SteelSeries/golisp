@@ -33,9 +33,11 @@ func WrapByteArray(typeTag uint32, data *[]byte) (wrappedByteArray *[]byte) {
     return &bytes
 }
 
-func ListToByteArray(list *Data, env *SymbolTableFrame) (result []byte) {
-    result = make([]byte, int(Length(list)))
+func ListToByteArray(list *Data, env *SymbolTableFrame) (result *[]byte) {
+    var a []byte
+    a = make([]byte, 0, int(Length(list)))
     for c := list; NotNilP(c); c = Cdr(c) {
+        a = append(a, byte(NumericValue(Car(c))))
     }
-    return
+    return &a
 }
