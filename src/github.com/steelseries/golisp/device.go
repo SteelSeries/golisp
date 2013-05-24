@@ -29,9 +29,6 @@ type DeviceStructure struct {
     Size   int // size of the struct, in buyes
 }
 
-type DeviceApi struct {
-}
-
 type Validation interface {
     Validate() bool
 }
@@ -237,22 +234,6 @@ func (self *Device) Expand() {
 }
 
 // serialization into byte array
-
-func addUint8ToByteArray(val uint8, offset int, bytes *[]byte) {
-    (*bytes)[offset] = val
-}
-
-func addUint16ToByteArray(val uint16, offset int, bytes *[]byte) {
-    (*bytes)[offset] = byte(val & 0xff)
-    (*bytes)[offset+1] = byte((val >> 8) & 0xff)
-}
-
-func addUint32ToByteArray(val uint32, offset int, bytes *[]byte) {
-    (*bytes)[offset] = byte(val & 0xff)
-    (*bytes)[offset+1] = byte((val >> 8) & 0xff)
-    (*bytes)[offset+2] = byte((val >> 16) & 0xff)
-    (*bytes)[offset+3] = byte((val >> 24) & 0xff)
-}
 
 func AddFieldToByteArray(f *ExpandedField, bytes *[]byte) {
     switch f.FieldDefinition.TypeName {
