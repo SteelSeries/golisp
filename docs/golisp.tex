@@ -401,7 +401,10 @@ value of \verb|cond| is the value of the last evaluation.
         (else 'equal)) ==> equal
 \end{verbatim}
 
-\noindent{\bf\large\verb|(case <variable> (<value> <sexpr...>) [<default sexpr>]|}
+\noindent{\bf\large\verb|(case <target sexpr> (<value> <sexpr>...)... [else <sexpr>...]|}
+
+\verb|case| chooses code to evaluate based on the value of the target
+sexpr. Any number of expressions can be associated with each target value.
 
 \begin{verbatim}
 (define (test-func x)
@@ -410,7 +413,7 @@ value of \verb|cond| is the value of the last evaluation.
     (1 "one")
     (2 "two")
     (3 "three")
-    "unknown"))
+    (else "unknown")))
 
 (test-func 0) ==> "zero"
 (test-func 1) ==> "one"

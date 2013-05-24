@@ -497,6 +497,16 @@ func Cond(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return
 }
 
+func EvalList(l *Data, env *SymbolTableFrame) (result *Data, err error) {
+    for sexpr := l; NotNilP(sexpr); sexpr = Cdr(sexpr) {
+        result, err = Eval(Car(sexpr), env)
+        if err != nil {
+            return
+        }
+    }
+    return
+}
+
 func Case(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var keyValue *Data
     var targetValue *Data
@@ -509,18 +519,17 @@ func Case(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     for clauseCell := Cdr(args); NotNilP(clauseCell); clauseCell = Cdr(clauseCell) {
         clause := Car(clauseCell)
         if PairP(clause) {
-            targetValue, err = Eval(Car(clause), env)
-            if IsEqual(targetValue, keyValue) {
-                for sexpr := Cdr(clause); NotNilP(sexpr); sexpr = Cdr(sexpr) {
-                    result, err = Eval(Car(sexpr), env)
-                    if err != nil {
-                        return
-                    }
+            if IsEqual(Car(clause), SymbolWithName("else")) {
+                return EvalList(Cdr(clause), env)
+            } else {
+                targetValue, err = Eval(Car(clause), env)
+                if IsEqual(targetValue, keyValue) {
+                    return EvalList(Cdr(clause), env)
                 }
-                return
             }
         } else {
-            return Eval(clause, env)
+            err = errors.New("Case requires non-atomic clauses")
+            return
         }
     }
 
