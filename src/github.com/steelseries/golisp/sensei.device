@@ -159,7 +159,9 @@
       (repeat 10)))
   
   ;; (def-api profile
-  ;;   (read cmd )
-  ;;   (write cmd))
+  ;;   (read read-profile-cmd 
+  ;;         (def-chunk firmware-payload sensei-profile-size (payload)))
+  ;;   (write write-profile-cmd 
+  ;;          (def-chunk firmware-payload sensei-profile-size (payload))))
 
 )

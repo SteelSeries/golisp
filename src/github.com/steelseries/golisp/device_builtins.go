@@ -26,6 +26,7 @@ func init() {
 
 func InitDeviceBuiltins() {
     MakePrimitiveFunction("def-device", -1, DefDevice)
+
     MakePrimitiveFunction("def-struct", -1, DefStruct)
     MakePrimitiveFunction("def-field", -1, DefField)
     MakePrimitiveFunction("range", 2, DefRange)
@@ -34,7 +35,12 @@ func InitDeviceBuiltins() {
     MakePrimitiveFunction("repeat", 1, DefRepeat)
     MakePrimitiveFunction("to-json", 1, DefToJson)
     MakePrimitiveFunction("to-from", 1, DefFromJson)
-    MakePrimitiveFunction("def-api", -1, DefApi)
+
+    MakePrimitiveFunction("def-api", 3, DefApi)
+    MakePrimitiveFunction("read", -1, ApiRead)
+    MakePrimitiveFunction("write", -1, ApiWrite)
+    MakePrimitiveFunction("def-chunk", 3, DefChunk)
+
     MakePrimitiveFunction("dump-struct", 1, DumpStructure)
     MakePrimitiveFunction("dump-expanded", 1, DumpExpanded)
 
@@ -55,10 +61,12 @@ func DefDevice(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     }
 
     CurrentDevice := NewDeviceNamed(StringValue(deviceName))
+    deviceEnv := NewSymbolTableFrameBelow(env)
+    CurrentDevice.Env = deviceEnv
 
     var thing *Data
     for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-        thing, err = Eval(Car(c), env)
+        thing, err = Eval(Car(c), deviceEnv)
         if err != nil {
             return
         }
@@ -232,10 +240,6 @@ func DefFromJson(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     }
 
     CurrentField.FromJsonTransform = Car(args)
-    return
-}
-
-func DefApi(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return
 }
 

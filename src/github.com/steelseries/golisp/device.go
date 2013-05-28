@@ -17,6 +17,7 @@ import (
 
 type Device struct {
     Name               string
+    Env                *SymbolWithName
     Structures         []*DeviceStructure
     ExpandedStructures []*ExpandedStructure
     Apis               []*DeviceApi
