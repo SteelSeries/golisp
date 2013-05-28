@@ -46,6 +46,7 @@ func InitDeviceBuiltins() {
 
     MakePrimitiveFunction("bytes-to-string", 2, BytesToString)
     MakePrimitiveFunction("string-to-bytes", 2, StringToBytes)
+    MakePrimitiveFunction("list-to-bytearray", 1, ListToBytes)
 }
 
 func DefDevice(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -314,4 +315,26 @@ func StringToBytes(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     Acons(StringWithValue("name"), ary, parent)
 
     return
+}
+
+func ListToBytes(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    list, err := Eval(Car(args), env)
+    if err != nil {
+        return
+    }
+
+    bytes := make([]byte, 0, int(Length(list)))
+    for c := list; NotNilP(c); c = Cdr(c) {
+        if !NumberP(Car(c)) {
+            err = errors.New("Byte arrays can only contain bytes.")
+            return
+        }
+        b := NumericValue(Car(c))
+        if b > 255 {
+            err = errors.New("Byte arrays can only contain bytes.")
+            return
+        }
+        bytes = append(bytes, byte(b))
+    }
+    return ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&bytes)), nil
 }

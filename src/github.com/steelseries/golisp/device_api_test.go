@@ -60,7 +60,7 @@ func (s *DeviceApiSuite) TestListToByteArray(c *C) {
     c.Assert((*b)[4], Equals, byte(5))
 }
 
-func (s *DeviceApiSuite) TestSimpleDefChunk(c *C) {
+func (s *DeviceApiSuite) TestDefChunk(c *C) {
     code := "(def-chunk 10 8 (list-to-bytearray '(1 2 3 4 5 6 7 8)))"
     sexpr, err := Parse(code)
     chunkObj, err := Eval(sexpr, Global)
@@ -69,4 +69,34 @@ func (s *DeviceApiSuite) TestSimpleDefChunk(c *C) {
     chunk := (*ApiChunk)(ObjectValue(chunkObj))
     c.Assert(chunk.DataType, Equals, uint32(10))
     c.Assert(chunk.DataSize, Equals, uint32(8))
+}
+
+func (s *DeviceApiSuite) TestSerializingChunk(c *C) {
+    code := "(def-chunk 10 8 (list-to-bytearray '(1 2 3 4 5 6 7 8)))"
+    sexpr, err := Parse(code)
+    chunkObj, err := Eval(sexpr, Global)
+    c.Assert(err, IsNil)
+    c.Assert(TypeOfObject(chunkObj), Equals, "ApiChunk")
+    chunk := (*ApiChunk)(ObjectValue(chunkObj))
+    bytes := chunk.Serialize()
+    c.Assert((*bytes)[0], Equals, byte(20))
+    c.Assert((*bytes)[1], Equals, byte(0))
+    c.Assert((*bytes)[2], Equals, byte(0))
+    c.Assert((*bytes)[3], Equals, byte(0))
+    c.Assert((*bytes)[4], Equals, byte(10))
+    c.Assert((*bytes)[5], Equals, byte(0))
+    c.Assert((*bytes)[6], Equals, byte(0))
+    c.Assert((*bytes)[7], Equals, byte(0))
+    c.Assert((*bytes)[8], Equals, byte(8))
+    c.Assert((*bytes)[9], Equals, byte(0))
+    c.Assert((*bytes)[10], Equals, byte(0))
+    c.Assert((*bytes)[11], Equals, byte(0))
+    c.Assert((*bytes)[12], Equals, byte(1))
+    c.Assert((*bytes)[13], Equals, byte(2))
+    c.Assert((*bytes)[14], Equals, byte(3))
+    c.Assert((*bytes)[15], Equals, byte(4))
+    c.Assert((*bytes)[16], Equals, byte(5))
+    c.Assert((*bytes)[17], Equals, byte(6))
+    c.Assert((*bytes)[18], Equals, byte(7))
+    c.Assert((*bytes)[19], Equals, byte(8))
 }

@@ -150,8 +150,8 @@ func (self *ApiChunk) Serialize() (result *[]byte) {
     if err != nil {
         panic(err)
     }
-    if !ObjectP(dataByteObject) || TypeOfObject(dataByteObject) != "*[]byte" {
-        panic(errors.New(fmt.Sprintf("API chunk code should return *[]byte but returned %s.", TypeOfObject(dataByteObject))))
+    if !ObjectP(dataByteObject) || TypeOfObject(dataByteObject) != "[]byte" {
+        panic(errors.New(fmt.Sprintf("API chunk code should return []byte but returned %s.", TypeOfObject(dataByteObject))))
     }
 
     dataBytes := (*[]byte)(ObjectValue(dataByteObject))
