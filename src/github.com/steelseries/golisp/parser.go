@@ -42,18 +42,6 @@ func makeSymbol(str string) (s *Data, err error) {
     return
 }
 
-func parseBoolean(s *MyTokenizer) (b *Data, err error) {
-    _, lit := s.NextToken()
-    s.ConsumeToken()
-    if lit[0] == 't' {
-        return True, nil
-    } else if lit[0] == 'f' {
-        return False, nil
-    } else {
-        return nil, errors.New(fmt.Sprintf("#%s is not a legal boolean constant.", lit))
-    }
-}
-
 func parseConsCell(s *MyTokenizer) (sexpr *Data, eof bool, err error) {
     tok, _ := s.NextToken()
     if tok == RPAREN {
@@ -97,10 +85,6 @@ func parseConsCell(s *MyTokenizer) (sexpr *Data, eof bool, err error) {
     s.ConsumeToken()
     sexpr = ArrayToList(cells)
     return
-}
-
-func isBooleanConstant(str string) bool {
-    return str[0] == '#'
 }
 
 func newSymbol(s *MyTokenizer, lit string) (sym *Data, eof bool, err error) {
