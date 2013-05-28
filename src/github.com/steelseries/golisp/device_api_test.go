@@ -15,6 +15,12 @@ type DeviceApiSuite struct {
 
 var _ = Suite(&DeviceApiSuite{})
 
+func (s *DeviceApiSuite) SetUpSuite(c *C) {
+    Global = NewSymbolTableFrameBelow(nil)
+    InitBuiltins()
+    InitDeviceBuiltins()
+}
+
 func (s *DeviceApiSuite) TestByteArrayWrapping(c *C) {
     data := []byte{1, 2, 3, 4}
     wrapped := WrapByteArray(42, &data)
@@ -52,4 +58,15 @@ func (s *DeviceApiSuite) TestListToByteArray(c *C) {
     c.Assert((*b)[2], Equals, byte(3))
     c.Assert((*b)[3], Equals, byte(4))
     c.Assert((*b)[4], Equals, byte(5))
+}
+
+func (s *DeviceApiSuite) TestSimpleDefChunk(c *C) {
+    code := "(def-chunk 10 8 (list-to-bytearray '(1 2 3 4 5 6 7 8)))"
+    sexpr, err := Parse(code)
+    chunkObj, err := Eval(sexpr, Global)
+    c.Assert(err, IsNil)
+    c.Assert(TypeOfObject(chunkObj), Equals, "ApiChunk")
+    chunk := (*ApiChunk)(ObjectValue(chunkObj))
+    c.Assert(chunk.DataType, Equals, uint32(10))
+    c.Assert(chunk.DataSize, Equals, uint32(8))
 }

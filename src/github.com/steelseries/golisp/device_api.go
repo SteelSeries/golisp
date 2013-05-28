@@ -6,11 +6,17 @@
 
 package golisp
 
+import (
+    "errors"
+    "fmt"
+    "unsafe"
+)
+
 type DeviceApi struct {
     Name  string
     Env   *SymbolTableFrame
-    Read  *Data
-    Write *Data
+    Read  *ApiCommand
+    Write *ApiCommand
 }
 
 type ApiCommand struct {
@@ -25,7 +31,7 @@ type ApiChunk struct {
     Env      *SymbolTableFrame
 }
 
-var currentApi *DeviceApi
+var CurrentApi *DeviceApi
 
 func addUint8ToByteArray(val uint8, offset int, bytes *[]byte) {
     (*bytes)[offset] = val
@@ -61,7 +67,7 @@ func ListToByteArray(list *Data, env *SymbolTableFrame) (result *[]byte) {
 }
 
 func DefApi(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    name = StringValue(Car(args))
+    name := StringValue(Car(args))
     apiEnv := NewSymbolTableFrameBelow(env)
     CurrentApi = &DeviceApi{Name: name, Env: apiEnv}
 
@@ -69,7 +75,7 @@ func DefApi(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         Eval(Car(c), apiEnv) // API commands have the side effect of adding themselves to the current API object
     }
 
-    return ObjectWithTypeAndValue("DeviceApi", unsafe.Pointer(CurrentApi))
+    return ObjectWithTypeAndValue("DeviceApi", unsafe.Pointer(CurrentApi)), nil
 }
 
 func makeApiCommand(args *Data, env *SymbolTableFrame) (result *ApiCommand, err error) {
@@ -85,7 +91,7 @@ func makeApiCommand(args *Data, env *SymbolTableFrame) (result *ApiCommand, err 
     for c := Cdr(args); NotNilP(c); c = Cdr(c) {
         obj, err = Eval(Car(c), env)
         if !ObjectP(obj) || TypeOfObject(obj) != "ApiChunk" {
-            err = error.New(fmt.Sprintf("API commands expect a series of chunks but a %s was found.", TypeOfObject(obj)))
+            err = errors.New(fmt.Sprintf("API commands expect a series of chunks but a %s was found.", TypeOfObject(obj)))
             return
         }
 
@@ -117,20 +123,20 @@ func DefChunk(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if err != nil {
         return
     }
-    typeVal = NumericValue(val)
+    typeVal := NumericValue(val)
 
     val, err = Eval(Cadr(args), env)
     if err != nil {
         return
     }
-    sizeVal = NumbericValue(val)
+    sizeVal := NumericValue(val)
 
-    chunk = &ByteArrayChunk{DataType: typeVal, DataSize: sizeVal, Code: Caddr(args), Env: env}
+    chunk := &ApiChunk{DataType: typeVal, DataSize: sizeVal, Code: Caddr(args), Env: env}
     result = ObjectWithTypeAndValue("ApiChunk", unsafe.Pointer(chunk))
     return
 }
 
-func (self *ByteArrayChunk) Serialize() (result *[]byte) {
+func (self *ApiChunk) Serialize() (result *[]byte) {
     uint32sNeeded := ((self.DataSize + 3) / 4) * 4
     paddingNeeded := uint32sNeeded - self.DataSize
     chunkSize := uint32sNeeded + 12
@@ -144,19 +150,19 @@ func (self *ByteArrayChunk) Serialize() (result *[]byte) {
     if err != nil {
         panic(err)
     }
-    if !ObjectP(dataByteObject) || TypeOfObject(dataTypeObject) != "*[]byte" {
-        panic(error.New(fmt.Sprintf("API chunk code should return *[]byte but returned %s.", TypeOfObject(dataTypeObject))))
+    if !ObjectP(dataByteObject) || TypeOfObject(dataByteObject) != "*[]byte" {
+        panic(errors.New(fmt.Sprintf("API chunk code should return *[]byte but returned %s.", TypeOfObject(dataByteObject))))
     }
 
-    dataBytes = (*[]byte)(ObjectValue(dataByteObject))
+    dataBytes := (*[]byte)(ObjectValue(dataByteObject))
 
-    if len(*dataBytes) > self.DataSize {
-        panic(error.New(fmt.Sprintf("Expect no more than %d bytes of data, but got %d.", self.DataSize, len(*dataBytes))))
+    if uint32(len(*dataBytes)) > self.DataSize {
+        panic(errors.New(fmt.Sprintf("Expect no more than %d bytes of data, but got %d.", self.DataSize, len(*dataBytes))))
     }
 
-    extraPadding := self.DataSize - len(*dataBytes)
+    extraPadding := self.DataSize - uint32(len(*dataBytes))
     copy(bytes[12:], *dataBytes)
-    for i, offset := paddingNeeded+extraPadding, self.DataSize+12; i > 0; i, offset = i-1, offset+1 {
+    for i, offset := paddingNeeded+extraPadding, int(self.DataSize)+12; i > 0; i, offset = i-1, offset+1 {
         addUint8ToByteArray(0, offset, &bytes)
     }
     return &bytes
