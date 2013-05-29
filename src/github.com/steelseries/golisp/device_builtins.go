@@ -36,10 +36,10 @@ func InitDeviceBuiltins() {
     MakePrimitiveFunction("to-json", 1, DefToJson)
     MakePrimitiveFunction("to-from", 1, DefFromJson)
 
-    MakePrimitiveFunction("def-api", 3, DefApi)
+    MakePrimitiveFunction("def-api", -1, DefApi)
     MakePrimitiveFunction("read", -1, ApiRead)
     MakePrimitiveFunction("write", -1, ApiWrite)
-    MakePrimitiveFunction("def-chunk", 3, DefChunk)
+    MakePrimitiveFunction("chunk", 3, DefChunk)
 
     MakePrimitiveFunction("dump-struct", 1, DumpStructure)
     MakePrimitiveFunction("dump-expanded", 1, DumpExpanded)

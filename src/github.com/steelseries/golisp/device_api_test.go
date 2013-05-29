@@ -61,7 +61,7 @@ func (s *DeviceApiSuite) TestListToByteArray(c *C) {
 }
 
 func (s *DeviceApiSuite) TestDefChunk(c *C) {
-    code := "(def-chunk 10 8 (list-to-bytearray '(1 2 3 4 5 6 7 8)))"
+    code := "(chunk 10 8 (list-to-bytearray '(1 2 3 4 5 6 7 8)))"
     sexpr, err := Parse(code)
     chunkObj, err := Eval(sexpr, Global)
     c.Assert(err, IsNil)
@@ -72,14 +72,14 @@ func (s *DeviceApiSuite) TestDefChunk(c *C) {
 }
 
 func (s *DeviceApiSuite) TestSerializingChunk(c *C) {
-    code := "(def-chunk 10 8 (list-to-bytearray '(1 2 3 4 5 6 7 8)))"
+    code := "(chunk 10 8 (list-to-bytearray '(1 2 3 4 5 6 7 8)))"
     sexpr, err := Parse(code)
     chunkObj, err := Eval(sexpr, Global)
     c.Assert(err, IsNil)
     c.Assert(TypeOfObject(chunkObj), Equals, "ApiChunk")
     chunk := (*ApiChunk)(ObjectValue(chunkObj))
     bytes := chunk.Serialize()
-    c.Assert((*bytes)[0], Equals, byte(20))
+    c.Assert((*bytes)[0], Equals, byte(16))
     c.Assert((*bytes)[1], Equals, byte(0))
     c.Assert((*bytes)[2], Equals, byte(0))
     c.Assert((*bytes)[3], Equals, byte(0))
@@ -99,4 +99,76 @@ func (s *DeviceApiSuite) TestSerializingChunk(c *C) {
     c.Assert((*bytes)[17], Equals, byte(6))
     c.Assert((*bytes)[18], Equals, byte(7))
     c.Assert((*bytes)[19], Equals, byte(8))
+}
+
+func (s *DeviceApiSuite) TestDefRead(c *C) {
+    CurrentApi = &DeviceApi{Name: "test", Env: Global}
+    code := "(read 10 (chunk 10 4 (list-to-bytearray '(1 2 3 4))))"
+    sexpr, err := Parse(code)
+    _, err = Eval(sexpr, Global)
+    c.Assert(err, IsNil)
+
+    reader := CurrentApi.Read
+    c.Assert(reader.Cmd, Equals, uint32(10))
+    c.Assert(len(reader.Chunks), Equals, 1)
+
+    c.Assert(CurrentApi.Write, IsNil)
+}
+
+func (s *DeviceApiSuite) TestDefWrite(c *C) {
+    CurrentApi = &DeviceApi{Name: "test", Env: Global}
+    code := "(write 10 (chunk 10 4 (list-to-bytearray '(1 2 3 4))))"
+    sexpr, err := Parse(code)
+    _, err = Eval(sexpr, Global)
+    c.Assert(err, IsNil)
+
+    writer := CurrentApi.Write
+    c.Assert(writer.Cmd, Equals, uint32(10))
+    c.Assert(len(writer.Chunks), Equals, 1)
+
+    c.Assert(CurrentApi.Read, IsNil)
+}
+
+func (s *DeviceApiSuite) TestDefApi(c *C) {
+    CurrentApi = &DeviceApi{Name: "test", Env: Global}
+    code := "(def-api test (read 10 (chunk 10 4 (list-to-bytearray '(1 2 3 4)))) (write 11 (chunk 10 4 (list-to-bytearray '(1 2 3 4)))))"
+    sexpr, err := Parse(code)
+    c.Assert(err, IsNil)
+    apiObj, err := Eval(sexpr, Global)
+    c.Assert(err, IsNil)
+    c.Assert(apiObj, NotNil)
+    api := (*DeviceApi)(ObjectValue(apiObj))
+    c.Assert(api.Name, Equals, "test")
+
+    reader := CurrentApi.Read
+    c.Assert(reader.Cmd, Equals, uint32(10))
+    c.Assert(len(reader.Chunks), Equals, 1)
+
+    writer := CurrentApi.Write
+    c.Assert(writer.Cmd, Equals, uint32(11))
+    c.Assert(len(writer.Chunks), Equals, 1)
+}
+
+func (s *DeviceApiSuite) TestDefApiWithExtraCode(c *C) {
+    CurrentApi = &DeviceApi{Name: "test", Env: Global}
+    code := `(def-api test
+                      (define read-cmd 10)
+                      (read read-cmd (chunk 10 4 (list-to-bytearray '(1 2 3 4))))
+                      (let ((write-cmd 11))
+                           (write write-cmd (chunk 10 4 (list-to-bytearray '(1 2 3 4))))))`
+    sexpr, err := Parse(code)
+    c.Assert(err, IsNil)
+    apiObj, err := Eval(sexpr, Global)
+    c.Assert(err, IsNil)
+    c.Assert(apiObj, NotNil)
+    api := (*DeviceApi)(ObjectValue(apiObj))
+    c.Assert(api.Name, Equals, "test")
+
+    reader := CurrentApi.Read
+    c.Assert(reader.Cmd, Equals, uint32(10))
+    c.Assert(len(reader.Chunks), Equals, 1)
+
+    writer := CurrentApi.Write
+    c.Assert(writer.Cmd, Equals, uint32(11))
+    c.Assert(len(writer.Chunks), Equals, 1)
 }

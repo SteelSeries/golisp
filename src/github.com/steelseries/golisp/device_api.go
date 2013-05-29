@@ -139,9 +139,9 @@ func DefChunk(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 func (self *ApiChunk) Serialize() (result *[]byte) {
     uint32sNeeded := ((self.DataSize + 3) / 4) * 4
     paddingNeeded := uint32sNeeded - self.DataSize
-    chunkSize := uint32sNeeded + 12
+    chunkSize := uint32sNeeded + 8
 
-    bytes := make([]byte, chunkSize)
+    bytes := make([]byte, chunkSize+4)
     addUint32ToByteArray(chunkSize, 0, &bytes)
     addUint32ToByteArray(self.DataType, 4, &bytes)
     addUint32ToByteArray(self.DataSize, 8, &bytes)
