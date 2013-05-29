@@ -182,6 +182,9 @@ func (s *DeviceApiSuite) TestSerializingMultiChunkPayload(c *C) {
 
     reader := CurrentApi.Read
     bytes := reader.SerializePayload()
+
+    c.Assert(len(*bytes), Equals, 36)
+
     // chunk 1 is 16 bytes
     c.Assert((*bytes)[0], Equals, byte(16))
     c.Assert((*bytes)[1], Equals, byte(0))
