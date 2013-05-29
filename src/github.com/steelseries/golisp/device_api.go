@@ -167,3 +167,19 @@ func (self *ApiChunk) Serialize() (result *[]byte) {
     }
     return &bytes
 }
+
+func (self *ApiCommand) SerializePayload() (result *[]byte) {
+    chunks := make([]*[]byte, 0, len(self.Chunks))
+    total := 0
+    for _, chunk := range self.Chunks {
+        newChunk := chunk.Serialize()
+        chunks = append(chunks, newChunk)
+        total += len(*newChunk)
+    }
+    payload := make([]byte, total)
+    offset := 0
+    for _, chunk := range chunks {
+        offset += copy(payload[offset:], *chunk)
+    }
+    return &payload
+}

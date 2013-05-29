@@ -130,7 +130,6 @@ func (s *DeviceApiSuite) TestDefWrite(c *C) {
 }
 
 func (s *DeviceApiSuite) TestDefApi(c *C) {
-    CurrentApi = &DeviceApi{Name: "test", Env: Global}
     code := "(def-api test (read 10 (chunk 10 4 (list-to-bytearray '(1 2 3 4)))) (write 11 (chunk 10 4 (list-to-bytearray '(1 2 3 4)))))"
     sexpr, err := Parse(code)
     c.Assert(err, IsNil)
@@ -150,7 +149,6 @@ func (s *DeviceApiSuite) TestDefApi(c *C) {
 }
 
 func (s *DeviceApiSuite) TestDefApiWithExtraCode(c *C) {
-    CurrentApi = &DeviceApi{Name: "test", Env: Global}
     code := `(def-api test
                       (define read-cmd 10)
                       (read read-cmd (chunk 10 4 (list-to-bytearray '(1 2 3 4))))
@@ -171,4 +169,64 @@ func (s *DeviceApiSuite) TestDefApiWithExtraCode(c *C) {
     writer := CurrentApi.Write
     c.Assert(writer.Cmd, Equals, uint32(11))
     c.Assert(len(writer.Chunks), Equals, 1)
+}
+
+func (s *DeviceApiSuite) TestSerializingMultiChunkPayload(c *C) {
+    CurrentApi = &DeviceApi{Name: "test", Env: Global}
+    code := `(read 10 
+                   (chunk 1 8 (list-to-bytearray '(1 2 3 4 5 6 7 8)))
+                   (chunk 5 2 (list-to-bytearray '(9 10))))`
+    sexpr, err := Parse(code)
+    _, err = Eval(sexpr, Global)
+    c.Assert(err, IsNil)
+
+    reader := CurrentApi.Read
+    bytes := reader.SerializePayload()
+    // chunk 1 is 16 bytes
+    c.Assert((*bytes)[0], Equals, byte(16))
+    c.Assert((*bytes)[1], Equals, byte(0))
+    c.Assert((*bytes)[2], Equals, byte(0))
+    c.Assert((*bytes)[3], Equals, byte(0))
+    // chunk 1 has type 1
+    c.Assert((*bytes)[4], Equals, byte(1))
+    c.Assert((*bytes)[5], Equals, byte(0))
+    c.Assert((*bytes)[6], Equals, byte(0))
+    c.Assert((*bytes)[7], Equals, byte(0))
+    // chunk 1 data is 8 bytes
+    c.Assert((*bytes)[8], Equals, byte(8))
+    c.Assert((*bytes)[9], Equals, byte(0))
+    c.Assert((*bytes)[10], Equals, byte(0))
+    c.Assert((*bytes)[11], Equals, byte(0))
+    // chunk 1 data
+    c.Assert((*bytes)[12], Equals, byte(1))
+    c.Assert((*bytes)[13], Equals, byte(2))
+    c.Assert((*bytes)[14], Equals, byte(3))
+    c.Assert((*bytes)[15], Equals, byte(4))
+    c.Assert((*bytes)[16], Equals, byte(5))
+    c.Assert((*bytes)[17], Equals, byte(6))
+    c.Assert((*bytes)[18], Equals, byte(7))
+    c.Assert((*bytes)[19], Equals, byte(8))
+
+    // chunk 2 is 12 bytes
+    c.Assert((*bytes)[20], Equals, byte(12))
+    c.Assert((*bytes)[21], Equals, byte(0))
+    c.Assert((*bytes)[22], Equals, byte(0))
+    c.Assert((*bytes)[23], Equals, byte(0))
+    // chunk 2 has type 5
+    c.Assert((*bytes)[24], Equals, byte(5))
+    c.Assert((*bytes)[25], Equals, byte(0))
+    c.Assert((*bytes)[26], Equals, byte(0))
+    c.Assert((*bytes)[27], Equals, byte(0))
+    // chunk 2 is 2 bytes
+    c.Assert((*bytes)[28], Equals, byte(2))
+    c.Assert((*bytes)[29], Equals, byte(0))
+    c.Assert((*bytes)[30], Equals, byte(0))
+    c.Assert((*bytes)[31], Equals, byte(0))
+    // chunk 2 data
+    c.Assert((*bytes)[32], Equals, byte(9))
+    c.Assert((*bytes)[33], Equals, byte(10))
+    // 2 bytes of padding
+    c.Assert((*bytes)[34], Equals, byte(0))
+    c.Assert((*bytes)[35], Equals, byte(0))
+
 }
