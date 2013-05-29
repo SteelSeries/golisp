@@ -380,9 +380,29 @@ required 16 bytes.
 
 \begin{verbatim}
   (def-api profile
-    (read 0x02 (lambda (payload)
-                 ))
-    (write 0x12 ))
+    [<sexpr>...]
+    (read <cmd> (chunk <type> <size> <sexpr>)...)
+    [<sexpr>...]
+    (write <cmd> (chunk <type> <size> <sexpr>)...))
 \end{verbatim}
+
+\noindent An API endpoint can be defined for any structure that needs
+to be read and/or written to the device. The core of at API
+declaration are the read and write clauses (both of which are
+optional). The structure is the same in each case: a command value
+(uint32) followed by a sequence of chunk declarations. A chunk
+declaration is made up of type value (uint32), the size of the chunk's
+data (uint32), and an sexpr that evaluates to a bytearray which can be
+no longer than the size specified.
+
+There is the capability to have arbitrary sexprs before the read/write
+decalrations. Beyond that the read/write declarations can be embedded
+in a let, etc. They know the API declaration in which they are being
+evaluated, so they do not have to be in the API declarations immediate
+context.
+
+Json coming from core has a top level key that matches the name of both a
+structure and an api. The data at that key is used to build the
+payload bytearray which is available to the API read/write commands.
 
 \end{document}
