@@ -40,6 +40,16 @@ func JsonToLisp(json interface{}) (result *Data) {
     return
 }
 
+func JsonStringToLisp(json string) (result *Data) {
+    b := []byte(jsonData)
+    var data interface{}
+    err := json.Unmarshal(b, &data)
+    if err != nil {
+        panic(errors.New("Badly formed json"))
+    }
+    return JsonToLisp(data)
+}
+
 func LispToJson(d *Data) (result interface{}) {
     if NilP(d) && !AlistP(d) && !PairP(d) {
         return ""

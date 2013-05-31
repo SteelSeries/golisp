@@ -183,3 +183,28 @@ func (self *ApiCommand) SerializePayload() (result *[]byte) {
     }
     return &payload
 }
+
+func getUint32(bytes *[]byte, offset uint) uint32 {
+    var acc uint32
+    acc = uint32((*bytes)[offset])
+    acc += uint32((*bytes)[offset+1]) << 8
+    acc += uint32((*bytes)[offset+2]) << 16
+    acc += uint32((*bytes)[offset+3]) << 24
+    return acc
+}
+
+func (self *ApiCommand) ExtractPayload(bytes *[]byte) (result *[]byte) {
+    var offset = 0
+    var size = 0
+    var tag = 0
+    for offset < len(*bytes) {
+        size := getUint32(bytes, offset)
+        tag := getUint32(bytes, offset+4)
+        if tag == 0 {
+            dataSize := getUint32(bytes, offset+8)
+            return bytes[offset+12 : offset+12+dataSize]
+        }
+        offset += size + 4
+    }
+    panic(error.New("payload data chunk not found"))
+}

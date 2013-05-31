@@ -72,6 +72,19 @@ func (s *DeviceSuite) TestUint8AndUint32(c *C) {
 
 func (s *DeviceSuite) TestSingleUint8Bytes(c *C) {
     st := NewStructNamed("test")
+    f := NewField("f1", "uint8", 1)
+    f.IsConstant = true
+    f.Constant = 10
+    st.AddField(f)
+    exp := st.Expand(nil)
+    f := exp.Fields[0]
+    c.Assert(f.Value, Equals, 10)
+    bytes := *exp.ByteArray()
+    c.Assert(bytes[0], Equals, byte(10))
+}
+
+func (s *DeviceSuite) TestFieldWithConstant(c *C) {
+    st := NewStructNamed("test")
     st.AddField(NewField("f1", "uint8", 1))
     exp := st.Expand(nil)
     f := exp.Fields[0]
@@ -132,7 +145,7 @@ func (s *DeviceSuite) TestUint8AndUint8FromJson(c *C) {
 
     json := `{"f1": 47, "f2": 185}`
 
-    exp.PopulateFromJson(json)
+    exp.PopulateFromJson(JsonStringToLisp(json))
     c.Assert(exp.Fields[0].Value, Equals, uint32(47))
     c.Assert(exp.Fields[1].Value, Equals, uint32(185))
 }
@@ -154,7 +167,7 @@ func (s *DeviceSuite) TestComplexStructureFromJson(c *C) {
 
     json := `{"map": {"f1": [47, 75], "f2": 185}, "f3": 85}`
 
-    exp.PopulateFromJson(json)
+    exp.PopulateFromJson(JsonStringToLisp(json))
     c.Assert(exp.Fields[0].Value, Equals, uint32(47))
     c.Assert(exp.Fields[1].Value, Equals, uint32(75))
     c.Assert(exp.Fields[2].Value, Equals, uint32(185))
@@ -202,7 +215,7 @@ func (s *DeviceSuite) TestComplexStructureWithMultipleTypesFromJson(c *C) {
 
     json := `{"map": {"f1": [47, 75], "f2": 185000}, "f3": 85}`
 
-    exp.PopulateFromJson(json)
+    exp.PopulateFromJson(JsonStringToLisp(json))
     c.Assert(exp.Fields[0].Value, Equals, uint32(47))
     c.Assert(exp.Fields[1].Value, Equals, uint32(75))
     c.Assert(exp.Fields[2].Value, Equals, uint32(185000))

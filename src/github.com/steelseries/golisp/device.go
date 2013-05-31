@@ -7,20 +7,24 @@
 package golisp
 
 import (
-    //    "reflect"
+    "./driver"
     "encoding/json"
     "errors"
     "fmt"
     "strconv"
     "strings"
+    "unsafe"
 )
+
+var DriverToUse = driver.RealDriver{}
 
 type Device struct {
     Name               string
+    Handle             uint32
     Env                *SymbolTableFrame
-    Structures         []*DeviceStructure
-    ExpandedStructures []*ExpandedStructure
-    Apis               []*DeviceApi
+    Structures         map[string]*DeviceStructure
+    ExpandedStructures map[string]*ExpandedStructure
+    Apis               map[string]*DeviceApi
 }
 
 type DeviceStructure struct {
@@ -48,6 +52,8 @@ type DeviceField struct {
     TypeName               string
     Size                   int // size of a single element, in bytes
     RepeatCount            int // number of elements
+    IsConstant             bool
+    Constant               uint32
     ValidRange             *Range
     ValidValues            *Values
     DeferredValidationCode *Data
@@ -128,15 +134,15 @@ type ExpandedField struct {
 
 // Device functions
 func NewDeviceNamed(n string) (d *Device) {
-    return &Device{Name: n, Structures: make([]*DeviceStructure, 0, 10), ExpandedStructures: make([]*ExpandedStructure, 0, 10)}
+    return &Device{Name: n, Structures: make(map[string]*DeviceStructure, 10), ExpandedStructures: make(map[string]*ExpandedStructure, 10)}
 }
 
 func (self *Device) AddStructure(s *DeviceStructure) {
-    self.Structures = append(self.Structures, s)
+    self.Structures[s.Name] = s
 }
 
 func (self *Device) AddApi(a *DeviceApi) {
-    self.Apis = append(self.Apis, a)
+    self.Apis[a.Name] = a
 }
 
 // DeviceStructure functions
@@ -206,6 +212,9 @@ func (self *ExpandedStructure) addExpandedField(f *DeviceField, pathSoFar string
             }
             offset := self.Size + paddingRequired
             newField := &ExpandedField{FieldDefinition: f, Offset: offset, Size: f.Size, Path: path}
+            if f.IsConstant {
+                newField.Value = f.Constant
+            }
             self.Fields = append(self.Fields, newField)
             self.Size = offset + f.Size
             //            fmt.Printf("%s (%s)\n  size: %d\n  alignment: %d\n  padding: %d\n  offset: %d\n  total: %d\n  path: %s\n", f.Name, f.TypeName, newField.Size, alignment, paddingRequired, offset, self.Size, path)
@@ -230,7 +239,7 @@ func (self *DeviceStructure) Expand(parent *Device) *ExpandedStructure {
 
 func (self *Device) Expand() {
     for _, s := range self.Structures {
-        self.ExpandedStructures = append(self.ExpandedStructures, s.Expand(self))
+        self.ExpandedStructures[s.Name] = s.Expand(self)
     }
 }
 
@@ -263,6 +272,10 @@ func stepsFromPath(path string) (steps []string) {
 
 func (self *ExpandedField) Validate(env *SymbolTableFrame) bool {
     fieldDef := self.FieldDefinition
+    if fieldDef.IsConstant {
+        return true
+    }
+
     if fieldDef.ValidRange != nil {
         return fieldDef.ValidRange.Validate(self.Value)
     }
@@ -300,6 +313,10 @@ func (self *ExpandedStructure) Validate() bool {
 // populating from JSON
 
 func (self *ExpandedField) extractValueFromJsonWithStepAndParent(json *Data, steps []string, parentNode *Data) {
+    if self.FieldDefinition.IsConstant {
+        return
+    }
+
     if self.FieldDefinition.FromJsonTransform != nil {
         TransformJson(self.FieldDefinition.FromJsonTransform, json, parentNode)
     }
@@ -326,17 +343,9 @@ func (self *ExpandedField) extractValueFromJson(alist *Data) {
     self.extractValueFromJsonWithStepAndParent(alist, stepsFromPath(self.Path), nil)
 }
 
-func (self *ExpandedStructure) PopulateFromJson(jsonData string) {
-    b := []byte(jsonData)
-    var data interface{}
-    err := json.Unmarshal(b, &data)
-    if err != nil {
-        panic(errors.New("Badly formed json"))
-    }
-
-    alist := JsonToLisp(data)
+func (self *ExpandedStructure) PopulateFromJson(jsonData *Data) {
     for _, field := range self.Fields {
-        field.extractValueFromJson(alist)
+        field.extractValueFromJson(jsonData)
     }
 }
 
@@ -388,6 +397,10 @@ func (self *ExpandedStructure) JsonString() string {
 // populating from a byte arry
 
 func getValueForField(f *ExpandedField, bytes *[]byte) uint32 {
+    if f.FieldDefinition.IsConstant {
+        return f.FieldDefinition.Constant
+    }
+
     var b uint32 = 0
     for index, count := f.Offset, 0; count < f.Size; index, count = index+1, count+1 {
         //        fmt.Printf("index: %d, count: %d, b: %d\n", index, count, b)
@@ -427,5 +440,81 @@ func (self *DeviceStructure) DumpExpanded() {
 }
 
 func LoadDeviceDeclaration(deviceName string) {
-    //    _, err := ProcessFile(deviceName + ".device")
+    deviceObj, err := ProcessFile(deviceName + ".device")
+    if err != nil {
+        panic(errors.New(fmt.Sprintf("Error declaring device: '%s': %s", deviceName, err)))
+    }
+    if deviceObj == nil || !ObjectP(deviceObj) || TypeOfObject(deviceObj) != "Device" {
+        panic(errors.New(fmt.Sprintf("Error declaring device: '%s': %s", deviceName, err)))
+    }
+    device := (*Device)(ObjectValue(deviceObj))
+    device.Expand()
+}
+
+func getDeviceNamed(deviceName string) *Device {
+    deviceObj := Global.ValueOf(SymbolWithName(deviceName))
+    if deviceObj == nil || !ObjectP(deviceObj) || TypeOfObject(deviceObj) != "Device" {
+        return nil
+    }
+    return (*Device)(ObjectValue(deviceObj))
+}
+
+func WriteToDevice(deviceName string, jsonString string) {
+    device := getDeviceNamed(deviceName)
+    if device == nil {
+        panic(errors.New(fmt.Sprintf("Can't find device named '%s'.", deviceName)))
+    }
+    json := JsonStringToLisp(jsonString)
+    apiName := StringValue(Caar(json))
+    jsonData := Cdar(json)
+
+    api := device.Apis[apiName]
+    structure := device.ExpandedStructures[apiName]
+
+    structure.PopulateFromJson(jsonData)
+    structure.Validate()
+    bytes := structure.ByteArray()
+    Global.BindTo(SymbolWithName("payload"), ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&bytes)))
+    writeCmd := api.Write
+    bytes = writeCmd.SerializePayload()
+    err := DriverToUse.Write(device.Handle, writeCmd.Cmd, bytes, uint32(len(*bytes)))
+}
+
+func ReadFromDevice(deviceName string, jsonString string) (result string) {
+    device := getDeviceNamed(deviceName)
+    if device == nil {
+        panic(errors.New(fmt.Sprintf("Can't find device named '%s'.", deviceName)))
+    }
+    json := JsonStringToLisp(jsonString)
+    apiName := StringValue(Caar(json))
+    jsonData := Cdar(json)
+
+    api := device.Apis[apiName]
+    structure := device.ExpandedStructures[apiName]
+
+    structure.PopulateFromJson(jsonData)
+    bytes := structure.ByteArray()
+    Global.BindTo(SymbolWithName("payload"), ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&bytes)))
+
+    readCmd := api.Read
+    bytes = readCmd.SerializePayload()
+    err := DriverToUse.Read(device.Handle, readCmd.Cmd, bytes, uint32(len(*bytes)))
+    payload := readCmd.ExtractPayload(bytes)
+
+    structure.PopulateFromBytes(payload)
+    return structure.JsonString()
+}
+
+func GetDevices() {
+    deviceData := DriverToUse.GetDevices()
+
+    for _, deviceInfo := range deviceData.Devices {
+        productId := deviceInfo.ProductId
+        dev := device.Device.FindByProductId(int(productId))
+        device := getDeviceNamed(dev.Name)
+        if device != nil {
+            device.Handle = deviceInfo.DeviceHandle
+        }
+    }
+
 }

@@ -1,0 +1,75 @@
+(def-device sensei-raw
+  
+  (def-struct resolution
+    (def-field level uint8
+      ;; which level (of two) is this pertains to
+      (values 1 2))
+    (def-field cpi uint8
+      ;; N, where the resolution is N * 90
+      ))
+    
+  (def-struct polling-rate
+    (def-field byte1 uint8
+      (constant 0x00))
+    (def-field rate uint8
+      (values
+       1                                ; 1000 Hz
+       2                                ; 500 Hz
+       3                                ; 250 Hz
+       4)))                             ; 125 Hz
+  
+  (def-struct led-brightness
+    (def-field index uint8
+      (constant 0x01))
+    (def-field brightness uint8
+      (values
+       1                                ; off
+       2                                ; low brightness
+       3                                ; medium brightness
+       4)))                             ; high brightness
+
+  (def-struct current-resolution
+    (def-field byte1 uint8
+      (constant 0x00))
+    (def-field level uint8
+      (values 1 2)))
+
+  (def-struct led-pulsation
+    (def-field index uint8
+      (constant 0x01))
+    (def-field speed uint8
+      (values
+       1                                ; steady
+       2                                ; pulsation slow
+       3                                ; pulsation medium
+       4                                ; pulsatioon fast
+       5)))                             ; trigger mode
+
+  (def-struct save-profile-settings
+    (def-field byte1 uint8
+      (constant 0x00)))
+
+  (def-api resolution
+    (read 0x03 (chunk 0 2 payload))
+    (write 0x13 (chunk 0 2 payload)))
+
+  (def-api polling-rate
+    (read 0x14 (chunk 0 2 payload))
+    (write 0x04 (chunk 0 2 payload)))
+
+  (def-api led-brightness
+    (read 0x15 (chunk 0 2 payload))
+    (write 0x05 (chunk 0 2 payload)))
+
+  (def-api current-resolution
+    (read 0x16 (chunk 0 2 payload))
+    (write 0x06 (chunk 0 2 payload)))
+
+  (def-api led-pulsation
+    (read 0x17 (chunk 0 2 payload))
+    (write 0x07 (chunk 0 2 payload)))
+
+  (def-api save-profile-settings
+    (write 0x09 (chunk 0 1 payload))))
+
+

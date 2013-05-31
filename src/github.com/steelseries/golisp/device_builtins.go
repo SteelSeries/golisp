@@ -29,6 +29,7 @@ func InitDeviceBuiltins() {
 
     MakePrimitiveFunction("def-struct", -1, DefStruct)
     MakePrimitiveFunction("def-field", -1, DefField)
+    MakePrimitiveFunction("constant", 1, DefConstant)
     MakePrimitiveFunction("range", 2, DefRange)
     MakePrimitiveFunction("values", -1, DefValues)
     MakePrimitiveFunction("deferred-validation", -1, DefDeferredValidation)
@@ -80,7 +81,7 @@ func DefDevice(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         }
     }
     CurrentStructure = nil
-    return env.BindTo(deviceName, ObjectWithTypeAndValue("Device", unsafe.Pointer(CurrentDevice))), nil
+    return Global.BindTo(deviceName, ObjectWithTypeAndValue("Device", unsafe.Pointer(CurrentDevice))), nil
 }
 
 func DefStruct(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -152,12 +153,17 @@ func DefField(args *Data, env *SymbolTableFrame) (field *Data, err error) {
     return
 }
 
-func DefRange(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    if Length(args) != 2 {
-        err = errors.New(fmt.Sprintf("range requires 2 arguments, %d found", Length(args)))
+func DefConstant(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    if !NumberP(Car(args)) {
+        err = errors.New("constant requires a numeric argument")
         return
     }
+    CurrentField.IsConstant = true
+    CurrentField.Constant = uint32(NumericValue(Car(args)))
+    return
+}
 
+func DefRange(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if !NumberP(Car(args)) || !NumberP(Cadr(args)) {
         err = errors.New("range requires numeric arguments")
         return
