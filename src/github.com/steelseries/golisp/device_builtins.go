@@ -16,7 +16,7 @@ import (
     "unsafe"
 )
 
-var CurrentDevice *Device
+var CurrentDevice *DeviceDeclaration
 var CurrentStructure *DeviceStructure
 var CurrentField *DeviceField
 
@@ -81,7 +81,7 @@ func DefDevice(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         }
     }
     CurrentStructure = nil
-    return Global.BindTo(deviceName, ObjectWithTypeAndValue("Device", unsafe.Pointer(CurrentDevice))), nil
+    return Global.BindTo(deviceName, ObjectWithTypeAndValue("DeviceDeclaration", unsafe.Pointer(CurrentDevice))), nil
 }
 
 func DefStruct(args *Data, env *SymbolTableFrame) (result *Data, err error) {

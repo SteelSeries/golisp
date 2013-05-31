@@ -18,7 +18,7 @@ import (
 
 var DriverToUse = driver.RealDriver{}
 
-type Device struct {
+type DeviceDeclaration struct {
     Name               string
     Handle             uint32
     Env                *SymbolTableFrame
@@ -29,7 +29,7 @@ type Device struct {
 
 type DeviceStructure struct {
     Name   string
-    Parent *Device
+    Parent *DeviceDeclaration
     Fields []*DeviceField
     Size   int // size of the struct, in buyes
 }
@@ -119,7 +119,7 @@ func AlignmentOf(fieldType string) int {
 
 type ExpandedStructure struct {
     Name   string
-    Parent *Device
+    Parent *DeviceDeclaration
     Fields []*ExpandedField
     Size   int // size of the struct, in bytes
 }
@@ -133,15 +133,15 @@ type ExpandedField struct {
 }
 
 // Device functions
-func NewDeviceNamed(n string) (d *Device) {
-    return &Device{Name: n, Structures: make(map[string]*DeviceStructure, 10), ExpandedStructures: make(map[string]*ExpandedStructure, 10)}
+func NewDeviceNamed(n string) (d *DeviceDeclaration) {
+    return &DeviceDeclaration{Name: n, Structures: make(map[string]*DeviceStructure, 10), ExpandedStructures: make(map[string]*ExpandedStructure, 10)}
 }
 
-func (self *Device) AddStructure(s *DeviceStructure) {
+func (self *DeviceDeclaration) AddStructure(s *DeviceStructure) {
     self.Structures[s.Name] = s
 }
 
-func (self *Device) AddApi(a *DeviceApi) {
+func (self *DeviceDeclaration) AddApi(a *DeviceApi) {
     self.Apis[a.Name] = a
 }
 
@@ -231,13 +231,13 @@ func (self *ExpandedStructure) addExpandedFields(fields []*DeviceField, pathSoFa
     }
 }
 
-func (self *DeviceStructure) Expand(parent *Device) *ExpandedStructure {
+func (self *DeviceStructure) Expand(parent *DeviceDeclaration) *ExpandedStructure {
     newStruct := &ExpandedStructure{Name: self.Name, Parent: parent}
     newStruct.addExpandedFields(self.Fields, "")
     return newStruct
 }
 
-func (self *Device) Expand() {
+func (self *DeviceDeclaration) Expand() {
     for _, s := range self.Structures {
         self.ExpandedStructures[s.Name] = s.Expand(self)
     }
@@ -444,19 +444,19 @@ func LoadDeviceDeclaration(deviceName string) {
     if err != nil {
         panic(errors.New(fmt.Sprintf("Error declaring device: '%s': %s", deviceName, err)))
     }
-    if deviceObj == nil || !ObjectP(deviceObj) || TypeOfObject(deviceObj) != "Device" {
+    if deviceObj == nil || !ObjectP(deviceObj) || TypeOfObject(deviceObj) != "DeviceDeclaration" {
         panic(errors.New(fmt.Sprintf("Error declaring device: '%s': %s", deviceName, err)))
     }
-    device := (*Device)(ObjectValue(deviceObj))
+    device := (*DeviceDeclaration)(ObjectValue(deviceObj))
     device.Expand()
 }
 
-func getDeviceNamed(deviceName string) *Device {
+func getDeviceNamed(deviceName string) *DeviceDeclaration {
     deviceObj := Global.ValueOf(SymbolWithName(deviceName))
-    if deviceObj == nil || !ObjectP(deviceObj) || TypeOfObject(deviceObj) != "Device" {
+    if deviceObj == nil || !ObjectP(deviceObj) || TypeOfObject(deviceObj) != "DeviceDeclaration" {
         return nil
     }
-    return (*Device)(ObjectValue(deviceObj))
+    return (*DeviceDeclaration)(ObjectValue(deviceObj))
 }
 
 func WriteToDevice(deviceName string, jsonString string) {
