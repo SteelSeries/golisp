@@ -396,7 +396,7 @@ func String(d *Data) string {
     case PrimitiveType:
         return d.Prim.String()
     case ObjectType:
-        return fmt.Sprintf("<opaque Go object: %v>", d.Obj)
+        return fmt.Sprintf("<opaque Go object of type %s : 0x%x>", d.ObjType, (*uint64)(d.Obj))
     }
 
     return ""

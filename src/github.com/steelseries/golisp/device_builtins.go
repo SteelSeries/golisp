@@ -19,6 +19,7 @@ import (
 var CurrentDevice *DeviceDeclaration
 var CurrentStructure *DeviceStructure
 var CurrentField *DeviceField
+var CurrentDirection uint
 
 func init() {
     //    InitDeviceBuiltins()
@@ -29,6 +30,9 @@ func InitDeviceBuiltins() {
 
     MakePrimitiveFunction("def-struct", -1, DefStruct)
     MakePrimitiveFunction("def-field", -1, DefField)
+    MakePrimitiveFunction("outgoing", -1, DefOutgoing)
+    MakePrimitiveFunction("incoming", -1, DefIncoming)
+    MakePrimitiveFunction("common", -1, DefCommon)
     MakePrimitiveFunction("constant", 1, DefConstant)
     MakePrimitiveFunction("range", 2, DefRange)
     MakePrimitiveFunction("values", -1, DefValues)
@@ -92,28 +96,60 @@ func DefStruct(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     }
 
     if NilP(Cdr(args)) {
-        err = errors.New("Struct must have at least one field")
+        err = errors.New("Struct must have at least one section")
         return
     }
 
     structure := NewStructNamed(StringValue(structName))
     CurrentStructure = structure
+
+    for c := Cdr(args); NotNilP(c); c = Cdr(c) {
+        _, err = Eval(Car(c), env)
+        if err != nil {
+            return
+        }
+    }
+
+    CurrentStructure = nil
+    return Global.BindTo(structName, ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(structure))), nil
+}
+
+func ProcessStructureDefinition(args *Data, env *SymbolTableFrame, direction uint) (def *DeviceStructureDefinition, err error) {
+    def = NewDeviceStructureDefinition()
     CurrentField = nil
+    CurrentDirection = direction
 
     var field *Data
-    for c := Cdr(args); NotNilP(c); c = Cdr(c) {
+    for c := args; NotNilP(c); c = Cdr(c) {
         field, err = Eval(Car(c), env)
         if err != nil {
             return
         }
         if ObjectP(field) && TypeOfObject(field) == "DeviceField" {
-            CurrentStructure.AddField((*DeviceField)(ObjectValue(field)))
+            def.AddField((*DeviceField)(ObjectValue(field)))
         } else {
-            errors.New("Expected DeviceField")
+            err = errors.New("Expected DeviceField")
+            return
         }
     }
-    CurrentStructure = nil
-    return env.BindTo(structName, ObjectWithTypeAndValue("DeviceStructure", unsafe.Pointer(structure))), nil
+    return
+}
+
+func DefOutgoing(args *Data, env *SymbolTableFrame) (field *Data, err error) {
+    CurrentStructure.Outgoing, err = ProcessStructureDefinition(args, env, outgoing)
+    return
+}
+
+func DefIncoming(args *Data, env *SymbolTableFrame) (field *Data, err error) {
+    CurrentStructure.Incoming, err = ProcessStructureDefinition(args, env, incoming)
+    return
+}
+
+func DefCommon(args *Data, env *SymbolTableFrame) (field *Data, err error) {
+    def, err := ProcessStructureDefinition(args, env, outgoing)
+    CurrentStructure.Outgoing = def
+    CurrentStructure.Incoming = def
+    return
 }
 
 func DefField(args *Data, env *SymbolTableFrame) (field *Data, err error) {
@@ -139,7 +175,7 @@ func DefField(args *Data, env *SymbolTableFrame) (field *Data, err error) {
         return
     }
 
-    CurrentField = NewField(StringValue(fieldName), StringValue(fieldType), FieldSizeOf(fieldType))
+    CurrentField = NewField(StringValue(fieldName), StringValue(fieldType), FieldSizeOf(fieldType, CurrentDirection))
 
     for c := Cddr(args); NotNilP(c); c = Cdr(c) {
         field, err = Eval(Car(c), env)

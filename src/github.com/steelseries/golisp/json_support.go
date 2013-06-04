@@ -6,6 +6,11 @@
 
 package golisp
 
+import (
+    "encoding/json"
+    "errors"
+)
+
 func JsonToLisp(json interface{}) (result *Data) {
     mapValue, ok := json.(map[string]interface{})
     if ok {
@@ -40,7 +45,7 @@ func JsonToLisp(json interface{}) (result *Data) {
     return
 }
 
-func JsonStringToLisp(json string) (result *Data) {
+func JsonStringToLisp(jsonData string) (result *Data) {
     b := []byte(jsonData)
     var data interface{}
     err := json.Unmarshal(b, &data)

@@ -7,13 +7,18 @@
 package golisp
 
 import (
-    "./driver"
     "encoding/json"
     "errors"
     "fmt"
+    "github.com/steelseries/golisp/driver"
     "strconv"
     "strings"
     "unsafe"
+)
+
+const (
+    outgoing = iota
+    incoming
 )
 
 var DriverToUse = driver.RealDriver{}
@@ -23,15 +28,21 @@ type DeviceDeclaration struct {
     Handle             uint32
     Env                *SymbolTableFrame
     Structures         map[string]*DeviceStructure
-    ExpandedStructures map[string]*ExpandedStructure
+    ExpandedStructures map[string]*ExpandedDeviceStructure
     Apis               map[string]*DeviceApi
 }
 
-type DeviceStructure struct {
-    Name   string
-    Parent *DeviceDeclaration
+type DeviceStructureDefinition struct {
+    Parent *DeviceStructure
     Fields []*DeviceField
     Size   int // size of the struct, in buyes
+}
+
+type DeviceStructure struct {
+    Name     string
+    Parent   *DeviceDeclaration
+    Outgoing *DeviceStructureDefinition
+    Incoming *DeviceStructureDefinition
 }
 
 type Validation interface {
@@ -61,6 +72,27 @@ type DeviceField struct {
     FromJsonTransform      *Data
 }
 
+type ExpandedDeviceStructureDefinition struct {
+    Parent *ExpandedDeviceStructure
+    Fields []*ExpandedField
+    Size   int // size of the struct, in bytes
+}
+
+type ExpandedDeviceStructure struct {
+    Name     string
+    Parent   *DeviceDeclaration
+    Outgoing *ExpandedDeviceStructureDefinition
+    Incoming *ExpandedDeviceStructureDefinition
+}
+
+type ExpandedField struct {
+    FieldDefinition *DeviceField
+    Path            string
+    Offset          int
+    Value           uint32
+    Size            int
+}
+
 // helper functions
 
 func IsValidType(typeName *Data) bool {
@@ -78,7 +110,7 @@ func IsValidType(typeName *Data) bool {
     return fieldType.Name == typeNameString
 }
 
-func FieldSizeOf(typeName *Data) int {
+func FieldSizeOf(typeName *Data, direction uint) int {
     switch StringValue(typeName) {
     case "uint8":
         return 1
@@ -90,7 +122,13 @@ func FieldSizeOf(typeName *Data) int {
         {
             typeValue := Global.ValueOf(typeName)
             fieldType := (*DeviceStructure)(ObjectValue(typeValue))
-            return fieldType.SizeOf()
+            var def *DeviceStructureDefinition
+            if direction == outgoing {
+                def = fieldType.Outgoing
+            } else {
+                def = fieldType.Incoming
+            }
+            return def.SizeOf()
         }
     }
 }
@@ -117,24 +155,9 @@ func AlignmentOf(fieldType string) int {
     }
 }
 
-type ExpandedStructure struct {
-    Name   string
-    Parent *DeviceDeclaration
-    Fields []*ExpandedField
-    Size   int // size of the struct, in bytes
-}
-
-type ExpandedField struct {
-    FieldDefinition *DeviceField
-    Path            string
-    Offset          int
-    Value           uint32
-    Size            int
-}
-
 // Device functions
 func NewDeviceNamed(n string) (d *DeviceDeclaration) {
-    return &DeviceDeclaration{Name: n, Structures: make(map[string]*DeviceStructure, 10), ExpandedStructures: make(map[string]*ExpandedStructure, 10)}
+    return &DeviceDeclaration{Name: n, Structures: make(map[string]*DeviceStructure, 10), ExpandedStructures: make(map[string]*ExpandedDeviceStructure, 10)}
 }
 
 func (self *DeviceDeclaration) AddStructure(s *DeviceStructure) {
@@ -148,15 +171,19 @@ func (self *DeviceDeclaration) AddApi(a *DeviceApi) {
 // DeviceStructure functions
 
 func NewStructNamed(n string) (s *DeviceStructure) {
-    return &DeviceStructure{Name: n, Parent: CurrentDevice, Fields: make([]*DeviceField, 0, 5), Size: 0}
+    return &DeviceStructure{Name: n, Parent: CurrentDevice}
 }
 
-func (self *DeviceStructure) AddField(f *DeviceField) {
+func NewDeviceStructureDefinition() *DeviceStructureDefinition {
+    return &DeviceStructureDefinition{Parent: CurrentStructure, Fields: make([]*DeviceField, 0, 5), Size: 0}
+}
+
+func (self *DeviceStructureDefinition) AddField(f *DeviceField) {
     self.Fields = append(self.Fields, f)
     self.Size += f.TotalSize()
 }
 
-func (self *DeviceStructure) SizeOf() int {
+func (self *DeviceStructureDefinition) SizeOf() int {
     return self.Size
 }
 
@@ -193,7 +220,7 @@ func (self *DeviceField) TotalSize() int {
 
 // structure expansion
 
-func (self *ExpandedStructure) addExpandedField(f *DeviceField, pathSoFar string) {
+func (self *ExpandedDeviceStructureDefinition) addExpandedField(f *DeviceField, pathSoFar string, direction uint) {
     for i := 0; i < f.RepeatCount; i = i + 1 {
         var pathPart string = ""
         if f.RepeatCount > 1 {
@@ -217,23 +244,37 @@ func (self *ExpandedStructure) addExpandedField(f *DeviceField, pathSoFar string
             }
             self.Fields = append(self.Fields, newField)
             self.Size = offset + f.Size
-            //            fmt.Printf("%s (%s)\n  size: %d\n  alignment: %d\n  padding: %d\n  offset: %d\n  total: %d\n  path: %s\n", f.Name, f.TypeName, newField.Size, alignment, paddingRequired, offset, self.Size, path)
+            //fmt.Printf("%s (%s)\n  size: %d\n  alignment: %d\n  padding: %d\n  offset: %d\n  total: %d\n  path: %s\n", f.Name, f.TypeName, newField.Size, alignment, paddingRequired, offset, self.Size, path)
         } else {
             s := Global.ValueOf(SymbolWithName(f.TypeName))
-            self.addExpandedFields((*DeviceStructure)(ObjectValue(s)).Fields, path)
+            st := (*DeviceStructure)(ObjectValue(s))
+            var def *DeviceStructureDefinition
+            if direction == outgoing {
+                def = st.Outgoing
+            } else {
+                def = st.Incoming
+            }
+            self.addExpandedFields(def.Fields, path, direction)
         }
     }
 }
 
-func (self *ExpandedStructure) addExpandedFields(fields []*DeviceField, pathSoFar string) {
+func (self *ExpandedDeviceStructureDefinition) addExpandedFields(fields []*DeviceField, pathSoFar string, direction uint) {
     for _, f := range fields {
-        self.addExpandedField(f, pathSoFar)
+        self.addExpandedField(f, pathSoFar, direction)
     }
 }
 
-func (self *DeviceStructure) Expand(parent *DeviceDeclaration) *ExpandedStructure {
-    newStruct := &ExpandedStructure{Name: self.Name, Parent: parent}
-    newStruct.addExpandedFields(self.Fields, "")
+func (self *DeviceStructureDefinition) Expand(parent *ExpandedDeviceStructure, direction uint) *ExpandedDeviceStructureDefinition {
+    newStruct := &ExpandedDeviceStructureDefinition{Parent: parent}
+    newStruct.addExpandedFields(self.Fields, "", direction)
+    return newStruct
+}
+
+func (self *DeviceStructure) Expand(parent *DeviceDeclaration) *ExpandedDeviceStructure {
+    newStruct := &ExpandedDeviceStructure{Name: self.Name, Parent: parent}
+    newStruct.Outgoing = self.Outgoing.Expand(newStruct, outgoing)
+    newStruct.Incoming = self.Incoming.Expand(newStruct, incoming)
     return newStruct
 }
 
@@ -256,7 +297,7 @@ func AddFieldToByteArray(f *ExpandedField, bytes *[]byte) {
     }
 }
 
-func (self *ExpandedStructure) ByteArray() *[]byte {
+func (self *ExpandedDeviceStructureDefinition) ByteArray() *[]byte {
     bytes := make([]byte, self.Size)
     for _, f := range self.Fields {
         AddFieldToByteArray(f, &bytes)
@@ -299,7 +340,7 @@ func (self *ExpandedField) Validate(env *SymbolTableFrame) bool {
     return true
 }
 
-func (self *ExpandedStructure) Validate() bool {
+func (self *ExpandedDeviceStructureDefinition) Validate() bool {
     env := NewSymbolTableFrameBelow(Global)
     for _, field := range self.Fields {
         env.BindLocallyTo(SymbolWithName(field.FieldDefinition.Name), NumberWithValue(field.Value))
@@ -343,7 +384,7 @@ func (self *ExpandedField) extractValueFromJson(alist *Data) {
     self.extractValueFromJsonWithStepAndParent(alist, stepsFromPath(self.Path), nil)
 }
 
-func (self *ExpandedStructure) PopulateFromJson(jsonData *Data) {
+func (self *ExpandedDeviceStructureDefinition) PopulateFromJson(jsonData *Data) {
     for _, field := range self.Fields {
         field.extractValueFromJson(jsonData)
     }
@@ -374,7 +415,7 @@ func (self *ExpandedField) insertIntoJson(steps []string, root *Data) *Data {
     }
 }
 
-func (self *ExpandedStructure) Json() *Data {
+func (self *ExpandedDeviceStructureDefinition) Json() *Data {
     root := Alist(EmptyCons())
     for _, f := range self.Fields {
         steps := strings.Split(f.Path, "/")[1:]
@@ -383,7 +424,7 @@ func (self *ExpandedStructure) Json() *Data {
     return root
 }
 
-func (self *ExpandedStructure) JsonString() string {
+func (self *ExpandedDeviceStructureDefinition) JsonString() string {
     alist := self.Json()
     root := LispToJson(alist)
     j, err := json.Marshal(root)
@@ -409,7 +450,7 @@ func getValueForField(f *ExpandedField, bytes *[]byte) uint32 {
     return b
 }
 
-func (self *ExpandedStructure) PopulateFromBytes(bytes *[]byte) {
+func (self *ExpandedDeviceStructureDefinition) PopulateFromBytes(bytes *[]byte) {
     for _, f := range self.Fields {
         val := getValueForField(f, bytes)
         f.Value = val
@@ -418,25 +459,39 @@ func (self *ExpandedStructure) PopulateFromBytes(bytes *[]byte) {
 
 // dumping function implimentation
 
-func (self *DeviceStructure) Dump() {
-    fmt.Printf("%s (%d bytes)\n", self.Name, self.Size)
+func (self *DeviceStructureDefinition) Dump() {
+    fmt.Printf("  %s (%d bytes)\n", self.Parent.Name, self.Size)
     for _, f := range self.Fields {
         if f.RepeatCount > 1 {
-            fmt.Printf("  %s [%d]%s (%d bytes)\n", f.Name, f.RepeatCount, f.TypeName, f.Size)
+            fmt.Printf("    %s [%d]%s (%d bytes)\n", f.Name, f.RepeatCount, f.TypeName, f.Size)
         } else {
-            fmt.Printf("  %s %s (%d bytes)\n", f.Name, f.TypeName, f.Size)
+            fmt.Printf("    %s %s (%d bytes)\n", f.Name, f.TypeName, f.Size)
         }
     }
     return
 }
 
-func (self *DeviceStructure) DumpExpanded() {
-    expanded := self.Expand(self.Parent)
-    fmt.Printf("%s (%d bytes)\n", expanded.Name, expanded.Size)
-    for _, f := range expanded.Fields {
-        fmt.Printf("  %s %s (offset: %d, size: %d bytes) path: %s\n", f.FieldDefinition.Name, f.FieldDefinition.TypeName, f.Offset, f.Size, f.Path)
+func (self *DeviceStructure) Dump() {
+    fmt.Printf("Outgoing:")
+    self.Outgoing.Dump()
+    fmt.Printf("Incoming:")
+    self.Incoming.Dump()
+}
+
+func (self *ExpandedDeviceStructureDefinition) Dump(direction uint) {
+    fmt.Printf("  %s (%d bytes)\n", self.Parent.Name, self.Size)
+    for _, f := range self.Fields {
+        fmt.Printf("    %s %s (offset: %d, size: %d bytes) path: %s\n", f.FieldDefinition.Name, f.FieldDefinition.TypeName, f.Offset, f.Size, f.Path)
     }
     return
+}
+
+func (self *DeviceStructure) DumpExpanded() {
+    exp := self.Expand(self.Parent)
+    fmt.Printf("Outgoing:")
+    exp.Outgoing.Dump(outgoing)
+    fmt.Printf("Incoming:")
+    exp.Incoming.Dump(incoming)
 }
 
 func LoadDeviceDeclaration(deviceName string) {
@@ -471,13 +526,24 @@ func WriteToDevice(deviceName string, jsonString string) {
     api := device.Apis[apiName]
     structure := device.ExpandedStructures[apiName]
 
-    structure.PopulateFromJson(jsonData)
-    structure.Validate()
-    bytes := structure.ByteArray()
+    if api == nil {
+        panic(errors.New(fmt.Sprintf("Can't find api for %s", apiName)))
+    }
+    if structure == nil {
+        panic(errors.New(fmt.Sprintf("Can't find structure for %s", apiName)))
+    }
+
+    out := structure.Outgoing
+    out.PopulateFromJson(jsonData)
+    out.Validate()
+    bytes := out.ByteArray()
     Global.BindTo(SymbolWithName("payload"), ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&bytes)))
     writeCmd := api.Write
     bytes = writeCmd.SerializePayload()
     err := DriverToUse.Write(device.Handle, writeCmd.Cmd, bytes, uint32(len(*bytes)))
+    if err != 0 {
+        panic(errors.New(fmt.Sprintf("Error writing to %d: %s.", deviceName, err)))
+    }
 }
 
 func ReadFromDevice(deviceName string, jsonString string) (result string) {
@@ -492,26 +558,39 @@ func ReadFromDevice(deviceName string, jsonString string) (result string) {
     api := device.Apis[apiName]
     structure := device.ExpandedStructures[apiName]
 
-    structure.PopulateFromJson(jsonData)
-    bytes := structure.ByteArray()
+    if api == nil {
+        panic(errors.New(fmt.Sprintf("Can't find api for %s", apiName)))
+    }
+    if structure == nil {
+        panic(errors.New(fmt.Sprintf("Can't find structure for %s", apiName)))
+    }
+
+    out := structure.Outgoing
+    out.PopulateFromJson(jsonData)
+    bytes := out.ByteArray()
     Global.BindTo(SymbolWithName("payload"), ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&bytes)))
 
     readCmd := api.Read
     bytes = readCmd.SerializePayload()
     err := DriverToUse.Read(device.Handle, readCmd.Cmd, bytes, uint32(len(*bytes)))
+    if err != 0 {
+        panic(errors.New(fmt.Sprintf("Error reading from %d: %s.", deviceName, err)))
+    }
     payload := readCmd.ExtractPayload(bytes)
 
-    structure.PopulateFromBytes(payload)
-    return structure.JsonString()
+    in := structure.Incoming
+    in.PopulateFromBytes(payload)
+    return in.JsonString()
 }
 
 func GetDevices() {
     deviceData := DriverToUse.GetDevices()
 
     for _, deviceInfo := range deviceData.Devices {
-        productId := deviceInfo.ProductId
-        dev := device.Device.FindByProductId(int(productId))
-        device := getDeviceNamed(dev.Name)
+        //        productId := deviceInfo.ProductId
+        //        dev := device.Device.FindByProductId(int(productId))
+        //        device := getDeviceNamed(dev.Name)
+        device := getDeviceNamed("sensei-raw")
         if device != nil {
             device.Handle = deviceInfo.DeviceHandle
         }

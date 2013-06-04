@@ -6,7 +6,6 @@
 package golisp
 
 import (
-    //"fmt"
     . "launchpad.net/gocheck"
 )
 
@@ -144,8 +143,8 @@ func (s *DeviceBuiltinsSuite) TestFieldWithDeferredValues(c *C) {
 
 func (s *DeviceBuiltinsSuite) TestFieldWithDeferredValuesReferencingPreviousFields(c *C) {
     source := "(def-struct test-struct" +
-        "(def-field f1 uint8)" +
-        "(def-field f2 uint8 (deferred-validation (case f1 (0 (values 1)) (1 (range 10 11))))))"
+        " (common (def-field f1 uint8)" +
+        "         (def-field f2 uint8 (deferred-validation (case f1 (0 (values 1)) (1 (range 10 11)))))))"
 
     code, err := Parse(source)
     c.Assert(err, IsNil)
@@ -155,7 +154,7 @@ func (s *DeviceBuiltinsSuite) TestFieldWithDeferredValuesReferencingPreviousFiel
 
     structObj := Global.ValueOf(SymbolWithName("test-struct"))
     ds := (*DeviceStructure)(ObjectValue(structObj))
-    es := ds.Expand(nil)
+    es := ds.Expand(nil).Outgoing
     f1 := es.Fields[0]
     f2 := es.Fields[1]
 

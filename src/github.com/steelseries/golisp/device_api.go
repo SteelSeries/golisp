@@ -137,9 +137,9 @@ func DefChunk(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func (self *ApiChunk) Serialize() (result *[]byte) {
-    uint32sNeeded := ((self.DataSize + 3) / 4) * 4
-    paddingNeeded := uint32sNeeded - self.DataSize
-    chunkSize := uint32sNeeded + 8
+    bytesNeeded := ((self.DataSize + 3) / 4) * 4
+    paddingNeeded := bytesNeeded - self.DataSize
+    chunkSize := bytesNeeded + 8
 
     bytes := make([]byte, chunkSize+4)
     addUint32ToByteArray(chunkSize, 0, &bytes)
@@ -184,7 +184,7 @@ func (self *ApiCommand) SerializePayload() (result *[]byte) {
     return &payload
 }
 
-func getUint32(bytes *[]byte, offset uint) uint32 {
+func getUint32(bytes *[]byte, offset int) uint32 {
     var acc uint32
     acc = uint32((*bytes)[offset])
     acc += uint32((*bytes)[offset+1]) << 8
@@ -198,13 +198,15 @@ func (self *ApiCommand) ExtractPayload(bytes *[]byte) (result *[]byte) {
     var size = 0
     var tag = 0
     for offset < len(*bytes) {
-        size := getUint32(bytes, offset)
-        tag := getUint32(bytes, offset+4)
+        size = int(getUint32(bytes, offset))
+        tag = int(getUint32(bytes, offset+4))
         if tag == 0 {
-            dataSize := getUint32(bytes, offset+8)
-            return bytes[offset+12 : offset+12+dataSize]
+            dataSize := int(getUint32(bytes, offset+8))
+            byteArray := make([]byte, dataSize)
+            copy(byteArray, (*bytes)[offset+12:offset+12+dataSize])
+            return &byteArray
         }
         offset += size + 4
     }
-    panic(error.New("payload data chunk not found"))
+    panic(errors.New("payload data chunk not found"))
 }
