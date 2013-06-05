@@ -198,15 +198,29 @@ shown in Figure~\ref{fig:repeatingbytearray}.
 \label{fig:repeatingbytearray}
 \end{figure}
 
+Finally, you can provide a constant value to a field using the
+\verb|constant| function:
+
+\begin{verbatim}
+   (def-struct current-resolution
+     (def-field byte1 uint8
+       (constant 0x00))
+     (def-field level uint8
+       (values 1 2)))
+\end{verbatim}
+
+Constant fields have a static value, and are not set from json, and
+they are not validated (even if validation criteria are specified).
+
 \subsection{Validation}
 
 All leafs field are a numbers with a valid range given by it's size:
-\verb|0x00|-\verb|0xFF| for /verb|uint8|, \verb|0x0000|-\verb|0xFFFF| for \verb|uint16|, and
+\verb|0x00|-\verb|0xFF| for \verb|uint8|, \verb|0x0000|-\verb|0xFFFF| for \verb|uint16|, and
 \verb|0x00000000|-\verb|0xFFFFFFFF| for \verb|uint32|. For some fields the entire range
 isn't valid. To enforce this, we introduce validation clauses to the
 field definition. There are two types: ranges and values. A range is
 specified by lower and upper bounds, which are inclusive. A set of
-values is just that: a list of valid values for the field. 
+values is just that: a sequence of valid values for the field. 
 
 \begin{verbatim}
 (def-struct cpi
@@ -222,14 +236,35 @@ values is just that: a list of valid values for the field.
 A \verb|range| validation does no processing on it's arguments; they
 are expected to be two non-negative integers in ascending order.
 
-A \verb|values| validation is more flexible in that it can be given an
+A \verb|values| validation is more flexible in that it can be given a
+sequence of numbers that are the valid values, or an
 arbitrary expression that will be evaluated with the expectation that
-the result is a list of values. That list is then used as the set of
+the result is a list of numbers. That list is then used as the set of
 valid values for the field.
 
 What was discussed above all happens at the time the structure
-declaration is evaluated. The validation for each field is
-independant. Sometimes this isn't good enough. Conside the following:
+declaration is evaluated, and the validation for each field is
+completely independant independant all others. Sometimes this isn't
+good enough. Conside the following:
+
+
+\begin{verbatim}
+  (def-struct button
+    (def-field function uint8
+      (values 0 1 2 3 6 8 255))
+    (def-field mapping uint8)
+    (def-field macro-address uint16
+      (range 0 2047))
+    (def-field number-of-events uint16
+      (range 0 164))
+    (def-field debounce-count uint8))
+\end{verbatim}
+
+In this example, the \verb|mapping| field's meaning depends on the
+value in the \verb|function| field. We need a mechanism to allow us to
+compute valid values at validation time as well as inspect the values
+in other fields (previous fields will be good enough). And so we have
+the \verb|deferred-validation| function:
 
 \begin{verbatim}
   (def-struct button
@@ -251,16 +286,10 @@ independant. Sometimes this isn't good enough. Conside the following:
     (def-field debounce-count uint8))
 \end{verbatim}
 
-Here we need the validation of the \verb|mapping| field to be
-dependant on the the value of the \verb|function| field. This is done
-by using the \verb|deferred-validation| function. The argument is an
-arbitrary piece of code that evaluates a \verb|range| or \verb|values|
-clause in the end.
-
-In the above example, a \verb|case| form is used to select the
-appropriate \verb|range| or \verb|values| based on the value of the
-\verb|function| field. Note that only fields previous in the structure
-can be referenced.
+In the above example, the validation for \verb|mapping| specifies some
+code to be run when the field is to be validated. In this case it's a
+\verb|case| that branches based on the value in the \verb|function| field,
+choosing the appropriate \verb|range| or \verb|values|.
 
 \subsection{Directional declarations}
 
@@ -344,11 +373,11 @@ strings, arrays become lists (e.g. \verb|[1, 2, 3]| $\Rightarrow$
 
 When using json to populate the values in the fields, the paths from
 the fields are used to traverse the json to find the corresponding
-values. Once values are in the fields, the flattened structure can be
-used to generate the bytearray. 
+values. Once values are in the fields, they are validated, and the
+flattened structure can be used to generate the bytearray.
 
 Conversely, the data in a bytearray can be extracted based on the
-offsets and sizes in the fields and used to set the values in the
+offsets and sizes in the fields and used to set the values in those
 fields. Once the field values are populated, the corresponding paths
 can be used to build an appropriate json structure that can be sent to
 \SSEnext. 
@@ -356,26 +385,28 @@ can be used to build an appropriate json structure that can be sent to
 \subsection{JSON transformations}
 
 In the last section we went over how to declare fields, providing a
-name, type, and optionally a repeat count. You can provide an
-additional pair of arguments that will effect the consumption and
-generation of json from the field. Note that the repeat count is still
-optional. If the third arguemnt (if any) is a number, it's assumed
-that you are providing a repeat count.
+name, type, and possibly a repeat count and validation. You can
+optionally provide two more clauses that will effect the consumption and
+generation of json related to the field.
 
-These two additional arguments are Lisp functions (either named or
+These two additional clauses are Lisp functions (either named or
 anonymous lambdas) that are used to transform the json as it is on
-it's way to th app, or on its way from the app. They can be either the
-name of a Lisp function or a lambda expression. These functions takes
-two arguments. The first is the value from the json node corresponding
-to the field. The second is the json node containing it. The functions
-return nothing but can modify or replace the corresponding value value
-in the json.
+it's way to the app, or on its way from the app. These functions take
+two arguments:
+
+\begin{enumerate} 
+\item the value from the json node corresponding
+to the field, and
+\item the json node containing it. 
+\end{enumerate}
+
+The functions return nothing but can modify or replace the
+corresponding value in the json structure.
 
 As an example here's how to handle the name field on a Sensei. In the
 structure it is an array of 16 \verb|uint8|s, while in json it should
 be a string. This assumes functions \verb|(bytes-to-string bytes)| and
 \verb|(string-to-bytes string)|
-
 
 \begin{verbatim} 
 (def-struct profile
@@ -390,7 +421,7 @@ be a string. This assumes functions \verb|(bytes-to-string bytes)| and
      ...)
 \end{verbatim}
 
-\noindent For this declaraion, given the json derived from the
+\noindent For this declaraion, given that the json derived from the
 bytearray read from the device looks like:
 
 \begin{verbatim}
@@ -425,30 +456,146 @@ required 16 bytes.
 \end{verbatim}
 
 \noindent An API endpoint can be defined for any structure that needs
-to be read and/or written to the device. The core of at API
+to be read and/or written to the device. The core of an API
 declaration are the read and write clauses (both of which are
 optional). The structure is the same in each case: a command value
-(uint32) followed by a sequence of chunk declarations. A chunk
-declaration is made up of type value (uint32), the size of the chunk's
-data (uint32), and an sexpr that evaluates to a bytearray which can be
+(a \verb|uint32|) followed by a sequence of chunk declarations. A chunk
+declaration is made up of type value (a \verb|uint32|), the size of the chunk's
+data (a \verb|uint32|), and an sexpr that evaluates to a bytearray which can be
 no longer than the size specified. Note that the generated bytearray
 can be shorter than the stated size: the allocated byte array will be
 padded with zeros.
 
 When the chunks are being serialized into a byte array (using the
-sexprs) the \verb|payload| symbol available that evaluates to the
-serialized payload as defined by the corresponding structure using the
-provided json data.
+sexprs) the \verb|payload| symbol is available that evaluates to the
+serialized payload byte array as defined by the corresponding
+structure using the provided json data.
 
-There is the capability to have arbitrary sexprs before the read/write
-decalrations. Beyond that the read/write declarations can be embedded
-in a let, etc. They know the API declaration in which they are being
-evaluated, so they do not have to be in the API declarations immediate
-context.
+There is the capability to have arbitrary sexprs before and/or after
+the read/write decalrations. Beyond that, the read/write declarations
+can be embedded in a let, etc. They know the API declaration in which
+they are being evaluated, so they do not have to be in the API
+declarations immediate context.
 
 Json coming from core has a top level key that matches the name of
-both a structure and an api. The data at that key is used to build the
-payload bytearray from the appropriate structure which is available to
-the API read/write commands.
+both a structure and an api. The data indexed by that key is used to
+build the payload bytearray from the structure with the same name,
+which is then available to the API read/write commands.
+
+\subsection{Example: sensei-raw.device}
+
+\begin{verbatim}
+(def-device sensei-raw
+
+  (def-struct resolution
+    (outgoing
+     (def-field level uint8
+       ;; which level (of two) is this pertains to
+       (values 1 2))
+     (def-field cpi uint8
+       ;; N, where the resolution is N * 90
+       ))
+    (incoming
+     (def-field cpi uint8
+       ;; N, where the resolution is N * 90
+       )))
+    
+  (def-struct polling-rate
+    (outgoing
+     (def-field byte1 uint8
+       (constant 0x00))
+     (def-field rate uint8
+       (values
+        1                                ; 1000 Hz
+        2                                ; 500 Hz
+        3                                ; 250 Hz
+        4                                ; 125Hz
+        )))
+    (incoming
+     (def-field rate uint8
+       (values
+        1                                ; 1000 Hz
+        2                                ; 500 Hz
+        3                                ; 250 Hz
+        4                                ; 125 Hz
+        ))))                     
+  
+  (def-struct led-brightness
+    (outgoing
+     (def-field index uint8
+       (constant 0x01))
+     (def-field brightness uint8
+       (values
+        1                                ; off
+        2                                ; low brightness
+        3                                ; medium brightness
+        4                                ; high brightness
+        )))
+    (incoming
+     (def-field brightness uint8
+       (values
+        1                                ; off
+        2                                ; low brightness
+        3                                ; medium brightness
+        4                                ; high brightness
+        ))))
+
+  (def-struct current-resolution
+    (outgoing
+     (def-field byte1 uint8
+       (constant 0x00))
+     (def-field level uint8
+       (values 1 2)))
+    (incoming
+     (def-field level uint8
+       (values 1 2))))
+
+  (def-struct led-pulsation
+    (outgoing
+     (def-field index uint8
+       (constant 0x01))
+     (def-field speed uint8
+       (values
+        1                                ; steady
+        2                                ; pulsation slow
+        3                                ; pulsation medium
+        4                                ; pulsatioon fast
+        5)))
+    (incoming
+     (def-field speed uint8
+       (values
+        1                                ; steady
+        2                                ; pulsation slow
+        3                                ; pulsation medium
+        4                                ; pulsatioon fast
+        5))))                             ; trigger mode
+
+  (def-struct save-profile-settings
+    (def-field byte1 uint8
+      (constant 0x00)))
+
+  (def-api resolution
+    (read 0x03 (chunk 0 32 payload))
+    (write 0x13 (chunk 0 32 payload)))
+
+  (def-api polling-rate
+    (read 0x14 (chunk 0 32 payload))
+    (write 0x04 (chunk 0 32 payload)))
+
+  (def-api led-brightness
+    (read 0x15 (chunk 0 32 payload))
+    (write 0x05 (chunk 0 32 payload)))
+
+  (def-api current-resolution
+    (read 0x16 (chunk 0 32 payload))
+    (write 0x06 (chunk 0 32 payload)))
+
+  (def-api led-pulsation
+    (read 0x17 (chunk 0 32 payload))
+    (write 0x07 (chunk 0 32 payload)))
+
+  (def-api save-profile-settings
+    (write 0x09 (chunk 0 32 payload))))
+\end{verbatim}
 
 \end{document}

@@ -8,17 +8,17 @@ package driver
 type RealDriver struct {
 }
 
-func (self *RealDriver) GetDevices() *DeviceList {
+func (self RealDriver) GetDevices() *DeviceList {
     senseiRaw := DeviceInfo{VendorId: uint32(0), ProductId: uint32(0), DeviceHandle: uint32(0x01)}
     l := &DeviceList{Count: uint32(1)}
     l.Devices = append(l.Devices, senseiRaw)
     return l
 }
 
-func (self *RealDriver) Write(handle uint32, command uint32, data *[]byte, dataLength uint32) (err uint32) {
+func (self RealDriver) Write(handle uint32, command uint32, data *[]byte, dataLength uint32) (err uint32) {
     return uint32(0)
 }
 
-func (self *RealDriver) Read(handle uint32, command uint32, data *[]byte, dataLength uint32) (err uint32) {
+func (self RealDriver) Read(handle uint32, command uint32, data *[]byte, dataLength uint32) (err uint32) {
     return uint32(0)
 }

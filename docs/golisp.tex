@@ -77,7 +77,8 @@ enclosed by a pair of \verb|"|, e.g. \verb|"string"|.
 
 \item[Numbers] are non-negative integers internally represented as \verb|uint32| so
   their size reflects \verb|int| on the build of Go being used. E.g.
-  \verb|5|, \verb|9845376|. 
+  \verb|5|, \verb|9845376|. Hexidecimal numbers are also supported,
+  starting with \verb|"0x"|: \verb|0x1a|.
 
 \item[Booleans] represent true and false. \verb|nil|, \verb|()|, and
 false are all logically false, everything else is logically true.
@@ -874,14 +875,15 @@ reason to use these, and especially \verb|Eval|, is to evaluate
 arguments to primitives as required.
 
 \begin{description}
-\item [{\tt Eval(d *Data) (result *Data, err error)}] evaluates the
-  expression in \verb|d| and returns the result along with any error
-  that occurred during evaluation. If an error is returned, the value
-  of the data result is indeterminant.
-\item [{\tt Apply(function *Data, args *Data) (result *Data, err error)}]
-  This takes a function elemment, either user defined or
-  primitive, and applies it to the provided arguments. This is actually
-  how \verb|Eval| deals with a list: the evaluation of the \verb|car| of the list is the
+\item [{\tt Eval(d *Data, env *SymbolTableFrame) (*Data, error)}] evaluates the expression in \verb|d| in the provided
+  environment and returns the result along with any error that
+  occurred during evaluation. If an error is returned, the value of
+  the data result is indeterminant.
+\item [{\tt Apply(function *Data, args *Data, env *SymbolTableFrame)
+    (*Data, error)}] This takes a function elemment, either
+  user defined or primitive, and applies it to the provided arguments
+  in the provided environment. This is actually how \verb|Eval| deals
+  with a list: the evaluation of the \verb|car| of the list is the
   function, the \verb|cdr| is the list of arguments. It's up to the
   primitive implimentation to evaluate arguments as required.
 \end{description}
@@ -889,7 +891,7 @@ arguments to primitives as required.
 The implimentation of \verb|if| serves as an example:
 
 \begin{verbatim}
-  func If(args *Data) (result *Data, err error) {
+  func If(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) < 2 || Length(args) > 3 {
         msg := fmt.Sprintf("IF requires 2 or 3 arguments. Received %d.", 
                            Length(args))
@@ -906,9 +908,9 @@ The implimentation of \verb|if| serves as an example:
     elseClause := Caddr(args)
 
     if condition {
-        return Eval(thenClause)
+        return Eval(thenClause, env)
     } else {
-        return Eval(elseClause)
+        return Eval(elseClause, env)
     }
 }
 

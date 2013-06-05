@@ -21,7 +21,7 @@ const (
     incoming
 )
 
-var DriverToUse = driver.RealDriver{}
+var DriverToUse driver.Driver = driver.RealDriver{}
 
 type DeviceDeclaration struct {
     Name               string

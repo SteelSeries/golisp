@@ -21,8 +21,23 @@ var CurrentStructure *DeviceStructure
 var CurrentField *DeviceField
 var CurrentDirection uint
 
+const (
+    HID_PROTOCOL = iota
+    X2_PROTOCOL
+    KNX_PROTOCOL
+    SSE_PROTOCOL
+)
+
 func init() {
     //    InitDeviceBuiltins()
+    InitProtocolConstants()
+}
+
+func InitProtocolConstants() {
+    Global.BindTo(SymbolWithName("HID"), NumberWithValue(HID_PROTOCOL))
+    Global.BindTo(SymbolWithName("X2"), NumberWithValue(X2_PROTOCOL))
+    Global.BindTo(SymbolWithName("KNX"), NumberWithValue(KNX_PROTOCOL))
+    Global.BindTo(SymbolWithName("SSE"), NumberWithValue(SSE_PROTOCOL))
 }
 
 func InitDeviceBuiltins() {
@@ -52,6 +67,7 @@ func InitDeviceBuiltins() {
     MakePrimitiveFunction("bytes-to-string", 2, BytesToString)
     MakePrimitiveFunction("string-to-bytes", 2, StringToBytes)
     MakePrimitiveFunction("list-to-bytearray", 1, ListToBytes)
+    MakePrimitiveFunction("replace-byte", 3, ReplaceByte)
 }
 
 func DefDevice(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -205,7 +221,15 @@ func DefRange(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         return
     }
 
-    CurrentField.ValidRange = &Range{Lo: uint32(NumericValue(Car(args))), Hi: uint32(NumericValue(Cadr(args)))}
+    lo := uint32(NumericValue(Car(args)))
+    hi := uint32(NumericValue(Cadr(args)))
+
+    if lo >= hi {
+        err = errors.New("range requires arguments in ascending order")
+        return
+    }
+
+    CurrentField.ValidRange = &Range{Lo: lo, Hi: hi}
     return
 }
 
@@ -379,4 +403,39 @@ func ListToBytes(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         bytes = append(bytes, byte(b))
     }
     return ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&bytes)), nil
+}
+
+func ReplaceByte(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    dataByteObject, err := Eval(Car(args), env)
+    if err != nil {
+        panic(err)
+    }
+    if !ObjectP(dataByteObject) || TypeOfObject(dataByteObject) != "[]byte" {
+        panic(errors.New(fmt.Sprintf("Bytearray object should return []byte but returned %s.", TypeOfObject(dataByteObject))))
+    }
+
+    dataBytes := (*[]byte)(ObjectValue(dataByteObject))
+
+    indexObject, err := Eval(Cadr(args), env)
+    if err != nil {
+        panic(err)
+    }
+    if !NumberP(indexObject) {
+        panic(errors.New("Bytearray index should be a number."))
+    }
+    index := int(NumberValue(indexObject))
+
+    valueObject, err := Eval(Caddr(args), env)
+    if err != nil {
+        panic(err)
+    }
+    if !NumberP(valueObject) {
+        panic(errors.New("Bytearray value should be a number."))
+    }
+
+    value := byte(NumberValue(valueObject))
+
+    (*dataBytes)[index] = value
+
+    &ObjectWithTypeAndValue("byte[]", unsafe.Pointer(dataBytes))
 }

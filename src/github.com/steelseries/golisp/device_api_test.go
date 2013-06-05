@@ -7,6 +7,7 @@ package golisp
 
 import (
     //"fmt"
+    "github.com/steelseries/golisp/driver"
     . "launchpad.net/gocheck"
 )
 
@@ -232,4 +233,24 @@ func (s *DeviceApiSuite) TestSerializingMultiChunkPayload(c *C) {
     c.Assert((*bytes)[34], Equals, byte(0))
     c.Assert((*bytes)[35], Equals, byte(0))
 
+}
+
+func (s *DeviceApiSuite) TestWriting(c *C) {
+    testDriver := driver.StubDriver{}
+    DriverToUse = testDriver
+    CurrentApi = &DeviceApi{Name: "test", Env: Global}
+    code := `(def-device sensei-raw 
+               (def-struct test 
+			     (common (def-field f uint8 (repeat4))))
+			   (def-api test
+ 			     (write 10 (chunk 0 4 (payload)))))`
+    sexpr, err := Parse(code)
+    _, err = Eval(sexpr, Global)
+    c.Assert(err, IsNil)
+    json := `{"test": {"f": [1 2 3 4]}}`
+
+    bytes := []byte{1, 2, 3, 4}
+    testDriver.ExpectWrite(c, uint32(1), uint32(10), &bytes, uint32(4), uint32(0))
+    WriteToDevice("sensei-raw", json)
+    c.Assert(testDriver.WasSatisfied(), Equals, true)
 }
