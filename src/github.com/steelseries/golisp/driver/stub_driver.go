@@ -6,7 +6,9 @@
 package driver
 
 import (
+    "fmt"
     . "launchpad.net/gocheck"
+    "strings"
 )
 
 type StubDriver struct {
@@ -14,68 +16,93 @@ type StubDriver struct {
     ShouldWrite bool
     GotIt       bool
     Handle      uint32
-    Command     uint32
+    Protocol    uint32
     Data        *[]byte
     DataLength  uint32
     Err         uint32
     CC          *C
 }
 
-func (self StubDriver) ExpectWrite(c *C, handle uint32, command uint32, data *[]byte, dataLength uint32, err uint32) {
-    self.CC = c
-    self.ShouldRead = false
-    self.ShouldWrite = true
-    self.Handle = handle
-    self.Command = command
-    self.Data = data
-    self.DataLength = dataLength
-    self.Err = err
-    self.GotIt = false
+var TestDriver *StubDriver
+
+func (self StubDriver) ExpectWrite(c *C, handle uint32, protocol uint32, data *[]byte, dataLength uint32, err uint32) {
+    TestDriver.CC = c
+    TestDriver.ShouldRead = false
+    TestDriver.ShouldWrite = true
+    TestDriver.Handle = handle
+    TestDriver.Protocol = protocol
+    TestDriver.Data = data
+    TestDriver.DataLength = dataLength
+    TestDriver.Err = err
+    TestDriver.GotIt = false
 }
 
-func (self StubDriver) ExpectRead(c *C, handle uint32, command uint32, data *[]byte, dataLength uint32, err uint32) {
-    self.CC = c
-    self.ShouldRead = true
-    self.ShouldWrite = false
-    self.Handle = handle
-    self.Command = command
-    self.Data = data
-    self.DataLength = dataLength
-    self.Err = err
-    self.GotIt = false
+func (self StubDriver) ExpectRead(c *C, handle uint32, protocol uint32, data *[]byte, dataLength uint32, err uint32) {
+    TestDriver.CC = c
+    TestDriver.ShouldRead = true
+    TestDriver.ShouldWrite = false
+    TestDriver.Handle = handle
+    TestDriver.Protocol = protocol
+    TestDriver.Data = data
+    TestDriver.DataLength = dataLength
+    TestDriver.Err = err
+    TestDriver.GotIt = false
 }
 
 func (self StubDriver) WasSatisfied() bool {
-    return self.GotIt
+    return TestDriver.GotIt
 }
 
 func (self StubDriver) GetDevices() *DeviceList {
     senseiRaw := DeviceInfo{VendorId: uint32(0x1038), ProductId: uint32(0x1362), DeviceHandle: uint32(0x01)}
-    l := &DeviceList{Count: uint32(1)}
+    l := &DeviceList{Count: uint32(1), Devices: make([]DeviceInfo, 1)}
     l.Devices = append(l.Devices, senseiRaw)
     return l
 }
 
-func (self StubDriver) Write(handle uint32, command uint32, data *[]byte, dataLength uint32) (err uint32) {
-    if !self.ShouldWrite {
-        self.CC.Errorf("Unexpected device API write call: %d, %d", handle, command)
+func bytearryToString(bytes *[]byte) string {
+    s := make([]string, 0, len(*bytes))
+    for _, b := range *bytes {
+        s = append(s, fmt.Sprintf("%d", b))
     }
-    self.CC.Assert(handle, Equals, self.Handle)
-    self.CC.Assert(command, Equals, self.Command)
-    self.CC.Assert(*data, Equals, *self.Data)
-    self.CC.Assert(dataLength, Equals, self.DataLength)
-    self.GotIt = true
-    return self.Err
+    return fmt.Sprintf("[%s]", strings.Join(s, ", "))
 }
 
-func (self StubDriver) Read(handle uint32, command uint32, data *[]byte, dataLength uint32) (err uint32) {
-    if !self.ShouldRead {
-        self.CC.Errorf("Unexpected device API read call: %d, %d", handle, command)
+func printBytearrays(one *[]byte, two *[]byte) {
+    fmt.Printf("Got: %s\n", bytearryToString(one))
+    fmt.Printf("Exp: %s\n", bytearryToString(two))
+}
+
+func compareBytearrays(one *[]byte, two *[]byte) bool {
+    if len(*one) != len(*two) {
+        printBytearrays(one, two)
+        return false
     }
-    self.CC.Assert(handle, Equals, self.Handle)
-    self.CC.Assert(command, Equals, self.Command)
-    self.CC.Assert(*data, Equals, *self.Data)
-    self.CC.Assert(dataLength, Equals, self.DataLength)
-    self.GotIt = true
-    return self.Err
+    for i, b := range *one {
+        if b != (*two)[i] {
+            printBytearrays(one, two)
+            return false
+        }
+    }
+    return true
+}
+
+func (self StubDriver) Write(handle uint32, protocol uint32, data *[]byte, dataLength uint32) (err uint32) {
+    TestDriver.CC.Assert(TestDriver.ShouldWrite, Equals, true)
+    TestDriver.CC.Assert(handle, Equals, TestDriver.Handle)
+    TestDriver.CC.Assert(protocol, Equals, TestDriver.Protocol)
+    TestDriver.CC.Assert(compareBytearrays(data, TestDriver.Data), Equals, true)
+    TestDriver.CC.Assert(dataLength, Equals, TestDriver.DataLength)
+    TestDriver.GotIt = true
+    return TestDriver.Err
+}
+
+func (self StubDriver) Read(handle uint32, protocol uint32, data *[]byte, dataLength uint32) (err uint32) {
+    TestDriver.CC.Assert(TestDriver.ShouldRead, Equals, true)
+    TestDriver.CC.Assert(handle, Equals, TestDriver.Handle)
+    TestDriver.CC.Assert(protocol, Equals, TestDriver.Protocol)
+    TestDriver.CC.Assert(compareBytearrays(data, TestDriver.Data), Equals, true)
+    TestDriver.CC.Assert(dataLength, Equals, TestDriver.DataLength)
+    TestDriver.GotIt = true
+    return TestDriver.Err
 }

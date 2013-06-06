@@ -101,6 +101,7 @@ func DefDevice(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         }
     }
     CurrentStructure = nil
+    CurrentDevice.Expand()
     return Global.BindTo(deviceName, ObjectWithTypeAndValue("DeviceDeclaration", unsafe.Pointer(CurrentDevice))), nil
 }
 
@@ -423,7 +424,7 @@ func ReplaceByte(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if !NumberP(indexObject) {
         panic(errors.New("Bytearray index should be a number."))
     }
-    index := int(NumberValue(indexObject))
+    index := int(NumericValue(indexObject))
 
     valueObject, err := Eval(Caddr(args), env)
     if err != nil {
@@ -433,9 +434,10 @@ func ReplaceByte(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         panic(errors.New("Bytearray value should be a number."))
     }
 
-    value := byte(NumberValue(valueObject))
+    value := byte(NumericValue(valueObject))
 
     (*dataBytes)[index] = value
 
-    &ObjectWithTypeAndValue("byte[]", unsafe.Pointer(dataBytes))
+    result = ObjectWithTypeAndValue("byte[]", unsafe.Pointer(&dataBytes))
+    return
 }

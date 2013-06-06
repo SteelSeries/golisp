@@ -238,19 +238,22 @@ func (s *DeviceApiSuite) TestSerializingMultiChunkPayload(c *C) {
 func (s *DeviceApiSuite) TestWriting(c *C) {
     testDriver := driver.StubDriver{}
     DriverToUse = testDriver
+    driver.TestDriver = &testDriver
     CurrentApi = &DeviceApi{Name: "test", Env: Global}
     code := `(def-device sensei-raw 
                (def-struct test 
-			     (common (def-field f uint8 (repeat4))))
+			     (common (def-field f uint8 (repeat 4))))
 			   (def-api test
- 			     (write 10 (chunk 0 4 (payload)))))`
+ 			     (write HID (chunk 0 4 payload))))`
     sexpr, err := Parse(code)
     _, err = Eval(sexpr, Global)
     c.Assert(err, IsNil)
-    json := `{"test": {"f": [1 2 3 4]}}`
+    GetDevices()
 
-    bytes := []byte{1, 2, 3, 4}
-    testDriver.ExpectWrite(c, uint32(1), uint32(10), &bytes, uint32(4), uint32(0))
+    json := `{"test": {"f": [1, 2, 3, 4]}}`
+
+    bytes := []byte{12, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 1, 2, 3, 4}
+    testDriver.ExpectWrite(c, uint32(1), uint32(HID_PROTOCOL), &bytes, uint32(16), uint32(0))
     WriteToDevice("sensei-raw", json)
     c.Assert(testDriver.WasSatisfied(), Equals, true)
 }

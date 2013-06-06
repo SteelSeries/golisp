@@ -157,7 +157,7 @@ func AlignmentOf(fieldType string) int {
 
 // Device functions
 func NewDeviceNamed(n string) (d *DeviceDeclaration) {
-    return &DeviceDeclaration{Name: n, Structures: make(map[string]*DeviceStructure, 10), ExpandedStructures: make(map[string]*ExpandedDeviceStructure, 10)}
+    return &DeviceDeclaration{Name: n, Structures: make(map[string]*DeviceStructure, 10), ExpandedStructures: make(map[string]*ExpandedDeviceStructure, 10), Apis: make(map[string]*DeviceApi, 10)}
 }
 
 func (self *DeviceDeclaration) AddStructure(s *DeviceStructure) {
@@ -537,7 +537,7 @@ func WriteToDevice(deviceName string, jsonString string) {
     out.PopulateFromJson(jsonData)
     out.Validate()
     bytes := out.ByteArray()
-    Global.BindTo(SymbolWithName("payload"), ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&bytes)))
+    Global.BindTo(SymbolWithName("payload"), ObjectWithTypeAndValue("[]byte", unsafe.Pointer(bytes)))
     writeCmd := api.Write
     bytes = writeCmd.SerializePayload()
     err := DriverToUse.Write(device.Handle, writeCmd.Cmd, bytes, uint32(len(*bytes)))
@@ -568,7 +568,7 @@ func ReadFromDevice(deviceName string, jsonString string) (result string) {
     out := structure.Outgoing
     out.PopulateFromJson(jsonData)
     bytes := out.ByteArray()
-    Global.BindTo(SymbolWithName("payload"), ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&bytes)))
+    Global.BindTo(SymbolWithName("payload"), ObjectWithTypeAndValue("[]byte", unsafe.Pointer(bytes)))
 
     readCmd := api.Read
     bytes = readCmd.SerializePayload()

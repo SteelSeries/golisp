@@ -156,6 +156,10 @@ func (self *ApiChunk) Serialize() (result *[]byte) {
 
     dataBytes := (*[]byte)(ObjectValue(dataByteObject))
 
+    if uint32(len(*dataBytes)) == 0 {
+        panic(errors.New(fmt.Sprintf("No bytes of data generated.")))
+    }
+
     if uint32(len(*dataBytes)) > self.DataSize {
         panic(errors.New(fmt.Sprintf("Expect no more than %d bytes of data, but got %d.", self.DataSize, len(*dataBytes))))
     }
