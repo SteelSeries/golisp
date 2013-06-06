@@ -580,7 +580,8 @@ func ReadFromDevice(deviceName string, jsonString string) (result string) {
 
     in := structure.Incoming
     in.PopulateFromBytes(payload)
-    return in.JsonString()
+    innerJson := in.JsonString()
+    return fmt.Sprintf("{\"%s\":%s}", apiName, innerJson)
 }
 
 func GetDevices() {

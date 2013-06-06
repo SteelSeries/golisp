@@ -257,3 +257,29 @@ func (s *DeviceApiSuite) TestWriting(c *C) {
     WriteToDevice("sensei-raw", json)
     c.Assert(testDriver.WasSatisfied(), Equals, true)
 }
+
+func (s *DeviceApiSuite) TestReading(c *C) {
+    testDriver := driver.StubDriver{}
+    DriverToUse = testDriver
+    driver.TestDriver = &testDriver
+    CurrentApi = &DeviceApi{Name: "test", Env: Global}
+    code := `(def-device sensei-raw 
+               (def-struct test 
+			     (outgoing (def-field f uint8 (repeat 4)))
+			     (incoming (def-field g uint8)))
+			   (def-api test
+ 			     (read HID (chunk 0 4 payload))))`
+    sexpr, err := Parse(code)
+    _, err = Eval(sexpr, Global)
+    c.Assert(err, IsNil)
+    GetDevices()
+
+    json := `{"test": {"f": [1, 2, 3, 4]}}`
+
+    bytes := []byte{12, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 1, 2, 3, 4}
+    toReturn := []byte{255}
+    testDriver.ExpectRead(c, uint32(1), uint32(HID_PROTOCOL), &bytes, &toReturn, uint32(16), uint32(0))
+    resultJson := ReadFromDevice("sensei-raw", json)
+    c.Assert(resultJson, Equals, `{"test":{"g":255}}`)
+    c.Assert(testDriver.WasSatisfied(), Equals, true)
+}

@@ -17,6 +17,7 @@ type StubDriver struct {
     GotIt       bool
     Handle      uint32
     Protocol    uint32
+    ToReturn    *[]byte
     Data        *[]byte
     DataLength  uint32
     Err         uint32
@@ -37,12 +38,13 @@ func (self StubDriver) ExpectWrite(c *C, handle uint32, protocol uint32, data *[
     TestDriver.GotIt = false
 }
 
-func (self StubDriver) ExpectRead(c *C, handle uint32, protocol uint32, data *[]byte, dataLength uint32, err uint32) {
+func (self StubDriver) ExpectRead(c *C, handle uint32, protocol uint32, data *[]byte, toReturn *[]byte, dataLength uint32, err uint32) {
     TestDriver.CC = c
     TestDriver.ShouldRead = true
     TestDriver.ShouldWrite = false
     TestDriver.Handle = handle
     TestDriver.Protocol = protocol
+    TestDriver.ToReturn = toReturn
     TestDriver.Data = data
     TestDriver.DataLength = dataLength
     TestDriver.Err = err
@@ -104,5 +106,7 @@ func (self StubDriver) Read(handle uint32, protocol uint32, data *[]byte, dataLe
     TestDriver.CC.Assert(compareBytearrays(data, TestDriver.Data), Equals, true)
     TestDriver.CC.Assert(dataLength, Equals, TestDriver.DataLength)
     TestDriver.GotIt = true
+    (*data)[8] = uint8(len(*TestDriver.ToReturn))
+    copy((*data)[12:], *TestDriver.ToReturn)
     return TestDriver.Err
 }
