@@ -1,4 +1,4 @@
-(define (a 4))
+(define a 4)
 (define foo (lambda (x) (+ x x)))
 
 (describe type-test
