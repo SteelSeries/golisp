@@ -145,15 +145,24 @@ func IsSymbol(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func IsString(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    return BooleanWithValue(StringP(Car(args))), nil
+    // Evaluate the Car(args) first, in case args is a symbol or ConsCell
+    evaluated, _ := Eval(Car(args), env)
+    // Now just check the evaluated
+    return BooleanWithValue(StringP(evaluated)), nil
 }
 
 func IsNumber(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    return BooleanWithValue(NumberP(Car(args))), nil
+    // Evaluate the Car(args) first, in case args is a symbol or ConsCell
+    evaluated, _ := Eval(Car(args), env)
+    // Now just check the evaluated
+    return BooleanWithValue(NumberP(evaluated)), nil
 }
 
 func IsFunction(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    return BooleanWithValue(FunctionP(Car(args))), nil
+    // Evaluate the Car(args) first, in case args is a symbol or ConsCell
+    evaluated, _ := Eval(Car(args), env)
+    // Now just check the evaluated
+    return BooleanWithValue(FunctionP(evaluated)), nil
 }
 
 func Add(args *Data, env *SymbolTableFrame) (result *Data, err error) {
