@@ -524,6 +524,26 @@ func (s *BuiltinsSuite) TestDefine(c *C) {
     c.Assert(NumericValue(v), Equals, uint32(5))
 }
 
+func (s *BuiltinsSuite) TestDefineAString(c *C) {
+    code, _ := Parse(`(define x "a string")`)
+    Eval(code, Global)
+    sym := SymbolWithName("x")
+    v := Global.ValueOf(sym)
+    c.Assert(v, NotNil)
+    c.Assert(TypeOf(v), Equals, StringType)
+    c.Assert(StringValue(v), Equals, "a string")
+}
+
+func (s *BuiltinsSuite) TestDefineAStringForIssue1(c *C) {
+    code, _ := Parse(`(define some_string "I am a string")`)
+    Eval(code, Global)
+    sym := SymbolWithName("x")
+    v := Global.ValueOf(sym)
+    c.Assert(v, NotNil)
+    c.Assert(TypeOf(v), Equals, StringType)
+    c.Assert(StringValue(v), Equals, "a string")
+}
+
 func (s *BuiltinsSuite) TestDefineNotSymbol(c *C) {
     code, _ := Parse(`(define "x" 5)`)
     _, err := Eval(code, Global)
