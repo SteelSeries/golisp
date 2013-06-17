@@ -461,7 +461,7 @@ else clause is evaluated and is the result of the if form.
 Creates an anonymous function. This can then be used in a function call.
 
 \begin{verbatim}
-    ((lamdba (x) 
+    ((lambda (x) 
        (+ x x)) 
      5) ==> 10
 \end{verbatim}
@@ -520,7 +520,7 @@ Functions can be named (i.e. bound to a symbol) and later referred to
 by using define:
 
 \begin{verbatim}
-  (define foo (lamdba (x) 
+  (define foo (lambda (x) 
                 (+ x x)))
   (foo 5) ==> 10  
 \end{verbatim}
@@ -679,7 +679,7 @@ For example, here is the test file for scoping:
 \end{verbatim}
 
 Running a test results in a stream of status output for each test,
-followed at teh very end by a summary.  Running the above results in
+followed at the very end by a summary.  Running the above results in
 the following:
 
 \begin{verbatim}
@@ -880,7 +880,7 @@ arguments to primitives as required.
   occurred during evaluation. If an error is returned, the value of
   the data result is indeterminant.
 \item [{\tt Apply(function *Data, args *Data, env *SymbolTableFrame)
-    (*Data, error)}] This takes a function elemment, either
+    (*Data, error)}] This takes a function element, either
   user defined or primitive, and applies it to the provided arguments
   in the provided environment. This is actually how \verb|Eval| deals
   with a list: the evaluation of the \verb|car| of the list is the

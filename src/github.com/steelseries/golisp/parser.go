@@ -136,7 +136,9 @@ func parseExpression(s *MyTokenizer) (sexpr *Data, eof bool, err error) {
         case QUOTE:
             s.ConsumeToken()
             sexpr, eof, err = parseExpression(s)
-            sexpr = Cons(SymbolWithName("quote"), Cons(sexpr, nil))
+            if sexpr != nil {
+                sexpr = Cons(SymbolWithName("quote"), Cons(sexpr, nil))
+            }
             return
         case ILLEGAL:
             s.ConsumeToken()
