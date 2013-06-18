@@ -42,6 +42,20 @@ func (s *TokenizerSuite) TestSymbolWithDashes(c *C) {
     c.Assert(lit, Equals, "abc-def")
 }
 
+func (s *TokenizerSuite) TestSymbolWithUnderscore(c *C) {
+    t := NewMyTokenizer("abc_def a")
+    tok, lit := t.NextToken()
+    c.Assert(tok, Equals, SYMBOL)
+    c.Assert(lit, Equals, "abc_def")
+}
+
+func (s *TokenizerSuite) TestSymbolWithLeadingUnderscore(c *C) {
+    t := NewMyTokenizer("_abc_def a")
+    tok, lit := t.NextToken()
+    c.Assert(tok, Equals, SYMBOL)
+    c.Assert(lit, Equals, "_abc_def")
+}
+
 func (s *TokenizerSuite) TestSymbolWithQuestion(c *C) {
     t := NewMyTokenizer("abc? a")
     tok, lit := t.NextToken()

@@ -126,7 +126,7 @@ func (self *MyTokenizer) readNextToken() (token int, lit string) {
     if !self.isAlmostEof() {
         nextChar = rune(self.Source[self.Position+1])
     }
-    if unicode.IsLetter(currentChar) {
+    if unicode.IsLetter(currentChar) || currentChar == '_' {
         return self.readSymbol()
     } else if unicode.IsNumber(currentChar) {
         return self.readNumber()
