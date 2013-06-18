@@ -16,7 +16,6 @@ import (
 func init() {
     Global = NewSymbolTableFrameBelow(nil)
     InitBuiltins()
-    InitDeviceBuiltins()
 }
 
 func InitBuiltins() {
