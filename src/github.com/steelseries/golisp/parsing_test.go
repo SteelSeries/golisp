@@ -97,6 +97,13 @@ func (s *ParsingSuite) TestAnotherSymbol(c *C) {
     c.Assert(StringValue(sexpr), Equals, "defun")
 }
 
+func (s *ParsingSuite) TestSymbolWithUnderscores(c *C) {
+    sexpr, err := Parse("_test_1")
+    c.Assert(err, IsNil)
+    c.Assert(TypeOf(sexpr), Equals, SymbolType)
+    c.Assert(StringValue(sexpr), Equals, "_test_1")
+}
+
 // compound structures
 
 func (s *ParsingSuite) TestNil(c *C) {
