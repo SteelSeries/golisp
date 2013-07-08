@@ -6,12 +6,9 @@
 package main
 
 import (
-    "bufio"
     "flag"
     "fmt"
     "github.com/steelseries/golisp"
-    "os"
-    "strings"
 )
 
 var (
@@ -29,47 +26,20 @@ func test() {
     golisp.PrintTestResults()
 }
 
-func repl() {
-    for i := 0; i < flag.NArg(); i = i + 1 {
-        fmt.Printf("Loading %s\n", flag.Arg(i))
-        _, err := golisp.ProcessFile(flag.Arg(i))
-        if err != nil {
-            fmt.Printf("Error: %s\n", err)
-        }
-    }
-    for true {
-        in := bufio.NewReader(os.Stdin)
-
-        for true {
-            fmt.Printf(">")
-            input, err := in.ReadString('\n')
-            if err != nil {
-                panic(err)
-            }
-            input = strings.TrimRight(input, "\r\n")
-            if input != "" {
-                code, err := golisp.Parse(input)
-                if err != nil {
-                    fmt.Printf("Error: %s\n", err)
-                } else {
-                    d, err := golisp.Eval(code, golisp.Global)
-                    if err != nil {
-                        fmt.Printf("Error in evaluation: %s\n", err)
-                    } else {
-                        fmt.Printf("==> %s\n", golisp.String(d))
-                    }
-                }
-            }
-        }
-    }
-}
-
 func main() {
     flag.BoolVar(&runTests, "t", false, "Whether to run tests and exit.  Defaults to false.")
     flag.Parse()
     if runTests {
         test()
     } else {
-        repl()
+        for i := 0; i < flag.NArg(); i = i + 1 {
+            fmt.Printf("Loading %s\n", flag.Arg(i))
+            _, err := golisp.ProcessFile(flag.Arg(i))
+            if err != nil {
+                fmt.Printf("Error: %s\n", err)
+            }
+        }
+
+        golisp.Repl()
     }
 }
