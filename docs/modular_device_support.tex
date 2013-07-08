@@ -2,7 +2,9 @@
 \usepackage{geometry} % see geometry.pdf on how to lay out the page. There's lots.
 \geometry{a4paper} % or letter or a5paper or ... etc
 \usepackage{graphicx}
-
+\def\SSEnext{SSE\kern-.1em\lower.5ex\hbox{\footnotesize next}\kern+.2ex}
+\setlength{\parindent}{0.0in}
+\setlength{\parskip}{0.1in}
 % \geometry{landscape} % rotated page geometry
 
 % See the ``Article customise'' template for come common customisations
@@ -317,8 +319,8 @@ Any communication being sent to the device will use the
 \verb|outgoing| structure, and any data returned by the device will
 be extracted using the \verb|incoming| structure.
 
-In practice (at least for now) if you just need to declare a single
-structure, you {\bf must} use a \verb|common| clause, as so:
+If you just need to declare a single
+structure, you {\bf can} use a \verb|common| clause, as so:
 
 \begin{verbatim}
   (def-struct cpi
@@ -327,6 +329,16 @@ structure, you {\bf must} use a \verb|common| clause, as so:
       (def-field x uint16 (range 0 5670))
       (def-field y uint16 (range 0 5670))
       (def-field led led)))
+\end{verbatim}
+
+Alternatively, you can just declare the bare fields, as so:
+
+\begin{verbatim}
+  (def-struct cpi
+    (def-field unbind uint8 (values 0 1))
+    (def-field x uint16 (range 0 5670))
+    (def-field y uint16 (range 0 5670))
+    (def-field led led))
 \end{verbatim}
 
 \subsection{Json}

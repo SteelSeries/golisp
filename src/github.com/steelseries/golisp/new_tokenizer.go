@@ -91,9 +91,14 @@ func (self *MyTokenizer) readNumber() (token int, lit string) {
 }
 
 func (self *MyTokenizer) readString() (token int, lit string) {
+    println("YO!")
     start := self.Position
     self.Position++
     for !self.isEof() && rune(self.Source[self.Position]) != '"' {
+        println(rune(self.Source[self.Position]))
+        if rune(self.Source[self.Position]) == '\\' {
+            self.Position++
+        }
         self.Position++
     }
     if self.isEof() {
@@ -204,4 +209,5 @@ func (self *MyTokenizer) readNextToken() (token int, lit string) {
 
 func (self *MyTokenizer) ConsumeToken() {
     self.LookaheadToken, self.LookaheadLit = self.readNextToken()
+    println("Consumed")
 }
