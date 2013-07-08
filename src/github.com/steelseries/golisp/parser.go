@@ -33,7 +33,7 @@ func makeHexNumber(str string) (n *Data, err error) {
 }
 
 func makeString(str string) (s *Data, err error) {
-    s = StringWithValue(str[1 : len(str)-1])
+    s = StringWithValue(str)
     return
 }
 

@@ -102,7 +102,7 @@ func (s *TokenizerSuite) TestString(c *C) {
     t := NewMyTokenizer(`"hi" a`)
     tok, lit := t.NextToken()
     c.Assert(tok, Equals, STRING)
-    c.Assert(lit, Equals, `"hi"`)
+    c.Assert(lit, Equals, `hi`)
 }
 
 func (s *TokenizerSuite) TestQuote(c *C) {

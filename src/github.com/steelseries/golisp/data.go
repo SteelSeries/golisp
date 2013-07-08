@@ -334,6 +334,17 @@ func IsEqual(d *Data, o *Data) bool {
     return *d == *o
 }
 
+func escapeQuotes(str string) string {
+    buffer := make([]rune, 0, 10)
+    for _, ch := range str {
+        if rune(ch) == '"' {
+            buffer = append(buffer, '\\')
+        }
+        buffer = append(buffer, rune(ch))
+    }
+    return string(buffer)
+}
+
 func String(d *Data) string {
     if d == nil {
         return "()"
@@ -388,7 +399,7 @@ func String(d *Data) string {
             return "#t"
         }
     case StringType:
-        return fmt.Sprintf(`"%s"`, d.String)
+        return fmt.Sprintf(`"%s"`, escapeQuotes(d.String))
     case SymbolType:
         return d.String
     case FunctionType:
