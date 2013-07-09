@@ -208,4 +208,7 @@ func (self *MyTokenizer) readNextToken() (token int, lit string) {
 
 func (self *MyTokenizer) ConsumeToken() {
     self.LookaheadToken, self.LookaheadLit = self.readNextToken()
+    if self.LookaheadToken == COMMENT { // skip comments
+        self.ConsumeToken()
+    }
 }
