@@ -183,6 +183,7 @@ func ProcessFile(filename string) (result *Data, err error) {
     var sexpr *Data
     var eof bool
     for {
+        println("Parsing sexpr")
         sexpr, eof, err = parseExpression(s)
         if err != nil {
             return
@@ -193,6 +194,7 @@ func ProcessFile(filename string) (result *Data, err error) {
         if NilP(sexpr) {
             return
         }
+        println("Evaling sexpr")
         result, err = Eval(sexpr, Global)
         if err != nil {
             return
