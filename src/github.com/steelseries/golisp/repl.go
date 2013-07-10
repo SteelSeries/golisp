@@ -11,6 +11,9 @@ import (
 )
 
 func Repl() {
+    fmt.Printf("Welcome to GoLisp\n")
+    fmt.Printf("Copyright 2013 SteelSeries\n")
+    fmt.Printf("Evaluate '(quit)' to exit.\n\n")
     prompt := "> "
     LoadHistoryFromFile(".golisp_history")
     for true {
