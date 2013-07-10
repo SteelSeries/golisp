@@ -1220,6 +1220,7 @@ func Begin(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func DefQuit(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    WriteHistoryToFile(".golisp_history")
     os.Exit(0)
     return
 }

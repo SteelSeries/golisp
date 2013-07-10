@@ -230,17 +230,3 @@ func (s *TokenizerSuite) TestTrue(c *C) {
     c.Assert(tok, Equals, TRUE)
     c.Assert(lit, Equals, `#t`)
 }
-
-func (s *TokenizerSuite) TestCommentEof(c *C) {
-    t := NewMyTokenizer(`; a`)
-    tok, lit := t.NextToken()
-    c.Assert(tok, Equals, COMMENT)
-    c.Assert(lit, Equals, `; a`)
-}
-
-func (s *TokenizerSuite) TestCommentEol(c *C) {
-    t := NewMyTokenizer("; a\n")
-    tok, lit := t.NextToken()
-    c.Assert(tok, Equals, COMMENT)
-    c.Assert(lit, Equals, `; a`)
-}

@@ -12,6 +12,7 @@ import (
 
 func Repl() {
     prompt := "> "
+    LoadHistoryFromFile(".golisp_history")
     for true {
         for true {
             input := *ReadLine(&prompt)
