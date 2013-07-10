@@ -7,15 +7,14 @@
 package golisp
 
 import (
-    "bufio"
     "fmt"
-    "os"
 )
 
 func Repl() {
+    prompt := "> "
     for true {
         for true {
-            input := *ReadLine(">")
+            input := *ReadLine(&prompt)
             if input != "" {
                 AddHistory(input)
                 code, err := Parse(input)
