@@ -11,6 +11,7 @@ package golisp
 import (
     "errors"
     "fmt"
+    "os"
 )
 
 func init() {
@@ -21,6 +22,8 @@ func init() {
 func InitBuiltins() {
     // MakePrimitiveFunction(<symbol>, <required # args, -1 means >= 1>, <function>)
     Global.Intern("nil")
+
+    MakePrimitiveFunction("quit", 0, DefQuit)
 
     // type tests
 
@@ -1213,6 +1216,11 @@ func Begin(args *Data, env *SymbolTableFrame) (result *Data, err error) {
             return
         }
     }
+    return
+}
+
+func DefQuit(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    os.Exit(0)
     return
 }
 
