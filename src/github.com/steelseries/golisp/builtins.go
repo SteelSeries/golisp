@@ -11,6 +11,7 @@ package golisp
 import (
     "errors"
     "fmt"
+    "math/rand"
     "os"
 )
 
@@ -42,6 +43,7 @@ func InitBuiltins() {
     MakePrimitiveFunction("*", -1, Multiply)
     MakePrimitiveFunction("/", -1, Quotient)
     MakePrimitiveFunction("%", 2, Remainder)
+    MakePrimitiveFunction("random-byte", 0, RandomByte)
 
     MakePrimitiveFunction("<", -1, LessThan)
     MakePrimitiveFunction(">", -1, GreaterThan)
@@ -282,6 +284,12 @@ func Remainder(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
     val := NumericValue(dividend) % NumericValue(divisor)
     return NumberWithValue(val), nil
+}
+
+func RandomByte(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    r := uint8(rand.Int())
+    result = NumberWithValue(uint32(r))
+    return
 }
 
 func LessThan(args *Data, env *SymbolTableFrame) (result *Data, err error) {
