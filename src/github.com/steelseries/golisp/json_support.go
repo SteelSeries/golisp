@@ -88,6 +88,16 @@ func LispToJson(d *Data) (result interface{}) {
     return ""
 }
 
+func LispToJsonString(d *Data) (result string) {
+    temp := LispToJson(d)
+    j, err := json.Marshal(temp)
+    if err == nil {
+        return string(j)
+    } else {
+        return ""
+    }
+}
+
 func TransformJson(xform *Data, jsonNode *Data, parentNode *Data) (xformedJson *Data, err error) {
     var transformFunction *Data
     var newData *Data
