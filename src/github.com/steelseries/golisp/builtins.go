@@ -67,6 +67,7 @@ func InitBuiltins() {
     MakePrimitiveFunction("set!", 2, SetVar)
     MakePrimitiveFunction("let", -1, Let)
     MakePrimitiveFunction("begin", -1, Begin)
+    MakePrimitiveFunction("do", -1, Do)
 
     // list access
     MakePrimitiveFunction("list", -1, MakeList)
@@ -128,6 +129,7 @@ func InitBuiltins() {
     MakePrimitiveFunction("load", 1, LoadFile)
     MakePrimitiveFunction("dump", 0, DumpSymbolTable)
     MakePrimitiveFunction("sleep", 1, DefSleep)
+    MakePrimitiveFunction("write-line", 1, WriteLine)
 
     // testing
     MakePrimitiveFunction("describe", -1, Describe)
@@ -1229,6 +1231,77 @@ func Begin(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return
 }
 
+func RebindDoLocals(bindingForms *Data, env *SymbolTableFrame) (err error) {
+    var name *Data
+    var value *Data
+
+    for cell := bindingForms; NotNilP(cell); cell = Cdr(cell) {
+        bindingTuple := Car(cell)
+        name = Car(bindingTuple)
+        value, err = Eval(Caddr(bindingTuple), env)
+        if err != nil {
+            return
+        }
+        env.BindLocallyTo(name, value)
+    }
+    return
+}
+
+func Do(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    if Length(args) < 2 {
+        err = errors.New("Do requires at least a list of bindings and a test clause")
+        return
+    }
+
+    bindings := Car(args)
+    if !PairP(bindings) {
+        err = errors.New("Do requires a list of bindings as it's first argument")
+        return
+    }
+
+    testClause := Cadr(args)
+    if !PairP(testClause) {
+        err = errors.New("Do requires a list as it's second argument")
+        return
+    }
+
+    localFrame := NewSymbolTableFrameBelow(env)
+    BindLetLocals(bindings, localFrame)
+
+    body := Cddr(args)
+
+    var shouldExit *Data
+
+    for true {
+        shouldExit, err = Eval(Car(testClause), localFrame)
+        if err != nil {
+            return
+        }
+
+        if BooleanValue(shouldExit) {
+            for cell := Cdr(testClause); NotNilP(cell); cell = Cdr(cell) {
+                sexpr := Car(cell)
+                result, err = Eval(sexpr, localFrame)
+                if err != nil {
+                    return
+                }
+            }
+            return
+        }
+
+        for cell := body; NotNilP(cell); cell = Cdr(cell) {
+            sexpr := Car(cell)
+            result, err = Eval(sexpr, localFrame)
+            if err != nil {
+                return
+            }
+        }
+
+        RebindDoLocals(bindings, localFrame)
+    }
+    return
+}
+
 func DefQuit(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     WriteHistoryToFile(".golisp_history")
     os.Exit(0)
@@ -1243,6 +1316,15 @@ func DefSleep(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     }
     millis := NumericValue(n)
     time.Sleep(time.Duration(millis) * time.Millisecond)
+    return
+}
+
+func WriteLine(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    data, err := Eval(Car(args), env)
+    if err != nil {
+        return
+    }
+    println(StringValue(data))
     return
 }
 
