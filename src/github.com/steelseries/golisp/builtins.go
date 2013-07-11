@@ -13,6 +13,7 @@ import (
     "fmt"
     "math/rand"
     "os"
+    "time"
 )
 
 func init() {
@@ -126,6 +127,7 @@ func InitBuiltins() {
     // system
     MakePrimitiveFunction("load", 1, LoadFile)
     MakePrimitiveFunction("dump", 0, DumpSymbolTable)
+    MakePrimitiveFunction("sleep", 1, DefSleep)
 
     // testing
     MakePrimitiveFunction("describe", -1, Describe)
@@ -1230,6 +1232,17 @@ func Begin(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 func DefQuit(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     WriteHistoryToFile(".golisp_history")
     os.Exit(0)
+    return
+}
+
+func DefSleep(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    n := Car(args)
+    if !NumberP(n) {
+        err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
+        return
+    }
+    millis := NumericValue(n)
+    time.Sleep(time.Duration(millis) * time.Millisecond)
     return
 }
 
