@@ -70,6 +70,7 @@ func InitBuiltins() {
     MakePrimitiveFunction("let", -1, Let)
     MakePrimitiveFunction("begin", -1, Begin)
     MakePrimitiveFunction("do", -1, Do)
+    MakePrimitiveFunction("apply", 2, DefApply)
 
     // setters
     MakePrimitiveFunction("set!", 2, SetVar)
@@ -1373,6 +1374,20 @@ func Do(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         RebindDoLocals(bindings, localFrame)
     }
     return
+}
+
+func DefApply(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    f, err := Eval(Car(args), env)
+    if err != nil {
+        return
+    }
+
+    vals, err := Eval(Cadr(args), env)
+    if err != nil {
+        return
+    }
+
+    return Apply(f, vals, env)
 }
 
 func DefQuit(args *Data, env *SymbolTableFrame) (result *Data, err error) {
