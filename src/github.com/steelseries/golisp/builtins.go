@@ -64,10 +64,14 @@ func InitBuiltins() {
     MakePrimitiveFunction("define", -1, Define)
     MakePrimitiveFunction("map", 2, Map)
     MakePrimitiveFunction("quote", 1, Quote)
-    MakePrimitiveFunction("set!", 2, SetVar)
     MakePrimitiveFunction("let", -1, Let)
     MakePrimitiveFunction("begin", -1, Begin)
     MakePrimitiveFunction("do", -1, Do)
+
+    // setters
+    MakePrimitiveFunction("set!", 2, SetVar)
+    MakePrimitiveFunction("set-car!", 2, SetCar)
+    MakePrimitiveFunction("set-cdr!", 2, SetCdr)
 
     // list access
     MakePrimitiveFunction("list", -1, MakeList)
@@ -1170,6 +1174,34 @@ func SetVar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         return
     }
     return env.SetTo(symbol, value)
+}
+
+func SetCar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    pair, err := Eval(Car(args), env)
+    symbol := Car(args)
+    if !PairP(symbol) {
+        err = errors.New("set-car! requires a pair as it's first argument.")
+    }
+    value, err := Eval(Cadr(args), env)
+    if err != nil {
+        return
+    }
+    pair.Car = value
+    return value, nil
+}
+
+func SetCdr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    pair, err := Eval(Car(args), env)
+    symbol := Car(args)
+    if !PairP(symbol) {
+        err = errors.New("set-cdr! requires a pair as it's first argument.")
+    }
+    value, err := Eval(Cadr(args), env)
+    if err != nil {
+        return
+    }
+    pair.Cdr = value
+    return value, nil
 }
 
 func BindLetLocals(bindingForms *Data, env *SymbolTableFrame) (err error) {
