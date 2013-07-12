@@ -37,6 +37,8 @@ func InitBuiltins() {
     MakePrimitiveFunction("string?", 1, IsString)
     MakePrimitiveFunction("number?", 1, IsNumber)
     MakePrimitiveFunction("function?", 1, IsFunction)
+    MakePrimitiveFunction("even?", 1, IsEven)
+    MakePrimitiveFunction("odd?", 1, IsOdd)
 
     // math
     MakePrimitiveFunction("+", -1, Add)
@@ -45,6 +47,7 @@ func InitBuiltins() {
     MakePrimitiveFunction("/", -1, Quotient)
     MakePrimitiveFunction("%", 2, Remainder)
     MakePrimitiveFunction("random-byte", 0, RandomByte)
+    MakePrimitiveFunction("interval", 2, Interval)
 
     MakePrimitiveFunction("<", -1, LessThan)
     MakePrimitiveFunction(">", -1, GreaterThan)
@@ -168,6 +171,22 @@ func IsNumber(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     evaluated, _ := Eval(Car(args), env)
     // Now just check the evaluated
     return BooleanWithValue(NumberP(evaluated)), nil
+}
+
+func IsEven(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    evaluated, _ := Eval(Car(args), env)
+    if !NumberP(evaluated) {
+        return False, nil
+    }
+    return BooleanWithValue((NumericValue(evaluated) % 2) == 0), nil
+}
+
+func IsOdd(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    evaluated, _ := Eval(Car(args), env)
+    if !NumberP(evaluated) {
+        return False, nil
+    }
+    return BooleanWithValue((NumericValue(evaluated) % 2) == 1), nil
 }
 
 func IsFunction(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -297,6 +316,28 @@ func Remainder(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 func RandomByte(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     r := uint8(rand.Int())
     result = NumberWithValue(uint32(r))
+    return
+}
+
+func Interval(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    startObj, err := Eval(Car(args), env)
+    if err != nil {
+        return
+    }
+    start := NumericValue(startObj)
+
+    endObj, err := Eval(Cadr(args), env)
+    if err != nil {
+        return
+    }
+    end := NumericValue(endObj)
+
+    var items []*Data = make([]*Data, 0, end-start+1)
+
+    for i := start; i <= end; i = i + 1 {
+        items = append(items, NumberWithValue(i))
+    }
+    result = ArrayToList(items)
     return
 }
 
