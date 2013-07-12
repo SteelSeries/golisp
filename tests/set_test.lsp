@@ -16,3 +16,17 @@
                 y)
               15)
           (== y 5))
+
+(describe set-car
+          (== (let ((pair '(a b)))
+                (set-car! pair 1)
+                (car pair))
+              1))
+
+(describe set-cdr
+          (== (let ((pair '(a b)))
+                (set-cdr! pair 1)
+                (cdr pair))
+              1))
+
+
