@@ -110,6 +110,20 @@ func Append(l *Data, value *Data) *Data {
     return l
 }
 
+func AppendList(l *Data, otherList *Data) *Data {
+    if NilP(l) {
+        return otherList
+    }
+
+    var c *Data
+    for c = l; NotNilP(c.Cdr); c = Cdr(c) {
+    }
+
+    c.Cdr = otherList
+
+    return l
+}
+
 func Acons(car *Data, cdr *Data, alist *Data) *Data {
     pair, _ := Assoc(car, alist)
     if NilP(pair) {
