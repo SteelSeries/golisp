@@ -295,6 +295,25 @@ func Assoc(key *Data, alist *Data) (result *Data, err error) {
     return
 }
 
+func Copy(d *Data) *Data {
+    if d == nil {
+        return d
+    }
+
+    switch d.Type {
+    case ConsCellType, AlistType, AlistCellType:
+        {
+            if NilP(d) {
+                return d
+            }
+
+            return Cons(Copy(Car(d)), Copy(Cdr(d)))
+        }
+    }
+
+    return d
+}
+
 func IsEqual(d *Data, o *Data) bool {
     if d == o {
         return true
