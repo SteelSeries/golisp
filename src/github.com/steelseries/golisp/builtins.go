@@ -83,6 +83,7 @@ func InitBuiltins() {
     MakePrimitiveFunction("cons", 2, ExposedCons)
     MakePrimitiveFunction("reverse", 1, ExposedReverse)
     MakePrimitiveFunction("append", 2, ExposeAppend)
+    MakePrimitiveFunction("append!", 2, ExposeAppendBang)
     MakePrimitiveFunction("copy", 1, ExposeCopy)
 
     MakePrimitiveFunction("car", 1, ExposedCar)
@@ -663,6 +664,21 @@ func ExposedReverse(args *Data, env *SymbolTableFrame) (result *Data, err error)
     return
 }
 
+func ExposeAppendBang(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    firstList, err := Eval(Car(args), env)
+    if err != nil {
+        return
+    }
+
+    secondList, err := Eval(Cadr(args), env)
+    if err != nil {
+        return
+    }
+
+    result = AppendBangList(firstList, secondList)
+    return
+}
+
 func ExposeAppend(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     firstList, err := Eval(Car(args), env)
     if err != nil {
@@ -674,7 +690,7 @@ func ExposeAppend(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         return
     }
 
-    result = AppendList(firstList, secondList)
+    result = AppendBangList(Copy(firstList), secondList)
     return
 }
 
