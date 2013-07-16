@@ -57,7 +57,7 @@ func NilP(d *Data) bool {
 }
 
 func NotNilP(d *Data) bool {
-    return d != nil
+    return !NilP(d)
 }
 
 func PairP(d *Data) bool {

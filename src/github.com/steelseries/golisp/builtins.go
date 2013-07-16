@@ -152,11 +152,19 @@ func IsPair(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func ExposedNilP(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    return BooleanWithValue(NilP(Car(args))), nil
+    val, err := Eval(Car(args), env)
+    if err != nil {
+        return
+    }
+    return BooleanWithValue(NilP(val)), nil
 }
 
 func ExposedNotNilP(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    return BooleanWithValue(NotNilP(Car(args))), nil
+    val, err := Eval(Car(args), env)
+    if err != nil {
+        return
+    }
+    return BooleanWithValue(NotNilP(val)), nil
 }
 
 func IsSymbol(args *Data, env *SymbolTableFrame) (result *Data, err error) {
