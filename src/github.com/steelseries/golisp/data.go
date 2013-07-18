@@ -101,11 +101,11 @@ func AppendBang(l *Data, value *Data) *Data {
         return Cons(value, nil)
     }
 
-    if Cdr(l) == nil {
-        l.Cdr = Cons(value, nil)
-    } else {
-        AppendBang(Cdr(l), value)
+    var c *Data
+    for c = l; NotNilP(c.Cdr); c = Cdr(c) {
     }
+
+    c.Cdr = Cons(value, nil)
 
     return l
 }
@@ -122,6 +122,36 @@ func AppendBangList(l *Data, otherList *Data) *Data {
     c.Cdr = otherList
 
     return l
+}
+
+func Append(l *Data, value *Data) *Data {
+    if NilP(l) {
+        return Cons(value, nil)
+    }
+
+    var newList = Copy(l)
+    var c *Data
+    for c = newList; NotNilP(c.Cdr); c = Cdr(c) {
+    }
+
+    c.Cdr = Cons(value, nil)
+
+    return newList
+}
+
+func AppendList(l *Data, otherList *Data) *Data {
+    if NilP(l) {
+        return otherList
+    }
+
+    var newList = Copy(l)
+    var c *Data
+    for c = newList; NotNilP(c.Cdr); c = Cdr(c) {
+    }
+
+    c.Cdr = otherList
+
+    return newList
 }
 
 func Acons(car *Data, cdr *Data, alist *Data) *Data {
