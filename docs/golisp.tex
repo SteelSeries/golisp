@@ -215,6 +215,33 @@ second argument.
     (>= 2 2) ==> #t
 \end{verbatim}
 
+\noindent{\bf\large\verb|(odd? <number>)|}
+
+Returns whether the argument is odd.
+
+\begin{verbatim}
+    (odd? 2) ==> #f
+    (odd? 5) ==> #t
+\end{verbatim}
+
+\noindent{\bf\large\verb|(even? <number>)|}
+
+Returns whether the argument is even.
+
+\begin{verbatim}
+    (even? 2) ==> #t
+    (even? 5) ==> #f
+\end{verbatim}
+
+\noindent{\bf\large\verb|(random-byte)|}
+
+Returns a psuedo-random unsigned integer between 0 and 255, inclusive..
+
+\begin{verbatim}
+    (random-byte) ==> 13
+    (random-byte) ==> 207
+\end{verbatim}
+
 \subsection{Logical}
 
 \noindent{\bf\large\verb|(! <arg>)|}
@@ -262,6 +289,14 @@ Creates a list out of a sequence of values.
 \begin{verbatim}
   (list 1 2 3) ==> (1 2 3)
   (list (+ 1 1) (+ 2 2) (+ 3 3)) ==> (2 4 6)
+\end{verbatim}
+
+\noindent{\bf\large\verb|(interval <lo> <hi>)|}
+
+Creates a list of numbers from \verb|<lo>| to \verb|<hi>|, inclusive.
+
+\begin{verbatim}
+  (interval 1 5) ==> (1 2 3 4 5)
 \end{verbatim}
 
 \noindent{\bf\large\verb|(car <list>)|}
@@ -366,7 +401,24 @@ Return the pair from \verb|<a-list>| whose \verb|cdr| is equal to
 \begin{verbatim}
   (rassoc '1 '((a.1) (b.2) (c.3))) ==> (a.1)
   (rassoc '3 '((a.1) (b.2))) ==> ()
+\end{verbatim}
 
+\section{Utility}
+
+\noindent{\bf\large\verb|(sleep <millis>)|}
+
+Sleep for \verb|<millis>| milliseconds.
+
+\begin{verbatim}
+  (sleep 1000)  ;; resumes execution 1 second later
+\end{verbatim}
+
+\noindent{\bf\large\verb|(write-line <sexpr>)|}
+
+Writes the string form of \verb|<sexpr>|.
+
+\begin{verbatim}
+  (write-line "Hello, world.")  ;; Hello, world. is sent to the console.
 \end{verbatim}
 
 \section{Special forms}
@@ -586,6 +638,26 @@ and doesn't extend beyond it.
   x ==> 5
 \end{verbatim}
 
+\noindent{\bf\large\verb|(set-car! <cons-cell> <new-value>)|}
+
+Set the \verb|car| pointer of \verb|cons-cell|.
+
+\begin{verbatim}
+  (define a '(1 2))
+  (set-car! a 3)
+  a ==> (3 2)
+\end{verbatim}
+
+\noindent{\bf\large\verb|(set-cdr! <cons-cell> <new-value>)|}
+
+Set the \verb|cdr| pointer of \verb|cons-cell|.
+
+\begin{verbatim}
+  (define a '(1 2))
+  (set-cdr! a 3)
+  a ==> (1 . 3)
+\end{verbatim}
+
 \noindent{\bf\large\verb|(map <function> <list>)|}
 
 Applies \verb|function| (which has to be of a single argument) to each
@@ -645,6 +717,39 @@ body. In effect the body of the \verb|let| is an implicit
         (y (+ x 2)))
        (do-something)
        (+ x y)) ==> 4
+\end{verbatim}
+
+\noindent{\bf\large\verb|(do ((<name> <initial> <next>)...)|}\\
+\noindent{\bf\large\verb|    ((<test> <sexpr>...))|}\\
+\noindent{\bf\large\verb|    <sexpr>...)|}
+
+This is a general purpose iteration construct. There are three
+sections: 
+
+\begin{description}
+\item[bindings] This is similar to \verb|let| in that it defines names
+  that can be used in the rest of the \verb|do|. Like \verb|let| it
+  is a list of lists, each starting with the binding name followed by
+  the initial value of the binding. The difference is that this is
+  followed by an expression that is evaluated at the beginning of each
+  subsequent pass through the loop, and whose result is used as a new
+  binding or the name.
+\item[termination] Ths is a list whose first element is an expression
+ which is evaluated before each pass through the loop (and after the
+ rebinding of the variables). If it evaluates to a truthy value, the
+ remaining expressions are evaulated in turn. The result of the final
+ one is used as the value of the \verb|do|.
+\item[body] This is a sequence of expressions that are evaluated in
+  order each time though the loop.
+\end{description}
+
+Here's an example of using do to iteratively find the length of a
+list.
+
+\begin{verbatim}
+  (do ((rest '(...) (cdr rest))
+       (count 0 (+ 1 count)))
+      ((nil? rest) count))
 \end{verbatim}
 
 \section{Testing}
