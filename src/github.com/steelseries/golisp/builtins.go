@@ -684,6 +684,11 @@ func ExposeAppendBang(args *Data, env *SymbolTableFrame) (result *Data, err erro
     }
 
     result = AppendBangList(firstList, secondList)
+
+    if SymbolP(Car(args)) {
+        env.BindTo(Car(args), result)
+    }
+
     return
 }
 
@@ -698,7 +703,7 @@ func ExposeAppend(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         return
     }
 
-    result = AppendBangList(Copy(firstList), secondList)
+    result = AppendList(Copy(firstList), secondList)
     return
 }
 
@@ -1270,8 +1275,7 @@ func SetVar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func SetCar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     pair, err := Eval(Car(args), env)
-    symbol := Car(args)
-    if !PairP(symbol) {
+    if !PairP(pair) {
         err = errors.New("set-car! requires a pair as it's first argument.")
     }
     value, err := Eval(Cadr(args), env)
@@ -1284,8 +1288,7 @@ func SetCar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func SetCdr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     pair, err := Eval(Car(args), env)
-    symbol := Car(args)
-    if !PairP(symbol) {
+    if !PairP(pair) {
         err = errors.New("set-cdr! requires a pair as it's first argument.")
     }
     value, err := Eval(Cadr(args), env)
@@ -1462,7 +1465,7 @@ func WriteLine(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if err != nil {
         return
     }
-    println(StringValue(data))
+    println(String(data))
     return
 }
 
