@@ -41,6 +41,10 @@ GoLisp is a lexically scoped Lisp-1:
   variables have separate namespaces.
 \end{description}
 
+The golisp repl supports \verb|readline| and so provides history and
+command editing. History is local to the directory from which you
+execute golisp.
+
 \section{Data types}
 
 \begin{description}
@@ -291,6 +295,29 @@ Creates a list out of a sequence of values.
   (list (+ 1 1) (+ 2 2) (+ 3 3)) ==> (2 4 6)
 \end{verbatim}
 
+\noindent{\bf\large\verb|(append <list> <sexpr>)|}
+
+Append the result of evaluating \verb|<sexpr>| to \verb|<lsit>|. This
+makes a copy of \verb|<list>|, appends to it, and returns the copy
+(which now contains the appened item).
+
+\noindent{\bf\large\verb|(append! <list> <sexpr>)|}
+
+Append the result of evaluating \verb|<sexpr>| to \verb|<lsit>|. This
+appends to the list provided, and returns it. The side effect
+(indicated by the \verb|!|) is that the original list is modified,
+unlike using \verb|append|..
+For example:
+
+\begin{verbatim}
+  (define a '(1 2 3))
+  (append a '(4 5 6)) => (1 2 3 4 5 6)
+  a => (1 2 3)
+
+  (append! a '(4 5 6)) => (1 2 3 4 5 6)
+  a => (1 2 3 4 5 6)  
+\end{verbatim}
+
 \noindent{\bf\large\verb|(interval <lo> <hi>)|}
 
 Creates a list of numbers from \verb|<lo>| to \verb|<hi>|, inclusive.
@@ -420,6 +447,14 @@ Writes the string form of \verb|<sexpr>|.
 \begin{verbatim}
   (write-line "Hello, world.")  ;; Hello, world. is sent to the console.
 \end{verbatim}
+
+\noindent{\bf\large\verb|(copy <sexpr>)|}
+
+Make a copy of the result of evaluating \verb|<sexpr>|, IFF it's
+mutable. This is limited to lists and association lists. All other
+values are immutable. Copying an immutable item will return the item,
+whereas copying a list or assocaition list will make a deep copy of
+the structure, and retuen it.
 
 \section{Special forms}
 
@@ -598,6 +633,11 @@ value of evaluation of the function.
        (+ x x))
     (double 5) ==> 10
 \end{verbatim}
+
+\noindent{\bf\large\verb|(apply <function> <sexpr>...)|}
+
+Apply the function that results from evaluating \verb|<function| to
+the argument list resulting from evaluating each \verb|<sexpr>|.
 
 \noindent{\bf\large\verb|(set! <name> <new-value>)|}
 
