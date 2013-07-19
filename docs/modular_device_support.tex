@@ -501,6 +501,39 @@ The position is zero-based and the new value must be a byte value
 (0-255). The byte array has to be an object reprtesenting a bytearray.
 E.g. the result of evaluating \verb|payload|.
 
+There is also a way to extract a byte from a bytearray:
+
+\begin{verbatim}
+  (extract-byte <bytearray> <position>)
+\end{verbatim}
+
+Sopmetimes you will need a literal bytearray, either foir a literal
+payload, or an a template on which you'll use \verb|replace-byte|.
+
+\begin{verbatim}
+  (list-to-bytearray <list of bytes>)
+
+  (list-to-bytearray '(1 2 3 4 5))
+\end{verbatim}
+
+There are times (e.g. an initialization sequence) when tyou will need
+to do a low level, raw wrtiter to a device. You can use the function
+\verb|raw-write-to-device| to accomplish this.
+
+\begin{verbatim}
+  (raw-write-to-device <byte array>)
+
+  (raw-write-to-device (list-to-bytearray '(1 2 3 4 5))
+\end{verbatim}
+
+Some devices need some initialization, such as a specific init/config
+command. This can be done by using \verb|def-init| to attach init code
+to the device.
+
+\begin{verbatim}
+  (def-init <sexpr>...)
+\end{verbatim}
+
 There is the capability to have arbitrary sexprs before and/or after
 the read/write decalrations. Beyond that, the read/write declarations
 can be embedded in a let, etc. They know the API declaration in which
@@ -511,6 +544,8 @@ Json coming from core has a top level key that matches the name of
 both a structure and an api. The data indexed by that key is used to
 build the payload bytearray from the structure with the same name,
 which is then available to the API read/write commands.
+
+
 
 \subsection{Example: an illustrative test case}
 
