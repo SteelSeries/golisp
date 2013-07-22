@@ -72,6 +72,10 @@ func AlistP(d *Data) bool {
     return d == nil || TypeOf(d) == AlistType
 }
 
+func BooleanP(d *Data) bool {
+    return d != nil && TypeOf(d) == BooleanType
+}
+
 func SymbolP(d *Data) bool {
     return d != nil && TypeOf(d) == SymbolType
 }
