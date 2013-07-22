@@ -39,3 +39,5 @@ src/launchpad.net/
 *.bib
 
 .DS_Store
+
+.golisp_history
