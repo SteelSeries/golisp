@@ -16,6 +16,8 @@ import (
     "time"
 )
 
+var DebugTrace = false
+
 func init() {
     Global = NewSymbolTableFrameBelow(nil)
     InitBuiltins()
@@ -26,6 +28,7 @@ func InitBuiltins() {
     Global.Intern("nil")
 
     MakePrimitiveFunction("quit", 0, DefQuit)
+    MakePrimitiveFunction("debug", 1, DefDebug)
 
     // type tests
 
@@ -1446,6 +1449,11 @@ func DefApply(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 func DefQuit(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     WriteHistoryToFile(".golisp_history")
     os.Exit(0)
+    return
+}
+
+func DefDebug(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    DebugTrace = BooleanValue(Car(args))
     return
 }
 
