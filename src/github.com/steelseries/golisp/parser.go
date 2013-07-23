@@ -9,6 +9,7 @@ package golisp
 import (
     "errors"
     "fmt"
+    "io"
     "os"
 )
 
@@ -71,6 +72,7 @@ func parseConsCell(s *MyTokenizer) (sexpr *Data, eof bool, err error) {
         } else {
             car, eof, err = parseExpression(s)
             if eof {
+                fmt.Printf("List being parsed: %s\n", String(ArrayToList(cells)))
                 err = errors.New("Unexpected EOF (expected closing parenthesis)")
                 return
             }
@@ -164,10 +166,14 @@ func ReadFile(filename string) (s string, err error) {
     }
     defer fin.Close()
 
-    contents := make([]byte, 8192)
-    _, err = fin.Read(contents)
-    if err != nil {
-        return
+    var contents []byte = make([]byte, 0)
+    for true {
+        buffer := make([]byte, 8192)
+        n, err := fin.Read(buffer)
+        if n == 0 && err == io.EOF {
+            break
+        }
+        contents = append(contents, buffer[:n]...)
     }
 
     s = string(contents)
