@@ -16,21 +16,23 @@ func Repl() {
     fmt.Printf("Evaluate '(quit)' to exit.\n\n")
     prompt := "> "
     LoadHistoryFromFile(".golisp_history")
+    lastInput := ""
     for true {
-        for true {
-            input := *ReadLine(&prompt)
-            if input != "" {
+        input := *ReadLine(&prompt)
+        if input != "" {
+            if input != lastInput {
                 AddHistory(input)
-                code, err := Parse(input)
+            }
+            lastInput = input
+            code, err := Parse(input)
+            if err != nil {
+                fmt.Printf("Error: %s\n", err)
+            } else {
+                d, err := Eval(code, Global)
                 if err != nil {
-                    fmt.Printf("Error: %s\n", err)
+                    fmt.Printf("Error in evaluation: %s\n", err)
                 } else {
-                    d, err := Eval(code, Global)
-                    if err != nil {
-                        fmt.Printf("Error in evaluation: %s\n", err)
-                    } else {
-                        fmt.Printf("==> %s\n", String(d))
-                    }
+                    fmt.Printf("==> %s\n", String(d))
                 }
             }
         }
