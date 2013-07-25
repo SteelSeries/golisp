@@ -13,6 +13,7 @@ import (
     "fmt"
     "math/rand"
     "os"
+    "strings"
     "time"
 )
 
@@ -144,6 +145,8 @@ func InitBuiltins() {
     MakePrimitiveFunction("dump", 0, DumpSymbolTable)
     MakePrimitiveFunction("sleep", 1, DefSleep)
     MakePrimitiveFunction("write-line", 1, WriteLine)
+    MakePrimitiveFunction("str", -1, MakeString)
+    MakePrimitiveFunction("time", 1, DefTime)
 
     // testing
     MakePrimitiveFunction("describe", -1, Describe)
@@ -1473,7 +1476,37 @@ func WriteLine(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if err != nil {
         return
     }
-    println(String(data))
+    println(PrintString(data))
+    return
+}
+
+func MakeString(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    pieces := make([]string, 2)
+    for cell := args; NotNilP(cell); cell = Cdr(cell) {
+        sexpr := Car(cell)
+        s, err := Eval(sexpr, env)
+        if err != nil {
+            break
+        }
+        pieces = append(pieces, PrintString(s))
+    }
+    return StringWithValue(strings.Join(pieces, "")), nil
+}
+
+func DefTime(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    fmt.Printf("Starting timer.\n")
+    startTime := time.Now()
+
+    for cell := args; NotNilP(cell); cell = Cdr(cell) {
+        sexpr := Car(cell)
+        result, err = Eval(sexpr, env)
+        if err != nil {
+            break
+        }
+    }
+
+    d := time.Since(startTime)
+    fmt.Printf("Stopped timer.\nTook %v to run.\n", d)
     return
 }
 
