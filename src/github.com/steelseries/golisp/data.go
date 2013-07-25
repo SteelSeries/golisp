@@ -488,6 +488,14 @@ func String(d *Data) string {
     return ""
 }
 
+func PrintString(d *Data) string {
+    if StringP(d) {
+        return d.String
+    } else {
+        return String(d)
+    }
+}
+
 func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
     if d == nil {
         return
