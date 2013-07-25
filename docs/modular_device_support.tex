@@ -102,14 +102,32 @@ to the app.
 \subsection{Data definition}
 \label{sec:datadefinition}
 
+All structures and apis of a device declaration is contained in a
+\verb|device| clause. The first argument is the product id of the
+device. The rest is a sequence of Lisp expressions that are evaluated
+in order. This includes \verb|struct| and \verb|api| declarations as
+well as any arbitrary code needed to support them.
+
+You will need to provide the usage page and usage values for the
+device's interface to use to communicate with it. The combination of
+product id, usage page, and usage completely specify the USB device to
+hook to.
+
+\begin{verbatim}
+(device 0x1216
+        (usage-page 0x000c)
+        (usage 0x0001)
+        ...)
+\end{verbatim}
+
 Each structure defines a conceptually complete chunk of data that
 corresponds to what the firmware deals with.  Structures are created
-by the \verb|def-struct| function. The first argument to
-\verb|def-struct| is the name of the structure as a raw symbol (i.e.
-unquoted). \verb|def-struct| can take a number of parameters which
+by the \verb|struct| function. The first argument to
+\verb|struct| is the name of the structure as a raw symbol (i.e.
+unquoted). \verb|struct| can take a number of parameters which
 define the fields of the structure.
 
-Each field is defined by \verb|def-field| which takes name and type
+Each field is defined by \verb|field| which takes name and type
 (both as raw symbols). The name is an arbitrary symbol (with the
 cavaet that it must match the corresponding name in the json used by
 \SSEnext. The type must be one of \verb|uint8|, \verb|uint16|,
@@ -117,17 +135,17 @@ cavaet that it must match the corresponding name in the json used by
 that's \verb|led|.
 
 \begin{verbatim}
-(def-struct led
-     (def-field red uint8)
-     (def-field green uint8)
-     (def-field blue uint8)
-     (def-field mode uint8))
+(struct led
+     (field red uint8)
+     (field green uint8)
+     (field blue uint8)
+     (field mode uint8))
 
-(def-struct cpi
-     (def-field unbind uint8)
-     (def-field x uint16)
-     (def-field y uint16)
-     (def-field led led))
+(struct cpi
+     (field unbind uint8)
+     (field x uint16)
+     (field y uint16)
+     (field led led))
 \end{verbatim}
 
 These delarations are executed and result in the structure shown in
@@ -176,6 +194,13 @@ shows the bytearray that this structure corresponds to.
 \label{fig:bytearray}
 \end{figure}
 
+Note, that by default fields are aligned appropriately in the
+bytearray. \verb|uint16| values are 2-byte aligned, and \verb|uint32|
+values are 4-byte aligned. You can state this explicitly by using
+\verb|(aligned)| at the top of the structure declaration. Some device
+firmware does not want fields aligned, and you can surpress alignment
+by using \verb|(unaligned)| at the top of the structure declaration. 
+
 Fields within a data declaration can be arrayed. When the structure
 gets processed/flattened multiple copies of these fields will be
 placed in the result. To do this you provide a count using a
@@ -185,9 +210,9 @@ contains one simple repeated field and one complex repeated field
 \S~\ref{sec:datadefinition}). 
 
 \begin{verbatim}
-  (def-struct sensor
-     (def-field a uint8 (repeat 4))
-     (def-field cpis cpi (repeat 2)))
+  (struct sensor
+     (field a uint8 (repeat 4))
+     (field cpis cpi (repeat 2)))
 \end{verbatim}
 
 Once this is processed and flattened, it corresponds to the byte array
@@ -204,10 +229,10 @@ Finally, you can provide a constant value to a field using the
 \verb|constant| function:
 
 \begin{verbatim}
-   (def-struct current-resolution
-     (def-field byte1 uint8
+   (struct current-resolution
+     (field byte1 uint8
        (constant 0x00))
-     (def-field level uint8
+     (field level uint8
        (values 1 2)))
 \end{verbatim}
 
@@ -225,14 +250,14 @@ specified by lower and upper bounds, which are inclusive. A set of
 values is just that: a sequence of valid values for the field. 
 
 \begin{verbatim}
-(def-struct cpi
-     (def-field unbind uint8
+(struct cpi
+     (field unbind uint8
                 (values 0 1))
-     (def-field x uint16
+     (field x uint16
                 (range 0 5670))
-     (def-field y uint16
+     (field y uint16
                 (range 0 5670))
-     (def-field led led))
+     (field led led))
 \end{verbatim}
 
 A \verb|range| validation does no processing on it's arguments; they
@@ -251,15 +276,15 @@ good enough. Conside the following:
 
 
 \begin{verbatim}
-  (def-struct button
-    (def-field function uint8
+  (struct button
+    (field function uint8
       (values 0 1 2 3 6 8 255))
-    (def-field mapping uint8)
-    (def-field macro-address uint16
+    (field mapping uint8)
+    (field macro-address uint16
       (range 0 2047))
-    (def-field number-of-events uint16
+    (field number-of-events uint16
       (range 0 164))
-    (def-field debounce-count uint8))
+    (field debounce-count uint8))
 \end{verbatim}
 
 In this example, the \verb|mapping| field's meaning depends on the
@@ -269,10 +294,10 @@ in other fields (previous fields will be good enough). And so we have
 the \verb|deferred-validation| function:
 
 \begin{verbatim}
-  (def-struct button
-    (def-field function uint8
+  (struct button
+    (field function uint8
       (values 0 1 2 3 6 8 255))
-    (def-field mapping uint8
+    (field mapping uint8
       (deferred-validation (case function
                              (0 (values 1 2 4 8 10))
                              (1 (values 1 255))
@@ -281,11 +306,11 @@ the \verb|deferred-validation| function:
                              (6 (values 1 255))
                              (8 (range 0 4))
                              (255 (range 0 255)))))
-    (def-field macro-address uint16
+    (field macro-address uint16
       (range 0 2047))
-    (def-field number-of-events uint16
+    (field number-of-events uint16
       (range 0 164))
-    (def-field debounce-count uint8))
+    (field debounce-count uint8))
 \end{verbatim}
 
 In the above example, the validation for \verb|mapping| specifies some
@@ -302,13 +327,13 @@ specific api command differs from that used when sending the command,
 you can define separate \verb|outgoing| and \verb|incoming| structures:
 
 \begin{verbatim}
-  (def-struct resolution
+  (struct resolution
     (outgoing
-      (def-field level uint8
+      (field level uint8
         (values 1 2))
-      (def-field cpi uint8))
+      (field cpi uint8))
     (incoming
-      (def-field cpi uint8)))
+      (field cpi uint8)))
 \end{verbatim}
 
 In the above declaration the \verb|outgoing| structure consists of a
@@ -323,22 +348,22 @@ If you just need to declare a single
 structure, you {\bf can} use a \verb|common| clause, as so:
 
 \begin{verbatim}
-  (def-struct cpi
+  (struct cpi
     (common
-      (def-field unbind uint8 (values 0 1))
-      (def-field x uint16 (range 0 5670))
-      (def-field y uint16 (range 0 5670))
-      (def-field led led)))
+      (field unbind uint8 (values 0 1))
+      (field x uint16 (range 0 5670))
+      (field y uint16 (range 0 5670))
+      (field led led)))
 \end{verbatim}
 
 Alternatively, you can just declare the bare fields, as so:
 
 \begin{verbatim}
-  (def-struct cpi
-    (def-field unbind uint8 (values 0 1))
-    (def-field x uint16 (range 0 5670))
-    (def-field y uint16 (range 0 5670))
-    (def-field led led))
+  (struct cpi
+    (field unbind uint8 (values 0 1))
+    (field x uint16 (range 0 5670))
+    (field y uint16 (range 0 5670))
+    (field led led))
 \end{verbatim}
 
 \subsection{Json}
@@ -421,15 +446,15 @@ be a string. This assumes functions \verb|(bytes-to-string bytes)| and
 \verb|(string-to-bytes string)|
 
 \begin{verbatim} 
-(def-struct profile
-     (def-field id uint8)
-     (def-field name uint8 
+(struct profile
+     (field id uint8)
+     (field name uint8 
                 (repeat 16)
                 (to-json (lambda (bytes parent)
                            (acons "name" (bytes-to-string bytes) parent)))
                 (from-json (lambda (str parent)
                              (acons "name" (string-to-bytes str) parent))))
-     (def-field size uint16)
+     (field size uint16)
      ...)
 \end{verbatim}
 
@@ -460,7 +485,7 @@ required 16 bytes.
 \subsection{API definition}
 
 \begin{verbatim}
-  (def-api profile
+  (api profile
     [<sexpr>...]
     (read <protocol> (chunk <type> <size> <sexpr>)...)
     [<sexpr>...]
@@ -527,11 +552,11 @@ to do a low level, raw wrtiter to a device. You can use the function
 \end{verbatim}
 
 Some devices need some initialization, such as a specific init/config
-command. This can be done by using \verb|def-init| to attach init code
+command. This can be done by using \verb|init| to attach init code
 to the device.
 
 \begin{verbatim}
-  (def-init <sexpr>...)
+  (init <sexpr>...)
 \end{verbatim}
 
 There is the capability to have arbitrary sexprs before and/or after
@@ -552,11 +577,11 @@ which is then available to the API read/write commands.
 This is extracted from a test case of the API layer.  We start with a device declaration:
 
 \begin{verbatim}
-(def-device sensei-raw 
-  (def-struct test 
-    (outgoing (def-field f uint8 (repeat 4)))
-    (incoming (def-field g uint8)))
-  (def-api test
+(device 0x1362
+  (struct test 
+    (outgoing (field f uint8 (repeat 4)))
+    (incoming (field g uint8)))
+  (api test
     (read HID (chunk 0 4 payload))))
 \end{verbatim}
 
@@ -593,28 +618,28 @@ the byte \verb|255|, we get back the json:
 As an example, here's the full declaration of the Sensei[RAW] device:
 
 \begin{verbatim}
-(def-device sensei-raw
+(device 0x1362
 
-  (def-struct resolution
+  (struct resolution
     (outgoing
-     (def-field level uint8
+     (field level uint8
        ;; which level (of two) is this pertains to
        (values 1 2))
-     (def-field cpi uint8
+     (field cpi uint8
        ;; N, where the resolution is N * 90
        ))
     (incoming
-     (def-field cpi uint8
+     (field cpi uint8
        ;; N, where the resolution is N * 90
        )))
     
-  (def-struct polling-rate
+  (struct polling-rate
     (outgoing
-     (def-field cmd uint8
+     (field cmd uint8
        (constant 0x00))
-     (def-field byte1 uint8
+     (field byte1 uint8
        (constant 0x00))
-     (def-field rate uint8
+     (field rate uint8
        (values
         1                                ; 1000 Hz
         2                                ; 500 Hz
@@ -622,7 +647,7 @@ As an example, here's the full declaration of the Sensei[RAW] device:
         4                                ; 125Hz
         )))
     (incoming
-     (def-field rate uint8
+     (field rate uint8
        (values
         1                                ; 1000 Hz
         2                                ; 500 Hz
@@ -630,13 +655,13 @@ As an example, here's the full declaration of the Sensei[RAW] device:
         4                                ; 125 Hz
         ))))                     
   
-  (def-struct led-brightness
+  (struct led-brightness
     (outgoing
-     (def-field cmd uint8
+     (field cmd uint8
        (constant 0x00))
-     (def-field index uint8
+     (field index uint8
        (constant 0x01))
-     (def-field brightness uint8
+     (field brightness uint8
        (values
         1                                ; off
         2                                ; low brightness
@@ -644,7 +669,7 @@ As an example, here's the full declaration of the Sensei[RAW] device:
         4                                ; high brightness
         )))
     (incoming
-     (def-field brightness uint8
+     (field brightness uint8
        (values
         1                                ; off
         2                                ; low brightness
@@ -652,25 +677,25 @@ As an example, here's the full declaration of the Sensei[RAW] device:
         4                                ; high brightness
         ))))
 
-  (def-struct current-resolution
+  (struct current-resolution
     (outgoing
-     (def-field cmd uint8
+     (field cmd uint8
        (constant 0x00))
-     (def-field byte1 uint8
+     (field byte1 uint8
        (constant 0x00))
-     (def-field level uint8
+     (field level uint8
        (values 1 2)))
     (incoming
-     (def-field level uint8
+     (field level uint8
        (values 1 2))))
 
-  (def-struct led-pulsation
+  (struct led-pulsation
     (outgoing
-     (def-field cmd uint8
+     (field cmd uint8
        (constant 0x00))
-     (def-field index uint8
+     (field index uint8
        (constant 0x01))
-     (def-field speed uint8
+     (field speed uint8
        (values
         1                                ; steady
         2                                ; pulsation slow
@@ -678,7 +703,7 @@ As an example, here's the full declaration of the Sensei[RAW] device:
         4                                ; pulsatioon fast
         5)))
     (incoming
-     (def-field speed uint8
+     (field speed uint8
        (values
         1                                ; steady
         2                                ; pulsation slow
@@ -686,33 +711,33 @@ As an example, here's the full declaration of the Sensei[RAW] device:
         4                                ; pulsatioon fast
         5))))                             ; trigger mode
 
-  (def-struct save-profile-settings
-    (def-field cmd uint8
+  (struct save-profile-settings
+    (field cmd uint8
       (constant 0x09))
-    (def-field byte1 uint8
+    (field byte1 uint8
       (constant 0x00)))
 
-  (def-api resolution
+  (api resolution
     (read HID (chunk 0 32 (replace-byte payload 0 0x13)))
     (write HID (chunk 0 32 (replace-byte payload 0 0x03))))
 
-  (def-api polling-rate
+  (api polling-rate
     (read HID (chunk 0 32 (replace-byte payload 0 0x14)))
     (write HID (chunk 0 32 (replace-byte payload 0 0x04))))
 
-  (def-api led-brightness
+  (api led-brightness
     (read HID (chunk 0 32 (replace-byte payload 0 0x15)))
     (write HID (chunk 0 32 (replace-byte payload 0 0x05))))
 
-  (def-api current-resolution
+  (api current-resolution
     (read HID (chunk 0 32 (replace-byte payload 0 0x16)))
     (write HID (chunk 0 32 (replace-byte payload 0 0x06))))
 
-  (def-api led-pulsation
+  (api led-pulsation
     (read HID (chunk 0 32 (replace-byte payload 0 0x17)))
     (write HID (chunk 0 32 (replace-byte payload 0 0x07))))
 
-  (def-api save-profile-settings
+  (api save-profile-settings
     (write HID (chunk 0 32 payload))))
 \end{verbatim}
 
