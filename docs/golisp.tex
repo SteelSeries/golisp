@@ -448,6 +448,14 @@ Writes the string form of \verb|<sexpr>|.
   (write-line "Hello, world.")  ;; Hello, world. is sent to the console.
 \end{verbatim}
 
+\noindent{\bf\large\verb|(str <sexpr>...)|}
+
+Creates a string from contatenating the string forms of all the \verb|<sexpr>|s.
+
+\begin{verbatim}
+  (str 1 "." 2) ==> "1.2"
+\end{verbatim}
+
 \noindent{\bf\large\verb|(copy <sexpr>)|}
 
 Make a copy of the result of evaluating \verb|<sexpr>|, IFF it's
