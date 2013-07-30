@@ -9,6 +9,7 @@ package golisp
 import (
     "encoding/json"
     "errors"
+    "fmt"
 )
 
 func JsonToLisp(json interface{}) (result *Data) {
