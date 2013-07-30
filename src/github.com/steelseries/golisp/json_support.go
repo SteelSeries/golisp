@@ -50,7 +50,7 @@ func JsonStringToLisp(jsonData string) (result *Data) {
     var data interface{}
     err := json.Unmarshal(b, &data)
     if err != nil {
-        panic(errors.New("Badly formed json"))
+        panic(errors.New(fmt.Sprintf("Badly formed json: %s", jsonData)))
     }
     return JsonToLisp(data)
 }
