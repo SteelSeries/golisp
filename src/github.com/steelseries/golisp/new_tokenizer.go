@@ -15,6 +15,7 @@ const (
     SYMBOL
     NUMBER
     HEXNUMBER
+    FLOAT
     STRING
     QUOTE
     LPAREN
@@ -55,7 +56,7 @@ func (self *MyTokenizer) readSymbol() (token int, lit string) {
     return SYMBOL, self.Source[start:self.Position]
 }
 
-func isHex(ch rune) bool {
+func isHexChar(ch rune) bool {
     switch ch {
     case 'a', 'b', 'c', 'd', 'e', 'f', 'A', 'B', 'C', 'D', 'E', 'F':
         return true
@@ -66,28 +67,37 @@ func isHex(ch rune) bool {
 
 func (self *MyTokenizer) readNumber() (token int, lit string) {
     start := self.Position
-    hex := false
+    isHex := false
+    isFloat := false
     for !self.isEof() {
         ch := rune(self.Source[self.Position])
-        if (start == self.Position) && unicode.IsNumber(ch) {
+        if ch == '.' {
+            isFloat = true
+            self.Position++
+        } else if (start == self.Position) && ch == '-' {
+            isFloat = true
             self.Position++
         } else if unicode.IsNumber(ch) {
             self.Position++
         } else if (start == self.Position-1) && ch == 'x' {
-            hex = true
+            isHex = true
             self.Position++
-        } else if hex && isHex(ch) {
+        } else if isHex && isHexChar(ch) {
             self.Position++
         } else {
             break
         }
     }
 
-    if hex {
-        return HEXNUMBER, self.Source[start:self.Position]
+    lit = self.Source[start:self.Position]
+    if isHex {
+        token = HEXNUMBER
+    } else if isFloat {
+        token = FLOAT
     } else {
-        return NUMBER, self.Source[start:self.Position]
+        token = NUMBER
     }
+    return
 }
 
 func (self *MyTokenizer) readString() (token int, lit string) {
@@ -134,6 +144,8 @@ func (self *MyTokenizer) readNextToken() (token int, lit string) {
         return self.readSymbol()
     } else if unicode.IsNumber(currentChar) {
         return self.readNumber()
+    } else if currentChar == '-' && unicode.IsNumber(nextChar) {
+        return self.readNumber()
     } else if currentChar == '"' {
         return self.readString()
     } else if currentChar == '\'' {
@@ -178,6 +190,9 @@ func (self *MyTokenizer) readNextToken() (token int, lit string) {
     } else if currentChar == '=' && nextChar == '=' {
         self.Position += 2
         return SYMBOL, "=="
+    } else if currentChar == '=' {
+        self.Position++
+        return SYMBOL, "="
     } else if currentChar == '!' && nextChar == '=' {
         self.Position += 2
         return SYMBOL, "!="

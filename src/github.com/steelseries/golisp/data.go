@@ -17,6 +17,7 @@ const (
     AlistType
     AlistCellType
     NumberType
+    FloatType
     BooleanType
     StringType
     SymbolType
@@ -26,11 +27,12 @@ const (
 )
 
 type Data struct {
-    Type    int                // data type
-    Car     *Data              // ConsCellType & AlistType
-    Cdr     *Data              // ConsCellType & AlistType
-    String  string             // StringType & SymbolType
-    Number  uint32             // NumberType & BooleanType
+    Type    int    // data type
+    Car     *Data  // ConsCellType & AlistType
+    Cdr     *Data  // ConsCellType & AlistType
+    String  string // StringType & SymbolType
+    Number  uint32 // NumberType & BooleanType
+    Float   float32
     Func    *Function          // FunctionType
     Prim    *PrimitiveFunction // PrimitiveType
     ObjType string             // ObjectType
@@ -64,6 +66,10 @@ func PairP(d *Data) bool {
     return d == nil || TypeOf(d) == ConsCellType
 }
 
+func ListP(d *Data) bool {
+    return PairP(d)
+}
+
 func DottedPairP(d *Data) bool {
     return d == nil || TypeOf(d) == AlistCellType
 }
@@ -86,6 +92,10 @@ func StringP(d *Data) bool {
 
 func NumberP(d *Data) bool {
     return d != nil && TypeOf(d) == NumberType
+}
+
+func FloatP(d *Data) bool {
+    return d != nil && TypeOf(d) == FloatType
 }
 
 func ObjectP(d *Data) bool {
@@ -190,7 +200,11 @@ func EmptyCons() *Data {
 }
 
 func NumberWithValue(n uint32) *Data {
-    return &Data{Type: NumberType, Car: nil, Cdr: nil, String: "", Number: n, Func: nil, Prim: nil}
+    return &Data{Type: NumberType, Number: n}
+}
+
+func FloatWithValue(n float32) *Data {
+    return &Data{Type: FloatType, Float: n}
 }
 
 func BooleanWithValue(b bool) *Data {
@@ -198,27 +212,27 @@ func BooleanWithValue(b bool) *Data {
     if b {
         num = 1
     }
-    return &Data{Type: BooleanType, Car: nil, Cdr: nil, String: "", Number: uint32(num), Func: nil, Prim: nil}
+    return &Data{Type: BooleanType, Number: uint32(num)}
 }
 
 func StringWithValue(s string) *Data {
-    return &Data{Type: StringType, Car: nil, Cdr: nil, String: s, Number: 0, Func: nil, Prim: nil}
+    return &Data{Type: StringType, String: s}
 }
 
 func SymbolWithName(s string) *Data {
-    return &Data{Type: SymbolType, Car: nil, Cdr: nil, String: s, Number: 0, Func: nil, Prim: nil}
+    return &Data{Type: SymbolType, String: s}
 }
 
 func FunctionWithNameParamsBodyAndParent(name string, params *Data, body *Data, parentEnv *SymbolTableFrame) *Data {
-    return &Data{Type: FunctionType, Car: nil, Cdr: nil, String: "", Number: 0, Func: MakeFunction(name, params, body, parentEnv), Prim: nil}
+    return &Data{Type: FunctionType, Func: MakeFunction(name, params, body, parentEnv)}
 }
 
 func PrimitiveWithNameAndFunc(name string, f *PrimitiveFunction) *Data {
-    return &Data{Type: PrimitiveType, Car: nil, Cdr: nil, String: "", Number: 0, Func: nil, Prim: f}
+    return &Data{Type: PrimitiveType, Prim: f}
 }
 
 func ObjectWithTypeAndValue(typeName string, o unsafe.Pointer) *Data {
-    return &Data{Type: ObjectType, Car: nil, Cdr: nil, String: "", Number: 0, Func: nil, Prim: nil, ObjType: typeName, Obj: o}
+    return &Data{Type: ObjectType, ObjType: typeName, Obj: o}
 }
 
 func NumericValue(d *Data) uint32 {
@@ -226,8 +240,28 @@ func NumericValue(d *Data) uint32 {
         return 0
     }
 
-    if d.Type == NumberType {
+    if NumberP(d) {
         return d.Number
+    }
+
+    if FloatP(d) {
+        return uint32(d.Float)
+    }
+
+    return 0
+}
+
+func FloatValue(d *Data) float32 {
+    if d == nil {
+        return 0
+    }
+
+    if FloatP(d) {
+        return d.Float
+    }
+
+    if NumberP(d) {
+        return float32(d.Number)
     }
 
     return 0
@@ -238,7 +272,7 @@ func StringValue(d *Data) string {
         return ""
     }
 
-    if d.Type == StringType || d.Type == SymbolType {
+    if StringP(d) || SymbolP(d) {
         return d.String
     }
 
@@ -250,12 +284,8 @@ func BooleanValue(d *Data) bool {
         return false
     }
 
-    if d.Type == BooleanType {
-        if d.Number == 0 {
-            return false
-        } else {
-            return true
-        }
+    if BooleanP(d) {
+        return d.Number != 0
     }
 
     return true
@@ -266,7 +296,7 @@ func TypeOfObject(d *Data) (oType string) {
         return
     }
 
-    if d.Type == ObjectType {
+    if ObjectP(d) {
         return d.ObjType
     }
 
@@ -278,7 +308,7 @@ func ObjectValue(d *Data) (p unsafe.Pointer) {
         return
     }
 
-    if d.Type == ObjectType {
+    if ObjectP(d) {
         return d.Obj
     }
 
@@ -290,7 +320,7 @@ func Length(d *Data) int {
         return 0
     }
 
-    if d.Type == ConsCellType || d.Type == AlistType {
+    if ListP(d) || AlistP(d) {
         return 1 + Length(d.Cdr)
     }
 
@@ -302,7 +332,7 @@ func Reverse(d *Data) (result *Data) {
         return nil
     }
 
-    if !PairP(d) {
+    if !ListP(d) {
         return d
     }
 
@@ -366,18 +396,18 @@ func IsEqual(d *Data, o *Data) bool {
     }
 
     if AlistP(d) {
-        if !AlistP(o) && !PairP(o) {
+        if !AlistP(o) && !ListP(o) {
             return false
         }
-    } else if TypeOf(d) == AlistCellType {
-        if TypeOf(o) != ConsCellType && TypeOf(o) != AlistCellType {
+    } else if DottedPairP(d) {
+        if PairP(o) && DottedPairP(o) {
             return false
         }
     } else if TypeOf(o) != TypeOf(d) {
         return false
     }
 
-    if PairP(d) {
+    if ListP(d) {
         if Length(d) != Length(o) {
             return false
         }
@@ -402,7 +432,7 @@ func IsEqual(d *Data, o *Data) bool {
         return true
     }
 
-    if TypeOf(d) == AlistCellType {
+    if DottedPairP(d) {
         return IsEqual(Car(d), Car(o)) && IsEqual(Cdr(d), Cdr(o))
     }
 
@@ -467,6 +497,8 @@ func String(d *Data) string {
         return fmt.Sprintf("(%s . %s)", String(Car(d)), String(Cdr(d)))
     case NumberType:
         return fmt.Sprintf("%d", d.Number)
+    case FloatType:
+        return fmt.Sprintf("%g", d.Float)
     case BooleanType:
         if d.Number == 0 {
             return "#f"

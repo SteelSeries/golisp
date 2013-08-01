@@ -98,6 +98,20 @@ func (s *TokenizerSuite) TestUppercaseHexNumber(c *C) {
     c.Assert(lit, Equals, "0x1F")
 }
 
+func (s *TokenizerSuite) TestFloat(c *C) {
+    t := NewMyTokenizer("12.345 a")
+    tok, lit := t.NextToken()
+    c.Assert(tok, Equals, FLOAT)
+    c.Assert(lit, Equals, "12.345")
+}
+
+func (s *TokenizerSuite) TestNegativeFloat(c *C) {
+    t := NewMyTokenizer("-12.345 a")
+    tok, lit := t.NextToken()
+    c.Assert(tok, Equals, FLOAT)
+    c.Assert(lit, Equals, "-12.345")
+}
+
 func (s *TokenizerSuite) TestString(c *C) {
     t := NewMyTokenizer(`"hi" a`)
     tok, lit := t.NextToken()
