@@ -53,6 +53,7 @@ func InitBuiltins() {
     MakePrimitiveFunction("%", 2, Remainder)
     MakePrimitiveFunction("random-byte", 0, RandomByte)
     MakePrimitiveFunction("interval", 2, Interval)
+    MakePrimitiveFunction("integer", 1, ToInt)
 
     MakePrimitiveFunction("<", -1, LessThan)
     MakePrimitiveFunction(">", -1, GreaterThan)
@@ -432,6 +433,19 @@ func Interval(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     }
     result = ArrayToList(items)
     return
+}
+
+func ToInt(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    n, err := Eval(Car(args), env)
+    if err != nil {
+        return
+    }
+    if TypeOf(n) != NumberType && TypeOf(n) != FloatType {
+        err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
+        return
+    }
+
+    return NumberWithValue(NumericValue(n)), nil
 }
 
 func LessThan(args *Data, env *SymbolTableFrame) (result *Data, err error) {
