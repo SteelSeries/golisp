@@ -40,6 +40,7 @@ func InitBuiltins() {
     MakePrimitiveFunction("symbol?", 1, IsSymbol)
     MakePrimitiveFunction("string?", 1, IsString)
     MakePrimitiveFunction("number?", 1, IsNumber)
+    MakePrimitiveFunction("float?", 1, IsFloat)
     MakePrimitiveFunction("function?", 1, IsFunction)
     MakePrimitiveFunction("even?", 1, IsEven)
     MakePrimitiveFunction("odd?", 1, IsOdd)
@@ -191,6 +192,13 @@ func IsNumber(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return BooleanWithValue(NumberP(evaluated)), nil
 }
 
+func IsFloat(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    // Evaluate the Car(args) first, in case args is a symbol or ConsCell
+    evaluated, _ := Eval(Car(args), env)
+    // Now just check the evaluated
+    return BooleanWithValue(FloatP(evaluated)), nil
+}
+
 func IsEven(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     evaluated, _ := Eval(Car(args), env)
     if !NumberP(evaluated) {
@@ -214,42 +222,61 @@ func IsFunction(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return BooleanWithValue(FunctionP(evaluated)), nil
 }
 
-func Add(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func addFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    var acc float32 = 0
+    var n *Data
+    for c := args; NotNilP(c); c = Cdr(c) {
+        n, err = Eval(Car(c), env)
+        acc += FloatValue(n)
+    }
+    return FloatWithValue(acc), nil
+}
+
+func addInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var acc uint32 = 0
     var n *Data
     for c := args; NotNilP(c); c = Cdr(c) {
         n, err = Eval(Car(c), env)
-        if err != nil {
-            return
-        } else if !NumberP(n) {
-            err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
-            return
-        }
         acc += NumericValue(n)
     }
     return NumberWithValue(acc), nil
 }
 
-func Subtract(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func anyFloats(args *Data, env *SymbolTableFrame) (result bool, err error) {
     var n *Data
-    n, err = Eval(Car(args), env)
-    if err != nil {
-        return
-    }
-    if !NumberP(n) {
-        err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
-        return
-    }
-    var acc uint32 = NumericValue(n)
-    for c := Cdr(args); NotNilP(c); c = Cdr(c) {
+    for c := args; NotNilP(c); c = Cdr(c) {
         n, err = Eval(Car(c), env)
         if err != nil {
             return
-        }
-        if !NumberP(n) {
+        } else if !NumberP(n) && !FloatP(n) {
             err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
             return
         }
+        if FloatP(n) {
+            return true, nil
+        }
+    }
+    return false, nil
+}
+
+func Add(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    areFloats, err := anyFloats(args, env)
+    if err != nil {
+        return
+    }
+    if areFloats {
+        return addFloats(args, env)
+    } else {
+        return addInts(args, env)
+    }
+}
+
+func subtractInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    var n *Data
+    n, err = Eval(Car(args), env)
+    acc := NumericValue(n)
+    for c := Cdr(args); NotNilP(c); c = Cdr(c) {
+        n, err = Eval(Car(c), env)
         if NumericValue(n) > acc {
             return NumberWithValue(0), nil
         } else {
@@ -260,45 +287,93 @@ func Subtract(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return NumberWithValue(acc), nil
 }
 
-func Multiply(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func subtractFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    var n *Data
+    n, _ = Eval(Car(args), env)
+    acc := FloatValue(n)
+    for c := Cdr(args); NotNilP(c); c = Cdr(c) {
+        n, _ = Eval(Car(c), env)
+        acc -= FloatValue(n)
+    }
+    return FloatWithValue(acc), nil
+}
+
+func Subtract(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    areFloats, err := anyFloats(args, env)
+    if err != nil {
+        return
+    }
+    if areFloats {
+        return subtractFloats(args, env)
+    } else {
+        return subtractInts(args, env)
+    }
+}
+
+func multiplyInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var n *Data
     var acc uint32 = 1
     for c := args; NotNilP(c); c = Cdr(c) {
         n, err = Eval(Car(c), env)
-        if err != nil {
-            return
-        } else if !NumberP(n) {
-            err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
-            return
-        }
         acc *= NumericValue(n)
     }
     return NumberWithValue(acc), nil
 }
 
-func Quotient(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func multiplyFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var n *Data
-    n, err = Eval(Car(args), env)
+    var acc float32 = 1.0
+    for c := args; NotNilP(c); c = Cdr(c) {
+        n, err = Eval(Car(c), env)
+        acc *= FloatValue(n)
+    }
+    return FloatWithValue(acc), nil
+}
+
+func Multiply(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    areFloats, err := anyFloats(args, env)
     if err != nil {
         return
     }
-    if !NumberP(n) {
-        err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
-        return
+    if areFloats {
+        return multiplyFloats(args, env)
+    } else {
+        return multiplyInts(args, env)
     }
+}
+
+func quotientInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    var n *Data
+    n, err = Eval(Car(args), env)
     var acc uint32 = NumericValue(n)
     for c := Cdr(args); NotNilP(c); c = Cdr(c) {
         n, err = Eval(Car(c), env)
-        if err != nil {
-            return
-        }
-        if !NumberP(n) {
-            err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
-            return
-        }
         acc /= NumericValue(n)
     }
     return NumberWithValue(acc), nil
+}
+
+func quotientFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    var n *Data
+    n, err = Eval(Car(args), env)
+    var acc float32 = FloatValue(n)
+    for c := Cdr(args); NotNilP(c); c = Cdr(c) {
+        n, err = Eval(Car(c), env)
+        acc /= FloatValue(n)
+    }
+    return FloatWithValue(acc), nil
+}
+
+func Quotient(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    areFloats, err := anyFloats(args, env)
+    if err != nil {
+        return
+    }
+    if areFloats {
+        return quotientFloats(args, env)
+    } else {
+        return quotientInts(args, env)
+    }
 }
 
 func Remainder(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -370,7 +445,7 @@ func LessThan(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if err != nil {
         return
     }
-    if TypeOf(arg1) != NumberType {
+    if TypeOf(arg1) != NumberType && TypeOf(arg1) != FloatType {
         err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg1)))
         return
     }
@@ -380,12 +455,12 @@ func LessThan(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if err != nil {
         return
     }
-    if TypeOf(arg2) != NumberType {
+    if TypeOf(arg2) != NumberType && TypeOf(arg2) != FloatType {
         err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg2)))
         return
     }
 
-    val := NumericValue(arg1) < NumericValue(arg2)
+    val := FloatValue(arg1) < FloatValue(arg2)
     return BooleanWithValue(val), nil
 }
 
@@ -400,7 +475,7 @@ func GreaterThan(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if err != nil {
         return
     }
-    if TypeOf(arg1) != NumberType {
+    if TypeOf(arg1) != NumberType && TypeOf(arg1) != FloatType {
         err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg1)))
         return
     }
@@ -410,12 +485,12 @@ func GreaterThan(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if err != nil {
         return
     }
-    if TypeOf(arg2) != NumberType {
+    if TypeOf(arg2) != NumberType && TypeOf(arg2) != FloatType {
         err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg2)))
         return
     }
 
-    val := NumericValue(arg1) > NumericValue(arg2)
+    val := FloatValue(arg1) > FloatValue(arg2)
     return BooleanWithValue(val), nil
 }
 
@@ -472,7 +547,7 @@ func LessThanOrEqualTo(args *Data, env *SymbolTableFrame) (result *Data, err err
     if err != nil {
         return
     }
-    if TypeOf(arg1) != NumberType {
+    if TypeOf(arg1) != NumberType && TypeOf(arg1) != FloatType {
         err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg1)))
         return
     }
@@ -482,12 +557,12 @@ func LessThanOrEqualTo(args *Data, env *SymbolTableFrame) (result *Data, err err
     if err != nil {
         return
     }
-    if TypeOf(arg2) != NumberType {
+    if TypeOf(arg2) != NumberType && TypeOf(arg2) != FloatType {
         err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg2)))
         return
     }
 
-    val := NumericValue(arg1) <= NumericValue(arg2)
+    val := FloatValue(arg1) <= FloatValue(arg2)
     return BooleanWithValue(val), nil
 }
 
@@ -502,7 +577,7 @@ func GreaterThanOrEqualTo(args *Data, env *SymbolTableFrame) (result *Data, err 
     if err != nil {
         return
     }
-    if TypeOf(arg1) != NumberType {
+    if TypeOf(arg1) != NumberType && TypeOf(arg1) != FloatType {
         err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg1)))
         return
     }
@@ -512,12 +587,12 @@ func GreaterThanOrEqualTo(args *Data, env *SymbolTableFrame) (result *Data, err 
     if err != nil {
         return
     }
-    if TypeOf(arg2) != NumberType {
+    if TypeOf(arg2) != NumberType && TypeOf(arg2) != FloatType {
         err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg2)))
         return
     }
 
-    val := NumericValue(arg1) >= NumericValue(arg2)
+    val := FloatValue(arg1) >= FloatValue(arg2)
     return BooleanWithValue(val), nil
 }
 

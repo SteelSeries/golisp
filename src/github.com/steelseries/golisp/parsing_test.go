@@ -34,6 +34,20 @@ func (s *ParsingSuite) TestHexNumber(c *C) {
     c.Assert(NumericValue(sexpr), Equals, uint32(165))
 }
 
+func (s *ParsingSuite) TestFloat(c *C) {
+    sexpr, err := Parse("12.345")
+    c.Assert(err, IsNil)
+    c.Assert(TypeOf(sexpr), Equals, FloatType)
+    c.Assert(FloatValue(sexpr), Equals, float32(12.345))
+}
+
+func (s *ParsingSuite) TestNegativeFloat(c *C) {
+    sexpr, err := Parse("-12.345")
+    c.Assert(err, IsNil)
+    c.Assert(TypeOf(sexpr), Equals, FloatType)
+    c.Assert(FloatValue(sexpr), Equals, float32(-12.345))
+}
+
 func (s *ParsingSuite) TestUppercaseHexNumber(c *C) {
     sexpr, err := Parse("0xA5")
     c.Assert(err, IsNil)

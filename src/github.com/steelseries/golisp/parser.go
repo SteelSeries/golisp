@@ -33,6 +33,16 @@ func makeHexNumber(str string) (n *Data, err error) {
     return
 }
 
+func makeFloat(str string) (n *Data, err error) {
+    var i float32
+    _, err = fmt.Sscanf(str, "%f", &i)
+    if err != nil {
+        return
+    }
+    n = FloatWithValue(i)
+    return
+}
+
 func makeString(str string) (s *Data, err error) {
     s = StringWithValue(str)
     return
@@ -98,7 +108,7 @@ func newSymbol(s *MyTokenizer, lit string) (sym *Data, eof bool, err error) {
 func parseExpression(s *MyTokenizer) (sexpr *Data, eof bool, err error) {
     for {
         tok, lit := s.NextToken()
-        //        fmt.Printf("token: %d\n", tok)
+        //fmt.Printf("token: %d (%s)\n", tok, lit)
         switch tok {
         case EOF:
             eof = true
@@ -114,6 +124,10 @@ func parseExpression(s *MyTokenizer) (sexpr *Data, eof bool, err error) {
         case HEXNUMBER:
             s.ConsumeToken()
             sexpr, err = makeHexNumber(lit)
+            return
+        case FLOAT:
+            s.ConsumeToken()
+            sexpr, err = makeFloat(lit)
             return
         case STRING:
             s.ConsumeToken()
