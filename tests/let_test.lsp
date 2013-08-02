@@ -23,6 +23,6 @@
 
 
 (describe let-binding-scope
-          (== (begin (let ((z 2)) z)
-                     z)
+          (== (begin (let ((zz 2)) zz)
+                     zz)
               nil))
