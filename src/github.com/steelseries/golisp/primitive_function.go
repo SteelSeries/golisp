@@ -42,3 +42,7 @@ func (self *PrimitiveFunction) Apply(args *Data, env *SymbolTableFrame) (result 
 
     return (self.Body)(args, env)
 }
+
+func (self *PrimitiveFunction) ApplyWithoutEval(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    return self.Apply(args, env)
+}

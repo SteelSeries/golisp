@@ -570,3 +570,17 @@ func Apply(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err
     }
     return
 }
+
+func ApplyWithoutEval(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    if function == nil {
+        err = errors.New("Nil when function expected.")
+        return
+    }
+    switch function.Type {
+    case FunctionType:
+        return function.Func.ApplyWithoutEval(args, env)
+    case PrimitiveType:
+        return function.Prim.ApplyWithoutEval(args, env)
+    }
+    return
+}

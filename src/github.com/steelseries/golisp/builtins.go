@@ -876,7 +876,7 @@ func Map(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if err != nil {
         return
     }
-    if !PairP(col) {
+    if !ListP(col) {
         err = errors.New("Map needs a list as its second argument")
         return
     }
@@ -884,7 +884,7 @@ func Map(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var d []*Data = make([]*Data, 0, Length(col))
     var v *Data
     for c := col; NotNilP(c); c = Cdr(c) {
-        v, err = Apply(f, Cons(Car(c), nil), env)
+        v, err = ApplyWithoutEval(f, Cons(Car(c), nil), env)
         if err != nil {
             return
         }
