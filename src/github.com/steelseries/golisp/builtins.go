@@ -91,6 +91,7 @@ func InitBuiltins() {
     MakePrimitiveFunction("cons", 2, ExposedCons)
     MakePrimitiveFunction("reverse", 1, ExposedReverse)
     MakePrimitiveFunction("flatten", 1, ExposedFlatten)
+    MakePrimitiveFunction("flatten*", 1, ExposedRecursiveFlatten)
     MakePrimitiveFunction("append", 2, ExposeAppend)
     MakePrimitiveFunction("append!", 2, ExposeAppendBang)
     MakePrimitiveFunction("copy", 1, ExposeCopy)
@@ -791,6 +792,16 @@ func ExposedFlatten(args *Data, env *SymbolTableFrame) (result *Data, err error)
         return
     }
     result, err = Flatten(val)
+    return
+}
+
+func ExposedRecursiveFlatten(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    var val *Data
+    val, err = Eval(Car(args), env)
+    if err != nil {
+        return
+    }
+    result, err = RecursiveFlatten(val)
     return
 }
 
