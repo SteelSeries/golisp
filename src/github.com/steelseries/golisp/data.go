@@ -367,6 +367,34 @@ func Flatten(d *Data) (result *Data, err error) {
     return ArrayToList(l), nil
 }
 
+func RecursiveFlatten(d *Data) (result *Data, err error) {
+    if d == nil {
+        return nil, nil
+    }
+
+    if !ListP(d) {
+        return d, nil
+    }
+
+    var l []*Data = make([]*Data, 0, 10)
+    var elem *Data
+    for c := d; NotNilP(c); c = Cdr(c) {
+        if ListP(Car(c)) {
+            elem, err = RecursiveFlatten(Car(c))
+            if err != nil {
+                return
+            }
+            for i := elem; NotNilP(i); i = Cdr(i) {
+                l = append(l, Car(i))
+            }
+        } else {
+            l = append(l, Car(c))
+        }
+    }
+
+    return ArrayToList(l), nil
+}
+
 func Assoc(key *Data, alist *Data) (result *Data, err error) {
     for c := alist; NotNilP(c); c = Cdr(c) {
         pair := Car(c)
