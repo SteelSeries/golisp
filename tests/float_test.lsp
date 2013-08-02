@@ -1,6 +1,6 @@
-(define x 2.2)
-(define y 8.8)
-(define z 7.7)
+(define fx 2.2)
+(define fy 8.8)
+(define fz 7.7)
 
 (describe arithmetic-test
     (== (+ 5.0 5.0) 10.0)
@@ -9,9 +9,9 @@
     (== (/ 25.0 5.0) 5.0))
 
 (describe condition-test
-    (== (< x y)  #t)
-    (== (< y z)  #f)
-    (== (> x y)  #f)
-    (== (> z x)  #t)
-    (== (<= x 2) #t)
-    (== (>= z 7) #t))
+    (== (< fx fy)  #t)
+    (== (< fy fz)  #f)
+    (== (> fx fy)  #f)
+    (== (> fz fx)  #t)
+    (== (<= fx 2.2) #t)
+    (== (>= fz 7) #t))
