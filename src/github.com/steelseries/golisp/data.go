@@ -355,12 +355,12 @@ func Flatten(d *Data) (result *Data, err error) {
 
     var l []*Data = make([]*Data, 0, 10)
     for c := d; NotNilP(c); c = Cdr(c) {
-        if !ListP(Car(c)) {
-            err = errors.New("Flatten needs a list of lists.")
-            return
-        }
-        for i := Car(c); NotNilP(i); i = Cdr(i) {
-            l = append(l, Car(i))
+        if ListP(Car(c)) {
+            for i := Car(c); NotNilP(i); i = Cdr(i) {
+                l = append(l, Car(i))
+            }
+        } else {
+            l = append(l, Car(c))
         }
     }
 
