@@ -83,6 +83,7 @@ func InitBuiltins() {
     MakePrimitiveFunction("set!", 2, SetVar)
     MakePrimitiveFunction("set-car!", 2, SetCar)
     MakePrimitiveFunction("set-cdr!", 2, SetCdr)
+    MakePrimitiveFunction("set-nth!", 3, SetNth)
 
     // list access
     MakePrimitiveFunction("list", -1, MakeList)
@@ -1416,6 +1417,29 @@ func SetCdr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         return
     }
     pair.Cdr = value
+    return value, nil
+}
+
+func SetNth(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    l, err := Eval(Car(args), env)
+    if !ListP(l) {
+        err = errors.New("set-nth! requires a list as it's first argument.")
+    }
+    index, err := Eval(Cadr(args), env)
+    if err != nil {
+        return
+    }
+    value, err := Eval(Caddr(args), env)
+    if err != nil {
+        return
+    }
+
+    for i := NumericValue(index); i > 1; l, i = Cdr(l), i-1 {
+    }
+    if !NilP(l) {
+        l.Car = value
+    }
+
     return value, nil
 }
 
