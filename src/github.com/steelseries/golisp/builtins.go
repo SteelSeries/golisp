@@ -94,6 +94,7 @@ func InitBuiltins() {
     MakePrimitiveFunction("append", 2, ExposeAppend)
     MakePrimitiveFunction("append!", 2, ExposeAppendBang)
     MakePrimitiveFunction("copy", 1, ExposeCopy)
+    MakePrimitiveFunction("partition", 2, Partition)
 
     MakePrimitiveFunction("car", 1, ExposedCar)
     MakePrimitiveFunction("cdr", 1, ExposedCdr)
@@ -835,6 +836,39 @@ func ExposeCopy(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     }
 
     return Copy(d), nil
+}
+
+func Partition(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    n, err := Eval(Car(args), env)
+    if err != nil {
+        return
+    }
+    size := int(NumericValue(n))
+
+    l, err := Eval(Cadr(args), env)
+    if err != nil {
+        return
+    }
+    if !ListP(l) {
+        err = errors.New("partition requires a list as it's second argument.")
+    }
+
+    var pieces []*Data = make([]*Data, 0, 5)
+    var chunk []*Data = make([]*Data, 0, 5)
+    for c := l; NotNilP(c); c = Cdr(c) {
+        if len(chunk) < size {
+            chunk = append(chunk, Car(c))
+        } else {
+            pieces = append(pieces, ArrayToList(chunk))
+            chunk = make([]*Data, 0, 5)
+            chunk = append(chunk, Car(c))
+        }
+    }
+    if len(chunk) > 0 {
+        pieces = append(pieces, ArrayToList(chunk))
+    }
+
+    return ArrayToList(pieces), nil
 }
 
 func Lambda(args *Data, env *SymbolTableFrame) (result *Data, err error) {
