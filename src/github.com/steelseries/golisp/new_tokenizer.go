@@ -45,7 +45,7 @@ func (self *MyTokenizer) NextToken() (token int, lit string) {
 }
 
 func (self *MyTokenizer) isSymbolCharacter(ch rune) bool {
-    return unicode.IsLetter(ch) || unicode.IsNumber(ch) || ch == '-' || ch == '?' || ch == '!' || ch == '_'
+    return unicode.IsLetter(ch) || unicode.IsNumber(ch) || ch == '*' || ch == '-' || ch == '?' || ch == '!' || ch == '_'
 }
 
 func (self *MyTokenizer) readSymbol() (token int, lit string) {
