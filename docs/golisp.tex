@@ -66,25 +66,39 @@ Symbols follow the follow simple rules:
 
 \begin{itemize}
 \item starts with a letter, and
-\item contains alphanumeric, \verb|-|, \verb|_|, \verb|?|, and \verb|!|.
+\item contains alphanumeric, \verb|-|, \verb|_|, \verb|?|, \verb|*|, and \verb|!|.
 \end{itemize}
 
-Typically, \verb|-| is used to seperate words in a symbol, \verb|?| is
-used at the end of the name of a predicate function, and \verb|!| is
-used at the end of the name of a function that changes some state as a
-side effect (\verb|set!| is a canonical example).
+Typically, \verb|-| is used to seperate words in a symbol, \verb|_| is
+used in special symbols (such as system use) to separate words and as
+prefix and suffix. The characters \verb|?|, \verb|!|, and \verb|*| are
+used as the final character of a function name to denote:
+
+\begin{description}
+\item [?] a predicate, e.g. \verb|nil?|
+\item [!] a mutating function (changes the argument rather than
+  returning a modified copy), e.g. \verb|set!|
+\item [*] a varient of the main function, e.g. \verb|flatten| and
+  \verb|flatten*| (which is a recursive \verb|flatten|)
+\end{description}
 
 Some builtin function names violate these rules (e.g. arithmetic and
 relative functions). You can't create symbols like this without
-adding support for them to the parser.
+adding support for them to the tokenizer and parser.
 
 \item[Strings] are any sequence of characters other than \verb|"|
 enclosed by a pair of \verb|"|, e.g. \verb|"string"|.
 
-\item[Numbers] are non-negative integers internally represented as \verb|uint32| so
+\item[Integers] ar enon-negative integers internally represented as \verb|uint32| so
   their size reflects \verb|int| on the build of Go being used. E.g.
   \verb|5|, \verb|9845376|. Hexidecimal numbers are also supported,
   starting with \verb|"0x"|: \verb|0x1a|.
+
+\item[Floats] are Go \verb|float32| numbers. Accordingly they are
+  signed. All arithmetic functions (modulus is a bit different) work
+  as expected for both numbers and floats. Numbers are coerced to
+  floats as required, specifically is any arguments are float, all are
+  converted to float and the result will be a float.
 
 \item[Booleans] represent true and false. \verb|nil|, \verb|()|, and
 false are all logically false, everything else is logically true.
@@ -116,17 +130,21 @@ Adds a series of numbers, e.g.
     (+ 4) ==> 4
     (+ 4 2) ==> 6
     (+ 4 2 7) ==> 13
+    (+ 1.2 2.3) ==> 3.5
+    (+ -1.2 2.3) ==> 1.0999999
 \end{verbatim}
 
 \noindent{\bf\large\verb|(- <number>...)|}
 
 Sequentially subtracts a sequence of numbers. Negative results become
-0. E.g. 
+0 for integers, while negative results are supported for float subtraction. E.g. 
 
 \begin{verbatim}
     (- 10 3) ==> 7
     (- 10 3 4) ==> 3
     (- 10 3 4 5) ==> 0
+    (- 2.3 1.2) ==> 1.0999999
+    (- 1.2 2.3) ==> -1.0999999 
 \end{verbatim}
 
 \noindent{\bf\large\verb|(* <number>...)|}
@@ -134,9 +152,10 @@ Sequentially subtracts a sequence of numbers. Negative results become
 Multiplies a series of numbers, e.g.
 
 \begin{verbatim}
-    (+ 4) ==> 4
-    (+ 4 2) ==> 6
-    (+ 4 2 7) ==> 13
+    (* 4) ==> 4
+    (* 4 2) ==> 8
+    (* 4 2 7) ==> 56
+    (* 1.2 2.3) ==> 2.76 
 \end{verbatim}
 
 \noindent{\bf\large\verb|(/ <number>...)|}
@@ -146,18 +165,54 @@ Sequentially divides a sequence of numbers. E.g.
 \begin{verbatim}
     (/ 30 2) ==> 15
     (/ 30 2 3 ) ==> 5
+    (/ 30 4) ==> 7
+    (/ 30.0 4) ==> 7.5
 \end{verbatim}
 
 \noindent{\bf\large\verb|(% <number> <number>)|}
 
-Returns the remainder of dividion. E.g.
+Returns the remainder of dividion. NOTE: modulus only works for
+integers. E.g.
 
 \begin{verbatim}
     (% 4 2) ==> 0
     (% 4 3) ==> 1 
 \end{verbatim}
 
+\subsection{Conversions}
+
+\noindent{\bf\large\verb|(integer <number>)|}
+
+Returns the integer value of \verb|<number>|. If it is an integer, it
+is simply returned. However, if it is a float the integer part is
+returned. Note that this is implemented in go by casting the
+\verb|float32| to a \verb|uint32| so converting negative floats gives
+a large integer. 
+
+\begin{verbatim}
+    (integer 5) ==> 5
+    (integer 5.2) ==> 5
+    (integer 5.8) ==> 5
+    (integer -1.0) ==> 4294967295
+\end{verbatim}
+
+\noindent{\bf\large\verb|(float <number>)|}
+
+Returns the float value of \verb|<number>|. If it is a float, it
+is simply returned. However, if it is an integer the coresponding float is
+returned.
+
+\begin{verbatim}
+    (float 5) ==> 5.0
+\end{verbatim}
+
+Note that converting a float to a string for printing using the format
+\verb|%g| to use the minimum number of characters so \verb|5.0| will
+actually print as \verb|5|.
+
 \subsection{Comparisons}
+
+All comparison operations work with floating point numbers as well.
 
 \noindent{\bf\large\verb|(< <number> <number>)|}
 
