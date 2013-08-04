@@ -98,7 +98,10 @@ func InitBuiltins() {
     MakePrimitiveFunction("partition", 2, Partition)
 
     MakePrimitiveFunction("car", 1, ExposedCar)
+    MakePrimitiveFunction("head", 1, ExposedCar)
     MakePrimitiveFunction("cdr", 1, ExposedCdr)
+    MakePrimitiveFunction("rest", 1, ExposedCdr)
+    MakePrimitiveFunction("tail", 1, ExposedCdr)
 
     MakePrimitiveFunction("caar", 1, ExposedCaar)
     MakePrimitiveFunction("cadr", 1, ExposedCadr)
