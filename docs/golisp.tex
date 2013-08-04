@@ -9,8 +9,8 @@
 
 % See the ``Article customise'' template for come common customisations
 
-\title{SteelSeries GoLisp 0.1}
-\author{Dave Astels}
+\title{SteelSeries GoLisp \\ {\small\it An embeddable scripting system for Go}}
+\author{Dave Astels \\ SteelSeries NA Corp.}
 
 \begin{document}
 
@@ -18,22 +18,27 @@
 
 \section{Overview}
 
-GoLisp is a simple Lisp implimented in Go for integrating into a Go
+GoLisp is a simple Lisp language and runtime implimented in Google's
+Go programming language. It's main purpose is integration into a Go
 application to provide runtime extension and scripting. The core of a
 basic Lisp in provided, but with limited special forms and primitive
-functions. More of these will be added as required. 
+functions. More of these will be added as required without having to
+modify the GoLisp core. Also, a REPL is provided and GoLisp can be
+used as-is to write and evaluage code.
 
 GoLisp is a lexically scoped Lisp-1:
 
 \begin{description}
 \item[Lexically scoped:] The scope of definitions are determined by
   where they are made in the lexical structure of the code. Each
-  function and let creates a new lexical scope. From~\cite{lisp}:
+  function, \verb|let|, and \verb|do| creates a new lexical scope. From~\cite{Gabriel:1988:ETI}:
 
   \begin{quotation}
-    A parameter has lexical scope if its binding is associated with
-    the text interval bounded by the parentheses that delineate a
-    parameter-binding form.
+    Here references to the established entity can occur only within
+    certain program portions that are lexically (that is, textually)
+    contained within the establishing construct. Typically the
+    construct will have a part designated the body, and the scope of
+    all entities established will be (or include) the body.
   \end{quotation}
 
 \item[Lisp-1:] A Lisp where functions and variables share a single
@@ -41,45 +46,41 @@ GoLisp is a lexically scoped Lisp-1:
   variables have separate namespaces.
 \end{description}
 
-The golisp repl supports \verb|readline| and so provides history and
+The GoLisp REPL supports \verb|readline| and so provides history and
 command editing. History is local to the directory from which you
-execute golisp.
+execute GoLisp.
 
 \section{Data types}
 
 \begin{description}
 
-\item[Cons Cells] are the central data type in classic Lisp used for
-  both as dotted pairs \verb|(a .  b)| and general lists \verb|(a b)|.
-  A cons cell is made up of two pointers, the \verb|car| and
-  \verb|cdr|, as shown in Figure~\ref{fig:conscell}.
-
-\begin{figure}[htbp] %  figure placement: here, top, bottom, or page
-   \centering
-   \includegraphics[width=5in]{conscell.png} 
-\caption{Cons Cell.}
-\label{fig:conscell}
-\end{figure}
+\item[Cons Cells] are the central data type in classic Lisp used both
+  as dotted pairs \verb|(a .  b)| and general lists \verb|(a b)|. For
+  an overview of cons cells and how to use them
+  see~\cite{Abelson85Structure}, \cite{Steele:1984:CLL}, or
+  \verb|http://cs.gmu.edu/~sean/lisp/cons/|.
 
 \item[Symbols] are simple identifiers, e.g. \verb|function-name|.
-Symbols follow the follow simple rules: 
+Symbols follow the follow 2 simple rules:
 
 \begin{itemize}
 \item starts with a letter, and
-\item contains alphanumeric, \verb|-|, \verb|_|, \verb|?|, \verb|*|, and \verb|!|.
+\item contains alphanumeric, \verb|-|, \verb|_|, \verb|?|, \verb|!|, and \verb|*|.
 \end{itemize}
 
 Typically, \verb|-| is used to seperate words in a symbol, \verb|_| is
 used in special symbols (such as system use) to separate words and as
-prefix and suffix. The characters \verb|?|, \verb|!|, and \verb|*| are
-used as the final character of a function name to denote:
+a prefix and suffix. The characters \verb|?|, \verb|!|, and \verb|*|
+are typically used as the final character of a function name to
+denote:
 
 \begin{description}
 \item [?] a predicate, e.g. \verb|nil?|
 \item [!] a mutating function (changes the argument rather than
-  returning a modified copy), e.g. \verb|set!|
-\item [*] a varient of the main function, e.g. \verb|flatten| and
-  \verb|flatten*| (which is a recursive \verb|flatten|)
+  returning a modified copy), e.g. \verb|set-car!|
+\item [*] a varient of the primary function, e.g. \verb|flatten|
+  (which does a one level flattening of a list) and \verb|flatten*|
+  (which is a recursive \verb|flatten|)
 \end{description}
 
 Some builtin function names violate these rules (e.g. arithmetic and
@@ -89,28 +90,26 @@ adding support for them to the tokenizer and parser.
 \item[Strings] are any sequence of characters other than \verb|"|
 enclosed by a pair of \verb|"|, e.g. \verb|"string"|.
 
-\item[Integers] ar enon-negative integers internally represented as \verb|uint32| so
-  their size reflects \verb|int| on the build of Go being used. E.g.
-  \verb|5|, \verb|9845376|. Hexidecimal numbers are also supported,
-  starting with \verb|"0x"|: \verb|0x1a|.
+\item[Integers] are non-negative integers internally represented as \verb|uint32|. Both decimal and hexidecimal formats are supported. E.g.
+  \verb|26|, \verb|0x1a|, \verb|0x1A|.
 
 \item[Floats] are Go \verb|float32| numbers. Accordingly they are
-  signed. All arithmetic functions (modulus is a bit different) work
+  signed. All arithmetic functions with the exception of modulus work
   as expected for both numbers and floats. Numbers are coerced to
-  floats as required, specifically is any arguments are float, all are
+  floats as required, specifically if any arguments are float, all are
   converted to float and the result will be a float.
 
 \item[Booleans] represent true and false. \verb|nil|, \verb|()|, and
-false are all logically false, everything else is logically true.
+\verb|false| are all logically false, everything else is logically true.
 Boolean literals are \verb|#t| and \verb|#f| for true and false,
-respectively. 
+respectively.
 
 \item[Functions] are user defined procedures. They are covered in
 detail later.
 
 \item[Objects] allow you to encapsulate a Go object (struct) in a Lisp
   data object. There is no way to do this from Lisp itself, but is
-  useful when writing primitive functions (see below). 
+  useful when writing primitive functions (see below).
 
 \item[Primitives] are just as they are in Lisp or Smalltalk: functions
   written in Go and exposed as functions in Lisp. The combination of
@@ -137,14 +136,14 @@ Adds a series of numbers, e.g.
 \noindent{\bf\large\verb|(- <number>...)|}
 
 Sequentially subtracts a sequence of numbers. Negative results become
-0 for integers, while negative results are supported for float subtraction. E.g. 
+0 for integers, while negative results are supported for float subtraction. E.g.
 
 \begin{verbatim}
     (- 10 3) ==> 7
     (- 10 3 4) ==> 3
     (- 10 3 4 5) ==> 0
     (- 2.3 1.2) ==> 1.0999999
-    (- 1.2 2.3) ==> -1.0999999 
+    (- 1.2 2.3) ==> -1.0999999
 \end{verbatim}
 
 \noindent{\bf\large\verb|(* <number>...)|}
@@ -155,7 +154,7 @@ Multiplies a series of numbers, e.g.
     (* 4) ==> 4
     (* 4 2) ==> 8
     (* 4 2 7) ==> 56
-    (* 1.2 2.3) ==> 2.76 
+    (* 1.2 2.3) ==> 2.76
 \end{verbatim}
 
 \noindent{\bf\large\verb|(/ <number>...)|}
@@ -176,7 +175,7 @@ integers. E.g.
 
 \begin{verbatim}
     (% 4 2) ==> 0
-    (% 4 3) ==> 1 
+    (% 4 3) ==> 1
 \end{verbatim}
 
 \subsection{Conversions}
@@ -187,7 +186,7 @@ Returns the integer value of \verb|<number>|. If it is an integer, it
 is simply returned. However, if it is a float the integer part is
 returned. Note that this is implemented in go by casting the
 \verb|float32| to a \verb|uint32| so converting negative floats gives
-a large integer. 
+a large integer.
 
 \begin{verbatim}
     (integer 5) ==> 5
@@ -255,7 +254,7 @@ Returns whether the first argument is not equal to the second argument.
 \noindent{\bf\large\verb|(<= <number> <number>)|}
 
 Returns whether the first argument is less than or equal to the second
-argument. 
+argument.
 
 \begin{verbatim}
     (<= 1 2) ==> #t
@@ -266,7 +265,7 @@ argument.
 \noindent{\bf\large\verb|(>= <number> <number>)|}
 
 Returns whether the first argument is greater than or equal to the
-second argument. 
+second argument.
 
 \begin{verbatim}
     (>= 1 2) ==> #f
@@ -323,7 +322,7 @@ If an argument evaluates to false, subsequent arguments are not
 evaluated. \verb|and| with no arguments evaluates to true.
 
 \begin{verbatim}
-  
+
 \end{verbatim}
 
 \noindent{\bf\large\verb|(or <arg>)|}
@@ -336,7 +335,7 @@ If an argument evaluates to true, subsequent arguments are not
 evaluated. \verb|or| with no arguments evaluates to false.
 
 \begin{verbatim}
-  
+
 \end{verbatim}
 
 \subsection{Lists}
@@ -370,7 +369,7 @@ For example:
   a => (1 2 3)
 
   (append! a '(4 5 6)) => (1 2 3 4 5 6)
-  a => (1 2 3 4 5 6)  
+  a => (1 2 3 4 5 6)
 \end{verbatim}
 
 \noindent{\bf\large\verb|(interval <lo> <hi>)|}
@@ -381,7 +380,8 @@ Creates a list of numbers from \verb|<lo>| to \verb|<hi>|, inclusive.
   (interval 1 5) ==> (1 2 3 4 5)
 \end{verbatim}
 
-\noindent{\bf\large\verb|(car <list>)|}
+\noindent{\bf\large\verb|(car <list>)|}\\
+\noindent{\bf\large\verb|(first <list>)|}
 
 Returns the first item in the list, i.e. the car pointer of the first
 conscell in the chain referenced by \verb|<list>|.
@@ -393,15 +393,16 @@ conscell in the chain referenced by \verb|<list>|.
   (car (list (+ 1 1) (+ 2 2))) ==> 2
 \end{verbatim}
 
-\noindent{\bf\large\verb|(cdr <list>)|}
+\noindent{\bf\large\verb|(cdr <list>)|}\\
+\noindent{\bf\large\verb|(rest <list>)|}
 
 Returns the rest of the list, i.e. the cdr pointer of the first
-conscell in the chain referenced by \verb|<list>|.
+conscell in the chain referenced by \verb|<list>|. \verb|rest| is provided as an alias.
 
 \begin{verbatim}
   (cdr nil) ==> nil
   (cdr '(a)) ==> nil
-  (cdr '(a b c)) ==> (b c)  
+  (cdr '(a b c)) ==> (b c)
   (cdr (list (+ 1 1) (+ 2 2))) ==> (2)
 \end{verbatim}
 
@@ -584,12 +585,12 @@ one that conditionally evaluates a single sexpr (see below about
 
 Iff the condition evaluates to logically true, the true clause is
 evaluated and the result is the result of the if form, otherwise nil
-is the result of the if form. 
+is the result of the if form.
 
 \begin{verbatim}
-    (if (< 1 2) 
+    (if (< 1 2)
         "less") ==> "less"
-    (if (< 2 2) 
+    (if (< 2 2)
         "less") ==> nil
 \end{verbatim}
 
@@ -597,14 +598,14 @@ is the result of the if form.
 
 If the condition evaluates to logically true, the true clause is
 evaluated and the result is the result of the if form, otherwise the
-else clause is evaluated and is the result of the if form. 
+else clause is evaluated and is the result of the if form.
 
 \begin{verbatim}
-    (if (< 1 2) 
-        "less" 
+    (if (< 1 2)
+        "less"
         "not less") ==> "less"
-    (if (< 2 2) 
-        "less" 
+    (if (< 2 2)
+        "less"
         "not less") ==> "not less"
 \end{verbatim}
 
@@ -613,15 +614,15 @@ else clause is evaluated and is the result of the if form.
 Creates an anonymous function. This can then be used in a function call.
 
 \begin{verbatim}
-    ((lambda (x) 
-       (+ x x)) 
+    ((lambda (x)
+       (+ x x))
      5) ==> 10
 \end{verbatim}
 
 \verb|lambda| creates a local environment at the point of it's
 evaluation. This environment is attached to the resulting function,
 and any binding or symbol lookup starts in this local environment. For
-example, consider the following code (from~\cite{sicp}, \S~3.2.2):
+example, consider the following code (from~\cite{Abelson85Structure}, \S~3.2.2):
 
 \begin{verbatim}
   (define (square x)
@@ -640,18 +641,18 @@ environment pointer that points back to the global environment.
 When a fucntion is executed, the implicit \verb|lambda| creates a new
 envroment frame for the evaluation that (in this case) points back to
 the global environment. This scoping approach is what is described in
-\S~3 of \cite{sicp}.
+\S~3 of \cite{Abelson85Structure}.
 
 \begin{figure}[htbp] %  figure placement: here, top, bottom, or page
    \centering
-   \includegraphics[width=5in]{function_declarations.png} 
+   \includegraphics[width=5in]{function_declarations.png}
 \caption{Procedure objects in the global frame.}
 \label{fig:funcdefs}
 \end{figure}
 
 \begin{figure}[htbp] %  figure placement: here, top, bottom, or page
    \centering
-   \includegraphics[width=5in]{function_invocations.png} 
+   \includegraphics[width=5in]{function_invocations.png}
 \caption[Invocation Environments]{Environments created by evaluating
   {\tt (f 5)} using the procedures in Figure~\ref{fig:funcdefs}.}
 \label{fig:funcinvocations}
@@ -661,7 +662,7 @@ the global environment. This scoping approach is what is described in
 \noindent{\bf\large\verb|(define <symbol> <value>)|}
 
 Evaluates the value expression and binds it to the symbol, returning
-the value. 
+the value.
 
 \begin{verbatim}
     (define x (+ 2 3)) ==> 5
@@ -672,9 +673,9 @@ Functions can be named (i.e. bound to a symbol) and later referred to
 by using define:
 
 \begin{verbatim}
-  (define foo (lambda (x) 
+  (define foo (lambda (x)
                 (+ x x)))
-  (foo 5) ==> 10  
+  (foo 5) ==> 10
 \end{verbatim}
 
 
@@ -685,11 +686,11 @@ A syntacticly cleaner way to create a named function:
 \verb|<symbol>| specifies the name (how you reference the function)
 
 \verb|<param>...| parameters of the function, these are bound to the
-respective arguments when the function is called. 
+respective arguments when the function is called.
 
 \verb|<body>| the sequence of expressions that are evaluated in order
 when the function is called. The final evaluation result becomes the
-value of evaluation of the function. 
+value of evaluation of the function.
 
 \begin{verbatim}
     (define (double x)
@@ -704,12 +705,12 @@ the argument list resulting from evaluating each \verb|<sexpr>|.
 
 \noindent{\bf\large\verb|(set! <name> <new-value>)|}
 
-The way to assign (i.e. rebind) a symbol. \verb|name| is the symbol to be rebound. The \verb|new-value| sexpr is
-evaluated to arrive at the new value to be bound to. Use of
-\verb|set!| is frowned upon, and should not be used without thought.
-See Chapter 3 of Structure and Interpretation of Computer Programs (by
-Harold Abelson and Gerald Jay Sussman) for a discussion of the pros
-and cons of assignment.
+The way to assign (i.e. rebind) a symbol. \verb|name| is the symbol to
+be rebound. The \verb|new-value| sexpr is evaluated to arrive at the
+new value to be bound to. Use of \verb|set!| is frowned upon, and
+should not be used without thought.  See Chapter 3
+of~\cite{Abelson85Structure} for a discussion of the pros and cons of
+assignment.
 
 \begin{verbatim}
   (define x 5)
@@ -761,10 +762,20 @@ Set the \verb|cdr| pointer of \verb|cons-cell|.
   a ==> (1 . 3)
 \end{verbatim}
 
+\noindent{\bf\large\verb|(set-nth! <list> <n> <new-value>)|}
+
+Set the \verb|car| pointer of the n^{th} cons cell of \verb|list|. Numbering starts at 1.
+
+\begin{verbatim}
+  (define a '(1 2 3 4))
+  (set-nth! a 3 0)
+  a ==> (1 2 0 4)
+\end{verbatim}
+
 \noindent{\bf\large\verb|(map <function> <list>)|}
 
 Applies \verb|function| (which has to be of a single argument) to each
-element in \verb|list| in order, returning the list of the results. 
+element in \verb|list| in order, returning the list of the results.
 
 \begin{verbatim}
     (map - '(1 2 3 4))) ==> (-1 -2 -3 -4)
@@ -827,32 +838,32 @@ body. In effect the body of the \verb|let| is an implicit
 \noindent{\bf\large\verb|    <sexpr>...)|}
 
 This is a general purpose iteration construct. There are three
-sections: 
+sections:
 
 \begin{description}
 \item[bindings] This is similar to \verb|let| in that it defines names
-  that can be used in the rest of the \verb|do|. Like \verb|let| it
-  is a list of lists, each starting with the binding name followed by
-  the initial value of the binding. The difference is that this is
-  followed by an expression that is evaluated at the beginning of each
-  subsequent pass through the loop, and whose result is used as a new
-  binding or the name.
+  that can be used in the remainer of the scope of the \verb|do|. Like
+  \verb|let| it is a list of lists, each starting with the binding
+  name followed by the initial value of the binding. The difference is
+  that this is followed by an expression that is evaluated at the
+  beginning of each subsequent pass through the loop, and whose result
+  is used as a new binding of the name.
 \item[termination] Ths is a list whose first element is an expression
- which is evaluated before each pass through the loop (and after the
- rebinding of the variables). If it evaluates to a truthy value, the
- remaining expressions are evaulated in turn. The result of the final
- one is used as the value of the \verb|do|.
+  which is evaluated before each pass through the loop (after
+  rebinding the variables). If it evaluates to a truthy value, the
+  remaining expressions are evaulated in turn. The result of the final
+  one is used as the value of the \verb|do|.
 \item[body] This is a sequence of expressions that are evaluated in
-  order each time though the loop.
+  order each time though the loop. This section can be empty.
 \end{description}
 
-Here's an example of using do to iteratively find the length of a
+Here's an example of using \verb|do| to iteratively find the length of a
 list.
 
 \begin{verbatim}
-  (do ((rest '(...) (cdr rest))
+  (do ((l some-list (cdr l))
        (count 0 (+ 1 count)))
-      ((nil? rest) count))
+      ((nil? l) count))
 \end{verbatim}
 
 \section{Testing}
@@ -925,6 +936,13 @@ Failures:
 4 Tests
 3 Passes, 1 failures, 0 errors
 \end{verbatim}
+
+You run tests by running the golisp repl in test mode, providing the list of test files to run:
+
+\begin{verbatim}
+golisp -t tests/scope_test.lsp
+\end{verbatim}
+
 \section{Defining primitives}
 
 The Go function \verb|MakePrimitiveFunction| allows you to create
@@ -932,13 +950,13 @@ primitive functions. This takes three arguments:
 
 \begin{enumerate}
 \item The function name. This is the name of a symbol which will be
-  used to reference the function. 
+  used to reference the function.
 \item The number of expected arguments. Using a -1 for this denotes
   any number of arguments. In the function definition you can enforce
-  further constraints on argument counts and types. 
+  further constraints on argument counts and types.
 \item The Go function which impliments the primitive. This function
   {\bf must} have the signature
-  \verb|func <Name>(*Data, *SymbolTableFrame) (*Data, error)| 
+  \verb|func <Name>(*Data, *SymbolTableFrame) (*Data, error)|
 \end{enumerate}
 
 \noindent The implimenting function takes two parameters as seen
@@ -955,15 +973,8 @@ above:
 \begin{verbatim}
     MakePrimitiveFunction("!", 1, BooleanNot)
 
-    func BooleanNot(args *Data, env *SymbolTableFrame) 
+    func BooleanNot(args *Data, env *SymbolTableFrame)
                    (result *Data, err error) {
-        if Length(args) != 1 {
-            msg := fmt.Sprintf("! requires 1 argument. Received %d.", 
-                               Length(args)
-            err = errors.New(msg))
-            return
-        }
-
         arg, err := Eval(Car(args), env)
         if err != nil {
             return
@@ -986,16 +997,18 @@ constants: \verb|ConsCellType|, \verb|NumberType|, \verb|BooleanType|,
 type of a piece of data you can fetch it's type using the
 \verb|TypeOf(*Data) int| fuction and then compare it to a type tag
 constant. Additionally there are predicate functions for the most
-common types: 
+common types:
 
 \begin{description}
 \item [{\tt StringP(*Data) bool}] returns whether the data is a string
 \item [{\tt SymbolP(*Data) bool}] returns whether the data is a symbol
 \item [{\tt NumberP(*Data) bool}] returns whether the data is a number
-\item [{\tt PairP(*Data) bool}] returns whether the data is a cons cenn
+\item [{\tt FloatP(*Data) bool}] returns whether the data is a float
+\item [{\tt PairP(*Data) bool}] returns whether the data is a cons cell
   (aka pair)
+\item [{\tt ListP(*Data) bool}] is an alias for \verb|PairP|
 \item [{\tt ObjectP(*Data) bool}] returns whether the data is an
-  encapsulated Go object 
+  encapsulated Go object
 \item [{\tt FunctionP(*Data) bool}] returns whether the data is either
   a user defined or primitive function
 \end{description}
@@ -1014,7 +1027,9 @@ There are various convience functions that you can use to create data:
 \begin{description}
 \item [{\tt Cons(car *Data, cdr *Data) *Data}] creates a cons cell
   with the provided values for it's \verb|car| and \verb|cdr|.
-\item [{\tt NumberWithValue(n int) *Data}] creates a number (integer)
+\item [{\tt NumberWithValue(n uint32) *Data}] creates a number (integer)
+  with the provided value
+\item [{\tt FloatWithValue(n float32) *Data}] creates a number (float)
   with the provided value
 \item [{\tt BooleanWithValue(b bool) *Data}] creates a boolean with
   the provided value
@@ -1024,14 +1039,15 @@ There are various convience functions that you can use to create data:
   provided name
 \item [{\tt ObjectWithTypeAndValue(thpeName string, o unsafe.Pointer) *Data}]
   creates an encapsulated Go object with the given type tag\footnote{a
-    string eqivalent to the Go type of the value} and value 
+    string eqivalent to the Go type of the value} and value
 \end{description}
 
 \noindent Similarly there are functions for extracting information
-from data elements: 
+from data elements:
 
 \begin{description}
-\item [{\tt NumericValue(*Data) int}] extracts the primitive integer value
+\item [{\tt NumericValue(*Data) uint32}] extracts the primitive integer value
+\item [{\tt FloatValue(*Data) float32}] extracts the primitive float value
 \item [{\tt StringValue(*Data) string}] extracts the primitive
   string value
 \item [{\tt BooleanValue(*Data) bool}] extracts the primitive
@@ -1041,8 +1057,8 @@ from data elements:
 \item [{\tt ObjectValue(*Data) unsafe.Pointer}] extracts the
   primitive object value
 \item [{\tt String(*Data) string}] returns a human readable string
-  representation of the data 
-\item [{\tt Length(*Data) int}] returns the length of a piece of Lisp 
+  representation of the data
+\item [{\tt Length(*Data) int}] returns the length of a piece of Lisp
   data. This will be 0 in all cases except lists, when it will be the
   number of elements in the list.
 \item [{\tt IsEqual(*Data, o *Data) bool}] compares two expressions:
@@ -1057,7 +1073,7 @@ from data elements:
 \end{description}
 
 \noindent Any of the above \verb|...Value| functions return the
-corresponding zero value if the data is 
+corresponding zero value if the data is
 not of the appropriate type.
 
 \subsection{Working with lists}
@@ -1103,13 +1119,13 @@ The implimentation of \verb|if| serves as an example:
 \begin{verbatim}
   func If(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) < 2 || Length(args) > 3 {
-        msg := fmt.Sprintf("IF requires 2 or 3 arguments. Received %d.", 
+        msg := fmt.Sprintf("IF requires 2 or 3 arguments. Received %d.",
                            Length(args))
         err = errors.New(msg)
         return
     }
 
-    c, err := Eval(Car(args))
+    c, err := Eval(Car(args), env)
     if err != nil {
         return
     }
@@ -1123,10 +1139,74 @@ The implimentation of \verb|if| serves as an example:
         return Eval(elseClause, env)
     }
 }
-
 \end{verbatim}
 
+Note that \verb|Cadr| and \verb|Caddr| return \verb|nil| if the
+corresponding element is missing from the argument list. Also, passing
+a \verb|nil| to \verb|Eval| returns \verb|nil|.
+
+\section{Embedded GoLisp}
+
+Now that you know what's supported in GoLisp, and how to manipulate
+it's structures and code in from Go, you need to get code into
+it. There are two ways to do this.
+
+\subsection{Single expression strings}
+
+If you have a Go \verb|string| that contains a single sexpr, you can
+pass it to \verb|Parse| which returns the list containing the parsed
+string and an error value. The returned s tructure can be passed to
+\verb|Eval| to evaluate it. The resulting sexpr is returned.
+
+For example, here is the REPL:
+
+\begin{verbatim}
+prompt := "> "
+LoadHistoryFromFile(".golisp_history")
+lastInput := ""
+for true {
+    input := *ReadLine(&prompt)
+    if input != "" {
+        if input != lastInput {
+            AddHistory(input)
+        }
+        lastInput = input
+        code, err := Parse(input)
+        if err != nil {
+            fmt.Printf("Error: %s\n", err)
+        } else {
+            d, err := Eval(code, Global)
+            if err != nil {
+                fmt.Printf("Error in evaluation: %s\n", err)
+            } else {
+                fmt.Printf("==> %s\n", String(d))
+            }
+        }
+    }
+}
+\end{verbatim}
+
+\subsection{Loading a file}
+
+If you have GoLisp code in a plain text file you can pass the filename
+to \verb|ProcessFile|. This will parse and evaluate each sexpr
+contained in the file. The result of \verb|LoadFile| is the value of
+the evaluation of the final sexpr in the file and an error value.
+
+Generally, you load a file for it's side effects: defining values and
+functions.
+
+\section{The REPL}
+
+You typically import the \verb|golisp| package into your Go app and
+use it. However, you can run the \verb|golisp/main/golisp| package,
+which puts you into the REPL where you can enter and evaluate one line
+at a time. You can use the \verb|load| function to load/evaluate files
+of golisp code you have written. If you provide a list of filenames on
+the command line they will be loaded and evaluated before dropping you
+into the REPL.
+
 \bibliographystyle{plain}
-\bibliography{lisp}
+\bibliography{common-lisp,scheme,lispsymbcomput}
 
 \end{document}
