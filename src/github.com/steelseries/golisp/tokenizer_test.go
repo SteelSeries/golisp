@@ -70,6 +70,13 @@ func (s *TokenizerSuite) TestSymbolWithBang(c *C) {
     c.Assert(lit, Equals, "abc!")
 }
 
+func (s *TokenizerSuite) TestSymbolWithStar(c *C) {
+    t := NewMyTokenizer("abc* a")
+    tok, lit := t.NextToken()
+    c.Assert(tok, Equals, SYMBOL)
+    c.Assert(lit, Equals, "abc*")
+}
+
 func (s *TokenizerSuite) TestShortNumber(c *C) {
     t := NewMyTokenizer("1 a")
     tok, lit := t.NextToken()

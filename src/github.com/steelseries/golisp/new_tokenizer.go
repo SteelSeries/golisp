@@ -69,10 +69,12 @@ func (self *MyTokenizer) readNumber() (token int, lit string) {
     start := self.Position
     isHex := false
     isFloat := false
+    sawDecimal := false
     for !self.isEof() {
         ch := rune(self.Source[self.Position])
-        if ch == '.' {
+        if ch == '.' && !sawDecimal {
             isFloat = true
+            sawDecimal = true
             self.Position++
         } else if (start == self.Position) && ch == '-' {
             isFloat = true
