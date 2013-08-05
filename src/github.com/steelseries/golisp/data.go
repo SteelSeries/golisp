@@ -549,7 +549,13 @@ func String(d *Data) string {
     case NumberType:
         return fmt.Sprintf("%d", d.Number)
     case FloatType:
-        return fmt.Sprintf("%g", d.Float)
+        {
+            raw := fmt.Sprintf("%g", d.Float)
+            if strings.ContainsRune(raw, '.') {
+                return raw
+            }
+            return fmt.Sprintf("%s.0", raw)
+        }
     case BooleanType:
         if d.Number == 0 {
             return "#f"
