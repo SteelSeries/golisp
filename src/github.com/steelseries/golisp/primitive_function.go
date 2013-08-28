@@ -29,13 +29,10 @@ func (self *PrimitiveFunction) String() string {
 func (self *PrimitiveFunction) Apply(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     argCount := Length(args)
     expectedArgs := self.NumberOfArgs
-    atLeastOneArg := (expectedArgs == -1) && (argCount > 0)
+    anyNumberArgs := expectedArgs == -1
     exactNumberOfArgs := self.NumberOfArgs == argCount
     var stringArgCount string = fmt.Sprintf("%d", self.NumberOfArgs)
-    if self.NumberOfArgs == -1 {
-        stringArgCount = "at least 1"
-    }
-    if !(atLeastOneArg || exactNumberOfArgs) {
+    if !(anyNumberArgs || exactNumberOfArgs) {
         err = errors.New(fmt.Sprintf("Wrong number of args to %s. Expected %s but got %d.\n", self.Name, stringArgCount, argCount))
         return
     }
