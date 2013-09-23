@@ -1647,7 +1647,10 @@ func DefDebug(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func DefSleep(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    n := Car(args)
+    n, err := Eval(Car(args), env)
+    if err != nil {
+        return
+    }
     if !NumberP(n) {
         err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
         return
