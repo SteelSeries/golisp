@@ -157,7 +157,7 @@ func parseExpression(s *MyTokenizer) (sexpr *Data, eof bool, err error) {
             }
             return
         case ILLEGAL:
-            s.ConsumeToken()
+            err = errors.New(fmt.Sprintf("Illegal character: %s", lit))
             return
         default:
             s.ConsumeToken()
