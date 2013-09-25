@@ -7,6 +7,7 @@
 package golisp
 
 import (
+    "fmt"
     "unicode"
 )
 
@@ -219,7 +220,7 @@ func (self *MyTokenizer) readNextToken() (token int, lit string) {
             self.Position++
         }
     } else {
-        return ILLEGAL, ""
+        return ILLEGAL, fmt.Sprintf("%c", currentChar)
     }
 }
 
