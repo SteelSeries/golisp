@@ -108,7 +108,7 @@ func TransformJson(xform *Data, jsonNode *Data, parentNode *Data) (xformedJson *
     if err != nil {
         return
     }
-    _, err = Apply(transformFunction, args, Global)
+    newData, err = Apply(transformFunction, args, Global)
     if err != nil {
         return
     }
