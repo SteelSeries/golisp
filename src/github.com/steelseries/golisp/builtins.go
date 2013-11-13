@@ -15,6 +15,7 @@ import (
     "os"
     "strings"
     "time"
+    "unsafe"
 )
 
 var DebugTrace = false
@@ -29,7 +30,7 @@ func InitBuiltins() {
     Global.Intern("nil")
 
     MakePrimitiveFunction("quit", 0, DefQuit)
-    MakePrimitiveFunction("debug", 1, DefDebug)
+    MakePrimitiveFunction("debug", -1, DefDebug)
 
     // type tests
 
@@ -157,6 +158,15 @@ func InitBuiltins() {
     MakePrimitiveFunction("write-line", 1, WriteLine)
     MakePrimitiveFunction("str", -1, MakeString)
     MakePrimitiveFunction("time", 1, DefTime)
+
+    // bytearrays
+    MakePrimitiveFunction("list-to-bytearray", 1, ListToBytes)
+    MakePrimitiveFunction("bytearray-to-list", 1, BytesToList)
+    MakePrimitiveFunction("replace-byte", 3, ReplaceByte)
+    MakePrimitiveFunction("replace-byte!", 3, ReplaceByteBang)
+    MakePrimitiveFunction("extract-byte", 2, ExtractByte)
+    MakePrimitiveFunction("append-bytes", -1, AppendBytes)
+    MakePrimitiveFunction("append-bytes!", -1, AppendBytesBang)
 
     // testing
     MakePrimitiveFunction("describe", -1, Describe)
@@ -1642,8 +1652,10 @@ func DefQuit(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func DefDebug(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    DebugTrace = BooleanValue(Car(args))
-    return
+    if Length(args) == 1 {
+        DebugTrace = BooleanValue(Car(args))
+    }
+    return BooleanWithValue(DebugTrace), nil
 }
 
 func DefSleep(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -1696,6 +1708,249 @@ func DefTime(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
     d := time.Since(startTime)
     fmt.Printf("Stopped timer.\nTook %v to run.\n", d)
+    return
+}
+
+func ListToBytes(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    if NilP(Car(args)) {
+        err = errors.New("Argument to ListToByutes can not be nil.")
+        return
+    }
+    list, err := Eval(Car(args), env)
+    if err != nil {
+        return
+    }
+
+    bytes := make([]byte, 0, int(Length(list)))
+    for c := list; NotNilP(c); c = Cdr(c) {
+        var n *Data
+        n, err = Eval(Car(c), env)
+        if !NumberP(n) {
+            err = errors.New(fmt.Sprintf("Byte arrays can only contain numbers, but found %v.", n))
+            return
+        }
+        b := NumericValue(n)
+        if b > 255 {
+            err = errors.New(fmt.Sprintf("Byte arrays can only contain bytes, but found %d.", b))
+            return
+        }
+        bytes = append(bytes, byte(b))
+    }
+    return ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&bytes)), nil
+}
+
+func BytesToList(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    dataByteObject, err := Eval(Car(args), env)
+    if err != nil {
+        panic(err)
+    }
+    if !ObjectP(dataByteObject) || TypeOfObject(dataByteObject) != "[]byte" {
+        err = errors.New(fmt.Sprintf("Bytearray object should return []byte but returned %s.", TypeOfObject(dataByteObject)))
+        return
+    }
+
+    dataBytes := (*[]byte)(ObjectValue(dataByteObject))
+    var bytes = make([]*Data, 0, len(*dataBytes))
+
+    for _, b := range *dataBytes {
+        bytes = append(bytes, NumberWithValue(uint32(b)))
+    }
+
+    result = ArrayToList(bytes)
+    return
+}
+
+func internalReplaceByte(args *Data, env *SymbolTableFrame, makeCopy bool) (result *Data, err error) {
+
+    if Car(args) == nil {
+        err = errors.New("replace-byte requires a non-nil bytearray argument.")
+        return
+    }
+    if Cadr(args) == nil {
+        err = errors.New("replace-byte requires a non-nil index argument.")
+        return
+    }
+    if Caddr(args) == nil {
+        err = errors.New("replace-byte requires a non-nil value argument.")
+        return
+    }
+
+    dataByteObject, err := Eval(Car(args), env)
+    if err != nil {
+        panic(err)
+    }
+    if !ObjectP(dataByteObject) || TypeOfObject(dataByteObject) != "[]byte" {
+        err = errors.New(fmt.Sprintf("Bytearray object should return []byte but returned %s.", TypeOfObject(dataByteObject)))
+        return
+    }
+
+    dataBytes := (*[]byte)(ObjectValue(dataByteObject))
+    var newBytes *[]byte
+    if makeCopy {
+        temp := make([]byte, len(*dataBytes))
+        newBytes = &temp
+        copy(*newBytes, *dataBytes)
+    } else {
+        newBytes = dataBytes
+    }
+
+    indexObject, err := Eval(Cadr(args), env)
+    if err != nil {
+        panic(err)
+    }
+    if !NumberP(indexObject) {
+        panic(errors.New("Bytearray index should be a number."))
+    }
+    index := int(NumericValue(indexObject))
+
+    if index >= len(*dataBytes) {
+        err = errors.New(fmt.Sprintf("replace-byte index was out of range. Was %d but bytearray has length of %d.", index, len(*dataBytes)))
+        return
+    }
+
+    if Caddr(args) == nil {
+        err = errors.New("replace-byte requires a non-nil value argument.")
+        return
+    }
+
+    valueObject, err := Eval(Caddr(args), env)
+    if err != nil {
+        panic(err)
+    }
+    if !NumberP(valueObject) {
+        panic(errors.New("Bytearray value should be a number."))
+    }
+
+    value := byte(NumericValue(valueObject))
+
+    if value > 255 {
+        err = errors.New(fmt.Sprintf("replace-byte value was not a byte. Was %d.", index))
+        return
+    }
+
+    (*newBytes)[index] = value
+
+    if makeCopy {
+        result = ObjectWithTypeAndValue("[]byte", unsafe.Pointer(newBytes))
+    } else {
+        result = dataByteObject
+    }
+    return
+}
+
+func ReplaceByte(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    return internalReplaceByte(args, env, true)
+}
+
+func ReplaceByteBang(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    return internalReplaceByte(args, env, false)
+}
+
+func ExtractByte(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    if Car(args) == nil {
+        err = errors.New("extract-byte requires a non-nil bytearray argument.")
+        return
+    }
+    if Cadr(args) == nil {
+        err = errors.New("extract-byte requires a non-nil index argument.")
+        return
+    }
+
+    dataByteObject, err := Eval(Car(args), env)
+    if err != nil {
+        panic(err)
+    }
+    if !ObjectP(dataByteObject) || TypeOfObject(dataByteObject) != "[]byte" {
+        panic(errors.New(fmt.Sprintf("Bytearray object should return []byte but returned %s.", TypeOfObject(dataByteObject))))
+    }
+
+    dataBytes := (*[]byte)(ObjectValue(dataByteObject))
+
+    indexObject, err := Eval(Cadr(args), env)
+    if err != nil {
+        panic(err)
+    }
+    if !NumberP(indexObject) {
+        panic(errors.New("Bytearray index should be a number."))
+    }
+    index := int(NumericValue(indexObject))
+
+    if index >= len(*dataBytes) {
+        err = errors.New(fmt.Sprintf("extract-byte index was out of range. Was %d but bytearray has length of %d.", index, len(*dataBytes)))
+        return
+    }
+
+    extractedValue := (*dataBytes)[index]
+    result = NumberWithValue(uint32(extractedValue))
+    return
+}
+
+func internalAppendBytes(args *Data, env *SymbolTableFrame) (newBytes *[]byte, err error) {
+    if Car(args) == nil {
+        err = errors.New("append-bytes requires a non-nil bytearray argument.")
+        return
+    }
+    if Cadr(args) == nil {
+        err = errors.New("append-bytes requires a non-nil list of bytes to append.")
+        return
+    }
+
+    dataByteObject, err := Eval(Car(args), env)
+    if err != nil {
+        panic(err)
+    }
+    if !ObjectP(dataByteObject) || TypeOfObject(dataByteObject) != "[]byte" {
+        panic(errors.New(fmt.Sprintf("Bytearray object should return []byte but returned %s.", TypeOfObject(dataByteObject))))
+    }
+
+    dataBytes := (*[]byte)(ObjectValue(dataByteObject))
+
+    var extraByteObj *Data
+    var evaledArg *Data
+    if NilP(Cddr(args)) {
+        evaledArg, err = Eval(Cadr(args), env)
+        if err != nil {
+            return
+        }
+        if ObjectP(evaledArg) && TypeOfObject(evaledArg) == "[]byte" {
+            extraByteObj = evaledArg
+        } else if ListP(evaledArg) {
+            extraByteObj, err = ListToBytes(InternalMakeList(QuoteIt(evaledArg)), env)
+        } else {
+            extraByteObj, err = ListToBytes(InternalMakeList(QuoteIt(Cdr(args))), env)
+        }
+    } else {
+        extraByteObj, err = ListToBytes(InternalMakeList(QuoteIt(Cdr(args))), env)
+    }
+
+    if err != nil {
+        return
+    }
+
+    extraBytes := (*[]byte)(ObjectValue(extraByteObj))
+
+    temp := make([]byte, len(*dataBytes)+len(*extraBytes))
+    newBytes = &temp
+    copy(*newBytes, *dataBytes)
+    copy((*newBytes)[len(*dataBytes):], *extraBytes)
+
+    return
+}
+
+func AppendBytes(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    newBytesPtr, err := internalAppendBytes(args, env)
+    if err != nil {
+        return
+    }
+    result = ObjectWithTypeAndValue("[]byte", unsafe.Pointer(newBytesPtr))
+    return
+}
+
+func AppendBytesBang(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    newBytesPtr, err := internalAppendBytes(args, env)
+    dataByteObject, _ := Eval(Car(args), env)
+    dataByteObject.Obj = unsafe.Pointer(newBytesPtr)
+    result = dataByteObject
     return
 }
 

@@ -67,7 +67,7 @@ func PairP(d *Data) bool {
 }
 
 func ListP(d *Data) bool {
-    return PairP(d)
+    return PairP(d) || AlistP(d)
 }
 
 func DottedPairP(d *Data) bool {
@@ -185,7 +185,20 @@ func Alist(d *Data) *Data {
     }
 
     if PairP(d) {
-        return Acons(Caar(d), Cdar(d), Alist(Cdr(d)))
+        headPair := Car(d)
+        tail := make([]*Data, 0, Length(Cdr(headPair)))
+        for c := Cdr(headPair); NotNilP(c); c = Cdr(c) {
+            tail = append(tail, Alist(Car(c)))
+        }
+        var tailData *Data
+        if len(tail) > 1 {
+            tailData = ArrayToList(tail)
+        } else if len(tail) > 0 {
+            tailData = tail[0]
+        } else {
+            tailData = nil
+        }
+        return Acons(Car(headPair), tailData, Alist(Cdr(d)))
     }
 
     return d
@@ -395,11 +408,15 @@ func RecursiveFlatten(d *Data) (result *Data, err error) {
     return ArrayToList(l), nil
 }
 
+func QuoteIt(value *Data) (result *Data) {
+    return InternalMakeList(SymbolWithName("quote"), value)
+}
+
 func Assoc(key *Data, alist *Data) (result *Data, err error) {
     for c := alist; NotNilP(c); c = Cdr(c) {
         pair := Car(c)
         if !DottedPairP(pair) && !PairP(pair) {
-            err = errors.New("Alist key can not be a list")
+            err = errors.New("An alist MUST be made of pairs.")
             return
         }
         if IsEqual(Car(pair), key) {
@@ -446,28 +463,12 @@ func IsEqual(d *Data, o *Data) bool {
         return false
     }
 
-    if AlistP(d) {
-        if !AlistP(o) && !ListP(o) {
-            return false
-        }
-    } else if DottedPairP(d) {
-        if PairP(o) && DottedPairP(o) {
-            return false
-        }
+    if AlistP(d) && !AlistP(o) && !ListP(o) {
+        return false
+    } else if DottedPairP(d) && !PairP(o) && !DottedPairP(o) {
+        return false
     } else if TypeOf(o) != TypeOf(d) {
         return false
-    }
-
-    if ListP(d) {
-        if Length(d) != Length(o) {
-            return false
-        }
-        for a1, a2 := d, o; NotNilP(a1); a1, a2 = Cdr(a1), Cdr(a2) {
-            if !IsEqual(Car(a1), Car(a2)) {
-                return false
-            }
-        }
-        return true
     }
 
     if AlistP(d) {
@@ -485,6 +486,18 @@ func IsEqual(d *Data, o *Data) bool {
 
     if DottedPairP(d) {
         return IsEqual(Car(d), Car(o)) && IsEqual(Cdr(d), Cdr(o))
+    }
+
+    if ListP(d) {
+        if Length(d) != Length(o) {
+            return false
+        }
+        for a1, a2 := d, o; NotNilP(a1); a1, a2 = Cdr(a1), Cdr(a2) {
+            if !IsEqual(Car(a1), Car(a2)) {
+                return false
+            }
+        }
+        return true
     }
 
     return *d == *o
@@ -571,7 +584,16 @@ func String(d *Data) string {
     case PrimitiveType:
         return d.Prim.String()
     case ObjectType:
-        return fmt.Sprintf("<opaque Go object of type %s : 0x%x>", d.ObjType, (*uint64)(d.Obj))
+        if d.ObjType == "[]byte" {
+            bytes := (*[]byte)(d.Obj)
+            contents := make([]string, 0, len(*bytes))
+            for _, b := range *bytes {
+                contents = append(contents, fmt.Sprintf("%d", b))
+            }
+            return fmt.Sprintf("[%s]", strings.Join(contents, " "))
+        } else {
+            return fmt.Sprintf("<opaque Go object of type %s : 0x%x>", d.ObjType, (*uint64)(d.Obj))
+        }
     }
 
     return ""
@@ -598,6 +620,11 @@ func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
             if err != nil {
                 return
             }
+            if function == nil {
+                err = errors.New(fmt.Sprintf("Nil when function expected for %s.", String(Car(d))))
+                return
+            }
+
             args := Cdr(d)
             result, err = Apply(function, args, env)
             if err != nil {

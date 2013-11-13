@@ -21,6 +21,8 @@ const (
     QUOTE
     LPAREN
     RPAREN
+    LBRACKET
+    RBRACKET
     PERIOD
     TRUE
     FALSE
@@ -160,6 +162,12 @@ func (self *MyTokenizer) readNextToken() (token int, lit string) {
     } else if currentChar == ')' {
         self.Position++
         return RPAREN, ")"
+    } else if currentChar == '[' {
+        self.Position++
+        return LBRACKET, "["
+    } else if currentChar == ']' {
+        self.Position++
+        return RBRACKET, "]"
     } else if currentChar == '.' {
         self.Position++
         return PERIOD, "."

@@ -11,6 +11,7 @@ import (
     "fmt"
     "io"
     "os"
+    "unsafe"
 )
 
 func makeNumber(str string) (n *Data, err error) {
@@ -99,6 +100,69 @@ func parseConsCell(s *MyTokenizer) (sexpr *Data, eof bool, err error) {
     return
 }
 
+func allNumbers(data []*Data) bool {
+    for _, n := range data {
+        if !NumberP(n) {
+            return false
+        }
+    }
+    return true
+}
+
+func listToBytearray(cells []*Data) *Data {
+    bytes := make([]byte, 0, len(cells))
+    for _, cell := range cells {
+        b := NumericValue(cell)
+        bytes = append(bytes, byte(b))
+    }
+    return ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&bytes))
+}
+
+func parseBytearray(s *MyTokenizer) (sexpr *Data, eof bool, err error) {
+    tok, _ := s.NextToken()
+    if tok == RBRACKET {
+        s.ConsumeToken()
+        bytes := make([]byte, 0)
+        sexpr = ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&bytes))
+        return
+    }
+
+    var element *Data
+    cells := make([]*Data, 0, 10)
+    for tok != RBRACKET {
+        element, eof, err = parseExpression(s)
+        if eof {
+            fmt.Printf("Bytearray being parsed: %s\n", String(ArrayToList(cells)))
+            err = errors.New("Unexpected EOF (expected closing bracket)")
+            return
+        }
+        if err != nil {
+            return
+        }
+        if NumberP(element) && NumericValue(element) > 255 {
+            fmt.Printf("Bytearray being parsed: %s\n", String(ArrayToList(cells)))
+            err = errors.New(fmt.Sprintf("Numeric literals in a bytearray must be bytes. Encountered %s.", String(element)))
+            return
+        }
+        if !NumberP(element) && !SymbolP(element) && !ListP(element) {
+            fmt.Printf("Bytearray being parsed: %s\n", String(ArrayToList(cells)))
+            err = errors.New(fmt.Sprintf("Bytearray elements must be numbers, symbols, or lists (function calls). Encountered %s.", String(element)))
+            return
+        }
+        cells = append(cells, element)
+        tok, _ = s.NextToken()
+    }
+
+    s.ConsumeToken()
+    if allNumbers(cells) {
+        sexpr = listToBytearray(cells)
+    } else {
+        sexpr = InternalMakeList(SymbolWithName("list-to-bytearray"), QuoteIt(ArrayToList(cells)))
+    }
+    return
+
+}
+
 func newSymbol(s *MyTokenizer, lit string) (sym *Data, eof bool, err error) {
     s.ConsumeToken()
     sym, err = makeSymbol(lit)
@@ -136,6 +200,10 @@ func parseExpression(s *MyTokenizer) (sexpr *Data, eof bool, err error) {
         case LPAREN:
             s.ConsumeToken()
             sexpr, eof, err = parseConsCell(s)
+            return
+        case LBRACKET:
+            s.ConsumeToken()
+            sexpr, eof, err = parseBytearray(s)
             return
         case SYMBOL:
             s.ConsumeToken()
@@ -199,6 +267,11 @@ func ProcessFile(filename string) (result *Data, err error) {
     if err != nil {
         return
     }
+    result, err = ParseAndEvalAll(src)
+    return
+}
+
+func ParseAndEvalAll(src string) (result *Data, err error) {
     s := NewMyTokenizer(src)
     var sexpr *Data
     var eof bool
