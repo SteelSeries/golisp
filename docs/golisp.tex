@@ -111,6 +111,13 @@ detail later.
   data object. There is no way to do this from Lisp itself, but is
   useful when writing primitive functions (see below).
 
+\item[Bytearrays] are simply objects that encapsulate \verb|[]byte|
+  objects. The difference is that there is syntactic support for them.
+  Use square braces surrounding a list of numbers between 0 and 255.
+  For example: \verb|[1 2 3 4 5]|. That format will parse to an
+  \verb|object| containing a the Go bytearray (i.e. \verb|[]byte|).
+  Bytearrays evaluate to themselves.
+
 \item[Primitives] are just as they are in Lisp or Smalltalk: functions
   written in Go and exposed as functions in Lisp. The combination of
   primitives and objects allow you to integrate with the underlying Go
@@ -484,6 +491,101 @@ Return the pair from \verb|<a-list>| whose \verb|cdr| is equal to
 \begin{verbatim}
   (rassoc '1 '((a.1) (b.2) (c.3))) ==> (a.1)
   (rassoc '3 '((a.1) (b.2))) ==> ()
+\end{verbatim}
+
+\section{Bytearrays}
+
+\noindent{\bf\large\verb|(list-to-bytearray <list of bytes>)|}
+
+The list must be comprised of numbers between 0 and 255, inclusive.
+The result is an \verb|object| containing a \verb|[]byte|.
+
+\begin{verbatim}
+  (list-to-bytearray '(1 2 3 4)) => [1 2 3 4]
+\end{verbatim}
+
+\noindent{\bf\large\verb|(bytearray-to-list <bytearray>)|}
+
+This is the opposite of the previous function. The result is a list
+containing the numbers in the bytearray.
+
+\begin{verbatim}
+  (bytearray-to-list [1 2 3 4]) => (1 2 3 4)
+\end{verbatim}
+
+\noindent{\bf\large\verb|(replace-byte <bytearray> <index> <value>)|}
+
+Make a copy of \verb|<bytearray>| and replaces the byte at
+\verb|<index>| with \verb|<value>|. The new bytearray with the
+replaced byte is returned.
+\verb|<index>| must be a valid index into the byte array (zero based), and
+\verb|<value>| must be a valid byte value, i.e. between 0 and 255, inclusive.
+
+\begin{verbatim}
+  (define a [1 2 3 4])    => [1 2 3 4]
+  (replace-byte a 2 100)  => [1 2 100 4]
+  a                       => [1 2 3 4]
+\end{verbatim}
+
+\noindent{\bf\large\verb|(replace-byte! <bytearray> <index> <value>)|}
+
+Replaces the byte at \verb|<index>| with \verb|<value>|.
+\verb|<index>| must be a valid index into the byte array (zero based), and
+\verb|<value>| must be a valid byte value, i.e. between 0 and 255,
+inclusive. The original byte array is modified and the returned
+bytearray object is the one that is passed to the function.
+
+\begin{verbatim}
+  (define a [1 2 3 4])    => [1 2 3 4]
+  (replace-byte! a 2 100) => [1 2 100 4]
+  a                       => [1 2 100 4]
+
+\end{verbatim}
+
+\noindent{\bf\large\verb|(extract-byte <bytearray> <index>)|}
+
+Fetch and return the byte at \verb|<index>|.
+\verb|<index>| must be a valid index into the byte array (zero based).
+
+\begin{verbatim}
+  (extract-byte [1 2 3 4] 2) => 3
+\end{verbatim}
+
+\noindent{\bf\large\verb|(append-bytes <bytearray> <byte>...)|}\\
+\noindent{\bf\large\verb|(append-bytes <bytearray> <list of bytes>)|}\\
+\noindent{\bf\large\verb|(append-bytes <bytearray> <bytearray>)|}
+
+Appends the rest of the arguments to a copy of the bytearray that is the first
+arg. The copy is returned. Things that can be appended are:
+\begin{itemize}
+\item A single byte
+\item A sequence of bytes (as a sequence of separate arguments)
+\item A list of bytes
+\item A bytearray object
+\item Code that evaluates to a byte, list of bytes, or bytearray.
+\end{itemize}
+
+\begin{verbatim}
+  (append-bytes [1 2 3] 4)            => [1 2 3 4]
+  (append-bytes [1 2 3] 4 5 6)        => [1 2 3 4 5 6]
+  (append-bytes [1 2 3] '(4 5 6))     => [1 2 3 4 5 6]
+  (append-bytes [1 2 3] [4 5 6])      => [1 2 3 4 5 6]
+  (append-bytes [1 2 3] (list 4 5 6)) => [1 2 3 4 5 6]
+\end{verbatim}
+
+\noindent{\bf\large\verb|(append-bytes! <bytearray> <byte>...)|}\\
+\noindent{\bf\large\verb|(append-bytes! <bytearray> <list of bytes>)|}\\
+\noindent{\bf\large\verb|(append-bytes! <bytearray> <bytearray>)|}
+
+As with \verb|append-bytes|, but modifies and returns the bytearray
+that is passed in rather than making a copy.
+
+\begin{verbatim}
+  (define a [1 2 3])  => [1 2 3]
+  (append-bytes a 4)  => [1 2 3 4]
+  a                   => [1 2 3]
+  (append-bytes! a 4) => [1 2 3 4]
+  a                   => [1 2 3 4]
 \end{verbatim}
 
 \section{Utility}
