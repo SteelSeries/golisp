@@ -186,19 +186,7 @@ func Alist(d *Data) *Data {
 
     if PairP(d) {
         headPair := Car(d)
-        tail := make([]*Data, 0, Length(Cdr(headPair)))
-        for c := Cdr(headPair); NotNilP(c); c = Cdr(c) {
-            tail = append(tail, Alist(Car(c)))
-        }
-        var tailData *Data
-        if len(tail) > 1 {
-            tailData = ArrayToList(tail)
-        } else if len(tail) > 0 {
-            tailData = tail[0]
-        } else {
-            tailData = nil
-        }
-        return Acons(Car(headPair), tailData, Alist(Cdr(d)))
+        return Acons(Car(headPair), Cdr(headPair), Alist(Cdr(d)))
     }
 
     return d
@@ -463,10 +451,14 @@ func IsEqual(d *Data, o *Data) bool {
         return false
     }
 
-    if AlistP(d) && !AlistP(o) && !ListP(o) {
-        return false
-    } else if DottedPairP(d) && !PairP(o) && !DottedPairP(o) {
-        return false
+    if AlistP(d) {
+        if !AlistP(o) && !ListP(o) {
+            return false
+        }
+    } else if DottedPairP(d) {
+        if !PairP(o) && !DottedPairP(o) {
+            return false
+        }
     } else if TypeOf(o) != TypeOf(d) {
         return false
     }
