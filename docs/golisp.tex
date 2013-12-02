@@ -968,6 +968,45 @@ list.
       ((nil? l) count))
 \end{verbatim}
 
+\noindent{\bf\large\verb\(-> <value> <sexpr>|<symbol>...)\}
+
+This creates a function chain. \verb|value| (evaluated first)is used as the first
+argument to the first \verb|sexpr|. The result of each \verb|sexpr| is
+used as the first argument of the next, and the result of the final
+\verb|sexpr| is the value of the \verb|->| form. If a \verb|sexpr|
+would take a single argument (which would be provided by the
+\verb|value| or the result of the previous \verb|sexpr|, just the
+function name can be used.
+
+The form \verb|(-> 0 a b c)| is equivalent to \verb|(c (b (a 0)))|. 
+
+\begin{verbatim}
+  (-> 1 (+ 3) (- 2)) ==> 2         ; (- (+ 1 3) 2)
+  (-> 1 (+ 3) (- 2) str) ==> "2"   ; (str (- (+ 1 3) 2))
+
+  (list (-> *device* .screen .width)
+        (-> *device* .screen .height))
+\end{verbatim}
+
+\noindent{\bf\large\verb\(tap <value> <sexpr>|<symbol>...)\}
+
+This operates similarly to \verb|->| with two differences:
+\begin{enumerate}
+\item \verb|value| (evaluated once at the beginning) is used
+as the initial argument to {\bf each} function, and they are
+independant and do not pass results one to another.
+\item \verb|value| is the result of the form.
+\end{enumerate}
+
+\begin{verbatim}
+  (tap 1 a b c) ==> 1   ; (begin (a 1) (b 1) (c 1) 1)  
+
+  (define label (tap (UILabel.)
+                     (.frame= '((10 10) (300 75)))
+                     (.text= (str balance))))
+\end{verbatim}
+
+
 \section{Testing}
 
 Golisp has a simple builtin testing framwork.
