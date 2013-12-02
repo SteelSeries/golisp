@@ -79,6 +79,8 @@ func InitBuiltins() {
     MakePrimitiveFunction("begin", -1, Begin)
     MakePrimitiveFunction("do", -1, Do)
     MakePrimitiveFunction("apply", 2, DefApply)
+    MakePrimitiveFunction("->", -1, DefChain)
+    MakePrimitiveFunction("tap", -1, DefTap)
 
     // setters
     MakePrimitiveFunction("set!", 2, SetVar)
@@ -1951,6 +1953,66 @@ func AppendBytesBang(args *Data, env *SymbolTableFrame) (result *Data, err error
     dataByteObject, _ := Eval(Car(args), env)
     dataByteObject.Obj = unsafe.Pointer(newBytesPtr)
     result = dataByteObject
+    return
+}
+
+func DefChain(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    if Length(args) == 0 {
+        err = errors.New("-> requires at least an initial value.")
+        return
+    }
+
+    var value *Data
+
+    value, err = Eval(Car(args), env)
+    if err != nil {
+        return
+    }
+
+    for cell := Cdr(args); NotNilP(cell); cell = Cdr(cell) {
+        sexpr := Car(cell)
+        var newExpr *Data
+        if ListP(sexpr) {
+            newExpr = Cons(Car(sexpr), Cons(value, Cdr(sexpr)))
+        } else {
+            newExpr = Cons(sexpr, Cons(value, nil))
+        }
+        value, err = Eval(newExpr, env)
+        if err != nil {
+            return
+        }
+    }
+    result = value
+    return
+}
+
+func DefTap(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    if Length(args) == 0 {
+        err = errors.New("tap requires at least an initial value.")
+        return
+    }
+
+    var value *Data
+
+    value, err = Eval(Car(args), env)
+    if err != nil {
+        return
+    }
+    result = value
+
+    for cell := Cdr(args); NotNilP(cell); cell = Cdr(cell) {
+        sexpr := Car(cell)
+        var newExpr *Data
+        if ListP(sexpr) {
+            newExpr = Cons(Car(sexpr), Cons(value, Cdr(sexpr)))
+        } else {
+            newExpr = Cons(sexpr, Cons(value, nil))
+        }
+        _, err = Eval(newExpr, env)
+        if err != nil {
+            return
+        }
+    }
     return
 }
 

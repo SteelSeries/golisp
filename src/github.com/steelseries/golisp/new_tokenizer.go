@@ -171,6 +171,9 @@ func (self *MyTokenizer) readNextToken() (token int, lit string) {
     } else if currentChar == '.' {
         self.Position++
         return PERIOD, "."
+    } else if currentChar == '-' && nextChar == '>' {
+        self.Position += 2
+        return SYMBOL, "->"
     } else if currentChar == '+' {
         self.Position++
         return SYMBOL, "+"
