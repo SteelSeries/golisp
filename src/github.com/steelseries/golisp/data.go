@@ -48,6 +48,35 @@ func TypeOf(d *Data) int {
     return d.Type
 }
 
+func TypeName(t int) string {
+    switch t {
+    case ConsCellType:
+        return "List"
+    case AlistType:
+        return "Association List"
+    case AlistCellType:
+        return "Association List Cell"
+    case NumberType:
+        return "Integer"
+    case FloatType:
+        return "Float"
+    case BooleanType:
+        return "Boolean"
+    case StringType:
+        return "String"
+    case SymbolType:
+        return "Symbol"
+    case FunctionType:
+        return "Function"
+    case PrimitiveType:
+        return "Primitive"
+    case ObjectType:
+        return "Go Object"
+    default:
+        return "Unknown"
+    }
+}
+
 func NilP(d *Data) bool {
     if d == nil {
         return true
