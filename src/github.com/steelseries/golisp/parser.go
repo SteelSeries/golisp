@@ -1,5 +1,6 @@
-// Copyright 2013 SteelSeries ApS. All rights reserved.
-// No license is given for the use of this source code.
+// Copyright 2013 SteelSeries ApS.  All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
 
 // This package impliments a basic LISP interpretor for embedding in a go program for scripting.
 // This file impliments the parser
@@ -54,7 +55,7 @@ func makeSymbol(str string) (s *Data, err error) {
     return
 }
 
-func parseConsCell(s *MyTokenizer) (sexpr *Data, eof bool, err error) {
+func parseConsCell(s *Tokenizer) (sexpr *Data, eof bool, err error) {
     tok, _ := s.NextToken()
     if tok == RPAREN {
         s.ConsumeToken()
@@ -118,7 +119,7 @@ func listToBytearray(cells []*Data) *Data {
     return ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&bytes))
 }
 
-func parseBytearray(s *MyTokenizer) (sexpr *Data, eof bool, err error) {
+func parseBytearray(s *Tokenizer) (sexpr *Data, eof bool, err error) {
     tok, _ := s.NextToken()
     if tok == RBRACKET {
         s.ConsumeToken()
@@ -163,13 +164,7 @@ func parseBytearray(s *MyTokenizer) (sexpr *Data, eof bool, err error) {
 
 }
 
-func newSymbol(s *MyTokenizer, lit string) (sym *Data, eof bool, err error) {
-    s.ConsumeToken()
-    sym, err = makeSymbol(lit)
-    return
-}
-
-func parseExpression(s *MyTokenizer) (sexpr *Data, eof bool, err error) {
+func parseExpression(s *Tokenizer) (sexpr *Data, eof bool, err error) {
     for {
         tok, lit := s.NextToken()
         //fmt.Printf("token: %d (%s)\n", tok, lit)
@@ -236,7 +231,7 @@ func parseExpression(s *MyTokenizer) (sexpr *Data, eof bool, err error) {
 }
 
 func Parse(src string) (sexpr *Data, err error) {
-    s := NewMyTokenizer(src)
+    s := NewTokenizer(src)
     sexpr, _, err = parseExpression(s)
     return
 }
@@ -272,7 +267,7 @@ func ProcessFile(filename string) (result *Data, err error) {
 }
 
 func ParseAndEvalAll(src string) (result *Data, err error) {
-    s := NewMyTokenizer(src)
+    s := NewTokenizer(src)
     var sexpr *Data
     var eof bool
     for {

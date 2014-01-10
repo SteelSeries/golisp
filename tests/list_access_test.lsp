@@ -48,6 +48,41 @@
           (== (fifth '(1 2 3 4 5)) 5)
           (== (fifth l) 5))
 
+(describe sixth
+          (== (sixth 'a) nil)
+          (== (sixth nil) nil)
+          (== (sixth '()) nil)
+          (== (sixth '(1 2 3 4 5 6)) 6)
+          (== (sixth l) 6))
+
+(describe seventh
+          (== (seventh 'a) nil)
+          (== (seventh nil) nil)
+          (== (seventh '()) nil)
+          (== (seventh '(1 2 3 4 5 6 7)) 7)
+          (== (seventh l) 7))
+
+(describe eighth
+          (== (eighth 'a) nil)
+          (== (eighth nil) nil)
+          (== (eighth '()) nil)
+          (== (eighth '(1 2 3 4 5 6 7 8)) 8)
+          (== (eighth l) 8))
+
+(describe ninth
+          (== (ninth 'a) nil)
+          (== (ninth nil) nil)
+          (== (ninth '()) nil)
+          (== (ninth '(1 2 3 4 5 6 7 8 9)) 9)
+          (== (ninth l) 9))
+
+(describe tenth
+          (== (tenth 'a) nil)
+          (== (tenth nil) nil)
+          (== (tenth '()) nil)
+          (== (tenth '(1 2 3 4 5 6 7 8 9 10)) 10)
+          (== (tenth l) 10))
+
 (describe nth
           (== (nth nil 1) nil)
           (== (nth '() 1) nil)
@@ -97,5 +132,49 @@
           (== (cddr nil) nil)
           (== (cddr '(1)) nil)
           (== (cddr '(1 2 3)) '(3)))
+
+(describe caaar
+          (== (caaar 'a) nil)
+          (== (caaar nil) nil)
+          (== (caaar '(((1)))) 1))
+
+(describe caadr
+          (== (caadr 'a) nil)
+          (== (caadr nil) nil)
+          (== (caadr '(1 (2))) 2))
+
+(describe cadar
+          (== (cadar 'a) nil)
+          (== (cadar nil) nil)
+          (== (cadar '(1)) nil)
+          (== (cadar '((1 2) 3)) 2))
+
+(describe caddr
+          (== (caddr 'a) nil)
+          (== (caddr nil) nil)
+          (== (caddr '(1)) nil)
+          (== (caddr '(1 2 3)) 3))
+
+(describe cdaar
+          (== (cdaar 'a) nil)
+          (== (cdaar nil) nil)
+          (== (cdaar '(((1 2)))) '(2)))
+
+(describe cdadr
+          (== (cdadr 'a) nil)
+          (== (cdadr nil) nil)
+          (== (cdadr '(1 (1 2))) '(2)))
+
+(describe cddar
+          (== (cddar 'a) nil)
+          (== (cddar nil) nil)
+          (== (cddar '(1)) nil)
+          (== (cddar '((1 2 4) 3)) '(4)))
+
+(describe cdddr
+          (== (cdddr 'a) nil)
+          (== (cdddr nil) nil)
+          (== (cdddr '(1)) nil)
+          (== (cdddr '(1 2 3 4)) '(4)))
 
 

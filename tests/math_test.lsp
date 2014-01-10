@@ -9,6 +9,9 @@
     (== (/ 25 5) 5)
     (== (% 7 5)  2))
 
+(describe arithmetic-limits
+          (== (- 5 9) 0))
+
 (describe condition-test
     (== (< xx y)  #t)
     (== (< y z)  #f)
@@ -26,4 +29,8 @@
     (== (and #t #f #t) #f)
     (== (and #t #t #t) #t)
     (== (or (> xx z) (> y z))  #t)
-    (== (and (> xx z) (>y z))  #f))
+    (== (and (> xx z) (>y z))  #f)
+    (== (even? 2) #t)
+    (== (even? 3) #f)
+    (== (odd? 3) #t)
+    (== (odd? 2) #f))

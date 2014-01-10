@@ -21,3 +21,11 @@
 (describe partition
           (== (partition 2 '(1 2 3 4 5 6 7 8)) '((1 2) (3 4) (5 6) (7 8)))
           (== (partition 4 '(1 2 3 4 5 6 7 8)) '((1 2 3 4) (5 6 7 8))))
+
+(describe append
+          (== (append '(1 2) '(3 4)) '(1 2 3 4)))
+
+(describe append!
+          (define list1 '(1 2))
+          (== (append! list1 '(3 4)) '(1 2 3 4))
+          (== list1 '(1 2 3 4)))
