@@ -1,3 +1,7 @@
+// Copyright 2013 SteelSeries ApS.  All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package golisp
 
 import (
@@ -163,14 +167,14 @@ func (s *ParsingSuite) TestNestedList(c *C) {
 
     c.Assert(TypeOf(Cadr(sexpr)), Equals, ConsCellType)
 
-    c.Assert(TypeOf(Caadr(sexpr)), Equals, NumberType)
-    c.Assert(NumericValue(Caadr(sexpr)), Equals, uint32(2))
+    c.Assert(TypeOf(WalkList(sexpr, "aad")), Equals, NumberType)
+    c.Assert(NumericValue(WalkList(sexpr, "aad")), Equals, uint32(2))
 
-    c.Assert(TypeOf(Cadadr(sexpr)), Equals, NumberType)
-    c.Assert(NumericValue(Cadadr(sexpr)), Equals, uint32(3))
+    c.Assert(TypeOf(WalkList(sexpr, "adad")), Equals, NumberType)
+    c.Assert(NumericValue(WalkList(sexpr, "adad")), Equals, uint32(3))
 
-    c.Assert(TypeOf(Caddr(sexpr)), Equals, NumberType)
-    c.Assert(NumericValue(Caddr(sexpr)), Equals, uint32(4))
+    c.Assert(TypeOf(Third(sexpr)), Equals, NumberType)
+    c.Assert(NumericValue(Third(sexpr)), Equals, uint32(4))
 
     c.Assert(Cdr(Cddr(sexpr)), IsNil)
 }
@@ -197,6 +201,26 @@ func (s *ParsingSuite) TestPrimitive(c *C) {
     c.Assert(TypeOf(Cadr(sexpr)), Equals, NumberType)
     c.Assert(NumericValue(Cadr(sexpr)), Equals, uint32(1))
 
-    c.Assert(TypeOf(Caddr(sexpr)), Equals, NumberType)
-    c.Assert(NumericValue(Caddr(sexpr)), Equals, uint32(2))
+    c.Assert(TypeOf(Third(sexpr)), Equals, NumberType)
+    c.Assert(NumericValue(Third(sexpr)), Equals, uint32(2))
+}
+
+func (s *ParsingSuite) TestByteArray(c *C) {
+    sexpr, err := Parse("[1 2]")
+    c.Assert(err, IsNil)
+    c.Assert(TypeOf(sexpr), Equals, ObjectType)
+    c.Assert(sexpr.ObjType, Equals, "[]byte")
+    bytes := (*[]byte)(sexpr.Obj)
+    c.Assert(len(*bytes), Equals, 2)
+    c.Assert((*bytes)[0], Equals, uint8(1))
+    c.Assert((*bytes)[1], Equals, uint8(2))
+}
+
+func (s *ParsingSuite) TestEmptyByteArray(c *C) {
+    sexpr, err := Parse("[]")
+    c.Assert(err, IsNil)
+    c.Assert(TypeOf(sexpr), Equals, ObjectType)
+    c.Assert(sexpr.ObjType, Equals, "[]byte")
+    bytes := (*[]byte)(sexpr.Obj)
+    c.Assert(len(*bytes), Equals, 0)
 }

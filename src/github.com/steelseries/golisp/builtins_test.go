@@ -1,5 +1,6 @@
-// Copyright 2013 SteelSeries ApS. All rights reserved.
-// No license is given for the use of this source code.
+// Copyright 2013 SteelSeries ApS.  All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
 
 // This package impliments a basic LISP interpretor for embedding in a go program for scripting.
 // This file tests builtin primitive functions
@@ -580,32 +581,11 @@ func (s *BuiltinsSuite) TestMapSingleCollection(c *C) {
     c.Assert(NumericValue(Cadr(result)), Equals, uint32(4))
 
     c.Assert(TypeOf(Cddr(result)), Equals, ConsCellType)
-    c.Assert(TypeOf(Caddr(result)), Equals, NumberType)
-    c.Assert(NumericValue(Caddr(result)), Equals, uint32(6))
+    c.Assert(TypeOf(Third(result)), Equals, NumberType)
+    c.Assert(NumericValue(Third(result)), Equals, uint32(6))
 
-    c.Assert(NilP(Cdddr(result)), Equals, true)
+    c.Assert(NilP(WalkList(result, "ddd")), Equals, true)
 }
-
-// func (s *BuiltinsSuite) TestMapMultipleCollection(c *C) {
-//     code, _ := Parse("(map (lambda (x y) (* x y)) (quote (1 2 3)) (quote (4 5 6)))")
-//     result, err := Eval(code, Global)
-//     c.Assert(err, IsNil)
-
-//     c.Assert(result, NotNil)
-//     c.Assert(TypeOf(result), Equals, ConsCellType)
-//     c.Assert(TypeOf(Car(result)), Equals, NumberType)
-//     c.Assert(NumericValue(Car(result)), Equals, uint32(5))
-
-//     c.Assert(TypeOf(Cdr(result)), Equals, ConsCellType)
-//     c.Assert(TypeOf(Cadr(result)), Equals, NumberType)
-//     c.Assert(NumericValue(Cadr(result)), Equals, uint32(7))
-
-//     c.Assert(TypeOf(Cddr(result)), Equals, ConsCellType)
-//     c.Assert(TypeOf(Caddr(result)), Equals, NumberType)
-//     c.Assert(NumericValue(Caddr(result)), Equals, uint32(9))
-
-//     c.Assert(NilP(Cdddr(result)), Equals, true)
-// }
 
 func (s *BuiltinsSuite) TestQuote(c *C) {
     code, _ := Parse("(quote (1 2))")

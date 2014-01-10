@@ -1,5 +1,6 @@
-// Copyright 2013 SteelSeries ApS. All rights reserved.
-// No license is given for the use of this source code.
+// Copyright 2013 SteelSeries ApS.  All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
 
 // This package impliments a basic LISP interpretor for embedding in a go program for scripting.
 // This file impliments the parser
@@ -30,28 +31,28 @@ const (
     EOF
 )
 
-type MyTokenizer struct {
+type Tokenizer struct {
     LookaheadToken int
     LookaheadLit   string
     Source         string
     Position       int
 }
 
-func NewMyTokenizer(src string) *MyTokenizer {
-    t := &MyTokenizer{Source: src}
+func NewTokenizer(src string) *Tokenizer {
+    t := &Tokenizer{Source: src}
     t.ConsumeToken()
     return t
 }
 
-func (self *MyTokenizer) NextToken() (token int, lit string) {
+func (self *Tokenizer) NextToken() (token int, lit string) {
     return self.LookaheadToken, self.LookaheadLit
 }
 
-func (self *MyTokenizer) isSymbolCharacter(ch rune) bool {
+func (self *Tokenizer) isSymbolCharacter(ch rune) bool {
     return unicode.IsLetter(ch) || unicode.IsNumber(ch) || ch == '*' || ch == '-' || ch == '?' || ch == '!' || ch == '_'
 }
 
-func (self *MyTokenizer) readSymbol() (token int, lit string) {
+func (self *Tokenizer) readSymbol() (token int, lit string) {
     start := self.Position
     for !self.isEof() && self.isSymbolCharacter(rune(self.Source[self.Position])) {
         self.Position++
@@ -68,7 +69,7 @@ func isHexChar(ch rune) bool {
     }
 }
 
-func (self *MyTokenizer) readNumber() (token int, lit string) {
+func (self *Tokenizer) readNumber() (token int, lit string) {
     start := self.Position
     isHex := false
     isFloat := false
@@ -105,13 +106,10 @@ func (self *MyTokenizer) readNumber() (token int, lit string) {
     return
 }
 
-func (self *MyTokenizer) readString() (token int, lit string) {
+func (self *Tokenizer) readString() (token int, lit string) {
     buffer := make([]rune, 0, 10)
     self.Position++
     for !self.isEof() && rune(self.Source[self.Position]) != '"' {
-        if rune(self.Source[self.Position]) == '\\' {
-            self.Position++
-        }
         buffer = append(buffer, rune(self.Source[self.Position]))
         self.Position++
     }
@@ -122,15 +120,15 @@ func (self *MyTokenizer) readString() (token int, lit string) {
     return STRING, string(buffer)
 }
 
-func (self *MyTokenizer) isEof() bool {
+func (self *Tokenizer) isEof() bool {
     return self.Position >= len(self.Source)
 }
 
-func (self *MyTokenizer) isAlmostEof() bool {
+func (self *Tokenizer) isAlmostEof() bool {
     return self.Position == len(self.Source)-1
 }
 
-func (self *MyTokenizer) readNextToken() (token int, lit string) {
+func (self *Tokenizer) readNextToken() (token int, lit string) {
     if self.isEof() {
         return EOF, ""
     }
@@ -174,6 +172,9 @@ func (self *MyTokenizer) readNextToken() (token int, lit string) {
     } else if currentChar == '-' && nextChar == '>' {
         self.Position += 2
         return SYMBOL, "->"
+    } else if currentChar == '=' && nextChar == '>' {
+        self.Position += 2
+        return SYMBOL, "=>"
     } else if currentChar == '+' {
         self.Position++
         return SYMBOL, "+"
@@ -235,7 +236,7 @@ func (self *MyTokenizer) readNextToken() (token int, lit string) {
     }
 }
 
-func (self *MyTokenizer) ConsumeToken() {
+func (self *Tokenizer) ConsumeToken() {
     self.LookaheadToken, self.LookaheadLit = self.readNextToken()
     if self.LookaheadToken == COMMENT { // skip comments
         self.ConsumeToken()
