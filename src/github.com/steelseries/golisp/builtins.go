@@ -1,9 +1,10 @@
-// Copyright 2013 SteelSeries ApS.  All rights reserved.
+// Copyright 2014 SteelSeries ApS.  All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// This package impliments a basic LISP interpretor for embedding in a go program for scripting.
-// This file pre-loads primitive builtin functions
+// This package implements a basic LISP interpretor for embedding in a go program for scripting.
+// This file contains the built-in primitive functions.
+
 package golisp
 
 import (
@@ -27,169 +28,169 @@ func InitBuiltins() {
     // MakePrimitiveFunction(<symbol>, <required # args, -1 means >= 1>, <function>)
     Global.Intern("nil")
 
-    MakePrimitiveFunction("quit", 0, DefQuit)
-    MakePrimitiveFunction("debug", -1, DefDebug)
-
     // type tests
 
-    MakePrimitiveFunction("list?", 1, IsPair)
-    MakePrimitiveFunction("pair?", 1, IsPair)
-    MakePrimitiveFunction("alist?", 1, IsAlist)
-    MakePrimitiveFunction("nil?", 1, ExposedNilP)
-    MakePrimitiveFunction("notnil?", 1, ExposedNotNilP)
-    MakePrimitiveFunction("symbol?", 1, IsSymbol)
-    MakePrimitiveFunction("string?", 1, IsString)
-    MakePrimitiveFunction("number?", 1, IsNumber)
-    MakePrimitiveFunction("float?", 1, IsFloat)
-    MakePrimitiveFunction("function?", 1, IsFunction)
-    MakePrimitiveFunction("even?", 1, IsEven)
-    MakePrimitiveFunction("odd?", 1, IsOdd)
+    MakePrimitiveFunction("list?", 1, IsPairImpl)
+    MakePrimitiveFunction("pair?", 1, IsPairImpl)
+    MakePrimitiveFunction("alist?", 1, IsAlistImpl)
+    MakePrimitiveFunction("nil?", 1, NilPImpl)
+    MakePrimitiveFunction("notnil?", 1, NotNilPImpl)
+    MakePrimitiveFunction("symbol?", 1, IsSymbolImpl)
+    MakePrimitiveFunction("string?", 1, IsStringImpl)
+    MakePrimitiveFunction("number?", 1, IsNumberImpl)
+    MakePrimitiveFunction("float?", 1, IsFloatImpl)
+    MakePrimitiveFunction("function?", 1, IsFunctionImpl)
 
     // math
-    MakePrimitiveFunction("+", -1, Add)
-    MakePrimitiveFunction("-", -1, Subtract)
-    MakePrimitiveFunction("*", -1, Multiply)
-    MakePrimitiveFunction("/", -1, Quotient)
-    MakePrimitiveFunction("%", 2, Remainder)
-    MakePrimitiveFunction("random-byte", 0, RandomByte)
-    MakePrimitiveFunction("interval", 2, Interval)
-    MakePrimitiveFunction("integer", 1, ToInt)
-    MakePrimitiveFunction("float", 1, ToFloat)
+    MakePrimitiveFunction("+", -1, AddImpl)
+    MakePrimitiveFunction("-", -1, SubtractImpl)
+    MakePrimitiveFunction("*", -1, MultiplyImpl)
+    MakePrimitiveFunction("/", -1, QuotientImpl)
+    MakePrimitiveFunction("%", 2, RemainderImpl)
+    MakePrimitiveFunction("random-byte", 0, RandomByteImpl)
+    MakePrimitiveFunction("interval", 2, IntervalImpl)
+    MakePrimitiveFunction("integer", 1, ToIntImpl)
+    MakePrimitiveFunction("float", 1, ToFloatImpl)
 
-    MakePrimitiveFunction("<", -1, LessThan)
-    MakePrimitiveFunction(">", -1, GreaterThan)
-    MakePrimitiveFunction("==", 2, EqualTo)
-    MakePrimitiveFunction("!=", 2, NotEqual)
-    MakePrimitiveFunction("<=", -1, LessThanOrEqualTo)
-    MakePrimitiveFunction(">=", -1, GreaterThanOrEqualTo)
-    MakePrimitiveFunction("!", 1, BooleanNot)
-    MakePrimitiveFunction("and", -1, BooleanAnd)
-    MakePrimitiveFunction("or", -1, BooleanOr)
+    // conditional/relative
+    MakePrimitiveFunction("<", -1, LessThanImpl)
+    MakePrimitiveFunction(">", -1, GreaterThanImpl)
+    MakePrimitiveFunction("==", 2, EqualToImpl)
+    MakePrimitiveFunction("!=", 2, NotEqualImpl)
+    MakePrimitiveFunction("<=", -1, LessThanOrEqualToImpl)
+    MakePrimitiveFunction(">=", -1, GreaterThanOrEqualToImpl)
+    MakePrimitiveFunction("!", 1, BooleanNotImpl)
+    MakePrimitiveFunction("and", -1, BooleanAndImpl)
+    MakePrimitiveFunction("or", -1, BooleanOrImpl)
+    MakePrimitiveFunction("even?", 1, IsEvenImpl)
+    MakePrimitiveFunction("odd?", 1, IsOddImpl)
 
     // special forms
-    MakePrimitiveFunction("cond", -1, Cond)
-    MakePrimitiveFunction("case", -1, Case)
-    MakePrimitiveFunction("if", -1, If)
-    MakePrimitiveFunction("lambda", -1, Lambda)
-    MakePrimitiveFunction("define", -1, Define)
-    MakePrimitiveFunction("map", 2, Map)
-    MakePrimitiveFunction("quote", 1, Quote)
-    MakePrimitiveFunction("let", -1, Let)
-    MakePrimitiveFunction("begin", -1, Begin)
-    MakePrimitiveFunction("do", -1, Do)
-    MakePrimitiveFunction("apply", 2, DefApply)
-    MakePrimitiveFunction("->", -1, DefChain)
-    MakePrimitiveFunction("=>", -1, DefTap)
+    MakePrimitiveFunction("cond", -1, CondImpl)
+    MakePrimitiveFunction("case", -1, CaseImpl)
+    MakePrimitiveFunction("if", -1, IfImpl)
+    MakePrimitiveFunction("lambda", -1, LambdaImpl)
+    MakePrimitiveFunction("define", -1, DefineImpl)
+    MakePrimitiveFunction("map", 2, MapImpl)
+    MakePrimitiveFunction("quote", 1, QuoteImpl)
+    MakePrimitiveFunction("let", -1, LetImpl)
+    MakePrimitiveFunction("begin", -1, BeginImpl)
+    MakePrimitiveFunction("do", -1, DoImpl)
+    MakePrimitiveFunction("apply", 2, DefApplyImpl)
+    MakePrimitiveFunction("->", -1, DefChainImpl)
+    MakePrimitiveFunction("=>", -1, DefTapImpl)
 
     // setters
-    MakePrimitiveFunction("set!", 2, SetVar)
-    MakePrimitiveFunction("set-car!", 2, SetCar)
-    MakePrimitiveFunction("set-cdr!", 2, SetCdr)
-    MakePrimitiveFunction("set-nth!", 3, SetNth)
+    MakePrimitiveFunction("set!", 2, SetVarImpl)
+    MakePrimitiveFunction("set-car!", 2, SetCarImpl)
+    MakePrimitiveFunction("set-cdr!", 2, SetCdrImpl)
+    MakePrimitiveFunction("set-nth!", 3, SetNthImpl)
 
-    // list access
-    MakePrimitiveFunction("list", -1, MakeList)
-    MakePrimitiveFunction("length", 1, ListLength)
-    MakePrimitiveFunction("cons", 2, ExposedCons)
-    MakePrimitiveFunction("reverse", 1, ExposedReverse)
-    MakePrimitiveFunction("flatten", 1, ExposedFlatten)
-    MakePrimitiveFunction("flatten*", 1, ExposedRecursiveFlatten)
-    MakePrimitiveFunction("append", 2, ExposeAppend)
-    MakePrimitiveFunction("append!", 2, ExposeAppendBang)
-    MakePrimitiveFunction("copy", 1, ExposeCopy)
-    MakePrimitiveFunction("partition", 2, Partition)
+    // lists
+    MakePrimitiveFunction("list", -1, MakeListImpl)
+    MakePrimitiveFunction("length", 1, ListLengthImpl)
+    MakePrimitiveFunction("cons", 2, ConsImpl)
+    MakePrimitiveFunction("reverse", 1, ReverseImpl)
+    MakePrimitiveFunction("flatten", 1, FlattenImpl)
+    MakePrimitiveFunction("flatten*", 1, RecursiveFlattenImpl)
+    MakePrimitiveFunction("append", 2, AppendImpl)
+    MakePrimitiveFunction("append!", 2, AppendBangImpl)
+    MakePrimitiveFunction("copy", 1, CopyImpl)
+    MakePrimitiveFunction("partition", 2, PartitionImpl)
 
-    MakePrimitiveFunction("car", 1, ExposedCar)
-    MakePrimitiveFunction("head", 1, ExposedCar)
-    MakePrimitiveFunction("cdr", 1, ExposedCdr)
-    MakePrimitiveFunction("rest", 1, ExposedCdr)
-    MakePrimitiveFunction("tail", 1, ExposedCdr)
+    MakePrimitiveFunction("car", 1, CarImpl)
+    MakePrimitiveFunction("head", 1, CarImpl)
+    MakePrimitiveFunction("cdr", 1, CdrImpl)
+    MakePrimitiveFunction("rest", 1, CdrImpl)
+    MakePrimitiveFunction("tail", 1, CdrImpl)
 
-    MakePrimitiveFunction("caar", 1, ExposedCaar)
-    MakePrimitiveFunction("cadr", 1, ExposedCadr)
-    MakePrimitiveFunction("cdar", 1, ExposedCdar)
-    MakePrimitiveFunction("cddr", 1, ExposedCddr)
+    MakePrimitiveFunction("caar", 1, CaarImpl)
+    MakePrimitiveFunction("cadr", 1, CadrImpl)
+    MakePrimitiveFunction("cdar", 1, CdarImpl)
+    MakePrimitiveFunction("cddr", 1, CddrImpl)
 
-    MakePrimitiveFunction("caaar", 1, ExposedCaaar)
-    MakePrimitiveFunction("caadr", 1, ExposedCaadr)
-    MakePrimitiveFunction("cadar", 1, ExposedCadar)
-    MakePrimitiveFunction("caddr", 1, ExposedCaddr)
-    MakePrimitiveFunction("cdaar", 1, ExposedCdaar)
-    MakePrimitiveFunction("cdadr", 1, ExposedCdadr)
-    MakePrimitiveFunction("cddar", 1, ExposedCddar)
-    MakePrimitiveFunction("cdddr", 1, ExposedCdddr)
+    MakePrimitiveFunction("caaar", 1, CaaarImpl)
+    MakePrimitiveFunction("caadr", 1, CaadrImpl)
+    MakePrimitiveFunction("cadar", 1, CadarImpl)
+    MakePrimitiveFunction("caddr", 1, CaddrImpl)
+    MakePrimitiveFunction("cdaar", 1, CdaarImpl)
+    MakePrimitiveFunction("cdadr", 1, CdadrImpl)
+    MakePrimitiveFunction("cddar", 1, CddarImpl)
+    MakePrimitiveFunction("cdddr", 1, CdddrImpl)
 
-    MakePrimitiveFunction("caaaar", 1, ExposedCaaaar)
-    MakePrimitiveFunction("caaadr", 1, ExposedCaaadr)
-    MakePrimitiveFunction("caadar", 1, ExposedCaadar)
-    MakePrimitiveFunction("caaddr", 1, ExposedCaaddr)
-    MakePrimitiveFunction("cadaar", 1, ExposedCadaar)
-    MakePrimitiveFunction("cadadr", 1, ExposedCadadr)
-    MakePrimitiveFunction("caddar", 1, ExposedCaddar)
-    MakePrimitiveFunction("cadddr", 1, ExposedCadddr)
-    MakePrimitiveFunction("cdaaar", 1, ExposedCdaaar)
-    MakePrimitiveFunction("cdaadr", 1, ExposedCdaadr)
-    MakePrimitiveFunction("cdadar", 1, ExposedCdadar)
-    MakePrimitiveFunction("cdaddr", 1, ExposedCdaddr)
-    MakePrimitiveFunction("cddaar", 1, ExposedCddaar)
-    MakePrimitiveFunction("cddadr", 1, ExposedCddadr)
-    MakePrimitiveFunction("cdddar", 1, ExposedCdddar)
-    MakePrimitiveFunction("cddddr", 1, ExposedCddddr)
+    MakePrimitiveFunction("caaaar", 1, CaaaarImpl)
+    MakePrimitiveFunction("caaadr", 1, CaaadrImpl)
+    MakePrimitiveFunction("caadar", 1, CaadarImpl)
+    MakePrimitiveFunction("caaddr", 1, CaaddrImpl)
+    MakePrimitiveFunction("cadaar", 1, CadaarImpl)
+    MakePrimitiveFunction("cadadr", 1, CadadrImpl)
+    MakePrimitiveFunction("caddar", 1, CaddarImpl)
+    MakePrimitiveFunction("cadddr", 1, CadddrImpl)
+    MakePrimitiveFunction("cdaaar", 1, CdaaarImpl)
+    MakePrimitiveFunction("cdaadr", 1, CdaadrImpl)
+    MakePrimitiveFunction("cdadar", 1, CdadarImpl)
+    MakePrimitiveFunction("cdaddr", 1, CdaddrImpl)
+    MakePrimitiveFunction("cddaar", 1, CddaarImpl)
+    MakePrimitiveFunction("cddadr", 1, CddadrImpl)
+    MakePrimitiveFunction("cdddar", 1, CdddarImpl)
+    MakePrimitiveFunction("cddddr", 1, CddddrImpl)
 
-    MakePrimitiveFunction("first", 1, ExposedFirst)
-    MakePrimitiveFunction("second", 1, ExposedSecond)
-    MakePrimitiveFunction("third", 1, ExposedThird)
-    MakePrimitiveFunction("fourth", 1, ExposedFourth)
-    MakePrimitiveFunction("fifth", 1, ExposedFifth)
-    MakePrimitiveFunction("sixth", 1, ExposedSixth)
-    MakePrimitiveFunction("seventh", 1, ExposedSeventh)
-    MakePrimitiveFunction("eighth", 1, ExposedEighth)
-    MakePrimitiveFunction("ninth", 1, ExposedNinth)
-    MakePrimitiveFunction("tenth", 1, ExposedTenth)
+    MakePrimitiveFunction("first", 1, FirstImpl)
+    MakePrimitiveFunction("second", 1, SecondImpl)
+    MakePrimitiveFunction("third", 1, ThirdImpl)
+    MakePrimitiveFunction("fourth", 1, FourthImpl)
+    MakePrimitiveFunction("fifth", 1, FifthImpl)
+    MakePrimitiveFunction("sixth", 1, SixthImpl)
+    MakePrimitiveFunction("seventh", 1, SeventhImpl)
+    MakePrimitiveFunction("eighth", 1, EighthImpl)
+    MakePrimitiveFunction("ninth", 1, NinthImpl)
+    MakePrimitiveFunction("tenth", 1, TenthImpl)
 
-    MakePrimitiveFunction("nth", 2, ExposedNth)
+    MakePrimitiveFunction("nth", 2, NthImpl)
 
     // association lists
 
-    MakePrimitiveFunction("acons", -1, ExposedAcons)
-    MakePrimitiveFunction("pairlis", -1, Pairlis)
-    MakePrimitiveFunction("assoc", 2, ExposedAssoc)
-    MakePrimitiveFunction("rassoc", 2, Rassoc)
-    MakePrimitiveFunction("alist", 1, ExposedAlist)
+    MakePrimitiveFunction("acons", -1, AconsImpl)
+    MakePrimitiveFunction("pairlis", -1, PairlisImpl)
+    MakePrimitiveFunction("assoc", 2, AssocImpl)
+    MakePrimitiveFunction("rassoc", 2, RassocImpl)
+    MakePrimitiveFunction("alist", 1, AlistImpl)
 
     // system
-    MakePrimitiveFunction("load", 1, LoadFile)
-    MakePrimitiveFunction("dump", 0, DumpSymbolTable)
-    MakePrimitiveFunction("sleep", 1, DefSleep)
-    MakePrimitiveFunction("write-line", 1, WriteLine)
-    MakePrimitiveFunction("str", -1, MakeString)
-    MakePrimitiveFunction("time", 1, DefTime)
+    MakePrimitiveFunction("load", 1, LoadFileImpl)
+    MakePrimitiveFunction("dump", 0, DumpSymbolTableImpl)
+    MakePrimitiveFunction("sleep", 1, DefSleepImpl)
+    MakePrimitiveFunction("write-line", 1, WriteLineImpl)
+    MakePrimitiveFunction("str", -1, MakeStringImpl)
+    MakePrimitiveFunction("time", 1, DefTimeImpl)
+    MakePrimitiveFunction("quit", 0, DefQuitImpl)
+    MakePrimitiveFunction("debug", -1, DefDebugImpl)
 
     // bytearrays
-    MakePrimitiveFunction("list-to-bytearray", 1, ListToBytes)
-    MakePrimitiveFunction("bytearray-to-list", 1, BytesToList)
-    MakePrimitiveFunction("replace-byte", 3, ReplaceByte)
-    MakePrimitiveFunction("replace-byte!", 3, ReplaceByteBang)
-    MakePrimitiveFunction("extract-byte", 2, ExtractByte)
-    MakePrimitiveFunction("append-bytes", -1, AppendBytes)
-    MakePrimitiveFunction("append-bytes!", -1, AppendBytesBang)
+    MakePrimitiveFunction("list-to-bytearray", 1, ListToBytesImpl)
+    MakePrimitiveFunction("bytearray-to-list", 1, BytesToListImpl)
+    MakePrimitiveFunction("replace-byte", 3, ReplaceByteImpl)
+    MakePrimitiveFunction("replace-byte!", 3, ReplaceByteBangImpl)
+    MakePrimitiveFunction("extract-byte", 2, ExtractByteImpl)
+    MakePrimitiveFunction("append-bytes", -1, AppendBytesImpl)
+    MakePrimitiveFunction("append-bytes!", -1, AppendBytesBangImpl)
 
     // testing
-    MakePrimitiveFunction("describe", -1, Describe)
+    MakePrimitiveFunction("describe", -1, DescribeImpl)
 
 }
 
-func IsPair(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func IsPairImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     val, err := Eval(Car(args), env)
     return BooleanWithValue(PairP(val)), nil
 }
 
-func IsAlist(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func IsAlistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     val, err := Eval(Car(args), env)
     return BooleanWithValue(AlistP(val)), nil
 }
 
-func ExposedNilP(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func NilPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     val, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -197,7 +198,7 @@ func ExposedNilP(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return BooleanWithValue(NilP(val)), nil
 }
 
-func ExposedNotNilP(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func NotNilPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     val, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -205,27 +206,27 @@ func ExposedNotNilP(args *Data, env *SymbolTableFrame) (result *Data, err error)
     return BooleanWithValue(NotNilP(val)), nil
 }
 
-func IsSymbol(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func IsSymbolImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     val, err := Eval(Car(args), env)
     return BooleanWithValue(SymbolP(val)), nil
 }
 
-func IsString(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func IsStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     val, _ := Eval(Car(args), env)
     return BooleanWithValue(StringP(val)), nil
 }
 
-func IsNumber(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func IsNumberImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     val, _ := Eval(Car(args), env)
     return BooleanWithValue(NumberP(val)), nil
 }
 
-func IsFloat(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func IsFloatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     val, _ := Eval(Car(args), env)
     return BooleanWithValue(FloatP(val)), nil
 }
 
-func IsEven(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func IsEvenImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     evaluated, _ := Eval(Car(args), env)
     if !NumberP(evaluated) {
         return False, nil
@@ -233,7 +234,7 @@ func IsEven(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return BooleanWithValue((NumericValue(evaluated) % 2) == 0), nil
 }
 
-func IsOdd(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func IsOddImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     evaluated, _ := Eval(Car(args), env)
     if !NumberP(evaluated) {
         return False, nil
@@ -241,7 +242,7 @@ func IsOdd(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return BooleanWithValue((NumericValue(evaluated) % 2) == 1), nil
 }
 
-func IsFunction(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func IsFunctionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     val, _ := Eval(Car(args), env)
     return BooleanWithValue(FunctionP(val)), nil
 }
@@ -283,7 +284,7 @@ func anyFloats(args *Data, env *SymbolTableFrame) (result bool, err error) {
     return false, nil
 }
 
-func Add(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func AddImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     areFloats, err := anyFloats(args, env)
     if err != nil {
         return
@@ -322,7 +323,7 @@ func subtractFloats(args *Data, env *SymbolTableFrame) (result *Data, err error)
     return FloatWithValue(acc), nil
 }
 
-func Subtract(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func SubtractImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     areFloats, err := anyFloats(args, env)
     if err != nil {
         return
@@ -354,7 +355,7 @@ func multiplyFloats(args *Data, env *SymbolTableFrame) (result *Data, err error)
     return FloatWithValue(acc), nil
 }
 
-func Multiply(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func MultiplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     areFloats, err := anyFloats(args, env)
     if err != nil {
         return
@@ -388,7 +389,7 @@ func quotientFloats(args *Data, env *SymbolTableFrame) (result *Data, err error)
     return FloatWithValue(acc), nil
 }
 
-func Quotient(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func QuotientImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     areFloats, err := anyFloats(args, env)
     if err != nil {
         return
@@ -400,7 +401,7 @@ func Quotient(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     }
 }
 
-func Remainder(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func RemainderImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) != 2 {
         err = errors.New(fmt.Sprintf("2 args expected, %d received", Length(args)))
         return
@@ -430,13 +431,13 @@ func Remainder(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return NumberWithValue(val), nil
 }
 
-func RandomByte(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func RandomByteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     r := uint8(rand.Int())
     result = NumberWithValue(uint32(r))
     return
 }
 
-func Interval(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func IntervalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     startObj, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -458,7 +459,7 @@ func Interval(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return
 }
 
-func ToInt(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func ToIntImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     n, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -471,7 +472,7 @@ func ToInt(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return NumberWithValue(NumericValue(n)), nil
 }
 
-func ToFloat(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func ToFloatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     n, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -484,7 +485,7 @@ func ToFloat(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return FloatWithValue(FloatValue(n)), nil
 }
 
-func LessThan(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func LessThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) != 2 {
         err = errors.New(fmt.Sprintf("2 args expected, %d received", Length(args)))
         return
@@ -514,7 +515,7 @@ func LessThan(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return BooleanWithValue(val), nil
 }
 
-func GreaterThan(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func GreaterThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) != 2 {
         err = errors.New(fmt.Sprintf("2 args expected, %d received", Length(args)))
         return
@@ -544,7 +545,7 @@ func GreaterThan(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return BooleanWithValue(val), nil
 }
 
-func EqualTo(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func EqualToImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) != 2 {
         err = errors.New(fmt.Sprintf("2 args expected, %d received", Length(args)))
         return
@@ -565,7 +566,7 @@ func EqualTo(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return BooleanWithValue(IsEqual(arg1, arg2)), nil
 }
 
-func NotEqual(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func NotEqualImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) != 2 {
         err = errors.New(fmt.Sprintf("2 args expected, %d received", Length(args)))
         return
@@ -586,7 +587,7 @@ func NotEqual(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return BooleanWithValue(!IsEqual(arg1, arg2)), nil
 }
 
-func LessThanOrEqualTo(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func LessThanOrEqualToImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) != 2 {
         err = errors.New(fmt.Sprintf("2 args expected, %d received", Length(args)))
         return
@@ -616,7 +617,7 @@ func LessThanOrEqualTo(args *Data, env *SymbolTableFrame) (result *Data, err err
     return BooleanWithValue(val), nil
 }
 
-func GreaterThanOrEqualTo(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func GreaterThanOrEqualToImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) != 2 {
         err = errors.New(fmt.Sprintf("2 args expected, %d received", Length(args)))
         return
@@ -646,7 +647,7 @@ func GreaterThanOrEqualTo(args *Data, env *SymbolTableFrame) (result *Data, err 
     return BooleanWithValue(val), nil
 }
 
-func BooleanNot(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func BooleanNotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) != 1 {
         err = errors.New(fmt.Sprintf("! requires 1 argument. Received %d.", Length(args)))
         return
@@ -661,7 +662,7 @@ func BooleanNot(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return BooleanWithValue(!val), nil
 }
 
-func BooleanAnd(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func BooleanAndImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     for c := args; NotNilP(c); c = Cdr(c) {
         result, err = Eval(Car(c), env)
         if !BooleanValue(result) {
@@ -672,7 +673,7 @@ func BooleanAnd(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return
 }
 
-func BooleanOr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func BooleanOrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     for c := args; NotNilP(c); c = Cdr(c) {
         result, err = Eval(Car(c), env)
         if BooleanValue(result) {
@@ -683,7 +684,7 @@ func BooleanOr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return
 }
 
-func Cond(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CondImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var condition *Data
     for c := args; NotNilP(c); c = Cdr(c) {
         clause := Car(c)
@@ -708,7 +709,7 @@ func Cond(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return
 }
 
-func EvalList(l *Data, env *SymbolTableFrame) (result *Data, err error) {
+func evalList(l *Data, env *SymbolTableFrame) (result *Data, err error) {
     for sexpr := l; NotNilP(sexpr); sexpr = Cdr(sexpr) {
         result, err = Eval(Car(sexpr), env)
         if err != nil {
@@ -718,7 +719,7 @@ func EvalList(l *Data, env *SymbolTableFrame) (result *Data, err error) {
     return
 }
 
-func Case(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CaseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var keyValue *Data
     var targetValue *Data
 
@@ -731,11 +732,11 @@ func Case(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         clause := Car(clauseCell)
         if PairP(clause) {
             if IsEqual(Car(clause), SymbolWithName("else")) {
-                return EvalList(Cdr(clause), env)
+                return evalList(Cdr(clause), env)
             } else {
                 targetValue, err = Eval(Car(clause), env)
                 if IsEqual(targetValue, keyValue) {
-                    return EvalList(Cdr(clause), env)
+                    return evalList(Cdr(clause), env)
                 }
             }
         } else {
@@ -747,7 +748,7 @@ func Case(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return
 }
 
-func If(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func IfImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) < 2 || Length(args) > 3 {
         err = errors.New(fmt.Sprintf("IF requires 2 or 3 arguments. Received %d.", Length(args)))
         return
@@ -768,7 +769,7 @@ func If(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     }
 }
 
-func ListLength(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func ListLengthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     d, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -776,7 +777,7 @@ func ListLength(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return NumberWithValue(uint32(Length(d))), nil
 }
 
-func ExposedCons(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func ConsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var car *Data
     car, err = Eval(Car(args), env)
     if err != nil {
@@ -793,7 +794,7 @@ func ExposedCons(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return
 }
 
-func ExposedReverse(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func ReverseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var val *Data
     val, err = Eval(Car(args), env)
     if err != nil {
@@ -803,7 +804,7 @@ func ExposedReverse(args *Data, env *SymbolTableFrame) (result *Data, err error)
     return
 }
 
-func ExposedFlatten(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func FlattenImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var val *Data
     val, err = Eval(Car(args), env)
     if err != nil {
@@ -813,7 +814,7 @@ func ExposedFlatten(args *Data, env *SymbolTableFrame) (result *Data, err error)
     return
 }
 
-func ExposedRecursiveFlatten(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func RecursiveFlattenImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var val *Data
     val, err = Eval(Car(args), env)
     if err != nil {
@@ -823,7 +824,7 @@ func ExposedRecursiveFlatten(args *Data, env *SymbolTableFrame) (result *Data, e
     return
 }
 
-func ExposeAppendBang(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func AppendBangImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     firstList, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -843,7 +844,7 @@ func ExposeAppendBang(args *Data, env *SymbolTableFrame) (result *Data, err erro
     return
 }
 
-func ExposeAppend(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func AppendImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     firstList, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -858,7 +859,7 @@ func ExposeAppend(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return
 }
 
-func ExposeCopy(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CopyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     d, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -867,7 +868,7 @@ func ExposeCopy(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return Copy(d), nil
 }
 
-func Partition(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func PartitionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     n, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -900,13 +901,13 @@ func Partition(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return ArrayToList(pieces), nil
 }
 
-func Lambda(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func LambdaImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     params := Car(args)
     body := Cdr(args)
     return FunctionWithNameParamsBodyAndParent("anonymous", params, body, env), nil
 }
 
-func Define(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func DefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var value *Data
     thing := Car(args)
     if SymbolP(thing) {
@@ -932,12 +933,12 @@ func Define(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return value, nil
 }
 
-func DumpSymbolTable(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func DumpSymbolTableImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     env.Dump()
     return
 }
 
-func Map(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     f, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -969,11 +970,11 @@ func Map(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return ArrayToList(d), nil
 }
 
-func Quote(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func QuoteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return Car(args), nil
 }
 
-func MakeList(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func MakeListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var items []*Data = make([]*Data, 0, Length(args))
     var item *Data
     for cell := args; NotNilP(cell); cell = Cdr(cell) {
@@ -987,7 +988,7 @@ func MakeList(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return
 }
 
-func ExposedCar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -995,7 +996,7 @@ func ExposedCar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return WalkList(a, "a"), nil
 }
 
-func ExposedCdr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CdrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1003,7 +1004,7 @@ func ExposedCdr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return WalkList(a, "d"), nil
 }
 
-func ExposedCaar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CaarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1011,7 +1012,7 @@ func ExposedCaar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return WalkList(a, "aa"), nil
 }
 
-func ExposedCadr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CadrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1019,7 +1020,7 @@ func ExposedCadr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return WalkList(a, "ad"), nil
 }
 
-func ExposedCdar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CdarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1027,7 +1028,7 @@ func ExposedCdar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return WalkList(a, "da"), nil
 }
 
-func ExposedCddr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CddrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1035,7 +1036,7 @@ func ExposedCddr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return WalkList(a, "dd"), nil
 }
 
-func ExposedCaaar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CaaarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1043,7 +1044,7 @@ func ExposedCaaar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return WalkList(a, "aaa"), nil
 }
 
-func ExposedCaadr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CaadrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1051,7 +1052,7 @@ func ExposedCaadr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return WalkList(a, "aad"), nil
 }
 
-func ExposedCadar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CadarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1059,7 +1060,7 @@ func ExposedCadar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return WalkList(a, "ada"), nil
 }
 
-func ExposedCaddr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CaddrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1067,7 +1068,7 @@ func ExposedCaddr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return WalkList(a, "add"), nil
 }
 
-func ExposedCdaar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CdaarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1075,7 +1076,7 @@ func ExposedCdaar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return WalkList(a, "daa"), nil
 }
 
-func ExposedCdadr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CdadrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1083,7 +1084,7 @@ func ExposedCdadr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return WalkList(a, "dad"), nil
 }
 
-func ExposedCddar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CddarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1091,7 +1092,7 @@ func ExposedCddar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return WalkList(a, "dda"), nil
 }
 
-func ExposedCdddr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CdddrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1099,7 +1100,7 @@ func ExposedCdddr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return WalkList(a, "ddd"), nil
 }
 
-func ExposedCaaaar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CaaaarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1107,7 +1108,7 @@ func ExposedCaaaar(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     return WalkList(a, "aaaa"), nil
 }
 
-func ExposedCaaadr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CaaadrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1115,7 +1116,7 @@ func ExposedCaaadr(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     return WalkList(a, "aaad"), nil
 }
 
-func ExposedCaadar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CaadarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1123,7 +1124,7 @@ func ExposedCaadar(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     return WalkList(a, "aada"), nil
 }
 
-func ExposedCaaddr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CaaddrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1131,7 +1132,7 @@ func ExposedCaaddr(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     return WalkList(a, "aadd"), nil
 }
 
-func ExposedCadaar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CadaarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1139,7 +1140,7 @@ func ExposedCadaar(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     return WalkList(a, "adaa"), nil
 }
 
-func ExposedCadadr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CadadrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1147,7 +1148,7 @@ func ExposedCadadr(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     return WalkList(a, "adad"), nil
 }
 
-func ExposedCaddar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CaddarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1155,7 +1156,7 @@ func ExposedCaddar(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     return WalkList(a, "adda"), nil
 }
 
-func ExposedCadddr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CadddrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1163,7 +1164,7 @@ func ExposedCadddr(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     return WalkList(a, "addd"), nil
 }
 
-func ExposedCdaaar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CdaaarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1171,7 +1172,7 @@ func ExposedCdaaar(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     return WalkList(a, "daaa"), nil
 }
 
-func ExposedCdaadr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CdaadrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1179,7 +1180,7 @@ func ExposedCdaadr(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     return WalkList(a, "daad"), nil
 }
 
-func ExposedCdadar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CdadarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1187,7 +1188,7 @@ func ExposedCdadar(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     return WalkList(a, "dada"), nil
 }
 
-func ExposedCdaddr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CdaddrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1195,7 +1196,7 @@ func ExposedCdaddr(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     return WalkList(a, "dadd"), nil
 }
 
-func ExposedCddaar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CddaarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1203,7 +1204,7 @@ func ExposedCddaar(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     return WalkList(a, "ddaa"), nil
 }
 
-func ExposedCddadr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CddadrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1211,7 +1212,7 @@ func ExposedCddadr(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     return WalkList(a, "ddad"), nil
 }
 
-func ExposedCdddar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CdddarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1219,7 +1220,7 @@ func ExposedCdddar(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     return WalkList(a, "ddda"), nil
 }
 
-func ExposedCddddr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func CddddrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1227,7 +1228,7 @@ func ExposedCddddr(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     return WalkList(a, "dddd"), nil
 }
 
-func ExposedFirst(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func FirstImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1235,7 +1236,7 @@ func ExposedFirst(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return First(a), nil
 }
 
-func ExposedSecond(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func SecondImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1243,7 +1244,7 @@ func ExposedSecond(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     return Second(a), nil
 }
 
-func ExposedThird(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func ThirdImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1251,7 +1252,7 @@ func ExposedThird(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return Third(a), nil
 }
 
-func ExposedFourth(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func FourthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1259,7 +1260,7 @@ func ExposedFourth(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     return Fourth(a), nil
 }
 
-func ExposedFifth(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func FifthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1267,7 +1268,7 @@ func ExposedFifth(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return Fifth(a), nil
 }
 
-func ExposedSixth(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func SixthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1275,7 +1276,7 @@ func ExposedSixth(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return Sixth(a), nil
 }
 
-func ExposedSeventh(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func SeventhImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1283,7 +1284,7 @@ func ExposedSeventh(args *Data, env *SymbolTableFrame) (result *Data, err error)
     return Seventh(a), nil
 }
 
-func ExposedEighth(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func EighthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1291,7 +1292,7 @@ func ExposedEighth(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     return Eighth(a), nil
 }
 
-func ExposedNinth(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func NinthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1299,7 +1300,7 @@ func ExposedNinth(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return Ninth(a), nil
 }
 
-func ExposedTenth(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func TenthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     a, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1307,7 +1308,7 @@ func ExposedTenth(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return Tenth(a), nil
 }
 
-func ExposedNth(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func NthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     col, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1328,7 +1329,7 @@ func ExposedNth(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return Nth(col, int(NumericValue(count))), nil
 }
 
-func ExposedAlist(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func AlistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     l, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1337,7 +1338,7 @@ func ExposedAlist(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return
 }
 
-func ExposedAcons(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func AconsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var key *Data
     var value *Data
     var alist *Data
@@ -1373,7 +1374,7 @@ func ExposedAcons(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return
 }
 
-func Pairlis(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func PairlisImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var keys *Data
     var values *Data
     if Length(args) > 3 {
@@ -1429,7 +1430,7 @@ func Pairlis(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return
 }
 
-func ExposedAssoc(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func AssocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var key *Data
     var list *Data
 
@@ -1447,7 +1448,7 @@ func ExposedAssoc(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return
 }
 
-func Rassoc(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func RassocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var value *Data
     var list *Data
 
@@ -1475,7 +1476,7 @@ func Rassoc(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return
 }
 
-func LoadFile(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func LoadFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     filename := Car(args)
     if !StringP(filename) {
         err = errors.New("Filename must be a string")
@@ -1485,7 +1486,7 @@ func LoadFile(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return ProcessFile(StringValue(filename))
 }
 
-func SetVar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func SetVarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     symbol := Car(args)
     if !SymbolP(symbol) {
         err = errors.New("set! requires a raw (unevaluated) symbol as it's first argument.")
@@ -1497,7 +1498,7 @@ func SetVar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return env.SetTo(symbol, value)
 }
 
-func SetCar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func SetCarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     pair, err := Eval(Car(args), env)
     if !PairP(pair) {
         err = errors.New("set-car! requires a pair as it's first argument.")
@@ -1510,7 +1511,7 @@ func SetCar(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return value, nil
 }
 
-func SetCdr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func SetCdrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     pair, err := Eval(Car(args), env)
     if !PairP(pair) {
         err = errors.New("set-cdr! requires a pair as it's first argument.")
@@ -1523,7 +1524,7 @@ func SetCdr(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return value, nil
 }
 
-func SetNth(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func SetNthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     l, err := Eval(First(args), env)
     if !ListP(l) {
         err = errors.New("set-nth! requires a list as it's first argument.")
@@ -1546,7 +1547,7 @@ func SetNth(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return value, nil
 }
 
-func BindLetLocals(bindingForms *Data, env *SymbolTableFrame) (err error) {
+func bindLetLocals(bindingForms *Data, env *SymbolTableFrame) (err error) {
     var name *Data
     var value *Data
 
@@ -1569,7 +1570,7 @@ func BindLetLocals(bindingForms *Data, env *SymbolTableFrame) (err error) {
     return
 }
 
-func Let(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func LetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) < 1 {
         err = errors.New("Let requires at least a list of bindings")
         return
@@ -1581,7 +1582,7 @@ func Let(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     }
 
     localFrame := NewSymbolTableFrameBelow(env)
-    BindLetLocals(Car(args), localFrame)
+    bindLetLocals(Car(args), localFrame)
 
     for cell := Cdr(args); NotNilP(cell); cell = Cdr(cell) {
         sexpr := Car(cell)
@@ -1594,7 +1595,7 @@ func Let(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return
 }
 
-func Begin(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func BeginImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     for cell := args; NotNilP(cell); cell = Cdr(cell) {
         sexpr := Car(cell)
         result, err = Eval(sexpr, env)
@@ -1605,7 +1606,7 @@ func Begin(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return
 }
 
-func RebindDoLocals(bindingForms *Data, env *SymbolTableFrame) (err error) {
+func rebindDoLocals(bindingForms *Data, env *SymbolTableFrame) (err error) {
     var name *Data
     var value *Data
 
@@ -1623,7 +1624,7 @@ func RebindDoLocals(bindingForms *Data, env *SymbolTableFrame) (err error) {
     return
 }
 
-func Do(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func DoImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) < 2 {
         err = errors.New("Do requires at least a list of bindings and a test clause")
         return
@@ -1642,7 +1643,7 @@ func Do(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     }
 
     localFrame := NewSymbolTableFrameBelow(env)
-    BindLetLocals(bindings, localFrame)
+    bindLetLocals(bindings, localFrame)
 
     body := Cddr(args)
 
@@ -1673,12 +1674,12 @@ func Do(args *Data, env *SymbolTableFrame) (result *Data, err error) {
             }
         }
 
-        RebindDoLocals(bindings, localFrame)
+        rebindDoLocals(bindings, localFrame)
     }
     return
 }
 
-func DefApply(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func DefApplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     f, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1692,20 +1693,20 @@ func DefApply(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return Apply(f, vals, env)
 }
 
-func DefQuit(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func DefQuitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     WriteHistoryToFile(".golisp_history")
     os.Exit(0)
     return
 }
 
-func DefDebug(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func DefDebugImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) == 1 {
         DebugTrace = BooleanValue(Car(args))
     }
     return BooleanWithValue(DebugTrace), nil
 }
 
-func DefSleep(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func DefSleepImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     n, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1719,7 +1720,7 @@ func DefSleep(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return
 }
 
-func WriteLine(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func WriteLineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     data, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1728,7 +1729,7 @@ func WriteLine(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return
 }
 
-func MakeString(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func MakeStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     pieces := make([]string, 2)
     for cell := args; NotNilP(cell); cell = Cdr(cell) {
         sexpr := Car(cell)
@@ -1741,7 +1742,7 @@ func MakeString(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return StringWithValue(strings.Join(pieces, "")), nil
 }
 
-func DefTime(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func DefTimeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     fmt.Printf("Starting timer.\n")
     startTime := time.Now()
 
@@ -1759,7 +1760,7 @@ func DefTime(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return
 }
 
-func ListToBytes(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func ListToBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if NilP(Car(args)) {
         err = errors.New("Argument to ListToByutes can not be nil.")
         return
@@ -1787,7 +1788,7 @@ func ListToBytes(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&bytes)), nil
 }
 
-func BytesToList(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func BytesToListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     dataByteObject, err := Eval(Car(args), env)
     if err != nil {
         panic(err)
@@ -1886,15 +1887,15 @@ func internalReplaceByte(args *Data, env *SymbolTableFrame, makeCopy bool) (resu
     return
 }
 
-func ReplaceByte(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func ReplaceByteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return internalReplaceByte(args, env, true)
 }
 
-func ReplaceByteBang(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func ReplaceByteBangImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return internalReplaceByte(args, env, false)
 }
 
-func ExtractByte(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func ExtractByteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Car(args) == nil {
         err = errors.New("extract-byte requires a non-nil bytearray argument.")
         return
@@ -1963,12 +1964,12 @@ func internalAppendBytes(args *Data, env *SymbolTableFrame) (newBytes *[]byte, e
         if ObjectP(evaledArg) && TypeOfObject(evaledArg) == "[]byte" {
             extraByteObj = evaledArg
         } else if ListP(evaledArg) {
-            extraByteObj, err = ListToBytes(InternalMakeList(QuoteIt(evaledArg)), env)
+            extraByteObj, err = ListToBytesImpl(InternalMakeList(QuoteIt(evaledArg)), env)
         } else {
-            extraByteObj, err = ListToBytes(InternalMakeList(QuoteIt(Cdr(args))), env)
+            extraByteObj, err = ListToBytesImpl(InternalMakeList(QuoteIt(Cdr(args))), env)
         }
     } else {
-        extraByteObj, err = ListToBytes(InternalMakeList(QuoteIt(Cdr(args))), env)
+        extraByteObj, err = ListToBytesImpl(InternalMakeList(QuoteIt(Cdr(args))), env)
     }
 
     if err != nil {
@@ -1985,7 +1986,7 @@ func internalAppendBytes(args *Data, env *SymbolTableFrame) (newBytes *[]byte, e
     return
 }
 
-func AppendBytes(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func AppendBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     newBytesPtr, err := internalAppendBytes(args, env)
     if err != nil {
         return
@@ -1994,7 +1995,7 @@ func AppendBytes(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return
 }
 
-func AppendBytesBang(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func AppendBytesBangImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     newBytesPtr, err := internalAppendBytes(args, env)
     dataByteObject, _ := Eval(Car(args), env)
     dataByteObject.Obj = unsafe.Pointer(newBytesPtr)
@@ -2002,7 +2003,7 @@ func AppendBytesBang(args *Data, env *SymbolTableFrame) (result *Data, err error
     return
 }
 
-func DefChain(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func DefChainImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) == 0 {
         err = errors.New("-> requires at least an initial value.")
         return
@@ -2032,7 +2033,7 @@ func DefChain(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return
 }
 
-func DefTap(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func DefTapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) == 0 {
         err = errors.New("tap requires at least an initial value.")
         return

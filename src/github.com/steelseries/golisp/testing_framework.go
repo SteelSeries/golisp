@@ -1,9 +1,10 @@
-// Copyright 2013 SteelSeries ApS.  All rights reserved.
+// Copyright 2014 SteelSeries ApS.  All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// This package impliments a basic LISP interpretor for embedding in a go program for scripting.
-// This file provides a testing framework in Lisp. Added to the global environment in builtins.go
+// This package implements a basic LISP interpretor for embedding in a go program for scripting.
+// This file provides a testing framework in Lisp.
+
 package golisp
 
 import (
@@ -20,7 +21,7 @@ var (
     errorMessages   []string = make([]string, 0, 5)
 )
 
-func Describe(args *Data, env *SymbolTableFrame) (d *Data, e error) {
+func DescribeImpl(args *Data, env *SymbolTableFrame) (d *Data, e error) {
     if !(StringP(Car(args)) || SymbolP(Car(args))) {
         e = errors.New("The describe tag must be a string or symbol")
         return
