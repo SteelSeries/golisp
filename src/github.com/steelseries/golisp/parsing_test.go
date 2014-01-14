@@ -227,3 +227,51 @@ func (s *ParsingSuite) TestEmptyByteArray(c *C) {
     bytes := (*[]byte)(sexpr.Obj)
     c.Assert(len(*bytes), Equals, 0)
 }
+
+func (s *ParsingSuite) TestQuote(c *C) {
+    sexpr, err := Parse("'a")
+    c.Assert(err, IsNil)
+    c.Assert(TypeOf(sexpr), Equals, ConsCellType)
+
+    c.Assert(TypeOf(Car(sexpr)), Equals, SymbolType)
+    c.Assert(StringValue(Car(sexpr)), Equals, "quote")
+
+    c.Assert(TypeOf(Cadr(sexpr)), Equals, SymbolType)
+    c.Assert(StringValue(Cadr(sexpr)), Equals, "a")
+}
+
+func (s *ParsingSuite) TestQuasiQuote(c *C) {
+    sexpr, err := Parse("`a")
+    c.Assert(err, IsNil)
+    c.Assert(TypeOf(sexpr), Equals, ConsCellType)
+
+    c.Assert(TypeOf(Car(sexpr)), Equals, SymbolType)
+    c.Assert(StringValue(Car(sexpr)), Equals, "quasiquote")
+
+    c.Assert(TypeOf(Cadr(sexpr)), Equals, SymbolType)
+    c.Assert(StringValue(Cadr(sexpr)), Equals, "a")
+}
+
+func (s *ParsingSuite) TestUnquote(c *C) {
+    sexpr, err := Parse(",a")
+    c.Assert(err, IsNil)
+    c.Assert(TypeOf(sexpr), Equals, ConsCellType)
+
+    c.Assert(TypeOf(Car(sexpr)), Equals, SymbolType)
+    c.Assert(StringValue(Car(sexpr)), Equals, "unquote")
+
+    c.Assert(TypeOf(Cadr(sexpr)), Equals, SymbolType)
+    c.Assert(StringValue(Cadr(sexpr)), Equals, "a")
+}
+
+func (s *ParsingSuite) TestUnquoteSplicing(c *C) {
+    sexpr, err := Parse(",@a")
+    c.Assert(err, IsNil)
+    c.Assert(TypeOf(sexpr), Equals, ConsCellType)
+
+    c.Assert(TypeOf(Car(sexpr)), Equals, SymbolType)
+    c.Assert(StringValue(Car(sexpr)), Equals, "unquote-splicing")
+
+    c.Assert(TypeOf(Cadr(sexpr)), Equals, SymbolType)
+    c.Assert(StringValue(Cadr(sexpr)), Equals, "a")
+}

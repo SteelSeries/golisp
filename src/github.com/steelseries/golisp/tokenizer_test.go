@@ -129,10 +129,31 @@ func (s *TokenizerSuite) TestString(c *C) {
 }
 
 func (s *TokenizerSuite) TestQuote(c *C) {
-    t := NewTokenizer(`' a`)
+    t := NewTokenizer(`'a`)
     tok, lit := t.NextToken()
     c.Assert(tok, Equals, QUOTE)
     c.Assert(lit, Equals, `'`)
+}
+
+func (s *TokenizerSuite) TestBackquote(c *C) {
+    t := NewTokenizer("`a")
+    tok, lit := t.NextToken()
+    c.Assert(tok, Equals, BACKQUOTE)
+    c.Assert(lit, Equals, "`")
+}
+
+func (s *TokenizerSuite) TestComma(c *C) {
+    t := NewTokenizer(",a")
+    tok, lit := t.NextToken()
+    c.Assert(tok, Equals, COMMA)
+    c.Assert(lit, Equals, ",")
+}
+
+func (s *TokenizerSuite) TestCommaAt(c *C) {
+    t := NewTokenizer(",@a")
+    tok, lit := t.NextToken()
+    c.Assert(tok, Equals, COMMAAT)
+    c.Assert(lit, Equals, ",@")
 }
 
 func (s *TokenizerSuite) TestLParen(c *C) {
