@@ -20,6 +20,9 @@ const (
     FLOAT
     STRING
     QUOTE
+    BACKQUOTE
+    COMMA
+    COMMAAT
     LPAREN
     RPAREN
     LBRACKET
@@ -154,6 +157,15 @@ func (self *Tokenizer) readNextToken() (token int, lit string) {
     } else if currentChar == '\'' {
         self.Position++
         return QUOTE, "'"
+    } else if currentChar == '`' {
+        self.Position++
+        return BACKQUOTE, "`"
+    } else if currentChar == ',' && nextChar == '@' {
+        self.Position += 2
+        return COMMAAT, ",@"
+    } else if currentChar == ',' {
+        self.Position++
+        return COMMA, ","
     } else if currentChar == '(' {
         self.Position++
         return LPAREN, "("

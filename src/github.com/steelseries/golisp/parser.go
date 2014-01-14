@@ -219,6 +219,27 @@ func parseExpression(s *Tokenizer) (sexpr *Data, eof bool, err error) {
                 sexpr = Cons(SymbolWithName("quote"), Cons(sexpr, nil))
             }
             return
+        case BACKQUOTE:
+            s.ConsumeToken()
+            sexpr, eof, err = parseExpression(s)
+            if sexpr != nil {
+                sexpr = Cons(SymbolWithName("quasiquote"), Cons(sexpr, nil))
+            }
+            return
+        case COMMA:
+            s.ConsumeToken()
+            sexpr, eof, err = parseExpression(s)
+            if sexpr != nil {
+                sexpr = Cons(SymbolWithName("unquote"), Cons(sexpr, nil))
+            }
+            return
+        case COMMAAT:
+            s.ConsumeToken()
+            sexpr, eof, err = parseExpression(s)
+            if sexpr != nil {
+                sexpr = Cons(SymbolWithName("unquote-splicing"), Cons(sexpr, nil))
+            }
+            return
         case ILLEGAL:
             err = errors.New(fmt.Sprintf("Illegal character: %s", lit))
             return
