@@ -24,6 +24,7 @@ const (
     StringType
     SymbolType
     FunctionType
+    MacroType
     PrimitiveType
     ObjectType
 )
@@ -36,6 +37,7 @@ type Data struct {
     Number  uint32 // NumberType & BooleanType
     Float   float32
     Func    *Function          // FunctionType
+    Mac     *Macro             // MacroType
     Prim    *PrimitiveFunction // PrimitiveType
     ObjType string             // ObjectType
     Obj     unsafe.Pointer     // ObjectType
@@ -70,6 +72,8 @@ func TypeName(t int) string {
         return "Symbol"
     case FunctionType:
         return "Function"
+    case MacroType:
+        return "Macro"
     case PrimitiveType:
         return "Primitive"
     case ObjectType:
@@ -135,6 +139,10 @@ func ObjectP(d *Data) bool {
 
 func FunctionP(d *Data) bool {
     return d != nil && TypeOf(d) == FunctionType || TypeOf(d) == PrimitiveType
+}
+
+func MacroP(d *Data) bool {
+    return d != nil && TypeOf(d) == MacroType
 }
 
 func Cons(car *Data, cdr *Data) *Data {
@@ -257,6 +265,10 @@ func SymbolWithName(s string) *Data {
 
 func FunctionWithNameParamsBodyAndParent(name string, params *Data, body *Data, parentEnv *SymbolTableFrame) *Data {
     return &Data{Type: FunctionType, Func: MakeFunction(name, params, body, parentEnv)}
+}
+
+func MacroWithNameParamsBodyAndParent(name string, params *Data, body *Data, parentEnv *SymbolTableFrame) *Data {
+    return &Data{Type: MacroType, Mac: MakeMacro(name, params, body, parentEnv)}
 }
 
 func PrimitiveWithNameAndFunc(name string, f *PrimitiveFunction) *Data {
@@ -604,6 +616,8 @@ func String(d *Data) string {
         return d.String
     case FunctionType:
         return fmt.Sprintf("<function: %s>", d.Func.Name)
+    case MacroType:
+        return fmt.Sprintf("<macro: %s>", d.Mac.Name)
     case PrimitiveType:
         return d.Prim.String()
     case ObjectType:
@@ -644,7 +658,7 @@ func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
                 return
             }
             if function == nil {
-                err = errors.New(fmt.Sprintf("Nil when function expected for %s.", String(Car(d))))
+                err = errors.New(fmt.Sprintf("Nil when function or macro expected for %s.", String(Car(d))))
                 return
             }
 
@@ -672,6 +686,8 @@ func Apply(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err
     switch function.Type {
     case FunctionType:
         return function.Func.Apply(args, env)
+    case MacroType:
+        return function.Mac.Apply(args, env)
     case PrimitiveType:
         return function.Prim.Apply(args, env)
     }
@@ -680,12 +696,14 @@ func Apply(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err
 
 func ApplyWithoutEval(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if function == nil {
-        err = errors.New("Nil when function expected.")
+        err = errors.New("Nil when function or macro expected.")
         return
     }
     switch function.Type {
     case FunctionType:
         return function.Func.ApplyWithoutEval(args, env)
+    case MacroType:
+        return function.Mac.ApplyWithoutEval(args, env)
     case PrimitiveType:
         return function.Prim.ApplyWithoutEval(args, env)
     }
