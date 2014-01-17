@@ -18,6 +18,7 @@ import (
 )
 
 var DebugTrace = false
+var quasiquoteLevel = 1
 
 func init() {
     Global = NewSymbolTableFrameBelow(nil)
@@ -71,14 +72,20 @@ func InitBuiltins() {
     MakePrimitiveFunction("if", -1, IfImpl)
     MakePrimitiveFunction("lambda", -1, LambdaImpl)
     MakePrimitiveFunction("define", -1, DefineImpl)
+    MakePrimitiveFunction("defun", -1, DefunImpl)
+    MakePrimitiveFunction("defmacro", -1, DefmacroImpl)
     MakePrimitiveFunction("map", 2, MapImpl)
     MakePrimitiveFunction("quote", 1, QuoteImpl)
+    MakePrimitiveFunction("quasiquote", 1, QuasiquoteImpl)
+    MakePrimitiveFunction("unquote", 1, UnquoteImpl)
+    MakePrimitiveFunction("unquote-splicing", 1, UnquoteSplicingImpl)
     MakePrimitiveFunction("let", -1, LetImpl)
     MakePrimitiveFunction("begin", -1, BeginImpl)
     MakePrimitiveFunction("do", -1, DoImpl)
-    MakePrimitiveFunction("apply", 2, DefApplyImpl)
-    MakePrimitiveFunction("->", -1, DefChainImpl)
-    MakePrimitiveFunction("=>", -1, DefTapImpl)
+    MakePrimitiveFunction("apply", 2, ApplyImpl)
+    MakePrimitiveFunction("eval", 1, EvalImpl)
+    MakePrimitiveFunction("->", -1, ChainImpl)
+    MakePrimitiveFunction("=>", -1, TapImpl)
 
     // setters
     MakePrimitiveFunction("set!", 2, SetVarImpl)
@@ -159,12 +166,12 @@ func InitBuiltins() {
     // system
     MakePrimitiveFunction("load", 1, LoadFileImpl)
     MakePrimitiveFunction("dump", 0, DumpSymbolTableImpl)
-    MakePrimitiveFunction("sleep", 1, DefSleepImpl)
+    MakePrimitiveFunction("sleep", 1, SleepImpl)
     MakePrimitiveFunction("write-line", 1, WriteLineImpl)
     MakePrimitiveFunction("str", -1, MakeStringImpl)
-    MakePrimitiveFunction("time", 1, DefTimeImpl)
-    MakePrimitiveFunction("quit", 0, DefQuitImpl)
-    MakePrimitiveFunction("debug", -1, DefDebugImpl)
+    MakePrimitiveFunction("time", 1, TimeImpl)
+    MakePrimitiveFunction("quit", 0, QuitImpl)
+    MakePrimitiveFunction("debug", -1, DebugImpl)
 
     // bytearrays
     MakePrimitiveFunction("list-to-bytearray", 1, ListToBytesImpl)
@@ -933,6 +940,48 @@ func DefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return value, nil
 }
 
+func DefunImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    var value *Data
+    thing := Car(args)
+    if PairP(thing) {
+        name := Car(thing)
+        params := Cdr(thing)
+        thing = name
+        if !SymbolP(name) {
+            err = errors.New("Function name has to be a symbol")
+            return
+        }
+        body := Cdr(args)
+        value = FunctionWithNameParamsBodyAndParent(StringValue(name), params, body, env)
+    } else {
+        err = errors.New("Invalid function definition")
+        return
+    }
+    env.BindLocallyTo(thing, value)
+    return value, nil
+}
+
+func DefmacroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    var value *Data
+    thing := Car(args)
+    if PairP(thing) {
+        name := Car(thing)
+        params := Cdr(thing)
+        thing = name
+        if !SymbolP(name) {
+            err = errors.New("Macro name has to be a symbol")
+            return
+        }
+        body := Cadr(args)
+        value = MacroWithNameParamsBodyAndParent(StringValue(name), params, body, env)
+    } else {
+        err = errors.New("Invalid macro definition")
+        return
+    }
+    env.BindLocallyTo(thing, value)
+    return value, nil
+}
+
 func DumpSymbolTableImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     env.Dump()
     return
@@ -972,6 +1021,85 @@ func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func QuoteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return Car(args), nil
+}
+
+func processQuasiquoted(sexpr *Data, env *SymbolTableFrame) (result *Data, err error) {
+    if !ListP(sexpr) {
+        return Cons(sexpr, nil), nil
+    } else if SymbolP(Car(sexpr)) && StringValue(Car(sexpr)) == "quasiquote" {
+        quasiquoteLevel += 1
+        parts := make([]*Data, 0, Length(Cdr(sexpr)))
+        for _, exp := range ToArray(Cdr(sexpr)) {
+            processed, err := processQuasiquoted(exp, env)
+            if err != nil {
+                return nil, err
+            }
+            parts = append(parts, Car(processed))
+        }
+        return Cons(ArrayToList(parts), nil), nil
+    } else if SymbolP(Car(sexpr)) && StringValue(Car(sexpr)) == "unquote" {
+        if quasiquoteLevel == 1 {
+            processed, err := processQuasiquoted(Cadr(sexpr), env)
+            if err != nil {
+                return nil, err
+            }
+            r, err := Eval(Car(processed), env)
+            if err != nil {
+                return nil, err
+            }
+            return Cons(r, nil), nil
+        } else {
+            quasiquoteLevel -= 1
+        }
+    } else if SymbolP(Car(sexpr)) && StringValue(Car(sexpr)) == "unquote-splicing" {
+        if quasiquoteLevel == 1 {
+            processed, err := processQuasiquoted(Cadr(sexpr), env)
+            if err != nil {
+                return nil, err
+            }
+            r, err := Eval(Car(processed), env)
+            if err != nil {
+                return nil, err
+            }
+            return r, nil
+        } else {
+            quasiquoteLevel -= 1
+        }
+    } else {
+        parts := make([]*Data, 0, Length(Cdr(sexpr)))
+        for _, exp := range ToArray(sexpr) {
+            processed, err := processQuasiquoted(exp, env)
+            if err != nil {
+                return nil, err
+            }
+            parts = append(parts, processed)
+        }
+        flat, err := Flatten(ArrayToList(parts))
+        if err != nil {
+            return nil, err
+        }
+        return Cons(flat, nil), nil
+    }
+    return
+}
+
+func QuasiquoteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    quasiquoteLevel = 1
+    r, err := processQuasiquoted(Car(args), env)
+    if err != nil {
+        return nil, err
+    }
+    return Car(r), nil
+}
+
+func UnquoteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    err = errors.New("unquote should not be used outside of a quasiquoted expression.")
+    return
+}
+
+func UnquoteSplicingImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    err = errors.New("unquote-splicing should not be used outside of a quasiquoted expression.")
+    return
 }
 
 func MakeListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -1679,7 +1807,7 @@ func DoImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return
 }
 
-func DefApplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func ApplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     f, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1693,20 +1821,29 @@ func DefApplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return Apply(f, vals, env)
 }
 
-func DefQuitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func EvalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    val, err := Eval(Car(args), env)
+    if err != nil {
+        return
+    }
+
+    return Eval(val, env)
+}
+
+func QuitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     WriteHistoryToFile(".golisp_history")
     os.Exit(0)
     return
 }
 
-func DefDebugImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func DebugImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) == 1 {
         DebugTrace = BooleanValue(Car(args))
     }
     return BooleanWithValue(DebugTrace), nil
 }
 
-func DefSleepImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func SleepImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     n, err := Eval(Car(args), env)
     if err != nil {
         return
@@ -1742,7 +1879,7 @@ func MakeStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
     return StringWithValue(strings.Join(pieces, "")), nil
 }
 
-func DefTimeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func TimeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     fmt.Printf("Starting timer.\n")
     startTime := time.Now()
 
@@ -2003,7 +2140,7 @@ func AppendBytesBangImpl(args *Data, env *SymbolTableFrame) (result *Data, err e
     return
 }
 
-func DefChainImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func ChainImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) == 0 {
         err = errors.New("-> requires at least an initial value.")
         return
@@ -2033,7 +2170,7 @@ func DefChainImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return
 }
 
-func DefTapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func TapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if Length(args) == 0 {
         err = errors.New("tap requires at least an initial value.")
         return
