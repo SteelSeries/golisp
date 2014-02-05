@@ -29,7 +29,7 @@
     (== (and #t #f #t) #f)
     (== (and #t #t #t) #t)
     (== (or (> xx z) (> y z))  #t)
-    (== (and (> xx z) (>y z))  #f)
+    (== (and (> xx z) (> y z))  #f)
     (== (even? 2) #t)
     (== (even? 3) #f)
     (== (odd? 3) #t)
