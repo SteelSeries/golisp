@@ -443,6 +443,14 @@ func QuoteIt(value *Data) (result *Data) {
     return InternalMakeList(SymbolWithName("quote"), value)
 }
 
+func QuoteAll(d *Data) (result *Data) {
+    var l []*Data = make([]*Data, 0, 10)
+    for c := d; NotNilP(c); c = Cdr(c) {
+        l = append(l, QuoteIt(Car(c)))
+    }
+    return ArrayToList(l)
+}
+
 func Assoc(key *Data, alist *Data) (result *Data, err error) {
     for c := alist; NotNilP(c); c = Cdr(c) {
         pair := Car(c)
