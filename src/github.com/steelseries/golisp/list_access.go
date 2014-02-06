@@ -72,6 +72,72 @@ func Cddr(d *Data) *Data {
     return WalkList(d, "dd")
 }
 
+// Cxxxxr
+
+func Caaaar(d *Data) *Data {
+    return Car(Car(Car(Car(d))))
+}
+
+func Caaadr(d *Data) *Data {
+    return Car(Car(Car(Cdr(d))))
+}
+
+func Caadar(d *Data) *Data {
+    return Car(Car(Cdr(Car(d))))
+}
+
+func Caaddr(d *Data) *Data {
+    return Car(Car(Cdr(Cdr(d))))
+}
+
+func Cadaar(d *Data) *Data {
+    return Car(Cdr(Car(Car(d))))
+}
+
+func Cadadr(d *Data) *Data {
+    return Car(Cdr(Car(Cdr(d))))
+}
+
+func Caddar(d *Data) *Data {
+    return Car(Cdr(Cdr(Car(d))))
+}
+
+func Cadddr(d *Data) *Data {
+    return Car(Cdr(Cdr(Cdr(d))))
+}
+
+func Cdaaar(d *Data) *Data {
+    return Cdr(Car(Car(Car(d))))
+}
+
+func Cdaadr(d *Data) *Data {
+    return Cdr(Car(Car(Cdr(d))))
+}
+
+func Cdadar(d *Data) *Data {
+    return Cdr(Car(Cdr(Car(d))))
+}
+
+func Cdaddr(d *Data) *Data {
+    return Cdr(Car(Cdr(Cdr(d))))
+}
+
+func Cddaar(d *Data) *Data {
+    return Cdr(Cdr(Car(Car(d))))
+}
+
+func Cddadr(d *Data) *Data {
+    return Cdr(Cdr(Car(Cdr(d))))
+}
+
+func Cdddar(d *Data) *Data {
+    return Cdr(Cdr(Cdr(Car(d))))
+}
+
+func Cddddr(d *Data) *Data {
+    return Cdr(Cdr(Cdr(Cdr(d))))
+}
+
 func Nth(d *Data, n int) *Data {
     if d == nil || n < 1 || n > Length(d) {
         return nil
