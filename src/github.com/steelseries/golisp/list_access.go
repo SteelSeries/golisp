@@ -90,6 +90,10 @@ func Caaddr(d *Data) *Data {
     return Car(Car(Cdr(Cdr(d))))
 }
 
+func Caddr(d *Data) *Data {
+    return Car(Cdr(Cdr(d)))
+}
+
 func Cadaar(d *Data) *Data {
     return Car(Cdr(Car(Car(d))))
 }
