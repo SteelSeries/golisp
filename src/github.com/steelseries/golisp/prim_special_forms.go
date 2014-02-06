@@ -20,7 +20,6 @@ func RegisterSpecialFormPrimitives() {
     MakePrimitiveFunction("define", -1, DefineImpl)
     MakePrimitiveFunction("defun", -1, DefunImpl)
     MakePrimitiveFunction("defmacro", -1, DefmacroImpl)
-    MakePrimitiveFunction("map", 2, MapImpl)
     MakePrimitiveFunction("let", -1, LetImpl)
     MakePrimitiveFunction("begin", -1, BeginImpl)
     MakePrimitiveFunction("do", -1, DoImpl)
