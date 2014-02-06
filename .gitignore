@@ -40,4 +40,8 @@ src/launchpad.net/
 
 .DS_Store
 
-.golisp_history
+golisp_history
+
+cover.out
+.history
+
