@@ -23,8 +23,8 @@ func RegisterListManipulationPrimitives() {
     MakePrimitiveFunction("copy", 1, CopyImpl)
     MakePrimitiveFunction("partition", 2, PartitionImpl)
     MakePrimitiveFunction("sublist", 3, SublistImpl)
-    MakePrimitiveFunction("take", 3, TakeImpl)
-    MakePrimitiveFunction("drop", 3, DropImpl)
+    MakePrimitiveFunction("take", 2, TakeImpl)
+    MakePrimitiveFunction("drop", 2, DropImpl)
 }
 
 func MakeListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -144,6 +144,9 @@ func PartitionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     n, err := Eval(Car(args), env)
     if err != nil {
         return
+    } 
+    if !NumberP(n) {
+        err = errors.New("partition requires a number as it's first argument.")
     }
     size := int(NumericValue(n))
 
@@ -178,6 +181,28 @@ func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func TakeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    n, err := Eval(Car(args), env)
+    if err != nil {
+        return
+    }
+    if !NumberP(n) {
+        err = errors.New("take requires a number as it's first argument.")
+    }
+    size := int(NumericValue(n))
+
+    l, err := Eval(Cadr(args), env)
+    if err != nil {
+        return
+    }
+    if !ListP(l) {
+        err = errors.New("take requires a list as it's second argument.")
+    }
+
+    var items []*Data = make([]*Data, 0, Length(args))
+    for i, cell := 0, l; i < size && NotNilP(cell); i, cell = i+1, Cdr(cell) {
+        items = append(items, Car(cell))
+    }
+    result = ArrayToList(items)
     return
 }
 
