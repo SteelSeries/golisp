@@ -207,5 +207,27 @@ func TakeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func DropImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    n, err := Eval(Car(args), env)
+    if err != nil {
+        return
+    }
+    if !NumberP(n) {
+        err = errors.New("drop requires a number as it's first argument.")
+    }
+    size := int(NumericValue(n))
+
+    l, err := Eval(Cadr(args), env)
+    if err != nil {
+        return
+    }
+    if !ListP(l) {
+        err = errors.New("drop requires a list as it's second argument.")
+    }
+
+    var cell *Data
+    var i int
+    for i, cell = 0, l; i < size && NotNilP(cell); i, cell = i+1, Cdr(cell) {
+    }
+    result = cell
     return
 }
