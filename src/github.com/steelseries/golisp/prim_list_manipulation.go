@@ -22,6 +22,9 @@ func RegisterListManipulationPrimitives() {
     MakePrimitiveFunction("append!", 2, AppendBangImpl)
     MakePrimitiveFunction("copy", 1, CopyImpl)
     MakePrimitiveFunction("partition", 2, PartitionImpl)
+    MakePrimitiveFunction("sublist", 3, SublistImpl)
+    MakePrimitiveFunction("take", 3, TakeImpl)
+    MakePrimitiveFunction("drop", 3, DropImpl)
 }
 
 func MakeListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -170,3 +173,14 @@ func PartitionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     return ArrayToList(pieces), nil
 }
 
+func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    return
+}
+
+func TakeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    return
+}
+
+func DropImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    return
+}

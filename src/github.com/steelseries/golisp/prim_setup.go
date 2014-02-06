@@ -25,6 +25,7 @@ func InitBuiltins() {
     RegisterMutatorPrimitives()
     RegisterListManipulationPrimitives()
     RegisterListAccessPrimitives()
+    RegisterListFunctionsPrimitives()
     RegisterAListPrimitives()
     RegisterSystemPrimitives()
     RegisterBytearrayPrimitives()

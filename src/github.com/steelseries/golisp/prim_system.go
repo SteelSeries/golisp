@@ -31,41 +31,6 @@ func DumpSymbolTableImpl(args *Data, env *SymbolTableFrame) (result *Data, err e
     return
 }
 
-func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    f, err := Eval(Car(args), env)
-    if err != nil {
-        return
-    }
-    if !FunctionP(f) {
-        err = errors.New("Map needs a function as its first argument")
-        return
-    }
-
-    col, err := Eval(Cadr(args), env)
-    if err != nil {
-        return
-    }
-    if !ListP(col) {
-        err = errors.New("Map needs a list as its second argument")
-        return
-    }
-
-    var d []*Data = make([]*Data, 0, Length(col))
-    var v *Data
-    for c := col; NotNilP(c); c = Cdr(c) {
-        v, err = ApplyWithoutEval(f, Cons(Car(c), nil), env)
-        if err != nil {
-            return
-        }
-        d = append(d, v)
-    }
-
-    return ArrayToList(d), nil
-}
-
-
-
-
 func LoadFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     filename := Car(args)
     if !StringP(filename) {
@@ -75,7 +40,6 @@ func LoadFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
     return ProcessFile(StringValue(filename))
 }
-
 
 func QuitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     WriteHistoryToFile(".golisp_history")
