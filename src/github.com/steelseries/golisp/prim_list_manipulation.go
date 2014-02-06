@@ -177,6 +177,47 @@ func PartitionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 }
 
 func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    n, err := Eval(First(args), env)
+    if err != nil {
+        return
+    }
+    if !NumberP(n) {
+        err = errors.New("sublist requires a number as it's first argument.")
+    }
+    first := int(NumericValue(n))
+
+    n, err = Eval(Second(args), env)
+    if err != nil {
+        return
+    }
+    if !NumberP(n) {
+        err = errors.New("sublist requires a number as it's second argument.")
+    }
+    last := int(NumericValue(n))
+
+    if first >= last {
+        result = nil
+        return
+    }
+    
+    l, err := Eval(Third(args), env)
+    if err != nil {
+        return
+    }
+    if !ListP(l) {
+        err = errors.New("sublist requires a list as it's third argument.")
+    }
+    
+    var cell *Data
+    var i int
+    for i, cell = 1, l; i < first && NotNilP(cell); i, cell = i+1, Cdr(cell) {
+    }
+    
+    var items []*Data = make([]*Data, 0, Length(args))
+    for ; i <= last && NotNilP(cell); i, cell = i+1, Cdr(cell) {
+        items = append(items, Car(cell))
+    }
+    result = ArrayToList(items)
     return
 }
 
