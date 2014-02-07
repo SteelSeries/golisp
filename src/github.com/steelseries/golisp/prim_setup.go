@@ -19,6 +19,7 @@ func init() {
 func InitBuiltins() {
     RegisterTypePredicatePrimitives()
     RegisterMathPrimitives()
+    RegisterBinaryPrimitives()
     RegisterRelativePrimitives()
     RegisterSpecialFormPrimitives()
     RegisterMacroPrimitives()
