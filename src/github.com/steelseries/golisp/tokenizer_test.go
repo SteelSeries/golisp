@@ -128,6 +128,13 @@ func (s *TokenizerSuite) TestString(c *C) {
     c.Assert(lit, Equals, `hi`)
 }
 
+func (s *TokenizerSuite) TestStringWithEscapedChar(c *C) {
+    t := NewTokenizer(`"hi\""" a`)
+    tok, lit := t.NextToken()
+    c.Assert(tok, Equals, STRING)
+    c.Assert(lit, Equals, `hi"`)
+}
+
 func (s *TokenizerSuite) TestQuote(c *C) {
     t := NewTokenizer(`'a`)
     tok, lit := t.NextToken()
