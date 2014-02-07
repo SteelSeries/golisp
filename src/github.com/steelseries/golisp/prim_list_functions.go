@@ -13,10 +13,11 @@ import (
 
 func RegisterListFunctionsPrimitives() {
     MakePrimitiveFunction("map", 2, MapImpl)
+    MakePrimitiveFunction("reduce", 3, ReduceImpl)
 }
 
 func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    f, err := Eval(Car(args), env)
+    f, err := Eval(First(args), env)
     if err != nil {
         return
     }
@@ -25,7 +26,7 @@ func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         return
     }
 
-    col, err := Eval(Cadr(args), env)
+    col, err := Eval(Second(args), env)
     if err != nil {
         return
     }
@@ -45,4 +46,39 @@ func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     }
 
     return ArrayToList(d), nil
+}
+
+func ReduceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    f, err := Eval(First(args), env)
+    if err != nil {
+        return
+    }
+    if !FunctionP(f) {
+        err = errors.New("Map needs a function as its first argument")
+        return
+    }
+
+    initial, err := Eval(Second(args), env)
+    if err != nil {
+        return
+    }
+   
+    col, err := Eval(Third(args), env)
+    if err != nil {
+        return
+    }
+    if !ListP(col) {
+        err = errors.New("Map needs a list as its second argument")
+        return
+    }
+
+    result = initial
+    for c := col; NotNilP(c); c = Cdr(c) {
+        result, err = ApplyWithoutEval(f, InternalMakeList(result, Car(c)), env)
+        if err != nil {
+            return
+        }
+    }
+
+    return
 }
