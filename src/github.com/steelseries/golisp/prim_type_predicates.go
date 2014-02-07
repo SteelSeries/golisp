@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 // This package implements a basic LISP interpretor for embedding in a go program for scripting.
-// This file contains the built-in primitive functions.
+// This file contains the type predicate primitive functions.
 
 package golisp
 
