@@ -113,6 +113,9 @@ func (self *Tokenizer) readString() (token int, lit string) {
     buffer := make([]rune, 0, 10)
     self.Position++
     for !self.isEof() && rune(self.Source[self.Position]) != '"' {
+        if rune(self.Source[self.Position]) == '\\' {
+            self.Position++
+        }
         buffer = append(buffer, rune(self.Source[self.Position]))
         self.Position++
     }
