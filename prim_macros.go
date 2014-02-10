@@ -9,6 +9,7 @@ package golisp
 
 import (
     "errors"
+    "fmt"
 )
 
 func RegisterMacroPrimitives() {
@@ -16,29 +17,25 @@ func RegisterMacroPrimitives() {
     MakePrimitiveFunction("quasiquote", 1, QuasiquoteImpl)
     MakePrimitiveFunction("unquote", 1, UnquoteImpl)
     MakePrimitiveFunction("unquote-splicing", 1, UnquoteSplicingImpl)
+    MakePrimitiveFunction("expand", -1, ExpandImpl)
 }
 
 func QuoteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return Car(args), nil
 }
 
-func processQuasiquoted(sexpr *Data, env *SymbolTableFrame) (result *Data, err error) {
+func processQuasiquoted(sexpr *Data, level int, env *SymbolTableFrame) (result *Data, err error) {
     if !ListP(sexpr) {
         return Cons(sexpr, nil), nil
     } else if SymbolP(Car(sexpr)) && StringValue(Car(sexpr)) == "quasiquote" {
-        quasiquoteLevel += 1
-        parts := make([]*Data, 0, Length(Cdr(sexpr)))
-        for _, exp := range ToArray(Cdr(sexpr)) {
-            processed, err := processQuasiquoted(exp, env)
-            if err != nil {
-                return nil, err
-            }
-            parts = append(parts, Car(processed))
+        processed, err := processQuasiquoted(Cadr(sexpr), level + 1, env)
+        if err != nil {
+            return nil, err
         }
-        return Cons(ArrayToList(parts), nil), nil
+        return Cons(Cons(SymbolWithName("quasiquote"), processed), nil), nil
     } else if SymbolP(Car(sexpr)) && StringValue(Car(sexpr)) == "unquote" {
-        if quasiquoteLevel == 1 {
-            processed, err := processQuasiquoted(Cadr(sexpr), env)
+        if level == 1 {
+            processed, err := processQuasiquoted(Cadr(sexpr), level, env)
             if err != nil {
                 return nil, err
             }
@@ -48,11 +45,15 @@ func processQuasiquoted(sexpr *Data, env *SymbolTableFrame) (result *Data, err e
             }
             return Cons(r, nil), nil
         } else {
-            quasiquoteLevel -= 1
+            processed, err := processQuasiquoted(Cadr(sexpr), level - 1, env)
+            if err != nil {
+                return nil, err
+            }
+            return Cons(Cons(SymbolWithName("unquote"), processed), nil), nil
         }
     } else if SymbolP(Car(sexpr)) && StringValue(Car(sexpr)) == "unquote-splicing" {
-        if quasiquoteLevel == 1 {
-            processed, err := processQuasiquoted(Cadr(sexpr), env)
+        if level == 1 {
+            processed, err := processQuasiquoted(Cadr(sexpr), level, env)
             if err != nil {
                 return nil, err
             }
@@ -62,12 +63,16 @@ func processQuasiquoted(sexpr *Data, env *SymbolTableFrame) (result *Data, err e
             }
             return r, nil
         } else {
-            quasiquoteLevel -= 1
+            processed, err := processQuasiquoted(Cadr(sexpr), level - 1, env)
+            if err != nil {
+                return nil, err
+            }
+            return Cons(Cons(SymbolWithName("unquote-splicing"), processed), nil), nil
         }
     } else {
         parts := make([]*Data, 0, Length(Cdr(sexpr)))
         for _, exp := range ToArray(sexpr) {
-            processed, err := processQuasiquoted(exp, env)
+            processed, err := processQuasiquoted(exp, level, env)
             if err != nil {
                 return nil, err
             }
@@ -83,8 +88,7 @@ func processQuasiquoted(sexpr *Data, env *SymbolTableFrame) (result *Data, err e
 }
 
 func QuasiquoteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    quasiquoteLevel = 1
-    r, err := processQuasiquoted(Car(args), env)
+    r, err := processQuasiquoted(Car(args), 1, env)
     if err != nil {
         return nil, err
     }
@@ -100,3 +104,16 @@ func UnquoteSplicingImpl(args *Data, env *SymbolTableFrame) (result *Data, err e
     err = errors.New("unquote-splicing should not be used outside of a quasiquoted expression.")
     return
 }
+
+func ExpandImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    n, err := Eval(Car(args), env)
+    if err != nil {
+        return
+    }
+    if !MacroP(n) {
+        err = errors.New(fmt.Sprintf("expand expected a macro, received %s", String(n)))
+        return
+    }
+    return n.Mac.Expand(Cdr(args), env)
+}
+

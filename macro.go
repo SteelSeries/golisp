@@ -47,20 +47,23 @@ func (self *Macro) makeLocalBindings(args *Data, argEnv *SymbolTableFrame, local
     return nil
 }
 
-func (self *Macro) internalApply(args *Data, argEnv *SymbolTableFrame, eval bool) (result *Data, err error) {
+func (self *Macro) Expand(args *Data, argEnv *SymbolTableFrame) (result *Data, err error) {
     localEnv := NewSymbolTableFrameBelow(self.Env)
-    err = self.makeLocalBindings(args, argEnv, localEnv, eval)
+    err = self.makeLocalBindings(args, argEnv, localEnv, true)
     if err != nil {
         return
     }
 
-    expandedMacro, err := Eval(self.Body, localEnv)
+    return Eval(self.Body, localEnv)
+}
+
+func (self *Macro) internalApply(args *Data, argEnv *SymbolTableFrame, eval bool) (result *Data, err error) {
+    expandedMacro, err := self.Expand(args, argEnv)
     if err != nil {
         return
     }
 
-    result, err = Eval(expandedMacro, argEnv)
-    return
+    return Eval(expandedMacro, argEnv)
 }
 
 func (self *Macro) Apply(args *Data, argEnv *SymbolTableFrame) (result *Data, err error) {
