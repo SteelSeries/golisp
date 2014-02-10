@@ -9,7 +9,6 @@ package golisp
 
 import (
     . "launchpad.net/gocheck"
-    "os"
     "path/filepath"
 )
 
@@ -19,7 +18,7 @@ type LispSuite struct {
 var _ = Suite(&LispSuite{})
 
 func (s *LispSuite) TestLisp(c *C) {
-    files, err := filepath.Glob(filepath.Join(os.Getenv("GOPATH"), "tests/*.lsp"))
+    files, err := filepath.Glob("tests/*.lsp")
     if err != nil {
         c.Fail()
     }
