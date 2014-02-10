@@ -18,7 +18,6 @@ func RegisterSpecialFormPrimitives() {
     MakePrimitiveFunction("if", -1, IfImpl)
     MakePrimitiveFunction("lambda", -1, LambdaImpl)
     MakePrimitiveFunction("define", -1, DefineImpl)
-    MakePrimitiveFunction("defun", -1, DefunImpl)
     MakePrimitiveFunction("defmacro", -1, DefmacroImpl)
     MakePrimitiveFunction("let", -1, LetImpl)
     MakePrimitiveFunction("begin", -1, BeginImpl)
@@ -140,27 +139,6 @@ func DefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         value = FunctionWithNameParamsBodyAndParent(StringValue(name), params, body, env)
     } else {
         err = errors.New("Invalid definition")
-        return
-    }
-    env.BindLocallyTo(thing, value)
-    return value, nil
-}
-
-func DefunImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    var value *Data
-    thing := Car(args)
-    if PairP(thing) {
-        name := Car(thing)
-        params := Cdr(thing)
-        thing = name
-        if !SymbolP(name) {
-            err = errors.New("Function name has to be a symbol")
-            return
-        }
-        body := Cdr(args)
-        value = FunctionWithNameParamsBodyAndParent(StringValue(name), params, body, env)
-    } else {
-        err = errors.New("Invalid function definition")
         return
     }
     env.BindLocallyTo(thing, value)
