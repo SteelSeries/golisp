@@ -22,3 +22,12 @@
             `(+ ,x ,@y))
 
           (== (add 1 '(2 3)) 6))
+
+(describe expand
+          (defmacro (add x y)
+            `(+ ,x ,@y))
+          (== (expand add 1 '(2 3)) '(+ 1 2 3)))
+
+(describe nested
+          (==  `(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f) 
+               '(a `(b ,(+ 1 2) ,(foo 4 d) e) f)))
