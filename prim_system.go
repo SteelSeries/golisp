@@ -104,6 +104,6 @@ func TimeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
     d := time.Since(startTime)
     fmt.Printf("Stopped timer.\nTook %v to run.\n", d)
-    result = IntegerWithValue(int32(d.Nanoseconds() / 1000000))
+    result = IntegerWithValue(int64(d.Nanoseconds() / 1000000))
     return
 }

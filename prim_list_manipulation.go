@@ -44,7 +44,7 @@ func ListLengthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
     if err != nil {
         return
     }
-    return IntegerWithValue(int32(Length(d))), nil
+    return IntegerWithValue(int64(Length(d))), nil
 }
 
 func ConsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

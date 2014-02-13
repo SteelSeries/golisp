@@ -53,7 +53,7 @@ func addFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func addInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    var acc int32 = 0
+    var acc int64 = 0
     var n *Data
     for c := args; NotNilP(c); c = Cdr(c) {
         n, err = Eval(Car(c), env)
@@ -139,7 +139,7 @@ func SubtractImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func multiplyInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var n *Data
-    var acc int32 = 1
+    var acc int64 = 1
     for c := args; NotNilP(c); c = Cdr(c) {
         n, err = Eval(Car(c), env)
         if err != nil {
@@ -253,7 +253,7 @@ func RemainderImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 
 func RandomByteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     r := uint8(rand.Int())
-    result = IntegerWithValue(int32(r))
+    result = IntegerWithValue(int64(r))
     return
 }
 

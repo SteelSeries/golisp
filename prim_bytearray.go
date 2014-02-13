@@ -66,7 +66,7 @@ func BytesToListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
     var bytes = make([]*Data, 0, len(*dataBytes))
 
     for _, b := range *dataBytes {
-        bytes = append(bytes, IntegerWithValue(int32(b)))
+        bytes = append(bytes, IntegerWithValue(int64(b)))
     }
 
     result = ArrayToList(bytes)
@@ -194,7 +194,7 @@ func ExtractByteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
     }
 
     extractedValue := (*dataBytes)[index]
-    result = IntegerWithValue(int32(extractedValue))
+    result = IntegerWithValue(int64(extractedValue))
     return
 }
 

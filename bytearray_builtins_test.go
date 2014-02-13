@@ -81,7 +81,7 @@ func (s *BytearrayBuiltinsSuite) TestBytesToList(c *C) {
     c.Assert(err, IsNil)
     c.Assert(l, NotNil)
     for i, cell := 1, l; NotNilP(cell); i, cell = i+1, Cdr(cell) {
-        c.Assert(IntegerValue(Car(cell)), Equals, int32(i))
+        c.Assert(IntegerValue(Car(cell)), Equals, int64(i))
     }
 }
 
@@ -203,11 +203,11 @@ func (s *BytearrayBuiltinsSuite) TestExtractByte(c *C) {
     o := ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&dataBytes))
 
     for i := 0; i < 5; i++ {
-        b, err := ExtractByteImpl(InternalMakeList(o, IntegerWithValue(int32(i))), Global)
+        b, err := ExtractByteImpl(InternalMakeList(o, IntegerWithValue(int64(i))), Global)
         c.Assert(err, IsNil)
         c.Assert(b, NotNil)
         c.Assert(IntegerP(b), Equals, true)
-        c.Assert(IntegerValue(b), Equals, int32(i+1))
+        c.Assert(IntegerValue(b), Equals, int64(i+1))
     }
 }
 
