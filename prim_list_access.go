@@ -61,6 +61,8 @@ func RegisterListAccessPrimitives() {
     MakePrimitiveFunction("tenth", 1, TenthImpl)
 
     MakePrimitiveFunction("nth", 2, NthImpl)
+    MakePrimitiveFunction("take", 2, TakeImpl)
+    MakePrimitiveFunction("drop", 2, DropImpl)
 }
 
 func CarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -404,3 +406,54 @@ func NthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     return Nth(col, int(NumericValue(count))), nil
 }
 
+func TakeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    n, err := Eval(Car(args), env)
+    if err != nil {
+        return
+    }
+    if !NumberP(n) {
+        err = errors.New("take requires a number as it's first argument.")
+    }
+    size := int(NumericValue(n))
+
+    l, err := Eval(Cadr(args), env)
+    if err != nil {
+        return
+    }
+    if !ListP(l) {
+        err = errors.New("take requires a list as it's second argument.")
+    }
+
+    var items []*Data = make([]*Data, 0, Length(args))
+    for i, cell := 0, l; i < size && NotNilP(cell); i, cell = i+1, Cdr(cell) {
+        items = append(items, Car(cell))
+    }
+    result = ArrayToList(items)
+    return
+}
+
+func DropImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    n, err := Eval(Car(args), env)
+    if err != nil {
+        return
+    }
+    if !NumberP(n) {
+        err = errors.New("drop requires a number as it's first argument.")
+    }
+    size := int(NumericValue(n))
+
+    l, err := Eval(Cadr(args), env)
+    if err != nil {
+        return
+    }
+    if !ListP(l) {
+        err = errors.New("drop requires a list as it's second argument.")
+    }
+
+    var cell *Data
+    var i int
+    for i, cell = 0, l; i < size && NotNilP(cell); i, cell = i+1, Cdr(cell) {
+    }
+    result = cell
+    return
+}

@@ -19,6 +19,7 @@ func RegisterMathPrimitives() {
     MakePrimitiveFunction("*", -1, MultiplyImpl)
     MakePrimitiveFunction("/", -1, QuotientImpl)
     MakePrimitiveFunction("%", 2, RemainderImpl)
+    MakePrimitiveFunction("modulo", 2, RemainderImpl)
     MakePrimitiveFunction("random-byte", 0, RandomByteImpl)
     MakePrimitiveFunction("interval", 2, IntervalImpl)
     MakePrimitiveFunction("integer", 1, ToIntImpl)

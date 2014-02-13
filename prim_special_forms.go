@@ -65,7 +65,6 @@ func evalList(l *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func CaseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var keyValue *Data
-    var targetValue *Data
 
     keyValue, err = Eval(Car(args), env)
     if err != nil {
@@ -74,19 +73,19 @@ func CaseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
     for clauseCell := Cdr(args); NotNilP(clauseCell); clauseCell = Cdr(clauseCell) {
         clause := Car(clauseCell)
-        if PairP(clause) {
-            if IsEqual(Car(clause), SymbolWithName("else")) {
-                return evalList(Cdr(clause), env)
-            } else {
-                targetValue, err = Eval(Car(clause), env)
-                if IsEqual(targetValue, keyValue) {
-                    return evalList(Cdr(clause), env)
-                }
-            }
-        } else {
-            err = errors.New("Case requires non-atomic clauses")
-            return
-        }
+        if !PairP(clause) {
+             err = errors.New("Case requires non-atomic clauses")
+             return
+         }
+         if ListP(Car(clause)) {
+             for v := Car(clause); NotNilP(v); v = Cdr(v) {
+                 if IsEqual(Car(v), keyValue) {
+                     return evalList(Cdr(clause), env)
+                 }
+             }
+         } else if IsEqual(Car(clause), SymbolWithName("else")) {
+             return evalList(Cdr(clause), env)
+         }
     }
 
     return

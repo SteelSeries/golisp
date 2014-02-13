@@ -15,6 +15,7 @@ func RegisterAListPrimitives() {
     MakePrimitiveFunction("acons", -1, AconsImpl)
     MakePrimitiveFunction("pairlis", -1, PairlisImpl)
     MakePrimitiveFunction("assoc", 2, AssocImpl)
+    MakePrimitiveFunction("dissoc", 2, DissocImpl)
     MakePrimitiveFunction("rassoc", 2, RassocImpl)
     MakePrimitiveFunction("alist", 1, AlistImpl)
 }
@@ -165,3 +166,22 @@ func RassocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     }
     return
 }
+
+func DissocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    var key *Data
+    var list *Data
+
+    key, err = Eval(Car(args), env)
+    if err != nil {
+        return
+    }
+
+    list, err = Eval(Cadr(args), env)
+    if err != nil {
+        return
+    }
+
+    result, err = Dissoc(key, list)
+    return
+}
+
