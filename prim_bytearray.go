@@ -38,11 +38,11 @@ func ListToBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
     for c := list; NotNilP(c); c = Cdr(c) {
         var n *Data
         n, err = Eval(Car(c), env)
-        if !NumberP(n) {
+        if !IntegerP(n) {
             err = errors.New(fmt.Sprintf("Byte arrays can only contain numbers, but found %v.", n))
             return
         }
-        b := NumericValue(n)
+        b := IntegerValue(n)
         if b > 255 {
             err = errors.New(fmt.Sprintf("Byte arrays can only contain bytes, but found %d.", b))
             return
@@ -66,7 +66,7 @@ func BytesToListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
     var bytes = make([]*Data, 0, len(*dataBytes))
 
     for _, b := range *dataBytes {
-        bytes = append(bytes, NumberWithValue(uint32(b)))
+        bytes = append(bytes, IntegerWithValue(int32(b)))
     }
 
     result = ArrayToList(bytes)
@@ -111,10 +111,10 @@ func internalReplaceByte(args *Data, env *SymbolTableFrame, makeCopy bool) (resu
     if err != nil {
         panic(err)
     }
-    if !NumberP(indexObject) {
+    if !IntegerP(indexObject) {
         panic(errors.New("Bytearray index should be a number."))
     }
-    index := int(NumericValue(indexObject))
+    index := int(IntegerValue(indexObject))
 
     if index >= len(*dataBytes) {
         err = errors.New(fmt.Sprintf("replace-byte index was out of range. Was %d but bytearray has length of %d.", index, len(*dataBytes)))
@@ -130,11 +130,11 @@ func internalReplaceByte(args *Data, env *SymbolTableFrame, makeCopy bool) (resu
     if err != nil {
         panic(err)
     }
-    if !NumberP(valueObject) {
+    if !IntegerP(valueObject) {
         panic(errors.New("Bytearray value should be a number."))
     }
 
-    value := byte(NumericValue(valueObject))
+    value := byte(IntegerValue(valueObject))
 
     if value > 255 {
         err = errors.New(fmt.Sprintf("replace-byte value was not a byte. Was %d.", index))
@@ -183,10 +183,10 @@ func ExtractByteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
     if err != nil {
         panic(err)
     }
-    if !NumberP(indexObject) {
+    if !IntegerP(indexObject) {
         panic(errors.New("Bytearray index should be a number."))
     }
-    index := int(NumericValue(indexObject))
+    index := int(IntegerValue(indexObject))
 
     if index >= len(*dataBytes) {
         err = errors.New(fmt.Sprintf("extract-byte index was out of range. Was %d but bytearray has length of %d.", index, len(*dataBytes)))
@@ -194,7 +194,7 @@ func ExtractByteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
     }
 
     extractedValue := (*dataBytes)[index]
-    result = NumberWithValue(uint32(extractedValue))
+    result = IntegerWithValue(int32(extractedValue))
     return
 }
 

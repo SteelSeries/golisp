@@ -15,23 +15,23 @@ import (
     "unsafe"
 )
 
-func makeNumber(str string) (n *Data, err error) {
-    var i uint32
+func makeInteger(str string) (n *Data, err error) {
+    var i int32
     _, err = fmt.Sscanf(str, "%d", &i)
     if err != nil {
         return
     }
-    n = NumberWithValue(i)
+    n = IntegerWithValue(i)
     return
 }
 
-func makeHexNumber(str string) (n *Data, err error) {
-    var i uint32
+func makeHexInteger(str string) (n *Data, err error) {
+    var i int32
     _, err = fmt.Sscanf(str, "%v", &i)
     if err != nil {
         return
     }
-    n = NumberWithValue(i)
+    n = IntegerWithValue(i)
     return
 }
 
@@ -101,9 +101,9 @@ func parseConsCell(s *Tokenizer) (sexpr *Data, eof bool, err error) {
     return
 }
 
-func allNumbers(data []*Data) bool {
+func allIntegers(data []*Data) bool {
     for _, n := range data {
-        if !NumberP(n) {
+        if !IntegerP(n) {
             return false
         }
     }
@@ -113,7 +113,7 @@ func allNumbers(data []*Data) bool {
 func listToBytearray(cells []*Data) *Data {
     bytes := make([]byte, 0, len(cells))
     for _, cell := range cells {
-        b := NumericValue(cell)
+        b := IntegerValue(cell)
         bytes = append(bytes, byte(b))
     }
     return ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&bytes))
@@ -140,12 +140,12 @@ func parseBytearray(s *Tokenizer) (sexpr *Data, eof bool, err error) {
         if err != nil {
             return
         }
-        if NumberP(element) && NumericValue(element) > 255 {
+        if IntegerP(element) && IntegerValue(element) > 255 {
             fmt.Printf("Bytearray being parsed: %s\n", String(ArrayToList(cells)))
             err = errors.New(fmt.Sprintf("Numeric literals in a bytearray must be bytes. Encountered %s.", String(element)))
             return
         }
-        if !NumberP(element) && !SymbolP(element) && !ListP(element) {
+        if !IntegerP(element) && !SymbolP(element) && !ListP(element) {
             fmt.Printf("Bytearray being parsed: %s\n", String(ArrayToList(cells)))
             err = errors.New(fmt.Sprintf("Bytearray elements must be numbers, symbols, or lists (function calls). Encountered %s.", String(element)))
             return
@@ -155,7 +155,7 @@ func parseBytearray(s *Tokenizer) (sexpr *Data, eof bool, err error) {
     }
 
     s.ConsumeToken()
-    if allNumbers(cells) {
+    if allIntegers(cells) {
         sexpr = listToBytearray(cells)
     } else {
         sexpr = InternalMakeList(SymbolWithName("list-to-bytearray"), QuoteIt(ArrayToList(cells)))
@@ -178,11 +178,11 @@ func parseExpression(s *Tokenizer) (sexpr *Data, eof bool, err error) {
             break
         case NUMBER:
             s.ConsumeToken()
-            sexpr, err = makeNumber(lit)
+            sexpr, err = makeInteger(lit)
             return
         case HEXNUMBER:
             s.ConsumeToken()
-            sexpr, err = makeHexNumber(lit)
+            sexpr, err = makeHexInteger(lit)
             return
         case FLOAT:
             s.ConsumeToken()

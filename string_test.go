@@ -21,8 +21,8 @@ func (s *StringAtomSuite) SetUpTest(c *C) {
     s.atom = StringWithValue("Hello, world.")
 }
 
-func (s *StringAtomSuite) TestNumericValue(c *C) {
-    c.Assert(NumericValue(s.atom), Equals, uint32(0))
+func (s *StringAtomSuite) TestIntegerValue(c *C) {
+    c.Assert(IntegerValue(s.atom), Equals, int32(0))
 }
 
 func (s *StringAtomSuite) TestString(c *C) {

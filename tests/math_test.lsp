@@ -9,8 +9,8 @@
     (== (/ 25 5) 5)
     (== (% 7 5)  2))
 
-(describe arithmetic-limits
-          (== (- 5 9) 0))
+(describe subtraction-going-negative
+          (== (- 5 9) -4))
 
 (describe condition-test
     (== (< xx y)  #t)

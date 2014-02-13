@@ -86,21 +86,28 @@ func (s *TokenizerSuite) TestShortNumber(c *C) {
     c.Assert(lit, Equals, "1")
 }
 
-func (s *TokenizerSuite) TestLongNumber(c *C) {
+func (s *TokenizerSuite) TestLongInteger(c *C) {
     t := NewTokenizer("1234567 a")
     tok, lit := t.NextToken()
     c.Assert(tok, Equals, NUMBER)
     c.Assert(lit, Equals, "1234567")
 }
 
-func (s *TokenizerSuite) TestHexNumber(c *C) {
+func (s *TokenizerSuite) TestNegativeInteger(c *C) {
+    t := NewTokenizer("-42 a")
+    tok, lit := t.NextToken()
+    c.Assert(tok, Equals, NUMBER)
+    c.Assert(lit, Equals, "-42")
+}
+
+func (s *TokenizerSuite) TestHexInteger(c *C) {
     t := NewTokenizer("0x1f a")
     tok, lit := t.NextToken()
     c.Assert(tok, Equals, HEXNUMBER)
     c.Assert(lit, Equals, "0x1f")
 }
 
-func (s *TokenizerSuite) TestUppercaseHexNumber(c *C) {
+func (s *TokenizerSuite) TestUppercaseHexInteger(c *C) {
     t := NewTokenizer("0x1F a")
     tok, lit := t.NextToken()
     c.Assert(tok, Equals, HEXNUMBER)

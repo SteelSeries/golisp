@@ -44,7 +44,7 @@ func ListLengthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
     if err != nil {
         return
     }
-    return NumberWithValue(uint32(Length(d))), nil
+    return IntegerWithValue(int32(Length(d))), nil
 }
 
 func ConsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -143,10 +143,10 @@ func PartitionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     if err != nil {
         return
     } 
-    if !NumberP(n) {
+    if !IntegerP(n) {
         err = errors.New("partition requires a number as it's first argument.")
     }
-    size := int(NumericValue(n))
+    size := int(IntegerValue(n))
 
     l, err := Eval(Cadr(args), env)
     if err != nil {
@@ -179,19 +179,19 @@ func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if err != nil {
         return
     }
-    if !NumberP(n) {
+    if !IntegerP(n) {
         err = errors.New("sublist requires a number as it's first argument.")
     }
-    first := int(NumericValue(n))
+    first := int(IntegerValue(n))
 
     n, err = Eval(Second(args), env)
     if err != nil {
         return
     }
-    if !NumberP(n) {
+    if !IntegerP(n) {
         err = errors.New("sublist requires a number as it's second argument.")
     }
-    last := int(NumericValue(n))
+    last := int(IntegerValue(n))
 
     if first >= last {
         result = nil

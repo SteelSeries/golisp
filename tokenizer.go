@@ -84,7 +84,6 @@ func (self *Tokenizer) readNumber() (token int, lit string) {
             sawDecimal = true
             self.Position++
         } else if (start == self.Position) && ch == '-' {
-            isFloat = true
             self.Position++
         } else if unicode.IsNumber(ch) {
             self.Position++

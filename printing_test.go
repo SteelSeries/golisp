@@ -17,8 +17,8 @@ type PrintingSuite struct{}
 
 var _ = Suite(&PrintingSuite{})
 
-func (s *PrintingSuite) TestNumber(c *C) {
-    sexpr := NumberWithValue(5)
+func (s *PrintingSuite) TestInteger(c *C) {
+    sexpr := IntegerWithValue(5)
     c.Assert(String(sexpr), Equals, "5")
 }
 
@@ -53,17 +53,17 @@ func (s *PrintingSuite) TestNil(c *C) {
 }
 
 func (s *PrintingSuite) TestList(c *C) {
-    sexpr := Cons(NumberWithValue(1), Cons(StringWithValue("two"), Cons(NumberWithValue(3), Cons(True, nil))))
+    sexpr := Cons(IntegerWithValue(1), Cons(StringWithValue("two"), Cons(IntegerWithValue(3), Cons(True, nil))))
     c.Assert(String(sexpr), Equals, `(1 "two" 3 #t)`)
 }
 
 func (s *PrintingSuite) TestNestedList(c *C) {
-    sexpr := Cons(NumberWithValue(1), Cons(Cons(StringWithValue("two"), Cons(False, nil)), Cons(NumberWithValue(3), Cons(True, nil))))
+    sexpr := Cons(IntegerWithValue(1), Cons(Cons(StringWithValue("two"), Cons(False, nil)), Cons(IntegerWithValue(3), Cons(True, nil))))
     c.Assert(String(sexpr), Equals, `(1 ("two" #f) 3 #t)`)
 }
 
 func (s *PrintingSuite) TestDottedPair(c *C) {
-    sexpr := Cons(NumberWithValue(1), StringWithValue("two"))
+    sexpr := Cons(IntegerWithValue(1), StringWithValue("two"))
     c.Assert(String(sexpr), Equals, `(1 . "two")`)
 }
 
@@ -73,7 +73,7 @@ func (s *PrintingSuite) TestQuotedEmptyList(c *C) {
 }
 
 func (s *PrintingSuite) TestAlist(c *C) {
-    sexpr := Acons(NumberWithValue(1), StringWithValue("two"), nil)
+    sexpr := Acons(IntegerWithValue(1), StringWithValue("two"), nil)
     c.Assert(String(sexpr), Equals, `((1 . "two"))`)
 }
 

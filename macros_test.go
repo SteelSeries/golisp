@@ -29,7 +29,7 @@ func (s *BuiltinsSuite) TestNoUnquoting(c *C) {
     c.Assert(String(result), Equals, "(+ a 1)")
 }
 
-func (s *BuiltinsSuite) TestUnquotingNumber(c *C) {
+func (s *BuiltinsSuite) TestUnquotingInteger(c *C) {
     code, _ := Parse("`(+ a ,1)")
     result, err := Eval(code, Global)
     c.Assert(err, IsNil)
@@ -38,7 +38,7 @@ func (s *BuiltinsSuite) TestUnquotingNumber(c *C) {
 }
 
 func (s *BuiltinsSuite) TestUnquotingSymbol(c *C) {
-    Global.BindTo(SymbolWithName("a"), NumberWithValue(5))
+    Global.BindTo(SymbolWithName("a"), IntegerWithValue(5))
     code, _ := Parse("`(+ ,a 1)")
     result, err := Eval(code, Global)
     c.Assert(err, IsNil)
@@ -47,7 +47,7 @@ func (s *BuiltinsSuite) TestUnquotingSymbol(c *C) {
 }
 
 func (s *BuiltinsSuite) TestUnquotingExpression(c *C) {
-    Global.BindTo(SymbolWithName("a"), NumberWithValue(5))
+    Global.BindTo(SymbolWithName("a"), IntegerWithValue(5))
     code, _ := Parse("`(+ ,(+ a 1) 1)")
     result, err := Eval(code, Global)
     c.Assert(err, IsNil)
@@ -56,7 +56,7 @@ func (s *BuiltinsSuite) TestUnquotingExpression(c *C) {
 }
 
 func (s *BuiltinsSuite) TestUnquoteSplicing(c *C) {
-    Global.BindTo(SymbolWithName("a"), NumberWithValue(5))
+    Global.BindTo(SymbolWithName("a"), IntegerWithValue(5))
     code, _ := Parse("`(+ ,@(list 1 2 3) 1)")
     result, err := Eval(code, Global)
     c.Assert(err, IsNil)

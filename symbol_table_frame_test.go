@@ -23,7 +23,7 @@ func (s *SymbolTableFrameSuite) SetUpTest(c *C) {
 
 func (s *SymbolTableFrameSuite) TestFetching(c *C) {
     sym := SymbolWithName("test")
-    b := BindingWithSymbolAndValue(sym, NumberWithValue(42))
+    b := BindingWithSymbolAndValue(sym, IntegerWithValue(42))
     s.frame.SetBindingAt("test", b)
 
     fetched, found := s.frame.BindingNamed("test")
@@ -31,7 +31,7 @@ func (s *SymbolTableFrameSuite) TestFetching(c *C) {
     c.Assert(found, Equals, true)
 
     c.Assert(StringValue(fetched.Sym), Equals, "test")
-    c.Assert(NumericValue(fetched.Val), Equals, uint32(42))
+    c.Assert(IntegerValue(fetched.Val), Equals, int32(42))
 }
 
 func (s *SymbolTableFrameSuite) TestInterning(c *C) {
@@ -44,7 +44,7 @@ func (s *SymbolTableFrameSuite) TestInterning(c *C) {
 
 func (s *SymbolTableFrameSuite) TestBinding(c *C) {
     sym := s.frame.Intern("test")
-    s.frame.BindTo(sym, NumberWithValue(42))
+    s.frame.BindTo(sym, IntegerWithValue(42))
 
     binding, found := s.frame.Bindings["test"]
     c.Assert(found, Equals, true)
@@ -53,9 +53,9 @@ func (s *SymbolTableFrameSuite) TestBinding(c *C) {
 
 func (s *SymbolTableFrameSuite) TestSymbolValue(c *C) {
     sym := s.frame.Intern("test")
-    s.frame.BindTo(sym, NumberWithValue(42))
+    s.frame.BindTo(sym, IntegerWithValue(42))
     val := s.frame.ValueOf(sym)
     c.Assert(val, NotNil)
-    c.Assert(TypeOf(val), Equals, NumberType)
-    c.Assert(NumericValue(val), Equals, uint32(42))
+    c.Assert(TypeOf(val), Equals, IntegerType)
+    c.Assert(IntegerValue(val), Equals, int32(42))
 }
