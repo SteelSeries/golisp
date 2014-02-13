@@ -20,8 +20,8 @@ type ConsCellSuite struct {
 var _ = Suite(&ConsCellSuite{})
 
 func (s *ConsCellSuite) SetUpTest(c *C) {
-    s.a = NumberWithValue(1)
-    s.b = NumberWithValue(2)
+    s.a = IntegerWithValue(1)
+    s.b = IntegerWithValue(2)
     s.cell = Cons(s.a, s.b)
 }
 

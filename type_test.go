@@ -17,7 +17,7 @@ type TypeSuite struct {
 var _ = Suite(&TypeSuite{})
 
 func (s *TypeSuite) TestList(c *C) {
-    sexpr := Cons(NumberWithValue(5), nil)
+    sexpr := Cons(IntegerWithValue(5), nil)
     c.Assert(ListP(sexpr), Equals, true)
     c.Assert(PairP(sexpr), Equals, true)
     c.Assert(TypeOf(sexpr), Equals, ConsCellType)
@@ -25,7 +25,7 @@ func (s *TypeSuite) TestList(c *C) {
 }
 
 func (s *TypeSuite) TestAlist(c *C) {
-    sexpr := Acons(NumberWithValue(5), StringWithValue("five"), nil)
+    sexpr := Acons(IntegerWithValue(5), StringWithValue("five"), nil)
     c.Assert(AlistP(sexpr), Equals, true)
     c.Assert(ListP(sexpr), Equals, true)
     c.Assert(TypeOf(sexpr), Equals, AlistType)
@@ -37,10 +37,10 @@ func (s *TypeSuite) TestAlist(c *C) {
 }
 
 func (s *TypeSuite) TestInteger(c *C) {
-    sexpr := NumberWithValue(5)
-    c.Assert(NumberP(sexpr), Equals, true)
-    c.Assert(TypeOf(sexpr), Equals, NumberType)
-    c.Assert(TypeName(NumberType), Equals, "Integer")
+    sexpr := IntegerWithValue(5)
+    c.Assert(IntegerP(sexpr), Equals, true)
+    c.Assert(TypeOf(sexpr), Equals, IntegerType)
+    c.Assert(TypeName(IntegerType), Equals, "Integer")
 }
 
 func (s *TypeSuite) TestFloat(c *C) {

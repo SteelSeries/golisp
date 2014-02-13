@@ -398,12 +398,12 @@ func NthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if err != nil {
         return
     }
-    if !NumberP(count) {
+    if !IntegerP(count) {
         err = errors.New("Second arg to nth must be a number")
         return
     }
 
-    return Nth(col, int(NumericValue(count))), nil
+    return Nth(col, int(IntegerValue(count))), nil
 }
 
 func TakeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -411,10 +411,10 @@ func TakeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if err != nil {
         return
     }
-    if !NumberP(n) {
+    if !IntegerP(n) {
         err = errors.New("take requires a number as it's first argument.")
     }
-    size := int(NumericValue(n))
+    size := int(IntegerValue(n))
 
     l, err := Eval(Cadr(args), env)
     if err != nil {
@@ -437,10 +437,10 @@ func DropImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if err != nil {
         return
     }
-    if !NumberP(n) {
+    if !IntegerP(n) {
         err = errors.New("drop requires a number as it's first argument.")
     }
-    size := int(NumericValue(n))
+    size := int(IntegerValue(n))
 
     l, err := Eval(Cadr(args), env)
     if err != nil {

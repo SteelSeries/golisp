@@ -17,12 +17,12 @@ type UtilitySuite struct {
 var _ = Suite(&UtilitySuite{})
 
 func (s *UtilitySuite) TestArrayToList(c *C) {
-    a := []*Data{NumberWithValue(1), NumberWithValue(2)}
+    a := []*Data{IntegerWithValue(1), IntegerWithValue(2)}
     sexpr := ArrayToList(a)
     c.Assert(ListP(sexpr), Equals, true)
     c.Assert(Length(sexpr), Equals, 2)
-    c.Assert(NumericValue(Car(sexpr)), Equals, uint32(1))
-    c.Assert(NumericValue(Cadr(sexpr)), Equals, uint32(2))
+    c.Assert(IntegerValue(Car(sexpr)), Equals, int32(1))
+    c.Assert(IntegerValue(Cadr(sexpr)), Equals, int32(2))
 }
 
 func (s *UtilitySuite) TestEmptyArrayToList(c *C) {
@@ -33,30 +33,30 @@ func (s *UtilitySuite) TestEmptyArrayToList(c *C) {
 }
 
 func (s *UtilitySuite) TestArrayToListWithTail(c *C) {
-    a := []*Data{NumberWithValue(1), NumberWithValue(2)}
-    tail := Cons(NumberWithValue(3), Cons(NumberWithValue(4), nil))
+    a := []*Data{IntegerWithValue(1), IntegerWithValue(2)}
+    tail := Cons(IntegerWithValue(3), Cons(IntegerWithValue(4), nil))
     sexpr := ArrayToListWithTail(a, tail)
     c.Assert(ListP(sexpr), Equals, true)
     c.Assert(Length(sexpr), Equals, 4)
-    c.Assert(NumericValue(First(sexpr)), Equals, uint32(1))
-    c.Assert(NumericValue(Second(sexpr)), Equals, uint32(2))
-    c.Assert(NumericValue(Third(sexpr)), Equals, uint32(3))
-    c.Assert(NumericValue(Fourth(sexpr)), Equals, uint32(4))
+    c.Assert(IntegerValue(First(sexpr)), Equals, int32(1))
+    c.Assert(IntegerValue(Second(sexpr)), Equals, int32(2))
+    c.Assert(IntegerValue(Third(sexpr)), Equals, int32(3))
+    c.Assert(IntegerValue(Fourth(sexpr)), Equals, int32(4))
 }
 
 func (s *UtilitySuite) TestArrayToListWithEmptyTail(c *C) {
-    a := []*Data{NumberWithValue(1), NumberWithValue(2)}
+    a := []*Data{IntegerWithValue(1), IntegerWithValue(2)}
     sexpr := ArrayToListWithTail(a, nil)
     c.Assert(ListP(sexpr), Equals, true)
     c.Assert(Length(sexpr), Equals, 2)
-    c.Assert(NumericValue(First(sexpr)), Equals, uint32(1))
-    c.Assert(NumericValue(Second(sexpr)), Equals, uint32(2))
+    c.Assert(IntegerValue(First(sexpr)), Equals, int32(1))
+    c.Assert(IntegerValue(Second(sexpr)), Equals, int32(2))
 }
 
 func (s *UtilitySuite) TestToArray(c *C) {
-    list := Cons(NumberWithValue(1), Cons(NumberWithValue(2), nil))
+    list := Cons(IntegerWithValue(1), Cons(IntegerWithValue(2), nil))
     ary := ToArray(list)
     c.Assert(len(ary), Equals, 2)
-    c.Assert(NumericValue(ary[0]), Equals, uint32(1))
-    c.Assert(NumericValue(ary[1]), Equals, uint32(2))
+    c.Assert(IntegerValue(ary[0]), Equals, int32(1))
+    c.Assert(IntegerValue(ary[1]), Equals, int32(2))
 }

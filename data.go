@@ -18,7 +18,7 @@ const (
     ConsCellType = iota
     AlistType
     AlistCellType
-    NumberType
+    IntegerType
     FloatType
     BooleanType
     StringType
@@ -34,7 +34,7 @@ type Data struct {
     Car     *Data  // ConsCellType & AlistType
     Cdr     *Data  // ConsCellType & AlistType
     String  string // StringType & SymbolType
-    Number  uint32 // NumberType & BooleanType
+    Integer int32 // IntegerType & BooleanType
     Float   float32
     Func    *Function          // FunctionType
     Mac     *Macro             // MacroType
@@ -60,7 +60,7 @@ func TypeName(t int) string {
         return "Association List"
     case AlistCellType:
         return "Association List Cell"
-    case NumberType:
+    case IntegerType:
         return "Integer"
     case FloatType:
         return "Float"
@@ -125,12 +125,16 @@ func StringP(d *Data) bool {
     return d != nil && TypeOf(d) == StringType
 }
 
-func NumberP(d *Data) bool {
-    return d != nil && TypeOf(d) == NumberType
+func IntegerP(d *Data) bool {
+    return d != nil && TypeOf(d) == IntegerType
 }
 
 func FloatP(d *Data) bool {
     return d != nil && TypeOf(d) == FloatType
+}
+
+func NumberP(d *Data) bool {
+    return IntegerP(d) || FloatP(d)
 }
 
 func ObjectP(d *Data) bool {
@@ -146,7 +150,7 @@ func MacroP(d *Data) bool {
 }
 
 func Cons(car *Data, cdr *Data) *Data {
-    return &Data{Type: ConsCellType, Car: car, Cdr: cdr, String: "", Number: 0, Func: nil, Prim: nil}
+    return &Data{Type: ConsCellType, Car: car, Cdr: cdr, String: "", Integer: 0, Func: nil, Prim: nil}
 }
 
 func AppendBang(l *Data, value *Data) *Data {
@@ -210,8 +214,8 @@ func AppendList(l *Data, otherList *Data) *Data {
 func Acons(car *Data, cdr *Data, alist *Data) *Data {
     pair, _ := Assoc(car, alist)
     if NilP(pair) {
-        cell := &Data{Type: AlistCellType, Car: car, Cdr: cdr, String: "", Number: 0, Func: nil, Prim: nil}
-        return &Data{Type: AlistType, Car: cell, Cdr: alist, String: "", Number: 0, Func: nil, Prim: nil}
+        cell := &Data{Type: AlistCellType, Car: car, Cdr: cdr, String: "", Integer: 0, Func: nil, Prim: nil}
+        return &Data{Type: AlistType, Car: cell, Cdr: alist, String: "", Integer: 0, Func: nil, Prim: nil}
     } else {
         pair.Cdr = cdr
         return alist
@@ -239,8 +243,8 @@ func EmptyCons() *Data {
     return Cons(nil, nil)
 }
 
-func NumberWithValue(n uint32) *Data {
-    return &Data{Type: NumberType, Number: n}
+func IntegerWithValue(n int32) *Data {
+    return &Data{Type: IntegerType, Integer: n}
 }
 
 func FloatWithValue(n float32) *Data {
@@ -252,7 +256,7 @@ func BooleanWithValue(b bool) *Data {
     if b {
         num = 1
     }
-    return &Data{Type: BooleanType, Number: uint32(num)}
+    return &Data{Type: BooleanType, Integer: int32(num)}
 }
 
 func StringWithValue(s string) *Data {
@@ -279,17 +283,17 @@ func ObjectWithTypeAndValue(typeName string, o unsafe.Pointer) *Data {
     return &Data{Type: ObjectType, ObjType: typeName, Obj: o}
 }
 
-func NumericValue(d *Data) uint32 {
+func IntegerValue(d *Data) int32 {
     if d == nil {
         return 0
     }
 
-    if NumberP(d) {
-        return d.Number
+    if IntegerP(d) {
+        return d.Integer
     }
 
     if FloatP(d) {
-        return uint32(d.Float)
+        return int32(d.Float)
     }
 
     return 0
@@ -304,8 +308,8 @@ func FloatValue(d *Data) float32 {
         return d.Float
     }
 
-    if NumberP(d) {
-        return float32(d.Number)
+    if IntegerP(d) {
+        return float32(d.Integer)
     }
 
     return 0
@@ -329,7 +333,7 @@ func BooleanValue(d *Data) bool {
     }
 
     if BooleanP(d) {
-        return d.Number != 0
+        return d.Integer != 0
     }
 
     return true
@@ -617,8 +621,8 @@ func String(d *Data) string {
         }
     case AlistCellType:
         return fmt.Sprintf("(%s . %s)", String(Car(d)), String(Cdr(d)))
-    case NumberType:
-        return fmt.Sprintf("%d", d.Number)
+    case IntegerType:
+        return fmt.Sprintf("%d", d.Integer)
     case FloatType:
         {
             raw := fmt.Sprintf("%g", d.Float)
@@ -628,7 +632,7 @@ func String(d *Data) string {
             return fmt.Sprintf("%s.0", raw)
         }
     case BooleanType:
-        if d.Number == 0 {
+        if d.Integer == 0 {
             return "#f"
         } else {
             return "#t"

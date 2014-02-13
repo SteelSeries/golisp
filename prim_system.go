@@ -59,11 +59,11 @@ func SleepImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if err != nil {
         return
     }
-    if !NumberP(n) {
+    if !IntegerP(n) {
         err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
         return
     }
-    millis := NumericValue(n)
+    millis := IntegerValue(n)
     time.Sleep(time.Duration(millis) * time.Millisecond)
     return
 }
@@ -104,6 +104,6 @@ func TimeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
     d := time.Since(startTime)
     fmt.Printf("Stopped timer.\nTook %v to run.\n", d)
-    result = NumberWithValue(uint32(d.Nanoseconds() / 1000000))
+    result = IntegerWithValue(int32(d.Nanoseconds() / 1000000))
     return
 }

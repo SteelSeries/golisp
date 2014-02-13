@@ -28,18 +28,18 @@ func RegisterMathPrimitives() {
 
 func IsEvenImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     evaluated, _ := Eval(Car(args), env)
-    if !NumberP(evaluated) {
+    if !IntegerP(evaluated) {
         return False, nil
     }
-    return BooleanWithValue((NumericValue(evaluated) % 2) == 0), nil
+    return BooleanWithValue((IntegerValue(evaluated) % 2) == 0), nil
 }
 
 func IsOddImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     evaluated, _ := Eval(Car(args), env)
-    if !NumberP(evaluated) {
+    if !IntegerP(evaluated) {
         return False, nil
     }
-    return BooleanWithValue((NumericValue(evaluated) % 2) == 1), nil
+    return BooleanWithValue((IntegerValue(evaluated) % 2) == 1), nil
 }
 
 func addFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -53,13 +53,13 @@ func addFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func addInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    var acc uint32 = 0
+    var acc int32 = 0
     var n *Data
     for c := args; NotNilP(c); c = Cdr(c) {
         n, err = Eval(Car(c), env)
-        acc += NumericValue(n)
+        acc += IntegerValue(n)
     }
-    return NumberWithValue(acc), nil
+    return IntegerWithValue(acc), nil
 }
 
 func anyFloats(args *Data, env *SymbolTableFrame) (result bool, err error) {
@@ -68,7 +68,7 @@ func anyFloats(args *Data, env *SymbolTableFrame) (result bool, err error) {
         n, err = Eval(Car(c), env)
         if err != nil {
             return
-        } else if !NumberP(n) && !FloatP(n) {
+        } else if !IntegerP(n) && !FloatP(n) {
             err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
             return
         }
@@ -94,25 +94,32 @@ func AddImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 func subtractInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var n *Data
     n, err = Eval(Car(args), env)
-    acc := NumericValue(n)
+    if err != nil {
+        return
+    }
+    acc := IntegerValue(n)
     for c := Cdr(args); NotNilP(c); c = Cdr(c) {
         n, err = Eval(Car(c), env)
-        if NumericValue(n) > acc {
-            return NumberWithValue(0), nil
-        } else {
-            acc -= NumericValue(n)
+        if err != nil {
+            return
         }
-
+        acc -= IntegerValue(n)
     }
-    return NumberWithValue(acc), nil
+    return IntegerWithValue(acc), nil
 }
 
 func subtractFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var n *Data
-    n, _ = Eval(Car(args), env)
+    n, err = Eval(Car(args), env)
+    if err != nil {
+        return
+    }
     acc := FloatValue(n)
     for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-        n, _ = Eval(Car(c), env)
+        n, err = Eval(Car(c), env)
+        if err != nil {
+            return
+        }
         acc -= FloatValue(n)
     }
     return FloatWithValue(acc), nil
@@ -132,12 +139,15 @@ func SubtractImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func multiplyInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var n *Data
-    var acc uint32 = 1
+    var acc int32 = 1
     for c := args; NotNilP(c); c = Cdr(c) {
         n, err = Eval(Car(c), env)
-        acc *= NumericValue(n)
+        if err != nil {
+            return
+        }
+        acc *= IntegerValue(n)
     }
-    return NumberWithValue(acc), nil
+    return IntegerWithValue(acc), nil
 }
 
 func multiplyFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -145,6 +155,9 @@ func multiplyFloats(args *Data, env *SymbolTableFrame) (result *Data, err error)
     var acc float32 = 1.0
     for c := args; NotNilP(c); c = Cdr(c) {
         n, err = Eval(Car(c), env)
+        if err != nil {
+            return
+        }
         acc *= FloatValue(n)
     }
     return FloatWithValue(acc), nil
@@ -165,20 +178,32 @@ func MultiplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 func quotientInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var n *Data
     n, err = Eval(Car(args), env)
-    var acc uint32 = NumericValue(n)
+    if err != nil {
+        return
+    }
+    acc := IntegerValue(n)
     for c := Cdr(args); NotNilP(c); c = Cdr(c) {
         n, err = Eval(Car(c), env)
-        acc /= NumericValue(n)
+        if err != nil {
+            return
+        }
+        acc /= IntegerValue(n)
     }
-    return NumberWithValue(acc), nil
+    return IntegerWithValue(acc), nil
 }
 
 func quotientFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     var n *Data
     n, err = Eval(Car(args), env)
+    if err != nil {
+        return
+    }
     var acc float32 = FloatValue(n)
     for c := Cdr(args); NotNilP(c); c = Cdr(c) {
         n, err = Eval(Car(c), env)
+        if err != nil {
+            return
+        }
         acc /= FloatValue(n)
     }
     return FloatWithValue(acc), nil
@@ -207,7 +232,7 @@ func RemainderImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     if err != nil {
         return
     }
-    if TypeOf(dividend) != NumberType {
+    if !IntegerP(dividend) {
         err = errors.New(fmt.Sprintf("Number expected, received %s", String(dividend)))
         return
     }
@@ -217,18 +242,18 @@ func RemainderImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     if err != nil {
         return
     }
-    if TypeOf(divisor) != NumberType {
+    if !IntegerP(dividend) {
         err = errors.New(fmt.Sprintf("Number expected, received %s", String(divisor)))
         return
     }
 
-    val := NumericValue(dividend) % NumericValue(divisor)
-    return NumberWithValue(val), nil
+    val := IntegerValue(dividend) % IntegerValue(divisor)
+    return IntegerWithValue(val), nil
 }
 
 func RandomByteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     r := uint8(rand.Int())
-    result = NumberWithValue(uint32(r))
+    result = IntegerWithValue(int32(r))
     return
 }
 
@@ -237,18 +262,18 @@ func IntervalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if err != nil {
         return
     }
-    start := NumericValue(startObj)
+    start := IntegerValue(startObj)
 
     endObj, err := Eval(Cadr(args), env)
     if err != nil {
         return
     }
-    end := NumericValue(endObj)
+    end := IntegerValue(endObj)
 
     var items []*Data = make([]*Data, 0, end-start+1)
 
     for i := start; i <= end; i = i + 1 {
-        items = append(items, NumberWithValue(i))
+        items = append(items, IntegerWithValue(i))
     }
     result = ArrayToList(items)
     return
@@ -259,12 +284,12 @@ func ToIntImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if err != nil {
         return
     }
-    if TypeOf(n) != NumberType && TypeOf(n) != FloatType {
+    if !IntegerP(n) && !FloatP(n) {
         err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
         return
     }
 
-    return NumberWithValue(NumericValue(n)), nil
+    return IntegerWithValue(IntegerValue(n)), nil
 }
 
 func ToFloatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -272,7 +297,7 @@ func ToFloatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if err != nil {
         return
     }
-    if TypeOf(n) != NumberType && TypeOf(n) != FloatType {
+    if !IntegerP(n) && !FloatP(n) {
         err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
         return
     }

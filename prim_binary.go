@@ -25,23 +25,23 @@ func BinaryAndImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     if err != nil {
         return
     }
-    if TypeOf(arg1) != NumberType {
-        err = errors.New(fmt.Sprintf("Integer expected, received %s", String(arg1)))
+    if !IntegerP(arg1) {
+        err = errors.New(fmt.Sprintf("Integer expected, received %s %s", TypeName(TypeOf(arg1)), String(arg1)))
         return
     }
-    b1 := NumericValue(arg1)
+    b1 := uint32(IntegerValue(arg1))
 
     arg2, err := Eval(Second(args), env)
     if err != nil {
         return
     }
-    if TypeOf(arg2) != NumberType {
-        err = errors.New(fmt.Sprintf("Integer expected, received %s", String(arg2)))
+    if !IntegerP(arg2) {
+        err = errors.New(fmt.Sprintf("Integer expected, received %s %s", TypeName(TypeOf(arg2)), String(arg2)))
         return
     }
-    b2 := NumericValue(arg2)
+    b2 := uint32(IntegerValue(arg2))
     
-    return NumberWithValue(b1 & b2), nil
+    return IntegerWithValue(int32(b1 & b2)), nil
 }
 
 func BinaryOrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -49,23 +49,23 @@ func BinaryOrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if err != nil {
         return
     }
-    if TypeOf(arg1) != NumberType {
-        err = errors.New(fmt.Sprintf("Integer expected, received %s", String(arg1)))
+    if !IntegerP(arg1) {
+        err = errors.New(fmt.Sprintf("Integer expected, received %s %s", TypeName(TypeOf(arg1)), String(arg1)))
         return
     }
-    b1 := NumericValue(arg1)
+    b1 := uint32(IntegerValue(arg1))
 
     arg2, err := Eval(Second(args), env)
     if err != nil {
         return
     }
-    if TypeOf(arg2) != NumberType {
-        err = errors.New(fmt.Sprintf("Integer expected, received %s", String(arg2)))
+    if !IntegerP(arg2) {
+        err = errors.New(fmt.Sprintf("Integer expected, received %s %s", TypeName(TypeOf(arg2)), String(arg2)))
         return
     }
-    b2 := NumericValue(arg2)
+    b2 := uint32(IntegerValue(arg2))
     
-    return NumberWithValue(b1 | b2), nil
+    return IntegerWithValue(int32(b1 | b2)), nil
 }
 
 func BinaryNotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -73,13 +73,13 @@ func BinaryNotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     if err != nil {
         return
     }
-    if TypeOf(arg1) != NumberType {
-        err = errors.New(fmt.Sprintf("Integer expected, received %s", String(arg1)))
+    if !IntegerP(arg1) {
+        err = errors.New(fmt.Sprintf("Integer expected, received %s %s", TypeName(TypeOf(arg1)), String(arg1)))
         return
     }
-    b1 := NumericValue(arg1)
+    b1 := uint32(IntegerValue(arg1))
     
-    return NumberWithValue(b1 ^ uint32(0xFFFFFFFF)), nil
+    return IntegerWithValue(int32(b1 ^ uint32(0xFFFFFFFF))), nil
 }
 
 func LeftShiftImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -87,23 +87,23 @@ func LeftShiftImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
     if err != nil {
         return
     }
-    if TypeOf(arg1) != NumberType {
-        err = errors.New(fmt.Sprintf("Integer expected, received %s", String(arg1)))
+    if !IntegerP(arg1) {
+        err = errors.New(fmt.Sprintf("Integer expected, received %s %s", TypeName(TypeOf(arg1)), String(arg1)))
         return
     }
-    b1 := NumericValue(arg1)
+    b1 := uint32(IntegerValue(arg1))
 
     arg2, err := Eval(Second(args), env)
     if err != nil {
         return
     }
-    if TypeOf(arg2) != NumberType {
-        err = errors.New(fmt.Sprintf("Integer expected, received %s", String(arg2)))
+    if !IntegerP(arg2) {
+        err = errors.New(fmt.Sprintf("Integer expected, received %s %s", TypeName(TypeOf(arg2)), String(arg2)))
         return
     }
-    b2 := NumericValue(arg2)
+    b2 := uint32(IntegerValue(arg2))
     
-    return NumberWithValue(b1 << b2), nil
+    return IntegerWithValue(int32(b1 << b2)), nil
 }
 
 func RightShiftImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -111,21 +111,21 @@ func RightShiftImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
     if err != nil {
         return
     }
-    if TypeOf(arg1) != NumberType {
-        err = errors.New(fmt.Sprintf("Integer expected, received %s", String(arg1)))
+    if !IntegerP(arg1) {
+        err = errors.New(fmt.Sprintf("Integer expected, received %s %s", TypeName(TypeOf(arg1)), String(arg1)))
         return
     }
-    b1 := NumericValue(arg1)
+    b1 := uint32(IntegerValue(arg1))
 
     arg2, err := Eval(Second(args), env)
     if err != nil {
         return
     }
-    if TypeOf(arg2) != NumberType {
-        err = errors.New(fmt.Sprintf("Integer expected, received %s", String(arg2)))
+    if !IntegerP(arg2) {
+        err = errors.New(fmt.Sprintf("Integer expected, received %s %s", TypeName(TypeOf(arg2)), String(arg2)))
         return
     }
-    b2 := NumericValue(arg2)
+    b2 := uint32(IntegerValue(arg2))
     
-    return NumberWithValue(b1 >> b2), nil
+    return IntegerWithValue(int32(b1 >> b2)), nil
 }

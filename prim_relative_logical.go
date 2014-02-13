@@ -37,7 +37,7 @@ func LessThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if err != nil {
         return
     }
-    if TypeOf(arg1) != NumberType && TypeOf(arg1) != FloatType {
+    if !IntegerP(arg1) && !FloatP(arg1) {
         err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg1)))
         return
     }
@@ -47,7 +47,7 @@ func LessThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
     if err != nil {
         return
     }
-    if TypeOf(arg2) != NumberType && TypeOf(arg2) != FloatType {
+    if !IntegerP(arg2) && !FloatP(arg2) {
         err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg2)))
         return
     }
@@ -67,7 +67,7 @@ func GreaterThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
     if err != nil {
         return
     }
-    if TypeOf(arg1) != NumberType && TypeOf(arg1) != FloatType {
+    if !IntegerP(arg1) && !FloatP(arg1) {
         err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg1)))
         return
     }
@@ -77,7 +77,7 @@ func GreaterThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
     if err != nil {
         return
     }
-    if TypeOf(arg2) != NumberType && TypeOf(arg2) != FloatType {
+    if !IntegerP(arg2) && !FloatP(arg2) {
         err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg2)))
         return
     }
@@ -139,7 +139,7 @@ func LessThanOrEqualToImpl(args *Data, env *SymbolTableFrame) (result *Data, err
     if err != nil {
         return
     }
-    if TypeOf(arg1) != NumberType && TypeOf(arg1) != FloatType {
+    if !IntegerP(arg1) && !FloatP(arg1) {
         err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg1)))
         return
     }
@@ -149,7 +149,7 @@ func LessThanOrEqualToImpl(args *Data, env *SymbolTableFrame) (result *Data, err
     if err != nil {
         return
     }
-    if TypeOf(arg2) != NumberType && TypeOf(arg2) != FloatType {
+    if !IntegerP(arg2) && !FloatP(arg2) {
         err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg2)))
         return
     }
@@ -169,7 +169,7 @@ func GreaterThanOrEqualToImpl(args *Data, env *SymbolTableFrame) (result *Data, 
     if err != nil {
         return
     }
-    if TypeOf(arg1) != NumberType && TypeOf(arg1) != FloatType {
+    if !IntegerP(arg1) && !FloatP(arg1) {
         err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg1)))
         return
     }
@@ -179,7 +179,7 @@ func GreaterThanOrEqualToImpl(args *Data, env *SymbolTableFrame) (result *Data, 
     if err != nil {
         return
     }
-    if TypeOf(arg2) != NumberType && TypeOf(arg2) != FloatType {
+    if !IntegerP(arg2) && !FloatP(arg2) {
         err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg2)))
         return
     }

@@ -11,30 +11,30 @@ import (
     . "launchpad.net/gocheck"
 )
 
-type NumberAtomSuite struct {
+type IntegerAtomSuite struct {
     n *Data
 }
 
-var _ = Suite(&NumberAtomSuite{})
+var _ = Suite(&IntegerAtomSuite{})
 
-func (s *NumberAtomSuite) SetUpTest(c *C) {
-    s.n = NumberWithValue(5)
+func (s *IntegerAtomSuite) SetUpTest(c *C) {
+    s.n = IntegerWithValue(5)
 }
 
-func (s *NumberAtomSuite) TestNumericValue(c *C) {
-    c.Assert(NumericValue(s.n), Equals, uint32(5))
+func (s *IntegerAtomSuite) TestIntegerValue(c *C) {
+    c.Assert(IntegerValue(s.n), Equals, int32(5))
 }
 
-func (s *NumberAtomSuite) TestString(c *C) {
+func (s *IntegerAtomSuite) TestString(c *C) {
     c.Assert(String(s.n), Equals, "5")
 }
 
-func (s *NumberAtomSuite) TestEval(c *C) {
+func (s *IntegerAtomSuite) TestEval(c *C) {
     n, err := Eval(s.n, Global)
     c.Assert(err, IsNil)
     c.Assert(n, Equals, s.n)
 }
 
-func (s *NumberAtomSuite) TestBooleanValue(c *C) {
+func (s *IntegerAtomSuite) TestBooleanValue(c *C) {
     c.Assert(BooleanValue(s.n), Equals, true)
 }

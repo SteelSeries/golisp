@@ -20,25 +20,32 @@ var _ = Suite(&ParsingSuite{})
 
 // Atoms
 
-func (s *ParsingSuite) TestNumber(c *C) {
+func (s *ParsingSuite) TestInteger(c *C) {
     sexpr, err := Parse("5")
     c.Assert(err, IsNil)
-    c.Assert(TypeOf(sexpr), Equals, NumberType)
-    c.Assert(NumericValue(sexpr), Equals, uint32(5))
+    c.Assert(TypeOf(sexpr), Equals, IntegerType)
+    c.Assert(IntegerValue(sexpr), Equals, int32(5))
 }
 
-func (s *ParsingSuite) TestAnotherNumber(c *C) {
+func (s *ParsingSuite) TestAnotherInteger(c *C) {
     sexpr, err := Parse("476")
     c.Assert(err, IsNil)
-    c.Assert(TypeOf(sexpr), FitsTypeOf, NumberType)
-    c.Assert(NumericValue(sexpr), Equals, uint32(476))
+    c.Assert(TypeOf(sexpr), FitsTypeOf, IntegerType)
+    c.Assert(IntegerValue(sexpr), Equals, int32(476))
 }
 
-func (s *ParsingSuite) TestHexNumber(c *C) {
+func (s *ParsingSuite) TestNegaitveInteger(c *C) {
+    sexpr, err := Parse("-5")
+    c.Assert(err, IsNil)
+    c.Assert(TypeOf(sexpr), Equals, IntegerType)
+    c.Assert(IntegerValue(sexpr), Equals, int32(-5))
+}
+
+func (s *ParsingSuite) TestHexInteger(c *C) {
     sexpr, err := Parse("0xa5")
     c.Assert(err, IsNil)
-    c.Assert(TypeOf(sexpr), Equals, NumberType)
-    c.Assert(NumericValue(sexpr), Equals, uint32(165))
+    c.Assert(TypeOf(sexpr), Equals, IntegerType)
+    c.Assert(IntegerValue(sexpr), Equals, int32(165))
 }
 
 func (s *ParsingSuite) TestFloat(c *C) {
@@ -55,18 +62,18 @@ func (s *ParsingSuite) TestNegativeFloat(c *C) {
     c.Assert(FloatValue(sexpr), Equals, float32(-12.345))
 }
 
-func (s *ParsingSuite) TestUppercaseHexNumber(c *C) {
+func (s *ParsingSuite) TestUppercaseHexInteger(c *C) {
     sexpr, err := Parse("0xA5")
     c.Assert(err, IsNil)
-    c.Assert(TypeOf(sexpr), Equals, NumberType)
-    c.Assert(NumericValue(sexpr), Equals, uint32(165))
+    c.Assert(TypeOf(sexpr), Equals, IntegerType)
+    c.Assert(IntegerValue(sexpr), Equals, int32(165))
 }
 
-func (s *ParsingSuite) TestMixedCaseHexNumber(c *C) {
+func (s *ParsingSuite) TestMixedCaseHexInteger(c *C) {
     sexpr, err := Parse("0xAf")
     c.Assert(err, IsNil)
-    c.Assert(TypeOf(sexpr), Equals, NumberType)
-    c.Assert(NumericValue(sexpr), Equals, uint32(175))
+    c.Assert(TypeOf(sexpr), Equals, IntegerType)
+    c.Assert(IntegerValue(sexpr), Equals, int32(175))
 }
 
 func (s *ParsingSuite) TestString(c *C) {
@@ -133,12 +140,12 @@ func (s *ParsingSuite) TestNil(c *C) {
     c.Assert(sexpr, IsNil)
 }
 
-func (s *ParsingSuite) TestNumberCar(c *C) {
+func (s *ParsingSuite) TestIntegerCar(c *C) {
     sexpr, err := Parse("(1)")
     c.Assert(err, IsNil)
     c.Assert(TypeOf(sexpr), Equals, ConsCellType)
-    c.Assert(TypeOf(Car(sexpr)), Equals, NumberType)
-    c.Assert(NumericValue(Car(sexpr)), Equals, uint32(1))
+    c.Assert(TypeOf(Car(sexpr)), Equals, IntegerType)
+    c.Assert(IntegerValue(Car(sexpr)), Equals, int32(1))
 }
 
 func (s *ParsingSuite) TestStringCar(c *C) {
@@ -153,10 +160,10 @@ func (s *ParsingSuite) Test2ElementList(c *C) {
     sexpr, err := Parse("(1 2)")
     c.Assert(err, IsNil)
     c.Assert(sexpr, FitsTypeOf, EmptyCons())
-    c.Assert(TypeOf(Car(sexpr)), Equals, NumberType)
-    c.Assert(NumericValue(Car(sexpr)), Equals, uint32(1))
-    c.Assert(TypeOf(Car(Cdr(sexpr))), Equals, NumberType)
-    c.Assert(NumericValue(Car(Cdr(sexpr))), Equals, uint32(2))
+    c.Assert(TypeOf(Car(sexpr)), Equals, IntegerType)
+    c.Assert(IntegerValue(Car(sexpr)), Equals, int32(1))
+    c.Assert(TypeOf(Car(Cdr(sexpr))), Equals, IntegerType)
+    c.Assert(IntegerValue(Car(Cdr(sexpr))), Equals, int32(2))
     c.Assert(Cdr(Cdr(sexpr)), IsNil)
 }
 
@@ -165,19 +172,19 @@ func (s *ParsingSuite) TestNestedList(c *C) {
     c.Assert(err, IsNil)
     c.Assert(TypeOf(sexpr), Equals, ConsCellType)
 
-    c.Assert(TypeOf(Car(sexpr)), Equals, NumberType)
-    c.Assert(NumericValue(Car(sexpr)), Equals, uint32(1))
+    c.Assert(TypeOf(Car(sexpr)), Equals, IntegerType)
+    c.Assert(IntegerValue(Car(sexpr)), Equals, int32(1))
 
     c.Assert(TypeOf(Cadr(sexpr)), Equals, ConsCellType)
 
-    c.Assert(TypeOf(WalkList(sexpr, "aad")), Equals, NumberType)
-    c.Assert(NumericValue(WalkList(sexpr, "aad")), Equals, uint32(2))
+    c.Assert(TypeOf(WalkList(sexpr, "aad")), Equals, IntegerType)
+    c.Assert(IntegerValue(WalkList(sexpr, "aad")), Equals, int32(2))
 
-    c.Assert(TypeOf(WalkList(sexpr, "adad")), Equals, NumberType)
-    c.Assert(NumericValue(WalkList(sexpr, "adad")), Equals, uint32(3))
+    c.Assert(TypeOf(WalkList(sexpr, "adad")), Equals, IntegerType)
+    c.Assert(IntegerValue(WalkList(sexpr, "adad")), Equals, int32(3))
 
-    c.Assert(TypeOf(Third(sexpr)), Equals, NumberType)
-    c.Assert(NumericValue(Third(sexpr)), Equals, uint32(4))
+    c.Assert(TypeOf(Third(sexpr)), Equals, IntegerType)
+    c.Assert(IntegerValue(Third(sexpr)), Equals, int32(4))
 
     c.Assert(Cdr(Cddr(sexpr)), IsNil)
 }
@@ -187,10 +194,10 @@ func (s *ParsingSuite) TestDottedPair(c *C) {
     c.Assert(err, IsNil)
     c.Assert(TypeOf(sexpr), Equals, ConsCellType)
 
-    c.Assert(TypeOf(Car(sexpr)), Equals, NumberType)
-    c.Assert(NumericValue(Car(sexpr)), Equals, uint32(1))
-    c.Assert(TypeOf(Cdr(sexpr)), Equals, NumberType)
-    c.Assert(NumericValue(Cdr(sexpr)), Equals, uint32(2))
+    c.Assert(TypeOf(Car(sexpr)), Equals, IntegerType)
+    c.Assert(IntegerValue(Car(sexpr)), Equals, int32(1))
+    c.Assert(TypeOf(Cdr(sexpr)), Equals, IntegerType)
+    c.Assert(IntegerValue(Cdr(sexpr)), Equals, int32(2))
 }
 
 func (s *ParsingSuite) TestPrimitive(c *C) {
@@ -201,11 +208,11 @@ func (s *ParsingSuite) TestPrimitive(c *C) {
     c.Assert(TypeOf(Car(sexpr)), Equals, SymbolType)
     c.Assert(StringValue(Car(sexpr)), Equals, "+")
 
-    c.Assert(TypeOf(Cadr(sexpr)), Equals, NumberType)
-    c.Assert(NumericValue(Cadr(sexpr)), Equals, uint32(1))
+    c.Assert(TypeOf(Cadr(sexpr)), Equals, IntegerType)
+    c.Assert(IntegerValue(Cadr(sexpr)), Equals, int32(1))
 
-    c.Assert(TypeOf(Third(sexpr)), Equals, NumberType)
-    c.Assert(NumericValue(Third(sexpr)), Equals, uint32(2))
+    c.Assert(TypeOf(Third(sexpr)), Equals, IntegerType)
+    c.Assert(IntegerValue(Third(sexpr)), Equals, int32(2))
 }
 
 func (s *ParsingSuite) TestByteArray(c *C) {

@@ -70,7 +70,7 @@ func SetNthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
         return
     }
 
-    for i := NumericValue(index); i > 1; l, i = Cdr(l), i-1 {
+    for i := IntegerValue(index); i > 1; l, i = Cdr(l), i-1 {
     }
     if !NilP(l) {
         l.Car = value
