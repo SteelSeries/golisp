@@ -29,7 +29,7 @@ func (s *BuiltinsSuite) TestUnaryAdd(c *C) {
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, IntegerType)
-    c.Assert(IntegerValue(result), Equals, int32(1))
+    c.Assert(IntegerValue(result), Equals, int64(1))
 }
 
 func (s *BuiltinsSuite) TestBinaryAdd(c *C) {
@@ -38,7 +38,7 @@ func (s *BuiltinsSuite) TestBinaryAdd(c *C) {
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, IntegerType)
-    c.Assert(IntegerValue(result), Equals, int32(3))
+    c.Assert(IntegerValue(result), Equals, int64(3))
 }
 
 func (s *BuiltinsSuite) TestTrinaryAdd(c *C) {
@@ -47,7 +47,7 @@ func (s *BuiltinsSuite) TestTrinaryAdd(c *C) {
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, IntegerType)
-    c.Assert(IntegerValue(result), Equals, int32(6))
+    c.Assert(IntegerValue(result), Equals, int64(6))
 }
 
 // Subtract
@@ -58,7 +58,7 @@ func (s *BuiltinsSuite) TestBinarySubtract(c *C) {
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, IntegerType)
-    c.Assert(IntegerValue(result), Equals, int32(1))
+    c.Assert(IntegerValue(result), Equals, int64(1))
 }
 
 func (s *BuiltinsSuite) TestTrinarySubtract(c *C) {
@@ -67,7 +67,7 @@ func (s *BuiltinsSuite) TestTrinarySubtract(c *C) {
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, IntegerType)
-    c.Assert(IntegerValue(result), Equals, int32(0))
+    c.Assert(IntegerValue(result), Equals, int64(0))
 }
 
 // Mutiply
@@ -78,7 +78,7 @@ func (s *BuiltinsSuite) TestUnaryMultiply(c *C) {
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, IntegerType)
-    c.Assert(IntegerValue(result), Equals, int32(2))
+    c.Assert(IntegerValue(result), Equals, int64(2))
 }
 
 func (s *BuiltinsSuite) TestBinaryMultiplty(c *C) {
@@ -87,7 +87,7 @@ func (s *BuiltinsSuite) TestBinaryMultiplty(c *C) {
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, IntegerType)
-    c.Assert(IntegerValue(result), Equals, int32(6))
+    c.Assert(IntegerValue(result), Equals, int64(6))
 }
 
 func (s *BuiltinsSuite) TestTrinaryMultiply(c *C) {
@@ -96,7 +96,7 @@ func (s *BuiltinsSuite) TestTrinaryMultiply(c *C) {
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, IntegerType)
-    c.Assert(IntegerValue(result), Equals, int32(24))
+    c.Assert(IntegerValue(result), Equals, int64(24))
 }
 
 // Quotient
@@ -107,7 +107,7 @@ func (s *BuiltinsSuite) TestUnaryQuotient(c *C) {
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, IntegerType)
-    c.Assert(IntegerValue(result), Equals, int32(24))
+    c.Assert(IntegerValue(result), Equals, int64(24))
 }
 
 func (s *BuiltinsSuite) TestBinaryQuotient(c *C) {
@@ -116,7 +116,7 @@ func (s *BuiltinsSuite) TestBinaryQuotient(c *C) {
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, IntegerType)
-    c.Assert(IntegerValue(result), Equals, int32(12))
+    c.Assert(IntegerValue(result), Equals, int64(12))
 }
 
 func (s *BuiltinsSuite) TestTrinaryQuotient(c *C) {
@@ -125,7 +125,7 @@ func (s *BuiltinsSuite) TestTrinaryQuotient(c *C) {
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, IntegerType)
-    c.Assert(IntegerValue(result), Equals, int32(4))
+    c.Assert(IntegerValue(result), Equals, int64(4))
 }
 
 // compound
@@ -136,7 +136,7 @@ func (s *BuiltinsSuite) TestCompoundMath(c *C) {
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, IntegerType)
-    c.Assert(IntegerValue(result), Equals, int32(7))
+    c.Assert(IntegerValue(result), Equals, int64(7))
 }
 
 // If
@@ -147,7 +147,7 @@ func (s *BuiltinsSuite) TestIfTrueWithThen(c *C) {
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, IntegerType)
-    c.Assert(IntegerValue(result), Equals, int32(5))
+    c.Assert(IntegerValue(result), Equals, int64(5))
 }
 
 func (s *BuiltinsSuite) TestIfFalseWithThen(c *C) {
@@ -163,7 +163,7 @@ func (s *BuiltinsSuite) TestIfTrueWithThenAndElse(c *C) {
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, IntegerType)
-    c.Assert(IntegerValue(result), Equals, int32(5))
+    c.Assert(IntegerValue(result), Equals, int64(5))
 }
 
 func (s *BuiltinsSuite) TestIfFalseWithThenAndElse(c *C) {
@@ -172,7 +172,7 @@ func (s *BuiltinsSuite) TestIfFalseWithThenAndElse(c *C) {
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, IntegerType)
-    c.Assert(IntegerValue(result), Equals, int32(10))
+    c.Assert(IntegerValue(result), Equals, int64(10))
 }
 
 func (s *BuiltinsSuite) TestIfTrueWithNoClauses(c *C) {
@@ -209,7 +209,7 @@ func (s *BuiltinsSuite) TestIfTrueWithMoreInvolvedArgs(c *C) {
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, IntegerType)
-    c.Assert(IntegerValue(result), Equals, int32(5))
+    c.Assert(IntegerValue(result), Equals, int64(5))
 }
 
 func (s *BuiltinsSuite) TestIfFalseWithMoreInvolvedArgs(c *C) {
@@ -218,7 +218,7 @@ func (s *BuiltinsSuite) TestIfFalseWithMoreInvolvedArgs(c *C) {
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, IntegerType)
-    c.Assert(IntegerValue(result), Equals, int32(1))
+    c.Assert(IntegerValue(result), Equals, int64(1))
 }
 
 // %
@@ -241,7 +241,7 @@ func (s *BuiltinsSuite) TestRemainder1(c *C) {
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, IntegerType)
-    c.Assert(IntegerValue(result), Equals, int32(1))
+    c.Assert(IntegerValue(result), Equals, int64(1))
 }
 
 func (s *BuiltinsSuite) TestRemainder3(c *C) {
@@ -250,7 +250,7 @@ func (s *BuiltinsSuite) TestRemainder3(c *C) {
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, IntegerType)
-    c.Assert(IntegerValue(result), Equals, int32(3))
+    c.Assert(IntegerValue(result), Equals, int64(3))
 }
 
 func (s *BuiltinsSuite) TestRemainder0(c *C) {
@@ -259,7 +259,7 @@ func (s *BuiltinsSuite) TestRemainder0(c *C) {
     c.Assert(err, IsNil)
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, IntegerType)
-    c.Assert(IntegerValue(result), Equals, int32(0))
+    c.Assert(IntegerValue(result), Equals, int64(0))
 }
 
 // <
@@ -523,7 +523,7 @@ func (s *BuiltinsSuite) TestDefine(c *C) {
     v := Global.ValueOf(sym)
     c.Assert(v, NotNil)
     c.Assert(TypeOf(v), Equals, IntegerType)
-    c.Assert(IntegerValue(v), Equals, int32(5))
+    c.Assert(IntegerValue(v), Equals, int64(5))
 }
 
 func (s *BuiltinsSuite) TestDefineAString(c *C) {
@@ -564,7 +564,7 @@ func (s *BuiltinsSuite) TestDefineFunction(c *C) {
 
     c.Assert(v, NotNil)
     c.Assert(TypeOf(v), Equals, IntegerType)
-    c.Assert(IntegerValue(v), Equals, int32(10))
+    c.Assert(IntegerValue(v), Equals, int64(10))
 }
 
 func (s *BuiltinsSuite) TestMapSingleCollection(c *C) {
@@ -575,15 +575,15 @@ func (s *BuiltinsSuite) TestMapSingleCollection(c *C) {
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, ConsCellType)
     c.Assert(TypeOf(Car(result)), Equals, IntegerType)
-    c.Assert(IntegerValue(Car(result)), Equals, int32(2))
+    c.Assert(IntegerValue(Car(result)), Equals, int64(2))
 
     c.Assert(TypeOf(Cdr(result)), Equals, ConsCellType)
     c.Assert(TypeOf(Cadr(result)), Equals, IntegerType)
-    c.Assert(IntegerValue(Cadr(result)), Equals, int32(4))
+    c.Assert(IntegerValue(Cadr(result)), Equals, int64(4))
 
     c.Assert(TypeOf(Cddr(result)), Equals, ConsCellType)
     c.Assert(TypeOf(Third(result)), Equals, IntegerType)
-    c.Assert(IntegerValue(Third(result)), Equals, int32(6))
+    c.Assert(IntegerValue(Third(result)), Equals, int64(6))
 
     c.Assert(NilP(WalkList(result, "ddd")), Equals, true)
 }
@@ -596,11 +596,11 @@ func (s *BuiltinsSuite) TestQuote(c *C) {
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, ConsCellType)
     c.Assert(TypeOf(Car(result)), Equals, IntegerType)
-    c.Assert(IntegerValue(Car(result)), Equals, int32(1))
+    c.Assert(IntegerValue(Car(result)), Equals, int64(1))
 
     c.Assert(TypeOf(Cdr(result)), Equals, ConsCellType)
     c.Assert(TypeOf(Cadr(result)), Equals, IntegerType)
-    c.Assert(IntegerValue(Cadr(result)), Equals, int32(2))
+    c.Assert(IntegerValue(Cadr(result)), Equals, int64(2))
 
     c.Assert(NilP(Cddr(result)), Equals, true)
 }
@@ -613,11 +613,11 @@ func (s *BuiltinsSuite) TestQuoteShortcut(c *C) {
     c.Assert(result, NotNil)
     c.Assert(TypeOf(result), Equals, ConsCellType)
     c.Assert(TypeOf(Car(result)), Equals, IntegerType)
-    c.Assert(IntegerValue(Car(result)), Equals, int32(1))
+    c.Assert(IntegerValue(Car(result)), Equals, int64(1))
 
     c.Assert(TypeOf(Cdr(result)), Equals, ConsCellType)
     c.Assert(TypeOf(Cadr(result)), Equals, IntegerType)
-    c.Assert(IntegerValue(Cadr(result)), Equals, int32(2))
+    c.Assert(IntegerValue(Cadr(result)), Equals, int64(2))
 
     c.Assert(NilP(Cddr(result)), Equals, true)
 }

@@ -31,7 +31,7 @@ func (s *SymbolTableFrameSuite) TestFetching(c *C) {
     c.Assert(found, Equals, true)
 
     c.Assert(StringValue(fetched.Sym), Equals, "test")
-    c.Assert(IntegerValue(fetched.Val), Equals, int32(42))
+    c.Assert(IntegerValue(fetched.Val), Equals, int64(42))
 }
 
 func (s *SymbolTableFrameSuite) TestInterning(c *C) {
@@ -57,5 +57,5 @@ func (s *SymbolTableFrameSuite) TestSymbolValue(c *C) {
     val := s.frame.ValueOf(sym)
     c.Assert(val, NotNil)
     c.Assert(TypeOf(val), Equals, IntegerType)
-    c.Assert(IntegerValue(val), Equals, int32(42))
+    c.Assert(IntegerValue(val), Equals, int64(42))
 }

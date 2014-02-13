@@ -90,7 +90,7 @@ adding support for them to the tokenizer and parser.
 \item[Strings] are any sequence of characters other than \verb|"|
 enclosed by a pair of \verb|"|, e.g. \verb|"string"|.
 
-\item[Integers] are non-negative integers internally represented as \verb|uint32|. Both decimal and hexidecimal formats are supported. E.g.
+\item[Integers] are non-negative integers internally represented as \verb|uint64|. Both decimal and hexidecimal formats are supported. E.g.
   \verb|26|, \verb|0x1a|, \verb|0x1A|.
 
 \item[Floats] are Go \verb|float32| numbers. Accordingly they are
@@ -192,7 +192,7 @@ integers. E.g.
 Returns the integer value of \verb|<number>|. If it is an integer, it
 is simply returned. However, if it is a float the integer part is
 returned. Note that this is implemented in go by casting the
-\verb|float32| to a \verb|uint32| so converting negative floats gives
+\verb|float32| to a \verb|uint64| so converting negative floats gives
 a large integer.
 
 \begin{verbatim}
@@ -1168,7 +1168,7 @@ There are various convience functions that you can use to create data:
 \begin{description}
 \item [{\tt Cons(car *Data, cdr *Data) *Data}] creates a cons cell
   with the provided values for it's \verb|car| and \verb|cdr|.
-\item [{\tt NumberWithValue(n uint32) *Data}] creates a number (integer)
+\item [{\tt NumberWithValue(n uint64) *Data}] creates a number (integer)
   with the provided value
 \item [{\tt FloatWithValue(n float32) *Data}] creates a number (float)
   with the provided value
@@ -1187,7 +1187,7 @@ There are various convience functions that you can use to create data:
 from data elements:
 
 \begin{description}
-\item [{\tt IntegerValue(*Data) uint32}] extracts the primitive integer value
+\item [{\tt IntegerValue(*Data) uint64}] extracts the primitive integer value
 \item [{\tt FloatValue(*Data) float32}] extracts the primitive float value
 \item [{\tt StringValue(*Data) string}] extracts the primitive
   string value

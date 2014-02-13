@@ -16,7 +16,7 @@ import (
 )
 
 func makeInteger(str string) (n *Data, err error) {
-    var i int32
+    var i int64
     _, err = fmt.Sscanf(str, "%d", &i)
     if err != nil {
         return
@@ -26,7 +26,7 @@ func makeInteger(str string) (n *Data, err error) {
 }
 
 func makeHexInteger(str string) (n *Data, err error) {
-    var i int32
+    var i int64
     _, err = fmt.Sscanf(str, "%v", &i)
     if err != nil {
         return

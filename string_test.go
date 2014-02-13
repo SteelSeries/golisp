@@ -22,7 +22,7 @@ func (s *StringAtomSuite) SetUpTest(c *C) {
 }
 
 func (s *StringAtomSuite) TestIntegerValue(c *C) {
-    c.Assert(IntegerValue(s.atom), Equals, int32(0))
+    c.Assert(IntegerValue(s.atom), Equals, int64(0))
 }
 
 func (s *StringAtomSuite) TestString(c *C) {

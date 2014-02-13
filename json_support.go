@@ -36,7 +36,7 @@ func JsonToLisp(json interface{}) (result *Data) {
 
     intValue, ok := json.(float64)
     if ok {
-        return IntegerWithValue(int32(intValue))
+        return IntegerWithValue(int64(intValue))
     }
 
     strValue, ok := json.(string)

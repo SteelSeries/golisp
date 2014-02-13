@@ -21,8 +21,8 @@ func (s *UtilitySuite) TestArrayToList(c *C) {
     sexpr := ArrayToList(a)
     c.Assert(ListP(sexpr), Equals, true)
     c.Assert(Length(sexpr), Equals, 2)
-    c.Assert(IntegerValue(Car(sexpr)), Equals, int32(1))
-    c.Assert(IntegerValue(Cadr(sexpr)), Equals, int32(2))
+    c.Assert(IntegerValue(Car(sexpr)), Equals, int64(1))
+    c.Assert(IntegerValue(Cadr(sexpr)), Equals, int64(2))
 }
 
 func (s *UtilitySuite) TestEmptyArrayToList(c *C) {
@@ -38,10 +38,10 @@ func (s *UtilitySuite) TestArrayToListWithTail(c *C) {
     sexpr := ArrayToListWithTail(a, tail)
     c.Assert(ListP(sexpr), Equals, true)
     c.Assert(Length(sexpr), Equals, 4)
-    c.Assert(IntegerValue(First(sexpr)), Equals, int32(1))
-    c.Assert(IntegerValue(Second(sexpr)), Equals, int32(2))
-    c.Assert(IntegerValue(Third(sexpr)), Equals, int32(3))
-    c.Assert(IntegerValue(Fourth(sexpr)), Equals, int32(4))
+    c.Assert(IntegerValue(First(sexpr)), Equals, int64(1))
+    c.Assert(IntegerValue(Second(sexpr)), Equals, int64(2))
+    c.Assert(IntegerValue(Third(sexpr)), Equals, int64(3))
+    c.Assert(IntegerValue(Fourth(sexpr)), Equals, int64(4))
 }
 
 func (s *UtilitySuite) TestArrayToListWithEmptyTail(c *C) {
@@ -49,14 +49,14 @@ func (s *UtilitySuite) TestArrayToListWithEmptyTail(c *C) {
     sexpr := ArrayToListWithTail(a, nil)
     c.Assert(ListP(sexpr), Equals, true)
     c.Assert(Length(sexpr), Equals, 2)
-    c.Assert(IntegerValue(First(sexpr)), Equals, int32(1))
-    c.Assert(IntegerValue(Second(sexpr)), Equals, int32(2))
+    c.Assert(IntegerValue(First(sexpr)), Equals, int64(1))
+    c.Assert(IntegerValue(Second(sexpr)), Equals, int64(2))
 }
 
 func (s *UtilitySuite) TestToArray(c *C) {
     list := Cons(IntegerWithValue(1), Cons(IntegerWithValue(2), nil))
     ary := ToArray(list)
     c.Assert(len(ary), Equals, 2)
-    c.Assert(IntegerValue(ary[0]), Equals, int32(1))
-    c.Assert(IntegerValue(ary[1]), Equals, int32(2))
+    c.Assert(IntegerValue(ary[0]), Equals, int64(1))
+    c.Assert(IntegerValue(ary[1]), Equals, int64(2))
 }

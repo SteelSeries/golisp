@@ -34,7 +34,7 @@ type Data struct {
     Car     *Data  // ConsCellType & AlistType
     Cdr     *Data  // ConsCellType & AlistType
     String  string // StringType & SymbolType
-    Integer int32 // IntegerType & BooleanType
+    Integer int64 // IntegerType & BooleanType
     Float   float32
     Func    *Function          // FunctionType
     Mac     *Macro             // MacroType
@@ -243,7 +243,7 @@ func EmptyCons() *Data {
     return Cons(nil, nil)
 }
 
-func IntegerWithValue(n int32) *Data {
+func IntegerWithValue(n int64) *Data {
     return &Data{Type: IntegerType, Integer: n}
 }
 
@@ -256,7 +256,7 @@ func BooleanWithValue(b bool) *Data {
     if b {
         num = 1
     }
-    return &Data{Type: BooleanType, Integer: int32(num)}
+    return &Data{Type: BooleanType, Integer: int64(num)}
 }
 
 func StringWithValue(s string) *Data {
@@ -283,7 +283,7 @@ func ObjectWithTypeAndValue(typeName string, o unsafe.Pointer) *Data {
     return &Data{Type: ObjectType, ObjType: typeName, Obj: o}
 }
 
-func IntegerValue(d *Data) int32 {
+func IntegerValue(d *Data) int64 {
     if d == nil {
         return 0
     }
@@ -293,7 +293,7 @@ func IntegerValue(d *Data) int32 {
     }
 
     if FloatP(d) {
-        return int32(d.Float)
+        return int64(d.Float)
     }
 
     return 0
