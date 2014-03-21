@@ -8,34 +8,34 @@
 package golisp
 
 import (
-    "fmt"
+	"fmt"
 )
 
 func Repl() {
-    fmt.Printf("Welcome to GoLisp\n")
-    fmt.Printf("Copyright 2013 SteelSeries\n")
-    fmt.Printf("Evaluate '(quit)' to exit.\n\n")
-    prompt := "> "
-    LoadHistoryFromFile(".golisp_history")
-    lastInput := ""
-    for true {
-        input := *ReadLine(&prompt)
-        if input != "" {
-            if input != lastInput {
-                AddHistory(input)
-            }
-            lastInput = input
-            code, err := Parse(input)
-            if err != nil {
-                fmt.Printf("Error: %s\n", err)
-            } else {
-                d, err := Eval(code, Global)
-                if err != nil {
-                    fmt.Printf("Error in evaluation: %s\n", err)
-                } else {
-                    fmt.Printf("==> %s\n", String(d))
-                }
-            }
-        }
-    }
+	fmt.Printf("Welcome to GoLisp\n")
+	fmt.Printf("Copyright 2013 SteelSeries\n")
+	fmt.Printf("Evaluate '(quit)' to exit.\n\n")
+	prompt := "> "
+	LoadHistoryFromFile(".golisp_history")
+	lastInput := ""
+	for true {
+		input := *ReadLine(&prompt)
+		if input != "" {
+			if input != lastInput {
+				AddHistory(input)
+			}
+			lastInput = input
+			code, err := Parse(input)
+			if err != nil {
+				fmt.Printf("Error: %s\n", err)
+			} else {
+				d, err := Eval(code, Global)
+				if err != nil {
+					fmt.Printf("Error in evaluation: %s\n", err)
+				} else {
+					fmt.Printf("==> %s\n", String(d))
+				}
+			}
+		}
+	}
 }
