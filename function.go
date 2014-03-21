@@ -8,64 +8,103 @@
 package golisp
 
 import (
-    "errors"
-    "fmt"
+	"errors"
+	"fmt"
 )
 
 type Function struct {
-    Name   string
-    Params *Data
-    Body   *Data
-    Env    *SymbolTableFrame
+	Name             string
+	Params           *Data
+	VarArgs          bool
+	RequiredArgCount int
+	Body             *Data
+	Env              *SymbolTableFrame
+}
+
+func computeRequiredArgumentCount(args *Data) (requiredArgCount int, varArgs bool) {
+	requiredArgumentCount := 0
+	varArgs = false
+	for a := args; NotNilP(a); a = Cdr(a) {
+		if SymbolP(a) {
+			varArgs = true
+			return
+		} else {
+			requiredArgumentCount += 1
+		}
+	}
+	return
 }
 
 func MakeFunction(name string, params *Data, body *Data, parentEnv *SymbolTableFrame) *Function {
-    return &Function{Name: name, Params: params, Body: body, Env: parentEnv}
+	requiredArgs, varArgs := computeRequiredArgumentCount(params)
+	return &Function{Name: name, Params: params, VarArgs: varArgs, RequiredArgCount: requiredArgs, Body: body, Env: parentEnv}
 }
 
 func (self *Function) String() string {
-    return fmt.Sprintf("<func: %s>", self.Name)
+	return fmt.Sprintf("<func: %s>", self.Name)
 }
 
 func (self *Function) makeLocalBindings(args *Data, argEnv *SymbolTableFrame, localEnv *SymbolTableFrame, eval bool) (err error) {
-    if Length(args) != Length(self.Params) {
-        return errors.New("Number of args must equal number of params")
-    }
+	if self.VarArgs {
+		if Length(args) < self.RequiredArgCount {
+			return errors.New(fmt.Sprintf("%s expected at least %d parameters, received %d.", self.Name, self.RequiredArgCount, Length(args)))
+		}
+	} else {
+		if Length(args) != self.RequiredArgCount {
+			return errors.New(fmt.Sprintf("%s expected %d parameters, received %d.", self.Name, self.RequiredArgCount, Length(args)))
+		}
+	}
 
-    var data *Data
-    for p, a := self.Params, args; NotNilP(p); p, a = Cdr(p), Cdr(a) {
-        if eval {
-            data, err = Eval(Car(a), argEnv)
-            if err != nil {
-                return
-            }
-        } else {
-            data = Car(a)
-        }
-        localEnv.BindLocallyTo(Car(p), data)
-    }
-    return nil
+	var argValue *Data
+	var accumulatingParam *Data = nil
+	accumulatedArgs := make([]*Data, 0)
+	for p, a := self.Params, args; NotNilP(a); a = Cdr(a) {
+		if eval {
+			argValue, err = Eval(Car(a), argEnv)
+			if err != nil {
+				return
+			}
+		} else {
+			argValue = Car(a)
+		}
+
+		if accumulatingParam != nil {
+			accumulatedArgs = append(accumulatedArgs, argValue)
+		} else {
+			localEnv.BindLocallyTo(Car(p), argValue)
+		}
+		if accumulatingParam == nil {
+			p = Cdr(p)
+		}
+		if SymbolP(p) {
+			accumulatingParam = p
+		}
+	}
+	if accumulatingParam != nil {
+		localEnv.BindLocallyTo(accumulatingParam, ArrayToList(accumulatedArgs))
+	}
+	return nil
 }
 
 func (self *Function) internalApply(args *Data, argEnv *SymbolTableFrame, eval bool) (result *Data, err error) {
-    localEnv := NewSymbolTableFrameBelow(self.Env)
-    err = self.makeLocalBindings(args, argEnv, localEnv, eval)
-    if err != nil {
-        return
-    }
-    for s := self.Body; NotNilP(s); s = Cdr(s) {
-        result, err = Eval(Car(s), localEnv)
-        if err != nil {
-            return
-        }
-    }
-    return
+	localEnv := NewSymbolTableFrameBelow(self.Env)
+	err = self.makeLocalBindings(args, argEnv, localEnv, eval)
+	if err != nil {
+		return
+	}
+	for s := self.Body; NotNilP(s); s = Cdr(s) {
+		result, err = Eval(Car(s), localEnv)
+		if err != nil {
+			return
+		}
+	}
+	return
 }
 
 func (self *Function) Apply(args *Data, argEnv *SymbolTableFrame) (result *Data, err error) {
-    return self.internalApply(args, argEnv, true)
+	return self.internalApply(args, argEnv, true)
 }
 
 func (self *Function) ApplyWithoutEval(args *Data, argEnv *SymbolTableFrame) (result *Data, err error) {
-    return self.internalApply(args, argEnv, false)
+	return self.internalApply(args, argEnv, false)
 }
