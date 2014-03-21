@@ -21,8 +21,8 @@ type Function struct {
 	Env              *SymbolTableFrame
 }
 
-func computeRequiredArgumentCount(args *Data) (requiredArgCount int, varArgs bool) {
-	requiredArgumentCount := 0
+func computeRequiredArgumentCount(args *Data) (requiredArgumentCount int, varArgs bool) {
+	requiredArgumentCount = 0
 	varArgs = false
 	for a := args; NotNilP(a); a = Cdr(a) {
 		if SymbolP(a) {
