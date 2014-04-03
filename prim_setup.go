@@ -11,24 +11,25 @@ var DebugTrace = false
 var quasiquoteLevel = 1
 
 func init() {
-    Global = NewSymbolTableFrameBelow(nil)
-    Global.Intern("nil")
-    InitBuiltins()
+	Global = NewSymbolTableFrameBelow(nil)
+	Global.Intern("nil")
+	InitBuiltins()
 }
 
 func InitBuiltins() {
-    RegisterTypePredicatePrimitives()
-    RegisterMathPrimitives()
-    RegisterBinaryPrimitives()
-    RegisterRelativePrimitives()
-    RegisterSpecialFormPrimitives()
-    RegisterMacroPrimitives()
-    RegisterMutatorPrimitives()
-    RegisterListManipulationPrimitives()
-    RegisterListAccessPrimitives()
-    RegisterListFunctionsPrimitives()
-    RegisterAListPrimitives()
-    RegisterSystemPrimitives()
-    RegisterBytearrayPrimitives()
-    RegisterTestingPrimitives()
+	RegisterTypePredicatePrimitives()
+	RegisterMathPrimitives()
+	RegisterBinaryPrimitives()
+	RegisterRelativePrimitives()
+	RegisterSpecialFormPrimitives()
+	RegisterMacroPrimitives()
+	RegisterMutatorPrimitives()
+	RegisterListManipulationPrimitives()
+	RegisterListAccessPrimitives()
+	RegisterListFunctionsPrimitives()
+	RegisterAListPrimitives()
+	RegisterSystemPrimitives()
+	RegisterBytearrayPrimitives()
+	RegsterStringPrimitives()
+	RegisterTestingPrimitives()
 }

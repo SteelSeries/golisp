@@ -7,7 +7,9 @@
     (== (- 10 7) 3)
     (== (* 2 4)  8)
     (== (/ 25 5) 5)
-    (== (% 7 5)  2))
+    (== (quotient 25 5) 5)
+    (== (% 7 5)  2)
+    (== (modulo 7 5)  2))
 
 (describe subtraction-going-negative
           (== (- 5 9) -4))
