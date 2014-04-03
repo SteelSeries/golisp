@@ -18,6 +18,7 @@ func RegisterMathPrimitives() {
 	MakePrimitiveFunction("-", -1, SubtractImpl)
 	MakePrimitiveFunction("*", -1, MultiplyImpl)
 	MakePrimitiveFunction("/", -1, QuotientImpl)
+	MakePrimitiveFunction("quotient", -1, QuotientImpl)
 	MakePrimitiveFunction("%", 2, RemainderImpl)
 	MakePrimitiveFunction("modulo", 2, RemainderImpl)
 	MakePrimitiveFunction("random-byte", 0, RandomByteImpl)
@@ -25,6 +26,7 @@ func RegisterMathPrimitives() {
 	MakePrimitiveFunction("integer", 1, ToIntImpl)
 	MakePrimitiveFunction("float", 1, ToFloatImpl)
 	MakePrimitiveFunction("number->string", -1, NumberToStringImpl)
+	MakePrimitiveFunction("string->number", -1, StringToNumberImpl)
 }
 
 func IsEvenImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -312,10 +314,18 @@ func ToFloatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func NumberToStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	val := IntegerValue(First(args))
+	valObj, err := Eval(First(args), env)
+	if err != nil {
+		return nil, err
+	}
+	val := IntegerValue(valObj)
 	var base int64
 	if Length(args) == 2 {
-		base = IntegerValue(Second(args))
+		baseObj, err := Eval(Second(args), env)
+		if err != nil {
+			return nil, err
+		}
+		base = IntegerValue(baseObj)
 	} else {
 		base = 10
 	}
@@ -335,4 +345,42 @@ func NumberToStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err er
 		val = base
 	}
 	return StringWithValue(fmt.Sprintf(format, val)), nil
+}
+
+func StringToNumberImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	strObj, err := Eval(First(args), env)
+	if err != nil {
+		return nil, err
+	}
+	str := StringValue(strObj)
+	var base int64
+	if Length(args) == 2 {
+		baseObj, err := Eval(Second(args), env)
+		if err != nil {
+			return nil, err
+		}
+		base = IntegerValue(baseObj)
+	} else {
+		base = 10
+	}
+
+	var format string
+	switch base {
+	case 2:
+		format = "%b"
+	case 8:
+		format = "%o"
+	case 10:
+		format = "%d"
+	case 16:
+		format = "%x"
+	default:
+		return IntegerWithValue(0), nil
+	}
+	var val int64
+	_, err = fmt.Sscanf(str, format, &val)
+	if err != nil {
+		return
+	}
+	return IntegerWithValue(val), nil
 }
