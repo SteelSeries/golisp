@@ -338,12 +338,14 @@ func ApplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func EvalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	val, err := Eval(Car(args), env)
+	sexpr, err := Eval(Car(args), env)
 	if err != nil {
 		return
 	}
-
-	return Eval(val, env)
+	if !ListP(sexpr) {
+		err = errors.New(fmt.Sprintf("eval expect a list argument, received a %s.", TypeName(TypeOf(sexpr))))
+	}
+	return Eval(sexpr, env)
 }
 
 func ChainImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
