@@ -331,7 +331,8 @@ func ApplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 			argList = ary[0]
 		}
 	} else {
-		argList = Cdr(args)
+		err = errors.New("The last argument to apply must be a list")
+		return
 	}
 
 	return Apply(f, argList, env)
