@@ -108,3 +108,18 @@ func (self *Function) Apply(args *Data, argEnv *SymbolTableFrame) (result *Data,
 func (self *Function) ApplyWithoutEval(args *Data, argEnv *SymbolTableFrame) (result *Data, err error) {
 	return self.internalApply(args, argEnv, false)
 }
+
+func (self *Function) ApplyOveriddingEnvironment(args *Data, argEnv *SymbolTableFrame) (result *Data, err error) {
+	localEnv := NewSymbolTableFrameBelow(argEnv)
+	err = self.makeLocalBindings(args, argEnv, localEnv, true)
+	if err != nil {
+		return
+	}
+	for s := self.Body; NotNilP(s); s = Cdr(s) {
+		result, err = Eval(Car(s), localEnv)
+		if err != nil {
+			return nil, errors.New(fmt.Sprintf("In '%s': %s", self.Name, err))
+		}
+	}
+	return
+}
