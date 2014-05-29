@@ -1,3 +1,6 @@
+(describe alist
+          (== (alist 42) 42))
+
 (describe acons
           (== (acons 'a 1 '()) (alist '((a.1))))
           (== (acons 'a 1 (alist '((b.2) (c.3))))
@@ -18,3 +21,6 @@
           (== (rassoc 1 (alist '((a.1) (b.2) (c.3)))) '(a.1))
           (== (rassoc 2 (alist '((a.1) (b.2) (c.3)))) '(b.2))
           (== (rassoc 3 (alist '((a.1) (b.2)))) '()))
+
+(describe dissoc
+          (== (dissoc 'a (alist '((a.1) (b.2) (c.3)))) (alist '((b.2) (c.3)))))

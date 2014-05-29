@@ -3,28 +3,40 @@
 // license that can be found in the LICENSE file.
 
 //This package implements a basic LISP interpretor for embedding in a go program for scripting.
-// This file compliments tests for cons cell.
+// This file impliments tests for cons cell.
 
 package golisp
 
 import (
-    . "launchpad.net/gocheck"
+	. "launchpad.net/gocheck"
 )
 
 type ConsCellSuite struct {
-    a    *Data
-    b    *Data
-    cell *Data
+	a    *Data
+	b    *Data
+	cell *Data
 }
 
 var _ = Suite(&ConsCellSuite{})
 
 func (s *ConsCellSuite) SetUpTest(c *C) {
-    s.a = IntegerWithValue(1)
-    s.b = IntegerWithValue(2)
-    s.cell = Cons(s.a, s.b)
+	s.a = IntegerWithValue(1)
+	s.b = IntegerWithValue(2)
+	s.cell = Cons(s.a, s.b)
 }
 
 func (s *ConsCellSuite) TestCar(c *C) {
-    c.Check(s.cell.Car, Equals, s.a)
+	c.Check(Car(s.cell), Equals, s.a)
+}
+
+func (s *ConsCellSuite) TestCarNil(c *C) {
+	c.Check(Car(nil), IsNil)
+}
+
+func (s *ConsCellSuite) TestCdr(c *C) {
+	c.Check(Cdr(s.cell), Equals, s.b)
+}
+
+func (s *ConsCellSuite) TestCdrNil(c *C) {
+	c.Check(Cdr(nil), IsNil)
 }
