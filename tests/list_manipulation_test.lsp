@@ -5,30 +5,50 @@
 (describe reverse
           (== (reverse '(a)) '(a))
           (== (reverse '(a b)) '(b a))
-          (== (reverse '(a b c d)) '(d c b a)))
+          (== (reverse '(a b c d)) '(d c b a))
+          (== (reverse (list)) '())
+          (== (reverse 42) 42))
 
 (describe flatten
           (== (flatten '(1 2 3 4)) '(1 2 3 4))
           (== (flatten '(1 (2 3) 4)) '(1 2 3 4))
-          (== (flatten '(1 (2 (3 4) 5) 6)) '(1 2 (3 4) 5 6)))
+          (== (flatten '(1 (2 (3 4) 5) 6)) '(1 2 (3 4) 5 6))
+          (== (flatten (list)) '())
+          (== (flatten 42) 42))
 
 (describe flatten*
           (== (flatten* '(1 2 3 4)) '(1 2 3 4))
           (== (flatten* '(1 (2 3) 4)) '(1 2 3 4))
           (== (flatten* '(1 (2 (3 4) 5) 6)) '(1 2 3 4 5 6))
-          (== (flatten* '(1 (2 (3 (7 8) 4) 5) 6)) '(1 2 3 7 8 4 5 6)))
+          (== (flatten* '(1 (2 (3 (7 8) 4) 5) 6)) '(1 2 3 7 8 4 5 6))
+          (== (flatten* (list)) '())
+          (== (flatten* 42) 42))
 
 (describe partition
           (== (partition 2 '(1 2 3 4 5 6 7 8)) '((1 2) (3 4) (5 6) (7 8)))
           (== (partition 4 '(1 2 3 4 5 6 7 8)) '((1 2 3 4) (5 6 7 8))))
 
+(define list1 '(1 2))
 (describe append
-          (== (append '(1 2) '(3 4)) '(1 2 3 4)))
+          (== (append list1 '(3 4)) '(1 2 3 4))
+          (== list1 '(1 2))
+          (== (append list1 42) '(1 2 42))
+          (== list1 '(1 2))
+          (== (append '() 42) '(42))
+          (== (append '() '(1 2)) '(1 2)))
 
+(define list1 '(1 2))
+(define list2 '(1 2))
+(define list3 (list))
 (describe append!
-          (define list1 '(1 2))
           (== (append! list1 '(3 4)) '(1 2 3 4))
-          (== list1 '(1 2 3 4)))
+          (== list1 '(1 2 3 4))
+          (== (append! list2 42) '(1 2 42))
+          (== list2 '(1 2 42))
+          (== (append! '() 42) '(42))
+          (== (append! '() '(1 2)) '(1 2))
+          (== (append! list3 42) '(42))
+          (== list3 '(42)))
 
 (describe take
     (== (take 0 '(1 2 3)) '())

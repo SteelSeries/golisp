@@ -259,6 +259,7 @@ func RemainderImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 	return IntegerWithValue(val), nil
 }
 
+// Not tested since it just wraps rand.Int()
 func RandomByteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	r := uint8(rand.Int())
 	result = IntegerWithValue(int64(r))

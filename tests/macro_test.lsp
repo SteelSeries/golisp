@@ -12,6 +12,10 @@
 (describe unquote-splicing
           (== `(a ,@(list 1 2 3) b) '(a 1 2 3 b)))
 
+(describe nested-unquote-splicing
+          (== `(a ,@(list 1 2 3) `(list ,@(list a b c)))
+              '(a 1 2 3 `(list ,@(list a b c)))))
+
 (describe combined-and-eval
           (let ((x 1)
                 (y '(2 3)))

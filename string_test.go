@@ -8,33 +8,45 @@
 package golisp
 
 import (
-    . "launchpad.net/gocheck"
+	. "launchpad.net/gocheck"
 )
 
 type StringAtomSuite struct {
-    atom *Data
+	atom *Data
 }
 
 var _ = Suite(&StringAtomSuite{})
 
 func (s *StringAtomSuite) SetUpTest(c *C) {
-    s.atom = StringWithValue("Hello, world.")
+	s.atom = StringWithValue("Hello, world.")
 }
 
 func (s *StringAtomSuite) TestIntegerValue(c *C) {
-    c.Assert(IntegerValue(s.atom), Equals, int64(0))
+	c.Assert(IntegerValue(s.atom), Equals, int64(0))
 }
 
 func (s *StringAtomSuite) TestString(c *C) {
-    c.Assert(String(s.atom), Equals, `"Hello, world."`)
+	c.Assert(String(s.atom), Equals, `"Hello, world."`)
+}
+
+func (s *StringAtomSuite) TestStringValue(c *C) {
+	c.Assert(StringValue(s.atom), Equals, `Hello, world.`)
+}
+
+func (s *StringAtomSuite) TestStringValueOfNil(c *C) {
+	c.Assert(StringValue(nil), Equals, ``)
+}
+
+func (s *StringAtomSuite) TestStringValueOfNonString(c *C) {
+	c.Assert(StringValue(IntegerWithValue(42)), Equals, ``)
 }
 
 func (s *StringAtomSuite) TestEval(c *C) {
-    d, err := Eval(s.atom, Global)
-    c.Assert(err, IsNil)
-    c.Assert(d, Equals, s.atom)
+	d, err := Eval(s.atom, Global)
+	c.Assert(err, IsNil)
+	c.Assert(d, Equals, s.atom)
 }
 
 func (s *StringAtomSuite) TestBooleanValue(c *C) {
-    c.Assert(BooleanValue(s.atom), Equals, true)
+	c.Assert(BooleanValue(s.atom), Equals, true)
 }
