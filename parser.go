@@ -304,3 +304,20 @@ func ParseAndEvalAll(src string) (result *Data, err error) {
 	}
 	return
 }
+
+func ParseAndEval(src string) (result *Data, err error) {
+	s := NewTokenizer(src)
+	var sexpr *Data
+	sexpr, _, err = parseExpression(s)
+	if err != nil {
+		return
+	}
+	if NilP(sexpr) {
+		return
+	}
+	result, err = Eval(sexpr, Global)
+	if err != nil {
+		return
+	}
+	return
+}
