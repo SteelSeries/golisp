@@ -295,3 +295,11 @@ func (s *ParsingSuite) TestIllegal(c *C) {
 	c.Assert(err, NotNil)
 	c.Assert(sexpr, IsNil)
 }
+
+func (s *ParsingSuite) TestParseAndEval(c *C) {
+	result, err := ParseAndEval("(* 5 5)")
+	c.Assert(err, IsNil)
+	c.Assert(result, NotNil)
+	c.Assert(TypeOf(result), Equals, IntegerType)
+	c.Assert(IntegerValue(result), Equals, int64(25))
+}
