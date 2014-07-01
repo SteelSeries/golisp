@@ -72,6 +72,40 @@ func Cddr(d *Data) *Data {
 	return WalkList(d, "dd")
 }
 
+// Cxxxr
+
+func Caaar(d *Data) *Data {
+	return WalkList(d, "aaa")
+}
+
+func Caadr(d *Data) *Data {
+	return WalkList(d, "aad")
+}
+
+func Cadar(d *Data) *Data {
+	return WalkList(d, "ada")
+}
+
+func Caddr(d *Data) *Data {
+	return WalkList(d, "add")
+}
+
+func Cdaar(d *Data) *Data {
+	return WalkList(d, "daa")
+}
+
+func Cdadr(d *Data) *Data {
+	return WalkList(d, "dad")
+}
+
+func Cddar(d *Data) *Data {
+	return WalkList(d, "dda")
+}
+
+func Cdddr(d *Data) *Data {
+	return WalkList(d, "ddd")
+}
+
 // nth
 
 func Nth(d *Data, n int) *Data {
