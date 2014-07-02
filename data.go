@@ -671,16 +671,23 @@ func PrintString(d *Data) string {
 	}
 }
 
-func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
+func Eval(d *Data, env *SymbolTableFrame, extensionEnv ...*SymbolTableFrame) (result *Data, err error) {
 	if d == nil {
 		return
+	}
+
+	var searchEnv *SymbolTableFrame
+	if extensionEnv == nil {
+		searchEnv = env
+	} else {
+		searchEnv = extensionEnv[0]
 	}
 
 	switch d.Type {
 	case ConsCellType:
 		{
 			var function *Data
-			function, err = Eval(Car(d), env)
+			function, err = Eval(Car(d), searchEnv)
 			if err != nil {
 				return
 			}
@@ -690,7 +697,7 @@ func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
 			}
 
 			args := Cdr(d)
-			result, err = Apply(function, args, env)
+			result, err = Apply(function, args, searchEnv)
 			if err != nil {
 				err = errors.New(fmt.Sprintf("\nEvaling %s. %s", String(d), err))
 				return
@@ -698,7 +705,7 @@ func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
 			return
 		}
 	case SymbolType:
-		result = env.ValueOf(d)
+		result = searchEnv.ValueOf(d)
 		return
 	}
 
