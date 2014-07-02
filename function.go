@@ -116,7 +116,7 @@ func (self *Function) ApplyOveriddingEnvironment(args *Data, argEnv *SymbolTable
 		return
 	}
 	for s := self.Body; NotNilP(s); s = Cdr(s) {
-		result, err = Eval(Car(s), localEnv)
+		result, err = Eval(Car(s), localEnv, argEnv)
 		if err != nil {
 			return nil, errors.New(fmt.Sprintf("In '%s': %s", self.Name, err))
 		}
