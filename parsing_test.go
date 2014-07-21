@@ -303,3 +303,11 @@ func (s *ParsingSuite) TestParseAndEval(c *C) {
 	c.Assert(TypeOf(result), Equals, IntegerType)
 	c.Assert(IntegerValue(result), Equals, int64(25))
 }
+
+func (s *ParsingSuite) BenchmarkParse(c *C) {
+	c.ResetTimer()
+	for i := 0; i < c.N; i++ {
+		src, _ := ReadFile("tests/list_access_test.lsp")
+		_, _ = ParseAndEval(src)
+	}
+}

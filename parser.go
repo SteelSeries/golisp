@@ -10,8 +10,7 @@ package golisp
 import (
 	"errors"
 	"fmt"
-	"io"
-	"os"
+	"io/ioutil"
 	"unsafe"
 )
 
@@ -267,23 +266,12 @@ func ParseAll(src string) (result []*Data, err error) {
 }
 
 func ReadFile(filename string) (s string, err error) {
-	fin, err := os.Open(filename)
+	contents, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return
 	}
-	defer fin.Close()
 
-	var contents []byte = make([]byte, 0)
-	for true {
-		buffer := make([]byte, 8192)
-		n, err := fin.Read(buffer)
-		if n == 0 && err == io.EOF {
-			break
-		}
-		contents = append(contents, buffer[:n]...)
-	}
-
-	s = string(contents)
+	s = *(*string)(unsafe.Pointer(&contents))
 	return
 }
 
