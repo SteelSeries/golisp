@@ -26,7 +26,7 @@ func RegisterSpecialFormPrimitives() {
 	MakePrimitiveFunction("eval", 1, EvalImpl)
 	MakePrimitiveFunction("->", -1, ChainImpl)
 	MakePrimitiveFunction("=>", -1, TapImpl)
-	MakePrimitiveFunction("code", 1, CodeImpl)
+	MakePrimitiveFunction("definition-of", 1, DefinitionOfImpl)
 }
 
 func CondImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -410,7 +410,14 @@ func TapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return
 }
 
-func CodeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func DefinitionOfImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	var name *Data = nil
+	if SymbolP(Car(args)) {
+		name = Car(args)
+	} else {
+		name = SymbolWithName("anonymous")
+	}
+
 	f, err := Eval(Car(args), env)
 	if err != nil {
 		return
@@ -421,5 +428,9 @@ func CodeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	function := f.Func
-	return Cons(SymbolWithName("lambda"), Cons(function.Params, function.Body)), nil
+	if function.Name == "anonymous" {
+		return Cons(SymbolWithName("define"), Cons(name, Cons(Cons(SymbolWithName("lambda"), Cons(function.Params, function.Body)), nil))), nil
+	} else {
+		return Cons(SymbolWithName("define"), Cons(Cons(SymbolWithName(function.Name), function.Params), function.Body)), nil
+	}
 }
