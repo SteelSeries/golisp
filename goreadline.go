@@ -1,3 +1,4 @@
+// +build linux darwin
 // sniped from https://github.com/rocaltair/goreadline
 package golisp
 
