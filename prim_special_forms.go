@@ -26,6 +26,7 @@ func RegisterSpecialFormPrimitives() {
 	MakePrimitiveFunction("eval", 1, EvalImpl)
 	MakePrimitiveFunction("->", -1, ChainImpl)
 	MakePrimitiveFunction("=>", -1, TapImpl)
+	MakePrimitiveFunction("code", 1, CodeImpl)
 }
 
 func CondImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -407,4 +408,18 @@ func TapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		}
 	}
 	return
+}
+
+func CodeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	f, err := Eval(Car(args), env)
+	if err != nil {
+		return
+	}
+	if !FunctionP(f) {
+		err = errors.New(fmt.Sprintf("code requires a function argument, but received a %s.", TypeName(TypeOf(f))))
+		return
+	}
+
+	function := f.Func
+	return Cons(SymbolWithName("lambda"), Cons(function.Params, function.Body)), nil
 }
