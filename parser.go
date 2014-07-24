@@ -252,6 +252,20 @@ func Parse(src string) (sexpr *Data, err error) {
 	return
 }
 
+func ParseAll(src string) (result []*Data, err error) {
+	s := NewTokenizer(src)
+	var sexpr *Data
+	var eof bool
+	for {
+		sexpr, eof, err = parseExpression(s)
+		if err != nil || eof {
+			break
+		}
+		result = append(result, sexpr)
+	}
+	return
+}
+
 func ReadFile(filename string) (s string, err error) {
 	fin, err := os.Open(filename)
 	if err != nil {

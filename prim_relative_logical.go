@@ -21,6 +21,7 @@ func RegisterRelativePrimitives() {
 	MakePrimitiveFunction("<=", -1, LessThanOrEqualToImpl)
 	MakePrimitiveFunction(">=", -1, GreaterThanOrEqualToImpl)
 	MakePrimitiveFunction("!", 1, BooleanNotImpl)
+	MakePrimitiveFunction("not", 1, BooleanNotImpl)
 	MakePrimitiveFunction("and", -1, BooleanAndImpl)
 	MakePrimitiveFunction("or", -1, BooleanOrImpl)
 	MakePrimitiveFunction("even?", 1, IsEvenImpl)

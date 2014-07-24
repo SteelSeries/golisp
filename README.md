@@ -12,4 +12,4 @@ used as-is to enter and evaluate code.
 A complete language reference is available at
 [http://techblog.steelseries.com/golisp.html](http://techblog.steelseries.com/golisp.html).
 
-A sample application is also available at [PUT PUBLIC URL HERE](https://github.com/SteelSeries/golisp-example-app).
+A sample application is also available at [https://github.com/SteelSeries/golisp-example-app](https://github.com/SteelSeries/golisp-example-app).
