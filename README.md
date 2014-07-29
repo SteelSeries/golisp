@@ -9,7 +9,7 @@ functions. More of these will be added as required without having to
 modify the GoLisp core. Also, a REPL is provided and GoLisp can be
 used as-is to enter and evaluate code.
 
-A complete language reference is available at
-[http://techblog.steelseries.com/golisp.html](http://techblog.steelseries.com/golisp.html).
+A complete language reference and other material is available at
+[http://techblog.steelseries.com/golisp](http://techblog.steelseries.com/golisp).
 
 A sample application is also available at [https://github.com/SteelSeries/golisp-example-app](https://github.com/SteelSeries/golisp-example-app).
