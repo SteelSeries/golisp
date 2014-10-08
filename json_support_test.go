@@ -32,6 +32,14 @@ func (s *JsonLispSuite) TestJsonToLispArray(c *C) {
 	c.Assert(IsEqual(sexpr, expected), Equals, true)
 }
 
+func (s *JsonLispSuite) TestJsonToLispBool(c *C) {
+	jsonData := `{"map": true}`
+	sexpr := JsonStringToLisp(jsonData)
+	expected := Acons(StringWithValue("map"), BooleanWithValue(true), nil)
+
+	c.Assert(IsEqual(sexpr, expected), Equals, true)
+}
+
 func (s *JsonLispSuite) TestJsonToLispMixed(c *C) {
 	jsonData := `{"map": {"f1": [47, 75], "f2": 185}, "f3": 85}`
 	sexpr := JsonStringToLisp(jsonData)
