@@ -44,6 +44,11 @@ func JsonToLisp(json interface{}) (result *Data) {
 		return StringWithValue(strValue)
 	}
 
+	boolValue, ok := json.(bool)
+	if ok {
+		return BooleanWithValue(boolValue)
+	}
+
 	return
 }
 
