@@ -13,3 +13,7 @@ A complete language reference and other material is available at
 [http://techblog.steelseries.com/golisp](http://techblog.steelseries.com/golisp).
 
 A sample application is also available at [https://github.com/SteelSeries/golisp-example-app](https://github.com/SteelSeries/golisp-example-app).
+
+GoLisp has the following dependency:
+
+go get gopkg.in/fatih/set.v0
