@@ -32,4 +32,5 @@ func InitBuiltins() {
 	RegisterBytearrayPrimitives()
 	RegsterStringPrimitives()
 	RegisterTestingPrimitives()
+	RegisterFramePrimitives()
 }

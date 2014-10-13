@@ -27,26 +27,28 @@ const (
 	MacroType
 	PrimitiveType
 	ObjectType
+	FrameType
 )
 
 type Data struct {
-	Type    int    // data type
-	Car     *Data  // ConsCellType & AlistType
-	Cdr     *Data  // ConsCellType & AlistType
-	String  string // StringType & SymbolType
-	Integer int64  // IntegerType & BooleanType
-	Float   float32
+	Type    int                // data type
+	Car     *Data              // ConsCellType & AlistType
+	Cdr     *Data              // ConsCellType & AlistType
+	String  string             // StringType & SymbolType
+	Integer int64              // IntegerType & BooleanType
+	Float   float32            // FloatType
 	Func    *Function          // FunctionType
 	Mac     *Macro             // MacroType
 	Prim    *PrimitiveFunction // PrimitiveType
+	Frame   *FrameMap          // FrameType
 	ObjType string             // ObjectType
 	Obj     unsafe.Pointer     // ObjectType
 }
 
 // Boolean constants
 
-var True *Data = BooleanWithValue(true)
-var False *Data = BooleanWithValue(false)
+var True *Data = &Data{Type: BooleanType, Integer: 1}
+var False *Data = &Data{Type: BooleanType, Integer: 0}
 
 func TypeOf(d *Data) int {
 	return d.Type
@@ -76,6 +78,8 @@ func TypeName(t int) string {
 		return "Macro"
 	case PrimitiveType:
 		return "Primitive"
+	case FrameType:
+		return "Frame"
 	case ObjectType:
 		return "Go Object"
 	default:
@@ -121,6 +125,10 @@ func SymbolP(d *Data) bool {
 	return d != nil && TypeOf(d) == SymbolType
 }
 
+func NakedP(d *Data) bool {
+	return d != nil && TypeOf(d) == SymbolType && strings.HasSuffix(d.String, ":")
+}
+
 func StringP(d *Data) bool {
 	return d != nil && TypeOf(d) == StringType
 }
@@ -147,6 +155,10 @@ func FunctionP(d *Data) bool {
 
 func MacroP(d *Data) bool {
 	return d != nil && TypeOf(d) == MacroType
+}
+
+func FrameP(d *Data) bool {
+	return d != nil && TypeOf(d) == FrameType
 }
 
 func Cons(car *Data, cdr *Data) *Data {
@@ -243,6 +255,14 @@ func EmptyCons() *Data {
 	return Cons(nil, nil)
 }
 
+func FrameWithValue(m *FrameMap) *Data {
+	return &Data{Type: FrameType, Frame: m}
+}
+
+// func EmptyFrame() *Data {
+// 	return &Data{Type: FrameType, Frame: &make(FrameMap)}
+// }
+
 func IntegerWithValue(n int64) *Data {
 	return &Data{Type: IntegerType, Integer: n}
 }
@@ -252,11 +272,11 @@ func FloatWithValue(n float32) *Data {
 }
 
 func BooleanWithValue(b bool) *Data {
-	var num int = 0
 	if b {
-		num = 1
+		return True
+	} else {
+		return False
 	}
-	return &Data{Type: BooleanType, Integer: int64(num)}
 }
 
 func StringWithValue(s string) *Data {
@@ -265,6 +285,14 @@ func StringWithValue(s string) *Data {
 
 func SymbolWithName(s string) *Data {
 	return &Data{Type: SymbolType, String: s}
+}
+
+func NakedSymbolWithName(s string) *Data {
+	return &Data{Type: SymbolType, String: fmt.Sprintf("%s:", s)}
+}
+
+func NakedSymbolFrom(d *Data) *Data {
+	return &Data{Type: SymbolType, String: fmt.Sprintf("%s:", String(d))}
 }
 
 func FunctionWithNameParamsBodyAndParent(name string, params *Data, body *Data, parentEnv *SymbolTableFrame) *Data {
@@ -339,6 +367,18 @@ func BooleanValue(d *Data) bool {
 	return true
 }
 
+func FrameValue(d *Data) *FrameMap {
+	if d == nil {
+		return nil
+	}
+
+	if FrameP(d) {
+		return d.Frame
+	}
+
+	return nil
+}
+
 func TypeOfObject(d *Data) (oType string) {
 	if d == nil {
 		return
@@ -370,6 +410,10 @@ func Length(d *Data) int {
 
 	if ListP(d) || AlistP(d) {
 		return 1 + Length(d.Cdr)
+	}
+
+	if FrameP(d) {
+		return len(*d.Frame)
 	}
 
 	return 0
@@ -507,6 +551,14 @@ func Copy(d *Data) *Data {
 
 			return Cons(Copy(Car(d)), Copy(Cdr(d)))
 		}
+	case FrameType:
+		{
+			m := make(FrameMap)
+			for k, v := range *d.Frame {
+				m[k] = Copy(v)
+			}
+			return FrameWithValue(&m)
+		}
 	}
 
 	return d
@@ -556,6 +608,18 @@ func IsEqual(d *Data, o *Data) bool {
 		}
 		for a1, a2 := d, o; NotNilP(a1); a1, a2 = Cdr(a1), Cdr(a2) {
 			if !IsEqual(Car(a1), Car(a2)) {
+				return false
+			}
+		}
+		return true
+	}
+
+	if FrameP(d) {
+		if len(*d.Frame) != len(*o.Frame) {
+			return false
+		}
+		for k, v := range *d.Frame {
+			if !IsEqual(v, (*o.Frame)[k]) {
 				return false
 			}
 		}
@@ -658,6 +722,12 @@ func String(d *Data) string {
 		} else {
 			return fmt.Sprintf("<opaque Go object of type %s : 0x%x>", d.ObjType, (*uint64)(d.Obj))
 		}
+	case FrameType:
+		pairs := make([]string, 0, len(*d.Frame))
+		for k, v := range *d.Frame {
+			pairs = append(pairs, fmt.Sprintf("%s %s", k, String(v)))
+		}
+		return fmt.Sprintf("{%s}", strings.Join(pairs, " "))
 	}
 
 	return ""
@@ -698,7 +768,11 @@ func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
 			return
 		}
 	case SymbolType:
-		result = env.ValueOf(d)
+		if NakedP(d) {
+			result = d
+		} else {
+			result = env.ValueOf(d)
+		}
 		return
 	}
 

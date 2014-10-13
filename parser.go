@@ -156,7 +156,35 @@ func parseBytearray(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 		sexpr = InternalMakeList(SymbolWithName("list-to-bytearray"), QuoteIt(ArrayToList(cells)))
 	}
 	return
+}
 
+func parseFrame(s *Tokenizer) (sexpr *Data, eof bool, err error) {
+	tok, _ := s.NextToken()
+	if tok == RBRACKET {
+		s.ConsumeToken()
+		f := make(FrameMap)
+		sexpr = FrameWithValue(&f)
+		return
+	}
+
+	var element *Data
+	cells := make([]*Data, 0, 10)
+	for tok != RBRACE {
+		element, eof, err = parseExpression(s)
+		if eof {
+			err = errors.New("Unexpected EOF (expected closing brace)")
+			return
+		}
+		if err != nil {
+			return
+		}
+		cells = append(cells, element)
+		tok, _ = s.NextToken()
+	}
+
+	s.ConsumeToken()
+	sexpr = Cons(SymbolWithName("make-frame"), ArrayToList(cells))
+	return
 }
 
 func parseExpression(s *Tokenizer) (sexpr *Data, eof bool, err error) {
@@ -193,6 +221,10 @@ func parseExpression(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 		case LBRACKET:
 			s.ConsumeToken()
 			sexpr, eof, err = parseBytearray(s)
+			return
+		case LBRACE:
+			s.ConsumeToken()
+			sexpr, eof, err = parseFrame(s)
 			return
 		case SYMBOL:
 			s.ConsumeToken()

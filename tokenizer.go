@@ -27,6 +27,8 @@ const (
 	RPAREN
 	LBRACKET
 	RBRACKET
+	LBRACE
+	RBRACE
 	PERIOD
 	TRUE
 	FALSE
@@ -52,7 +54,7 @@ func (self *Tokenizer) NextToken() (token int, lit string) {
 }
 
 func (self *Tokenizer) isSymbolCharacter(ch rune) bool {
-	return unicode.IsLetter(ch) || unicode.IsNumber(ch) || ch == '*' || ch == '-' || ch == '?' || ch == '!' || ch == '_' || ch == '>'
+	return unicode.IsLetter(ch) || unicode.IsNumber(ch) || ch == '*' || ch == '-' || ch == '?' || ch == '!' || ch == '_' || ch == '>' || ch == ':'
 }
 
 func (self *Tokenizer) readSymbol() (token int, lit string) {
@@ -180,6 +182,12 @@ func (self *Tokenizer) readNextToken() (token int, lit string) {
 	} else if currentChar == ']' {
 		self.Position++
 		return RBRACKET, "]"
+	} else if currentChar == '{' {
+		self.Position++
+		return LBRACE, "{"
+	} else if currentChar == '}' {
+		self.Position++
+		return RBRACE, "}"
 	} else if currentChar == '.' {
 		self.Position++
 		return PERIOD, "."
