@@ -61,36 +61,15 @@ func (self *FrameMap) Parents() []*FrameMap {
 	return parents
 }
 
-func toSet(items []string) *set.Set {
-	s := set.New()
-	for _, i := range items {
-		s.Add(i)
-	}
-	return s
-}
+//------------------------------------------------------------
 
-func (self *FrameMap) inheritedValueSlots() []string {
-	parentFrames := self.Parents()
-	inheritedSlots := make([][]string, len(parentFrames))
-	for _, p := range parentFrames {
-		inheritedSlots = append(inheritedSlots, p.inheritedValueSlots())
+func (self *FrameMap) hasSlotHelper(key string, v *set.Set) bool {
+	if v.Has(self) {
+		return false
 	}
 
-	slots := set.New()
-	for _, s := range self.localSlots() {
-		if !isParentKey(s) {
-			slots.Add(s)
-		}
-	}
+	v.Add(self)
 
-	for _, is := range inheritedSlots {
-		slots.Merge(toSet(is))
-	}
-
-	return set.StringSlice(slots)
-}
-
-func (self *FrameMap) HasSlot(key string) bool {
 	if self.hasSlotLocally(key) {
 		return true
 	}
@@ -100,7 +79,7 @@ func (self *FrameMap) HasSlot(key string) bool {
 	}
 
 	for _, p := range self.Parents() {
-		if p.HasSlot(key) {
+		if p.hasSlotHelper(key, v) {
 			return true
 		}
 	}
@@ -108,21 +87,41 @@ func (self *FrameMap) HasSlot(key string) bool {
 	return false
 }
 
-func (self *FrameMap) Get(key string) *Data {
-	v, ok := (*self)[key]
+func (self *FrameMap) HasSlot(key string) bool {
+	visited := set.New()
+	return self.hasSlotHelper(key, visited)
+}
+
+//------------------------------------------------------------
+
+func (self *FrameMap) getHelper(key string, v *set.Set) *Data {
+	if v.Has(self) {
+		return nil
+	}
+
+	v.Add(self)
+
+	val, ok := (*self)[key]
 	if ok {
-		return v
+		return val
 	}
 
 	for _, p := range self.Parents() {
-		v := p.Get(key)
-		if v != nil {
-			return v
+		val := p.getHelper(key, v)
+		if val != nil {
+			return val
 		}
 	}
 
 	return nil
 }
+
+func (self *FrameMap) Get(key string) *Data {
+	visited := set.New()
+	return self.getHelper(key, visited)
+}
+
+//------------------------------------------------------------
 
 func (self *FrameMap) Remove(key string) bool {
 	if !self.hasSlotLocally(key) {
@@ -132,7 +131,15 @@ func (self *FrameMap) Remove(key string) bool {
 	return true
 }
 
-func (self *FrameMap) Set(key string, value *Data) *Data {
+//------------------------------------------------------------
+
+func (self *FrameMap) setHelper(key string, value *Data, v *set.Set) *Data {
+	if v.Has(self) {
+		return nil
+	}
+
+	v.Add(self)
+
 	if !self.HasSlot(key) || self.hasSlotLocally(key) {
 		(*self)[key] = value
 		return value
@@ -146,6 +153,13 @@ func (self *FrameMap) Set(key string, value *Data) *Data {
 	}
 	return nil
 }
+
+func (self *FrameMap) Set(key string, value *Data) *Data {
+	visited := set.New()
+	return self.setHelper(key, value, visited)
+}
+
+//------------------------------------------------------------
 
 func (self *FrameMap) Clone() *FrameMap {
 	f := make(FrameMap)
