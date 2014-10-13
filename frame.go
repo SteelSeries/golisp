@@ -133,30 +133,9 @@ func (self *FrameMap) Remove(key string) bool {
 
 //------------------------------------------------------------
 
-func (self *FrameMap) setHelper(key string, value *Data, v *set.Set) *Data {
-	if v.Has(self) {
-		return nil
-	}
-
-	v.Add(self)
-
-	if !self.HasSlot(key) || self.hasSlotLocally(key) {
-		(*self)[key] = value
-		return value
-	}
-
-	for _, p := range self.Parents() {
-		v := p.Set(key, value)
-		if v != nil {
-			return v
-		}
-	}
-	return nil
-}
-
 func (self *FrameMap) Set(key string, value *Data) *Data {
-	visited := set.New()
-	return self.setHelper(key, value, visited)
+	(*self)[key] = value
+	return value
 }
 
 //------------------------------------------------------------

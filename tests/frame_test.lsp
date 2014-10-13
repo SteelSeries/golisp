@@ -80,7 +80,7 @@
             (== (send g bar:) 7)
             (set-slot! g a: 10)
             (== (get-slot g a:) 10)
-            (== (get-slot e a:) 10)))
+            (== (get-slot e a:) 5)))
 
 (describe calling-super
           (let ((f {foo: (lambda () 42)})
