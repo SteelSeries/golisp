@@ -22,6 +22,8 @@ func RegisterFramePrimitives() {
 	MakePrimitiveFunction("send", -1, SendImpl)
 	MakePrimitiveFunction("send-super", -1, SendSuperImpl)
 	MakePrimitiveFunction("clone", 1, CloneImpl)
+	MakePrimitiveFunction("json->lisp", 1, JsonToLispImpl)
+	MakePrimitiveFunction("lisp->json", 1, LispToJsonImpl)
 }
 
 func MakeFrameImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -243,7 +245,30 @@ func CloneImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 	if !FrameP(f) {
 		err = errors.New(fmt.Sprintf("clone requires a frame as it's argument, but was given %s.", String(f)))
+		return
 	}
 
 	return FrameWithValue(f.Frame.Clone()), nil
+}
+
+func JsonToLispImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	j, err := Eval(Car(args), env)
+	if err != nil {
+		return
+	}
+	if !StringP(j) {
+		err = errors.New(fmt.Sprintf("json->lisp requires a string as it's argument, but was given %s.", String(j)))
+		return
+	}
+
+	return JsonStringToLispWithFrames(StringValue(j)), nil
+}
+
+func LispToJsonImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	l, err := Eval(Car(args), env)
+	if err != nil {
+		return
+	}
+
+	return StringWithValue(LispWithFramesToJsonString(l)), nil
 }
