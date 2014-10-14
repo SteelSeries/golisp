@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 )
 
@@ -35,9 +36,13 @@ func JsonToLispWithFrames(json interface{}) (result *Data) {
 		return Reverse(ary)
 	}
 
-	intValue, ok := json.(float64)
+	numValue, ok := json.(float64)
 	if ok {
-		return IntegerWithValue(int64(intValue))
+		if math.Trunc(numValue) == numValue {
+			return IntegerWithValue(int64(numValue))
+		} else {
+			return FloatWithValue(float32(numValue))
+		}
 	}
 
 	strValue, ok := json.(string)
@@ -72,6 +77,10 @@ func LispWithFramesToJson(d *Data) (result interface{}) {
 		return IntegerValue(d)
 	}
 
+	if FloatP(d) {
+		return FloatValue(d)
+	}
+
 	if StringP(d) {
 		return StringValue(d)
 	}
@@ -83,7 +92,7 @@ func LispWithFramesToJson(d *Data) (result interface{}) {
 	if PairP(d) {
 		ary := make([]interface{}, 0, Length(d))
 		for c := d; NotNilP(c); c = Cdr(c) {
-			ary = append(ary, LispToJson(Car(c)))
+			ary = append(ary, LispWithFramesToJson(Car(c)))
 		}
 		return ary
 	}
@@ -91,7 +100,9 @@ func LispWithFramesToJson(d *Data) (result interface{}) {
 	if FrameP(d) {
 		dict := make(map[string]interface{}, Length(d))
 		for k, v := range *d.Frame {
-			dict[strings.TrimRight(k, ":")] = LispWithFramesToJson(v)
+			if !FunctionP(v) {
+				dict[strings.TrimRight(k, ":")] = LispWithFramesToJson(v)
+			}
 		}
 		return dict
 	}
