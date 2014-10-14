@@ -41,7 +41,7 @@ func NewSymbolTableFrameBelow(p *SymbolTableFrame) *SymbolTableFrame {
 	if p != nil {
 		f = p.Frame
 	}
-	return &SymbolTableFrame{Parent: p, Bindings: make(map[string]*Binding, 10), Frame: f}
+	return &SymbolTableFrame{Parent: p, Bindings: make(map[string]*Binding), Frame: f}
 }
 
 func NewSymbolTableFrameBelowWithFrame(p *SymbolTableFrame, f *FrameMap) *SymbolTableFrame {
