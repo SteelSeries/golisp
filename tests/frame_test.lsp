@@ -120,3 +120,11 @@
             (== (remove-slot! g a:) #f)
             (== (has-slot? e a:) #t)))
 
+(describe shortcuts
+          (let ((f {a: 1 b: 2}))
+            (== (a:? f) #t)
+            (== (c:? f) #f)
+            (== (a: f) 1)
+            (== (b: f) 2)
+            (a:! f 42)
+            (== (a: f) 42)))

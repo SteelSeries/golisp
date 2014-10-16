@@ -747,6 +747,28 @@ func PrintString(d *Data) string {
 	}
 }
 
+func postProcessFrameShortcuts(d *Data) *Data {
+	key := Car(d)
+	frame := Cadr(d)
+	value := Caddr(d)
+
+	if !SymbolP(key) {
+		return d
+	}
+
+	s := StringValue(key)
+	switch {
+	case strings.HasSuffix(s, ":"):
+		return InternalMakeList(SymbolWithName("get-slot"), frame, key)
+	case strings.HasSuffix(s, ":!"):
+		return InternalMakeList(SymbolWithName("set-slot!"), frame, SymbolWithName(strings.TrimSuffix(s, "!")), value)
+	case strings.HasSuffix(s, ":?"):
+		return InternalMakeList(SymbolWithName("has-slot?"), frame, SymbolWithName(strings.TrimSuffix(s, "?")))
+	default:
+		return d
+	}
+}
+
 func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if d == nil {
 		return
@@ -755,6 +777,9 @@ func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
 	switch d.Type {
 	case ConsCellType:
 		{
+
+			d = postProcessFrameShortcuts(d)
+
 			var function *Data
 			function, err = Eval(Car(d), env)
 			if err != nil {
