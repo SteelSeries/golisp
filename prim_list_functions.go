@@ -15,6 +15,7 @@ func RegisterListFunctionsPrimitives() {
 	MakePrimitiveFunction("map", 2, MapImpl)
 	MakePrimitiveFunction("reduce", 3, ReduceImpl)
 	MakePrimitiveFunction("memq", 2, MemqImpl)
+	MakePrimitiveFunction("memp", 2, MempImpl)
 }
 
 func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -105,6 +106,32 @@ func MemqImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	for c := l; NotNilP(c); c = Cdr(c) {
 		if IsEqual(key, Car(c)) {
+			return c, nil
+		}
+	}
+
+	return False, nil
+}
+
+func MempImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	f, err := Eval(First(args), env)
+	if err != nil {
+		return
+	}
+	if !FunctionP(f) {
+		err = errors.New("memp needs a function as its first argument")
+		return
+	}
+
+	l, err := Eval(Second(args), env)
+	if err != nil {
+		return
+	}
+
+	var found *Data
+	for c := l; NotNilP(c); c = Cdr(c) {
+		found, err = ApplyWithoutEval(f, InternalMakeList(Car(c)), env)
+		if BooleanValue(found) {
 			return c, nil
 		}
 	}
