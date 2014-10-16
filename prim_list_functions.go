@@ -23,7 +23,7 @@ func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !FunctionP(f) {
-		err = errors.New("Map needs a function as its first argument")
+		err = errors.New("map needs a function as its first argument")
 		return
 	}
 
@@ -32,7 +32,7 @@ func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !ListP(col) {
-		err = errors.New("Map needs a list as its second argument")
+		err = errors.New("map needs a list as its second argument")
 		return
 	}
 
@@ -55,7 +55,7 @@ func ReduceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !FunctionP(f) {
-		err = errors.New("Map needs a function as its first argument")
+		err = errors.New("reduce needs a function as its first argument")
 		return
 	}
 
