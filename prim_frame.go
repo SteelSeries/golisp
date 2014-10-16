@@ -52,7 +52,7 @@ func HasSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !FrameP(f) {
-		err = errors.New(fmt.Sprintf("has-slot requires a frame as it's first argument, but was given %s.", String(f)))
+		err = errors.New(fmt.Sprintf("has-slot? requires a frame as it's first argument, but was given %s.", String(f)))
 	}
 
 	k, err := Eval(Cadr(args), env)
@@ -60,7 +60,7 @@ func HasSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !SymbolP(k) {
-		err = errors.New(fmt.Sprintf("has-slot requires a symbol as it's second argument, but was given %s.", String(k)))
+		err = errors.New(fmt.Sprintf("has-slot? requires a symbol as it's second argument, but was given %s.", String(k)))
 		return
 	}
 
@@ -141,7 +141,7 @@ func SetSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !FrameP(f) {
-		err = errors.New(fmt.Sprintf("set-slot requires a frame as it's first argument, but was given %s.", String(f)))
+		err = errors.New(fmt.Sprintf("set-slot! requires a frame as it's first argument, but was given %s.", String(f)))
 	}
 
 	k, err := Eval(Cadr(args), env)
@@ -149,7 +149,7 @@ func SetSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !NakedP(k) {
-		err = errors.New(fmt.Sprintf("set-slot requires a naked symbol as it's second argument, but was given %s.", String(k)))
+		err = errors.New(fmt.Sprintf("set-slot! requires a naked symbol as it's second argument, but was given %s.", String(k)))
 		return
 	}
 
