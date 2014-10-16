@@ -69,12 +69,20 @@ func ReduceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !ListP(col) {
-		err = errors.New("Map needs a list as its second argument")
+		err = errors.New("map needs a list as its third argument")
 		return
 	}
 
-	result = initial
-	for c := col; NotNilP(c); c = Cdr(c) {
+	if Length(col) == 0 {
+		return initial, nil
+	}
+
+	if Length(col) == 1 {
+		return Car(col), nil
+	}
+
+	result = Car(col)
+	for c := Cdr(col); NotNilP(c); c = Cdr(c) {
 		result, err = ApplyWithoutEval(f, InternalMakeList(result, Car(c)), env)
 		if err != nil {
 			return
