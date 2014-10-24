@@ -8,6 +8,8 @@
 package golisp
 
 import (
+	"errors"
+	"fmt"
 	"strings"
 )
 
@@ -21,9 +23,17 @@ func SplitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if err != nil {
 		return
 	}
+	if !StringP(theString) {
+		err = errors.New(fmt.Sprintf("trim requires string arguments but was given %s.", String(theString)))
+		return
+	}
 
 	theSeparator, err := Eval(Second(args), env)
 	if err != nil {
+		return
+	}
+	if !StringP(theSeparator) {
+		err = errors.New(fmt.Sprintf("trim requires string arguments but was given %s.", String(theSeparator)))
 		return
 	}
 
