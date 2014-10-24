@@ -16,6 +16,8 @@ import (
 func RegsterStringPrimitives() {
 	MakePrimitiveFunction("split", 2, SplitImpl)
 	MakePrimitiveFunction("trim", -1, TrimImpl)
+	MakePrimitiveFunction("string-upcase", 1, UpcaseImpl)
+	MakePrimitiveFunction("string-downcase", 1, DowncaseImpl)
 }
 
 func SplitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -62,4 +64,28 @@ func TrimImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		result = StringWithValue(strings.TrimSpace(StringValue(theString)))
 	}
 	return
+}
+
+func UpcaseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	theString, err := Eval(First(args), env)
+	if err != nil {
+		return
+	}
+	if !StringP(theString) {
+		err = errors.New(fmt.Sprintf("string-upcase requires a string argument but was given %s.", String(theString)))
+		return
+	}
+	return StringWithValue(strings.ToUpper(StringValue(theString))), nil
+}
+
+func DowncaseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	theString, err := Eval(First(args), env)
+	if err != nil {
+		return
+	}
+	if !StringP(theString) {
+		err = errors.New(fmt.Sprintf("string-downcase requires a string argument but was given %s.", String(theString)))
+		return
+	}
+	return StringWithValue(strings.ToLower(StringValue(theString))), nil
 }

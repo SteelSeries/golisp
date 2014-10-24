@@ -34,3 +34,13 @@
           (== (trim "  hello ") "hello")
           (== (trim "++ yo --" "+-") " yo ")
           (== (trim "++ yo --" "+- ") "yo"))
+
+(describe upcase
+          (== (string-upcase "hello") "HELLO")
+          (== (string-upcase "HeLlo") "HELLO")
+          (== (string-upcase "HELLO") "HELLO"))
+
+(describe downcase
+          (== (string-downcase "hello") "hello")
+          (== (string-downcase "HeLlo") "hello")
+          (== (string-downcase "HELLO") "hello"))
