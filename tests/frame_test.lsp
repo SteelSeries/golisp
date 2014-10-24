@@ -118,7 +118,8 @@
             (== (remove-slot! g foo:) #t)
             (== (has-slot? g foo:) #f)
             (== (remove-slot! g a:) #f)
-            (== (has-slot? e a:) #t)))
+            (== (has-slot? e a:) #t)
+            (== (remove-slot! nil a:) #f)))
 
 (describe shortcuts
           (let ((f {a: 1 b: 2}))

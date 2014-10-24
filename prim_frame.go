@@ -120,6 +120,11 @@ func RemoveSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 	if err != nil {
 		return
 	}
+
+	if NilP(f) {
+		return False, nil
+	}
+
 	if !FrameP(f) {
 		err = errors.New(fmt.Sprintf("remove-slot! requires a frame as it's first argument, but was given %s.", String(f)))
 	}
