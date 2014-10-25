@@ -9,6 +9,7 @@ package golisp
 
 import (
 	"errors"
+	"fmt"
 )
 
 func RegisterListFunctionsPrimitives() {
@@ -24,7 +25,7 @@ func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !FunctionP(f) {
-		err = errors.New("map needs a function as its first argument")
+		err = errors.New(fmt.Sprintf("map needs a function as its first argument, but got %s.", String(f)))
 		return
 	}
 
@@ -33,7 +34,7 @@ func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !ListP(col) {
-		err = errors.New("map needs a list as its second argument")
+		err = errors.New(fmt.Sprintf("map needs a list as its second argument, but got %s.", String(col)))
 		return
 	}
 
