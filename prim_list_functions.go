@@ -15,6 +15,7 @@ import (
 func RegisterListFunctionsPrimitives() {
 	MakePrimitiveFunction("map", 2, MapImpl)
 	MakePrimitiveFunction("reduce", 3, ReduceImpl)
+	MakePrimitiveFunction("filter", 2, FilterImpl)
 	MakePrimitiveFunction("memq", 2, MemqImpl)
 	MakePrimitiveFunction("memp", 2, MempImpl)
 }
@@ -92,6 +93,45 @@ func ReduceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	return
+}
+
+func FilterImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	f, err := Eval(First(args), env)
+	if err != nil {
+		return
+	}
+	if !FunctionP(f) {
+		err = errors.New(fmt.Sprintf("filter needs a function as its first argument, but got %s.", String(f)))
+		return
+	}
+
+	col, err := Eval(Second(args), env)
+	if err != nil {
+		return
+	}
+	if !ListP(col) {
+		err = errors.New(fmt.Sprintf("filter needs a list as its second argument, but got %s.", String(col)))
+		return
+	}
+
+	var d []*Data = make([]*Data, 0, Length(col))
+	var v *Data
+	for c := col; NotNilP(c); c = Cdr(c) {
+		v, err = ApplyWithoutEval(f, Cons(Car(c), nil), env)
+		if err != nil {
+			return
+		}
+		if !BooleanP(v) {
+			err = errors.New("filter needs a predicate function as its first argument.")
+			return
+		}
+
+		if BooleanValue(v) {
+			d = append(d, Car(c))
+		}
+	}
+
+	return ArrayToList(d), nil
 }
 
 func MemqImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
