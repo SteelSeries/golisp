@@ -150,7 +150,7 @@ func ObjectP(d *Data) bool {
 }
 
 func FunctionP(d *Data) bool {
-	return d != nil && TypeOf(d) == FunctionType || TypeOf(d) == PrimitiveType
+	return d != nil && (TypeOf(d) == FunctionType || TypeOf(d) == PrimitiveType)
 }
 
 func MacroP(d *Data) bool {
