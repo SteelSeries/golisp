@@ -42,3 +42,19 @@
     (== (odd? 3) #t)
     (== (odd? 2) #f)
     (== (odd? "hi") #f))
+
+(describe int-min
+          (== (min '(1 2)) 1)
+          (== (min '(3 4 2 8 8 6 1)) 1))
+
+(describe float-min
+          (== (min '(1.3 2.0)) 1.3)
+          (== (min '(3 4.8 2 8 8.3 6 1)) 1.0))
+
+(describe int-max
+          (== (max '(1 2)) 2)
+          (== (max '(3 4 2 8 8 6 1)) 8))
+
+(describe float-max
+          (== (max '(1.3 2.2)) 2.2)
+          (== (max '(3 4.8 2 8 8.3 6 1)) 8.3))
