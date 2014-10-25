@@ -27,6 +27,8 @@ func RegisterMathPrimitives() {
 	MakePrimitiveFunction("float", 1, ToFloatImpl)
 	MakePrimitiveFunction("number->string", -1, NumberToStringImpl)
 	MakePrimitiveFunction("string->number", -1, StringToNumberImpl)
+	MakePrimitiveFunction("min", 1, MinImpl)
+	MakePrimitiveFunction("max", 1, MaxImpl)
 }
 
 func IsEvenImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -384,4 +386,157 @@ func StringToNumberImpl(args *Data, env *SymbolTableFrame) (result *Data, err er
 		return
 	}
 	return IntegerWithValue(val), nil
+}
+
+func minInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	var n *Data
+	n, err = Eval(Car(args), env)
+	if err != nil {
+		return
+	} else if !IntegerP(n) {
+		err = errors.New(fmt.Sprintf("Min requires numbers, received %s", String(n)))
+		return
+	}
+	var acc int64 = IntegerValue(n)
+
+	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
+		n, err = Eval(Car(c), env)
+		if err != nil {
+			return
+		} else if !IntegerP(n) {
+			err = errors.New(fmt.Sprintf("Min requires numbers, received %s", String(n)))
+			return
+		}
+		if IntegerValue(n) < acc {
+			acc = IntegerValue(n)
+		}
+	}
+
+	return IntegerWithValue(acc), nil
+}
+
+func minFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	var n *Data
+	n, err = Eval(Car(args), env)
+	if err != nil {
+		return
+	} else if !NumberP(n) {
+		err = errors.New(fmt.Sprintf("Min requires numbers, received %s", String(n)))
+		return
+	}
+	var acc float32 = FloatValue(n)
+
+	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
+		n, err = Eval(Car(c), env)
+		if err != nil {
+			return
+		} else if !NumberP(n) {
+			err = errors.New(fmt.Sprintf("Min requires numbers, received %s", String(n)))
+			return
+		}
+		if FloatValue(n) < acc {
+			acc = FloatValue(n)
+		}
+	}
+
+	return FloatWithValue(acc), nil
+}
+
+func MinImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+
+	numbers, err := Eval(Car(args), env)
+	if !ListP(numbers) {
+		err = errors.New(fmt.Sprintf("Min requires a list of numbers, received %s", String(numbers)))
+		return
+	}
+	if Length(numbers) == 0 {
+		return IntegerWithValue(0), nil
+	}
+
+	areFloats, err := anyFloats(numbers, env)
+	if err != nil {
+		return
+	}
+	if areFloats {
+		return minFloats(numbers, env)
+	} else {
+		return minInts(numbers, env)
+	}
+}
+
+func maxInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	var n *Data
+	n, err = Eval(Car(args), env)
+	if err != nil {
+		return
+	} else if !IntegerP(n) {
+		err = errors.New(fmt.Sprintf("Max requires numbers, received %s", String(n)))
+		return
+	}
+	var acc int64 = IntegerValue(n)
+
+	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
+		n, err = Eval(Car(c), env)
+		if err != nil {
+			return
+		} else if !IntegerP(n) {
+			err = errors.New(fmt.Sprintf("Max requires numbers, received %s", String(n)))
+			return
+		}
+		if IntegerValue(n) > acc {
+			acc = IntegerValue(n)
+		}
+	}
+
+	return IntegerWithValue(acc), nil
+}
+
+func maxFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	var n *Data
+	n, err = Eval(Car(args), env)
+	if err != nil {
+		return
+	} else if !NumberP(n) {
+		err = errors.New(fmt.Sprintf("Max requires numbers, received %s", String(n)))
+		return
+	}
+	var acc float32 = FloatValue(n)
+
+	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
+		n, err = Eval(Car(c), env)
+		if err != nil {
+			return
+		} else if !NumberP(n) {
+			err = errors.New(fmt.Sprintf("Max requires numbers, received %s", String(n)))
+			return
+		}
+		if FloatValue(n) > acc {
+			acc = FloatValue(n)
+		}
+	}
+
+	return FloatWithValue(acc), nil
+}
+
+func MaxImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+
+	numbers, err := Eval(Car(args), env)
+	if !ListP(numbers) {
+		err = errors.New(fmt.Sprintf("Max requires a list of numbers, received %s", String(numbers)))
+		return
+	}
+
+	if Length(numbers) == 0 {
+		return IntegerWithValue(0), nil
+	}
+
+	areFloats, err := anyFloats(numbers, env)
+	if err != nil {
+		return
+	}
+	if areFloats {
+		return maxFloats(numbers, env)
+	} else {
+		return maxInts(numbers, env)
+	}
 }
