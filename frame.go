@@ -54,7 +54,7 @@ func (self *FrameMap) parentSlots() []string {
 func (self *FrameMap) Parents() []*FrameMap {
 	parents := make([]*FrameMap, 0, 0)
 	for k, v := range *self {
-		if isParentKey(k) {
+		if isParentKey(k) && v != nil {
 			parents = append(parents, FrameValue(v))
 		}
 	}
