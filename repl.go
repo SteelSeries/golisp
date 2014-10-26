@@ -19,6 +19,11 @@ func Repl() {
 	LoadHistoryFromFile(".golisp_history")
 	lastInput := ""
 	for true {
+		defer func() {
+			if x := recover(); x != nil {
+				println("BANG!")
+			}
+		}()
 		input := *ReadLine(&prompt)
 		if input != "" {
 			if input != lastInput {
