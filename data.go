@@ -50,6 +50,12 @@ type Data struct {
 var True *Data = &Data{Type: BooleanType, Integer: 1}
 var False *Data = &Data{Type: BooleanType, Integer: 0}
 
+// Debug support
+
+var EvalDepth int = 0
+var DebugSingleStep bool = false
+var DebugCurrentFrame *SymbolTableFrame = nil
+
 func TypeOf(d *Data) int {
 	return d.Type
 }
@@ -769,19 +775,56 @@ func postProcessFrameShortcuts(d *Data) *Data {
 	}
 }
 
-func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
+func logEval(d *Data) {
+	if DebugTrace {
+		fmt.Printf("%2d: %*sEvaling: %s\n", EvalDepth, EvalDepth, "", String(d))
+		EvalDepth += 1
+	}
+}
 
-	fmt.Printf("Evaling: %s\n", String(d))
+func logApply(function *Data, args *Data) {
+	if DebugTrace {
+		fmt.Printf("%2d: %*sApplying: %s to %s\n", EvalDepth, EvalDepth, "", String(function), String(args))
+		EvalDepth += 1
+	}
+}
+
+func logResult(result *Data) {
+	if DebugTrace {
+		if EvalDepth > 0 {
+			EvalDepth -= 1
+		}
+		fmt.Printf("%2d: %*s-------> %s\n", EvalDepth, EvalDepth, "", String(result))
+	}
+}
+
+func EvalInternal(d *Data, env *SymbolTableFrame, shouldLog bool) (result *Data, err error) {
+	if shouldLog {
+		logEval(d)
+	}
+
+	if DebugSingleStep {
+		DebugSingleStep = false
+		DebugRepl(env)
+	}
+
+	if DebugCurrentFrame != nil && env == DebugCurrentFrame.Parent {
+		DebugCurrentFrame = nil
+		DebugRepl(env)
+	}
 
 	if d != nil {
 		switch d.Type {
 		case ConsCellType:
 			{
+				if shouldLog {
+					env.CurrentCode = fmt.Sprintf("Eval %s", String(d))
+				}
 
 				d = postProcessFrameShortcuts(d)
 
 				var function *Data
-				function, err = Eval(Car(d), env)
+				function, err = EvalInternal(Car(d), env, shouldLog)
 				if err != nil {
 					return
 				}
@@ -791,7 +834,7 @@ func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
 				}
 
 				args := Cdr(d)
-				result, err = Apply(function, args, env)
+				result, err = ApplyInternal(function, args, env, shouldLog)
 				if err != nil {
 					err = errors.New(fmt.Sprintf("\nEvaling %s. %s", String(d), err))
 					return
@@ -807,40 +850,92 @@ func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
 			result = d
 		}
 	}
-
-	fmt.Printf("=======> %s\n", String(result))
-
+	if shouldLog {
+		logResult(result)
+	}
 	return result, nil
 }
 
-func Apply(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return EvalInternal(d, env, true)
+}
+
+func formatApply(function *Data, args *Data) string {
+	var fname string
+
+	if function == nil {
+		return "Trying to apply nil!"
+	}
+
+	switch function.Type {
+	case FunctionType:
+		fname = function.Func.Name
+	case MacroType:
+		fname = function.Mac.Name
+	case PrimitiveType:
+		fname = function.Prim.Name
+	}
+	return fmt.Sprintf("Apply %s to %s", fname, String(args))
+}
+
+func ApplyInternal(function *Data, args *Data, env *SymbolTableFrame, shouldLog bool) (result *Data, err error) {
+	if shouldLog {
+		logApply(function, args)
+		if len(env.CurrentCode) == 0 {
+			env.CurrentCode = formatApply(function, args)
+		}
+	}
+
 	if function == nil {
 		err = errors.New("Nil when function expected.")
 		return
 	}
 	switch function.Type {
 	case FunctionType:
-		return function.Func.Apply(args, env)
+		result, err = function.Func.Apply(args, env)
 	case MacroType:
-		return function.Mac.Apply(args, env)
+		result, err = function.Mac.Apply(args, env)
 	case PrimitiveType:
-		return function.Prim.Apply(args, env)
+		result, err = function.Prim.Apply(args, env)
+	}
+
+	if shouldLog {
+		logResult(result)
 	}
 	return
 }
 
-func ApplyWithoutEval(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func Apply(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return ApplyInternal(function, args, env, true)
+}
+
+func ApplyWithoutEvalInternal(function *Data, args *Data, env *SymbolTableFrame, shouldLog bool) (result *Data, err error) {
+	if shouldLog {
+		logApply(function, args)
+		if len(env.CurrentCode) == 0 {
+			env.CurrentCode = formatApply(function, args)
+		}
+	}
+
 	if function == nil {
 		err = errors.New("Nil when function or macro expected.")
 		return
 	}
 	switch function.Type {
 	case FunctionType:
-		return function.Func.ApplyWithoutEval(args, env)
+		result, err = function.Func.ApplyWithoutEval(args, env)
 	case MacroType:
-		return function.Mac.ApplyWithoutEval(args, env)
+		result, err = function.Mac.ApplyWithoutEval(args, env)
 	case PrimitiveType:
-		return function.Prim.ApplyWithoutEval(args, env)
+		result, err = function.Prim.ApplyWithoutEval(args, env)
+	}
+
+	if shouldLog {
+		logResult(result)
 	}
 	return
+}
+
+func ApplyWithoutEval(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return ApplyWithoutEvalInternal(function, args, env, true)
 }

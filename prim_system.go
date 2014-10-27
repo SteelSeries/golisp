@@ -17,18 +17,12 @@ import (
 
 func RegisterSystemPrimitives() {
 	MakePrimitiveFunction("load", 1, LoadFileImpl)
-	MakePrimitiveFunction("dump", 0, DumpSymbolTableImpl)
 	MakePrimitiveFunction("sleep", 1, SleepImpl)
 	MakePrimitiveFunction("write-line", 1, WriteLineImpl)
 	MakePrimitiveFunction("str", -1, MakeStringImpl)
 	MakePrimitiveFunction("intern", 1, InternImpl)
 	MakePrimitiveFunction("time", 1, TimeImpl)
 	MakePrimitiveFunction("quit", 0, QuitImpl)
-}
-
-func DumpSymbolTableImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	env.Dump()
-	return
 }
 
 func LoadFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

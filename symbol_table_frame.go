@@ -13,17 +13,20 @@ import (
 )
 
 type SymbolTableFrame struct {
-	Parent   *SymbolTableFrame
-	Frame    *FrameMap
-	Bindings map[string]*Binding
+	Parent      *SymbolTableFrame
+	Frame       *FrameMap
+	Bindings    map[string]*Binding
+	CurrentCode string
 }
 
 var Global *SymbolTableFrame
 
 func (self *SymbolTableFrame) InternalDump(frameNumber int) {
-	fmt.Printf("Frame %d\n", frameNumber)
+	fmt.Printf("Frame %d: %s\n", frameNumber, self.CurrentCode)
 	for _, b := range self.Bindings {
-		b.Dump()
+		if b.Val == nil || TypeOf(b.Val) != PrimitiveType {
+			b.Dump()
+		}
 	}
 	fmt.Printf("\n")
 	if self.Parent != nil {
@@ -34,6 +37,38 @@ func (self *SymbolTableFrame) InternalDump(frameNumber int) {
 func (self *SymbolTableFrame) Dump() {
 	println()
 	self.InternalDump(0)
+}
+
+func (self *SymbolTableFrame) DumpSingleFrame(frameNumber int) {
+	if frameNumber == 0 {
+		fmt.Printf("%s\n", self.CurrentCode)
+		for _, b := range self.Bindings {
+			if b.Val == nil || TypeOf(b.Val) != PrimitiveType {
+				b.Dump()
+			}
+		}
+		fmt.Printf("\n")
+	} else if self.Parent != nil {
+		self.Parent.DumpSingleFrame(frameNumber - 1)
+	} else {
+		fmt.Printf("Invalid frame selected.\n")
+	}
+}
+
+func (self *SymbolTableFrame) InternalDumpHeaders(frameNumber int) {
+	fmt.Printf("Frame %d: %s\n", frameNumber, self.CurrentCode)
+	if self.Parent != nil {
+		self.Parent.InternalDumpHeaders(frameNumber + 1)
+	}
+}
+
+func (self *SymbolTableFrame) DumpHeaders() {
+	println()
+	self.InternalDumpHeaders(0)
+}
+
+func (self *SymbolTableFrame) DumpHeader() {
+	fmt.Printf("%s\n", self.CurrentCode)
 }
 
 func NewSymbolTableFrameBelow(p *SymbolTableFrame) *SymbolTableFrame {
