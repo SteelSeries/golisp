@@ -770,44 +770,47 @@ func postProcessFrameShortcuts(d *Data) *Data {
 }
 
 func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if d == nil {
-		return
-	}
 
-	switch d.Type {
-	case ConsCellType:
-		{
+	fmt.Printf("Evaling: %s\n", String(d))
 
-			d = postProcessFrameShortcuts(d)
+	if d != nil {
+		switch d.Type {
+		case ConsCellType:
+			{
 
-			var function *Data
-			function, err = Eval(Car(d), env)
-			if err != nil {
-				return
+				d = postProcessFrameShortcuts(d)
+
+				var function *Data
+				function, err = Eval(Car(d), env)
+				if err != nil {
+					return
+				}
+				if function == nil {
+					err = errors.New(fmt.Sprintf("Nil when function or macro expected for %s.", String(Car(d))))
+					return
+				}
+
+				args := Cdr(d)
+				result, err = Apply(function, args, env)
+				if err != nil {
+					err = errors.New(fmt.Sprintf("\nEvaling %s. %s", String(d), err))
+					return
+				}
 			}
-			if function == nil {
-				err = errors.New(fmt.Sprintf("Nil when function or macro expected for %s.", String(Car(d))))
-				return
+		case SymbolType:
+			if NakedP(d) {
+				result = d
+			} else {
+				result = env.ValueOf(d)
 			}
-
-			args := Cdr(d)
-			result, err = Apply(function, args, env)
-			if err != nil {
-				err = errors.New(fmt.Sprintf("\nEvaling %s. %s", String(d), err))
-				return
-			}
-			return
-		}
-	case SymbolType:
-		if NakedP(d) {
+		default:
 			result = d
-		} else {
-			result = env.ValueOf(d)
 		}
-		return
 	}
 
-	return d, nil
+	fmt.Printf("=======> %s\n", String(result))
+
+	return result, nil
 }
 
 func Apply(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err error) {
