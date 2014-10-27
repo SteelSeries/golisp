@@ -798,11 +798,8 @@ func logResult(result *Data) {
 	}
 }
 
-func EvalInternal(d *Data, env *SymbolTableFrame, shouldLog bool) (result *Data, err error) {
-	if shouldLog {
-		logEval(d)
-	}
-
+func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
+	logEval(d)
 	if DebugSingleStep {
 		DebugSingleStep = false
 		DebugRepl(env)
@@ -817,14 +814,11 @@ func EvalInternal(d *Data, env *SymbolTableFrame, shouldLog bool) (result *Data,
 		switch d.Type {
 		case ConsCellType:
 			{
-				if shouldLog {
-					env.CurrentCode = fmt.Sprintf("Eval %s", String(d))
-				}
-
+				env.CurrentCode = fmt.Sprintf("Eval %s", String(d))
 				d = postProcessFrameShortcuts(d)
 
 				var function *Data
-				function, err = EvalInternal(Car(d), env, shouldLog)
+				function, err = Eval(Car(d), env)
 				if err != nil {
 					return
 				}
@@ -834,7 +828,7 @@ func EvalInternal(d *Data, env *SymbolTableFrame, shouldLog bool) (result *Data,
 				}
 
 				args := Cdr(d)
-				result, err = ApplyInternal(function, args, env, shouldLog)
+				result, err = Apply(function, args, env)
 				if err != nil {
 					err = errors.New(fmt.Sprintf("\nEvaling %s. %s", String(d), err))
 					return
@@ -850,14 +844,8 @@ func EvalInternal(d *Data, env *SymbolTableFrame, shouldLog bool) (result *Data,
 			result = d
 		}
 	}
-	if shouldLog {
-		logResult(result)
-	}
+	logResult(result)
 	return result, nil
-}
-
-func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return EvalInternal(d, env, true)
 }
 
 func formatApply(function *Data, args *Data) string {
@@ -878,12 +866,10 @@ func formatApply(function *Data, args *Data) string {
 	return fmt.Sprintf("Apply %s to %s", fname, String(args))
 }
 
-func ApplyInternal(function *Data, args *Data, env *SymbolTableFrame, shouldLog bool) (result *Data, err error) {
-	if shouldLog {
-		logApply(function, args)
-		if len(env.CurrentCode) == 0 {
-			env.CurrentCode = formatApply(function, args)
-		}
+func Apply(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	logApply(function, args)
+	if len(env.CurrentCode) == 0 {
+		env.CurrentCode = formatApply(function, args)
 	}
 
 	if function == nil {
@@ -899,23 +885,13 @@ func ApplyInternal(function *Data, args *Data, env *SymbolTableFrame, shouldLog 
 		result, err = function.Prim.Apply(args, env)
 	}
 
-	if shouldLog {
-		logResult(result)
-	}
+	logResult(result)
 	return
 }
 
-func Apply(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return ApplyInternal(function, args, env, true)
-}
-
-func ApplyWithoutEvalInternal(function *Data, args *Data, env *SymbolTableFrame, shouldLog bool) (result *Data, err error) {
-	if shouldLog {
-		logApply(function, args)
-		if len(env.CurrentCode) == 0 {
-			env.CurrentCode = formatApply(function, args)
-		}
-	}
+func ApplyWithoutEval(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	logApply(function, args)
+	env.CurrentCode = formatApply(function, args)
 
 	if function == nil {
 		err = errors.New("Nil when function or macro expected.")
@@ -930,12 +906,6 @@ func ApplyWithoutEvalInternal(function *Data, args *Data, env *SymbolTableFrame,
 		result, err = function.Prim.ApplyWithoutEval(args, env)
 	}
 
-	if shouldLog {
-		logResult(result)
-	}
+	logResult(result)
 	return
-}
-
-func ApplyWithoutEval(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return ApplyWithoutEvalInternal(function, args, env, true)
 }

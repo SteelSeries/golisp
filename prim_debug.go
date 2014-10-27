@@ -87,7 +87,7 @@ func DebugRepl(env *SymbolTableFrame) {
 				if err != nil {
 					fmt.Printf("Error: %s\n", err)
 				} else {
-					d, err := EvalInternal(code, env, false)
+					d, err := Eval(code, env)
 					if err != nil {
 						fmt.Printf("Error in evaluation: %s\n", err)
 					} else {
