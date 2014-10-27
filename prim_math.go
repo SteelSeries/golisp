@@ -49,35 +49,27 @@ func IsOddImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func addFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var acc float32 = 0
-	var n *Data
 	for c := args; NotNilP(c); c = Cdr(c) {
-		n, err = Eval(Car(c), env)
-		acc += FloatValue(n)
+		acc += FloatValue(Car(c))
 	}
 	return FloatWithValue(acc), nil
 }
 
 func addInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var acc int64 = 0
-	var n *Data
 	for c := args; NotNilP(c); c = Cdr(c) {
-		n, err = Eval(Car(c), env)
-		acc += IntegerValue(n)
+		acc += IntegerValue(Car(c))
 	}
 	return IntegerWithValue(acc), nil
 }
 
 func anyFloats(args *Data, env *SymbolTableFrame) (result bool, err error) {
-	var n *Data
 	for c := args; NotNilP(c); c = Cdr(c) {
-		n, err = Eval(Car(c), env)
-		if err != nil {
-			return
-		} else if !IntegerP(n) && !FloatP(n) {
-			err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
+		if !NumberP(Car(c)) {
+			err = errors.New(fmt.Sprintf("Number expected, received %s", String(Car(c))))
 			return
 		}
-		if FloatP(n) {
+		if FloatP(Car(c)) {
 			return true, nil
 		}
 	}
@@ -85,149 +77,151 @@ func anyFloats(args *Data, env *SymbolTableFrame) (result bool, err error) {
 }
 
 func AddImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	areFloats, err := anyFloats(args, env)
-	if err != nil {
-		return
-	}
-	if areFloats {
-		return addFloats(args, env)
-	} else {
-		return addInts(args, env)
-	}
-}
-
-func subtractInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var n *Data
-	n, err = Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	acc := IntegerValue(n)
-	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
+	nums := make([]*Data, 0, Length(args))
+	for c := args; NotNilP(c); c = Cdr(c) {
 		n, err = Eval(Car(c), env)
 		if err != nil {
 			return
 		}
-		acc -= IntegerValue(n)
+		nums = append(nums, n)
+	}
+	numbers := ArrayToList(nums)
+	areFloats, err := anyFloats(numbers, env)
+	if err != nil {
+		return
+	}
+	if areFloats {
+		return addFloats(numbers, env)
+	} else {
+		return addInts(numbers, env)
+	}
+}
+
+func subtractInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	acc := IntegerValue(Car(args))
+	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
+		acc -= IntegerValue(Car(c))
 	}
 	return IntegerWithValue(acc), nil
 }
 
 func subtractFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var n *Data
-	n, err = Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	acc := FloatValue(n)
+	acc := FloatValue(Car(args))
 	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-		n, err = Eval(Car(c), env)
-		if err != nil {
-			return
-		}
-		acc -= FloatValue(n)
+		acc -= FloatValue(Car(c))
 	}
 	return FloatWithValue(acc), nil
 }
 
 func SubtractImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	areFloats, err := anyFloats(args, env)
-	if err != nil {
-		return
-	}
-	if areFloats {
-		return subtractFloats(args, env)
-	} else {
-		return subtractInts(args, env)
-	}
-}
-
-func multiplyInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var n *Data
-	var acc int64 = 1
+	nums := make([]*Data, 0, Length(args))
 	for c := args; NotNilP(c); c = Cdr(c) {
 		n, err = Eval(Car(c), env)
 		if err != nil {
 			return
 		}
-		acc *= IntegerValue(n)
+		nums = append(nums, n)
+	}
+	numbers := ArrayToList(nums)
+	areFloats, err := anyFloats(numbers, env)
+	if err != nil {
+		return
+	}
+	if areFloats {
+		return subtractFloats(numbers, env)
+	} else {
+		return subtractInts(numbers, env)
+	}
+}
+
+func multiplyInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	var acc int64 = 1
+	for c := args; NotNilP(c); c = Cdr(c) {
+		acc *= IntegerValue(Car(c))
 	}
 	return IntegerWithValue(acc), nil
 }
 
 func multiplyFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var n *Data
 	var acc float32 = 1.0
 	for c := args; NotNilP(c); c = Cdr(c) {
-		n, err = Eval(Car(c), env)
-		if err != nil {
-			return
-		}
-		acc *= FloatValue(n)
+		acc *= FloatValue(Car(c))
 	}
 	return FloatWithValue(acc), nil
 }
 
 func MultiplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	areFloats, err := anyFloats(args, env)
-	if err != nil {
-		return
-	}
-	if areFloats {
-		return multiplyFloats(args, env)
-	} else {
-		return multiplyInts(args, env)
-	}
-}
-
-func quotientInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var n *Data
-	n, err = Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	acc := IntegerValue(n)
-	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
+	nums := make([]*Data, 0, Length(args))
+	for c := args; NotNilP(c); c = Cdr(c) {
 		n, err = Eval(Car(c), env)
 		if err != nil {
 			return
 		}
-		v := IntegerValue(n)
+		nums = append(nums, n)
+	}
+	numbers := ArrayToList(nums)
+	areFloats, err := anyFloats(numbers, env)
+	if err != nil {
+		return
+	}
+	if areFloats {
+		return multiplyFloats(numbers, env)
+	} else {
+		return multiplyInts(numbers, env)
+	}
+}
+
+func quotientInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	acc := IntegerValue(Car(args))
+	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
+		v := IntegerValue(Car(c))
 		if v == 0 {
-			errors.New(fmt.Sprintf("Quotent: %s -> Divide by zero.", String(args)))
+			err = errors.New(fmt.Sprintf("Quotent: %s -> Divide by zero.", String(args)))
+			return
 		} else {
-			acc /= IntegerValue(n)
+			acc /= v
 		}
 	}
 	return IntegerWithValue(acc), nil
 }
 
 func quotientFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var n *Data
-	n, err = Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	var acc float32 = FloatValue(n)
+	var acc float32 = FloatValue(Car(args))
 	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-		n, err = Eval(Car(c), env)
-		if err != nil {
+		v := FloatValue(Car(c))
+		if v == 0 {
+			err = errors.New(fmt.Sprintf("Quotent: %s -> Divide by zero.", String(args)))
 			return
+		} else {
+			acc /= v
 		}
-		acc /= FloatValue(n)
 	}
 	return FloatWithValue(acc), nil
 }
 
 func QuotientImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	areFloats, err := anyFloats(args, env)
+	nums := make([]*Data, 0, Length(args))
+	var n *Data
+	for c := args; NotNilP(c); c = Cdr(c) {
+		n, err = Eval(Car(c), env)
+		if err != nil {
+			return
+		}
+		nums = append(nums, n)
+	}
+	numbers := ArrayToList(nums)
+
+	areFloats, err := anyFloats(numbers, env)
 	if err != nil {
 		return
 	}
 	if areFloats {
-		return quotientFloats(args, env)
+		return quotientFloats(numbers, env)
 	} else {
-		return quotientInts(args, env)
+		return quotientInts(numbers, env)
 	}
 }
 
