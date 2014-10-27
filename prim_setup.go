@@ -31,6 +31,7 @@ func InitBuiltins() {
 	RegisterSystemPrimitives()
 	RegisterBytearrayPrimitives()
 	RegsterStringPrimitives()
+	RegisterDebugPrimitives()
 	RegisterTestingPrimitives()
 	RegisterFramePrimitives()
 }

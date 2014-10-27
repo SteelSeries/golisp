@@ -24,7 +24,6 @@ func RegisterSystemPrimitives() {
 	MakePrimitiveFunction("intern", 1, InternImpl)
 	MakePrimitiveFunction("time", 1, TimeImpl)
 	MakePrimitiveFunction("quit", 0, QuitImpl)
-	MakePrimitiveFunction("debug", -1, DebugImpl)
 }
 
 func DumpSymbolTableImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -46,13 +45,6 @@ func QuitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	WriteHistoryToFile(".golisp_history")
 	os.Exit(0)
 	return
-}
-
-func DebugImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if Length(args) == 1 {
-		DebugTrace = BooleanValue(Car(args))
-	}
-	return BooleanWithValue(DebugTrace), nil
 }
 
 func SleepImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
