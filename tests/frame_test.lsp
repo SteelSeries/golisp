@@ -89,9 +89,7 @@
 
 (describe locals-override-slots
           (let ((f {a: 42})
-                (g {parent*: f  foo: (lambda ()
-                                       (let ((a 10))
-                                         (+ 1 a)))}))
+                (g {parent*: f  foo: (lambda () (let ((a 10)) (+ 1 a)))}))
             (== (send g foo:) 11)))
 
 (describe cloning
