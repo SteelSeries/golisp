@@ -12,6 +12,7 @@ import (
 )
 
 func Repl() {
+	IsInteractive = true
 	fmt.Printf("Welcome to GoLisp\n")
 	fmt.Printf("Copyright 2014 SteelSeries\n")
 	fmt.Printf("Evaluate '(quit)' to exit.\n\n")
@@ -24,6 +25,10 @@ func Repl() {
 				println("BANG!")
 			}
 		}()
+		DebugCurrentFrame = nil
+		DebugSingleStep = false
+		DebugEvalInDebugRepl = false
+		Global.CurrentCode = ""
 		input := *ReadLine(&prompt)
 		if input != "" {
 			if input != lastInput {
@@ -37,6 +42,9 @@ func Repl() {
 				d, err := Eval(code, Global)
 				if err != nil {
 					fmt.Printf("Error in evaluation: %s\n", err)
+					if DebugOnError {
+						DebugRepl(DebugErrorEnv)
+					}
 				} else {
 					fmt.Printf("==> %s\n", String(d))
 				}

@@ -56,6 +56,10 @@ var EvalDepth int = 0
 var DebugSingleStep bool = false
 var DebugCurrentFrame *SymbolTableFrame = nil
 var DebugEvalInDebugRepl bool = false
+var DebugErrorEnv *SymbolTableFrame = nil
+var DebugOnError bool = false
+var IsInteractive bool = false
+var DebugReturnValue *Data = nil
 
 func TypeOf(d *Data) int {
 	return d.Type
@@ -800,7 +804,12 @@ func logResult(result *Data) {
 }
 
 func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if !DebugEvalInDebugRepl && d.Type == ConsCellType {
+		env.CurrentCode = fmt.Sprintf("Eval %s", String(d))
+	}
+
 	logEval(d)
+
 	if DebugSingleStep {
 		DebugSingleStep = false
 		DebugRepl(env)
@@ -815,9 +824,6 @@ func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
 		switch d.Type {
 		case ConsCellType:
 			{
-				if !DebugEvalInDebugRepl {
-					env.CurrentCode = fmt.Sprintf("Eval %s", String(d))
-				}
 
 				d = postProcessFrameShortcuts(d)
 
@@ -836,6 +842,9 @@ func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
 				if err != nil {
 					err = errors.New(fmt.Sprintf("\nEvaling %s. %s", String(d), err))
 					return
+				} else if DebugReturnValue != nil {
+					result = DebugReturnValue
+					DebugReturnValue = nil
 				}
 			}
 		case SymbolType:
