@@ -179,7 +179,7 @@ func quotientInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
 		v := IntegerValue(Car(c))
 		if v == 0 {
-			err = errors.New(fmt.Sprintf("Quotent: %s -> Divide by zero.", String(args)))
+			err = ProcessError(fmt.Sprintf("Quotent: %s -> Divide by zero.", String(args)), env)
 			return
 		} else {
 			acc /= v
@@ -193,7 +193,7 @@ func quotientFloats(args *Data, env *SymbolTableFrame) (result *Data, err error)
 	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
 		v := FloatValue(Car(c))
 		if v == 0 {
-			err = errors.New(fmt.Sprintf("Quotent: %s -> Divide by zero.", String(args)))
+			err = ProcessError(fmt.Sprintf("Quotent: %s -> Divide by zero.", String(args)), env)
 			return
 		} else {
 			acc /= v
