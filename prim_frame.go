@@ -8,7 +8,6 @@
 package golisp
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -29,13 +28,13 @@ func RegisterFramePrimitives() {
 
 func MakeFrameImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if Length(args)%2 != 0 {
-		err = errors.New("Frames must be initialized with an even number of arguments.")
+		err = ProcessError("Frames must be initialized with an even number of arguments.", env)
 	}
 	m := make(FrameMap)
 	for c := args; NotNilP(c); c = Cddr(c) {
 		k := Car(c)
 		if !NakedP(k) {
-			err = errors.New(fmt.Sprintf("Frame keys must be naked symbols, but was given %s.", String(k)))
+			err = ProcessError(fmt.Sprintf("Frame keys must be naked symbols, but was given %s.", String(k)), env)
 			return
 		}
 		v, e := Eval(Cadr(c), env)
@@ -53,7 +52,7 @@ func HasSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !FrameP(f) {
-		err = errors.New(fmt.Sprintf("has-slot? requires a frame as it's first argument, but was given %s.", String(f)))
+		err = ProcessError(fmt.Sprintf("has-slot? requires a frame as it's first argument, but was given %s.", String(f)), env)
 	}
 
 	k, err := Eval(Cadr(args), env)
@@ -61,7 +60,7 @@ func HasSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !SymbolP(k) {
-		err = errors.New(fmt.Sprintf("has-slot? requires a symbol as it's second argument, but was given %s.", String(k)))
+		err = ProcessError(fmt.Sprintf("has-slot? requires a symbol as it's second argument, but was given %s.", String(k)), env)
 		return
 	}
 
@@ -74,7 +73,7 @@ func GetSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !FrameP(f) {
-		err = errors.New(fmt.Sprintf("get-slot requires a frame as it's first argument, but was given %s.", String(f)))
+		err = ProcessError(fmt.Sprintf("get-slot requires a frame as it's first argument, but was given %s.", String(f)), env)
 	}
 
 	k, err := Eval(Cadr(args), env)
@@ -82,12 +81,12 @@ func GetSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !SymbolP(k) {
-		err = errors.New(fmt.Sprintf("get-slot requires a symbol as it's second argument, but was given %s.", String(k)))
+		err = ProcessError(fmt.Sprintf("get-slot requires a symbol as it's second argument, but was given %s.", String(k)), env)
 		return
 	}
 
 	if !f.Frame.HasSlot(StringValue(k)) {
-		err = errors.New(fmt.Sprintf("get-slot requires an existing slot, but was given %s.", String(k)))
+		err = ProcessError(fmt.Sprintf("get-slot requires an existing slot, but was given %s.", String(k)), env)
 		return
 	}
 
@@ -100,7 +99,7 @@ func GetSlotOrNilImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 		return
 	}
 	if !FrameP(f) {
-		err = errors.New(fmt.Sprintf("get-slot-or-nil requires a frame as it's first argument, but was given %s.", String(f)))
+		err = ProcessError(fmt.Sprintf("get-slot-or-nil requires a frame as it's first argument, but was given %s.", String(f)), env)
 	}
 
 	k, err := Eval(Cadr(args), env)
@@ -108,7 +107,7 @@ func GetSlotOrNilImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 		return
 	}
 	if !SymbolP(k) {
-		err = errors.New(fmt.Sprintf("get-slot-or-nil requires a symbol as it's second argument, but was given %s.", String(k)))
+		err = ProcessError(fmt.Sprintf("get-slot-or-nil requires a symbol as it's second argument, but was given %s.", String(k)), env)
 		return
 	}
 
@@ -126,7 +125,7 @@ func RemoveSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 	}
 
 	if !FrameP(f) {
-		err = errors.New(fmt.Sprintf("remove-slot! requires a frame as it's first argument, but was given %s.", String(f)))
+		err = ProcessError(fmt.Sprintf("remove-slot! requires a frame as it's first argument, but was given %s.", String(f)), env)
 	}
 
 	k, err := Eval(Cadr(args), env)
@@ -134,7 +133,7 @@ func RemoveSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 		return
 	}
 	if !SymbolP(k) {
-		err = errors.New(fmt.Sprintf("remove-slot! requires a symbol as it's second argument, but was given %s.", String(k)))
+		err = ProcessError(fmt.Sprintf("remove-slot! requires a symbol as it's second argument, but was given %s.", String(k)), env)
 		return
 	}
 
@@ -147,7 +146,7 @@ func SetSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !FrameP(f) {
-		err = errors.New(fmt.Sprintf("set-slot! requires a frame as it's first argument, but was given %s.", String(f)))
+		err = ProcessError(fmt.Sprintf("set-slot! requires a frame as it's first argument, but was given %s.", String(f)), env)
 	}
 
 	k, err := Eval(Cadr(args), env)
@@ -155,7 +154,7 @@ func SetSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !NakedP(k) {
-		err = errors.New(fmt.Sprintf("set-slot! requires a naked symbol as it's second argument, but was given %s.", String(k)))
+		err = ProcessError(fmt.Sprintf("set-slot! requires a naked symbol as it's second argument, but was given %s.", String(k)), env)
 		return
 	}
 
@@ -173,7 +172,7 @@ func SendImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !FrameP(f) {
-		err = errors.New(fmt.Sprintf("send requires a frame as it's first argument, but was given %s.", String(f)))
+		err = ProcessError(fmt.Sprintf("send requires a frame as it's first argument, but was given %s.", String(f)), env)
 	}
 
 	k, err := Eval(Cadr(args), env)
@@ -181,18 +180,18 @@ func SendImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !SymbolP(k) {
-		err = errors.New(fmt.Sprintf("send requires a symbol as it's second argument, but was given %s.", String(k)))
+		err = ProcessError(fmt.Sprintf("send requires a symbol as it's second argument, but was given %s.", String(k)), env)
 		return
 	}
 
 	if !f.Frame.HasSlot(StringValue(k)) {
-		err = errors.New(fmt.Sprintf("send requires an existing slot, but was given %s.", String(k)))
+		err = ProcessError(fmt.Sprintf("send requires an existing slot, but was given %s.", String(k)), env)
 		return
 	}
 
 	fun := f.Frame.Get(StringValue(k))
 	if !FunctionP(fun) {
-		err = errors.New(fmt.Sprintf("send requires a function slot, but was given a slot containing a %s.", TypeName(TypeOf(fun))))
+		err = ProcessError(fmt.Sprintf("send requires a function slot, but was given a slot containing a %s.", TypeName(TypeOf(fun))), env)
 	}
 
 	params := Cddr(args)
@@ -219,7 +218,7 @@ func getSuperFunction(selector string, env *SymbolTableFrame) *Data {
 
 func SendSuperImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if !env.HasFrame() {
-		err = errors.New("send-super can only be used within the context of a frame.")
+		err = ProcessError("send-super can only be used within the context of a frame.", env)
 		return
 	}
 
@@ -228,13 +227,13 @@ func SendSuperImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 		return
 	}
 	if !SymbolP(selector) {
-		err = errors.New(fmt.Sprintf("Selector must be a symbol but was %s.", TypeName(TypeOf(selector))))
+		err = ProcessError(fmt.Sprintf("Selector must be a symbol but was %s.", TypeName(TypeOf(selector))), env)
 		return
 	}
 
 	fun := getSuperFunction(StringValue(selector), env)
 	if fun == nil || !FunctionP(fun) {
-		err = errors.New(fmt.Sprintf("Message sent must select a function slot but was %s.", TypeName(TypeOf(fun))))
+		err = ProcessError(fmt.Sprintf("Message sent must select a function slot but was %s.", TypeName(TypeOf(fun))), env)
 		return
 	}
 
@@ -250,7 +249,7 @@ func CloneImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !FrameP(f) {
-		err = errors.New(fmt.Sprintf("clone requires a frame as it's argument, but was given %s.", String(f)))
+		err = ProcessError(fmt.Sprintf("clone requires a frame as it's argument, but was given %s.", String(f)), env)
 		return
 	}
 
@@ -263,7 +262,7 @@ func JsonToLispImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 		return
 	}
 	if !StringP(j) {
-		err = errors.New(fmt.Sprintf("json->lisp requires a string as it's argument, but was given %s.", String(j)))
+		err = ProcessError(fmt.Sprintf("json->lisp requires a string as it's argument, but was given %s.", String(j)), env)
 		return
 	}
 
@@ -285,7 +284,7 @@ func KeysImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !FrameP(f) {
-		err = errors.New(fmt.Sprintf("keys requires a frame as it's argument, but was given %s.", String(f)))
+		err = ProcessError(fmt.Sprintf("keys requires a frame as it's argument, but was given %s.", String(f)), env)
 		return
 	}
 

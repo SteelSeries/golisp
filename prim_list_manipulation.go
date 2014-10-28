@@ -7,9 +7,7 @@
 
 package golisp
 
-import (
-	"errors"
-)
+import ()
 
 func RegisterListManipulationPrimitives() {
 	MakePrimitiveFunction("list", -1, MakeListImpl)
@@ -152,7 +150,7 @@ func PartitionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 		return
 	}
 	if !IntegerP(n) {
-		err = errors.New("partition requires a number as it's first argument.")
+		err = ProcessError("partition requires a number as it's first argument.", env)
 	}
 	size := int(IntegerValue(n))
 
@@ -161,7 +159,7 @@ func PartitionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 		return
 	}
 	if !ListP(l) {
-		err = errors.New("partition requires a list as it's second argument.")
+		err = ProcessError("partition requires a list as it's second argument.", env)
 	}
 
 	var pieces []*Data = make([]*Data, 0, 5)
@@ -188,7 +186,7 @@ func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !IntegerP(n) {
-		err = errors.New("sublist requires a number as it's first argument.")
+		err = ProcessError("sublist requires a number as it's first argument.", env)
 	}
 	first := int(IntegerValue(n))
 
@@ -197,7 +195,7 @@ func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !IntegerP(n) {
-		err = errors.New("sublist requires a number as it's second argument.")
+		err = ProcessError("sublist requires a number as it's second argument.", env)
 	}
 	last := int(IntegerValue(n))
 
@@ -211,7 +209,7 @@ func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !ListP(l) {
-		err = errors.New("sublist requires a list as it's third argument.")
+		err = ProcessError("sublist requires a list as it's third argument.", env)
 	}
 
 	var cell *Data

@@ -7,9 +7,7 @@
 
 package golisp
 
-import (
-	"errors"
-)
+import ()
 
 func RegisterListAccessPrimitives() {
 	MakePrimitiveFunction("car", 1, CarImpl)
@@ -391,7 +389,7 @@ func NthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !PairP(col) {
-		err = errors.New("First arg to nth must be a list")
+		err = ProcessError("First arg to nth must be a list", env)
 		return
 	}
 	count, err := Eval(Cadr(args), env)
@@ -399,7 +397,7 @@ func NthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !IntegerP(count) {
-		err = errors.New("Second arg to nth must be a number")
+		err = ProcessError("Second arg to nth must be a number", env)
 		return
 	}
 
@@ -412,7 +410,7 @@ func TakeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !IntegerP(n) {
-		err = errors.New("take requires a number as it's first argument.")
+		err = ProcessError("take requires a number as it's first argument.", env)
 	}
 	size := int(IntegerValue(n))
 
@@ -421,7 +419,7 @@ func TakeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !ListP(l) {
-		err = errors.New("take requires a list as it's second argument.")
+		err = ProcessError("take requires a list as it's second argument.", env)
 	}
 
 	var items []*Data = make([]*Data, 0, Length(args))
@@ -438,7 +436,7 @@ func DropImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !IntegerP(n) {
-		err = errors.New("drop requires a number as it's first argument.")
+		err = ProcessError("drop requires a number as it's first argument.", env)
 	}
 	size := int(IntegerValue(n))
 
@@ -447,7 +445,7 @@ func DropImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !ListP(l) {
-		err = errors.New("drop requires a list as it's second argument.")
+		err = ProcessError("drop requires a list as it's second argument.", env)
 	}
 
 	var cell *Data

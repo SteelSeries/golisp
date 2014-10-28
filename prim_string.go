@@ -8,7 +8,6 @@
 package golisp
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 )
@@ -26,7 +25,7 @@ func SplitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !StringP(theString) {
-		err = errors.New(fmt.Sprintf("trim requires string arguments but was given %s.", String(theString)))
+		err = ProcessError(fmt.Sprintf("trim requires string arguments but was given %s.", String(theString)), env)
 		return
 	}
 
@@ -35,7 +34,7 @@ func SplitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !StringP(theSeparator) {
-		err = errors.New(fmt.Sprintf("trim requires string arguments but was given %s.", String(theSeparator)))
+		err = ProcessError(fmt.Sprintf("trim requires string arguments but was given %s.", String(theSeparator)), env)
 		return
 	}
 
@@ -72,7 +71,7 @@ func UpcaseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !StringP(theString) {
-		err = errors.New(fmt.Sprintf("string-upcase requires a string argument but was given %s.", String(theString)))
+		err = ProcessError(fmt.Sprintf("string-upcase requires a string argument but was given %s.", String(theString)), env)
 		return
 	}
 	return StringWithValue(strings.ToUpper(StringValue(theString))), nil
@@ -84,7 +83,7 @@ func DowncaseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !StringP(theString) {
-		err = errors.New(fmt.Sprintf("string-downcase requires a string argument but was given %s.", String(theString)))
+		err = ProcessError(fmt.Sprintf("string-downcase requires a string argument but was given %s.", String(theString)), env)
 		return
 	}
 	return StringWithValue(strings.ToLower(StringValue(theString))), nil

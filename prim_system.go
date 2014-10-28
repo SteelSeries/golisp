@@ -8,7 +8,6 @@
 package golisp
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -28,7 +27,7 @@ func RegisterSystemPrimitives() {
 func LoadFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	filename := Car(args)
 	if !StringP(filename) {
-		err = errors.New("Filename must be a string")
+		err = ProcessError("Filename must be a string", env)
 		return
 	}
 
@@ -47,7 +46,7 @@ func SleepImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !IntegerP(n) {
-		err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
+		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(n)), env)
 		return
 	}
 	millis := IntegerValue(n)
@@ -101,7 +100,7 @@ func InternImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !StringP(sym) {
-		err = errors.New(fmt.Sprintf("intern expects a string, but received %s.", String(sym)))
+		err = ProcessError(fmt.Sprintf("intern expects a string, but received %s.", String(sym)), env)
 		return
 	}
 
