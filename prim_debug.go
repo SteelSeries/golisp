@@ -18,6 +18,7 @@ var DebugCommandPrefix string = ":"
 func RegisterDebugPrimitives() {
 	MakePrimitiveFunction("debug-trace", -1, DebugTraceImpl)
 	MakePrimitiveFunction("debug-on-error", -1, DebugOnErrorImpl)
+	MakePrimitiveFunction("debug-on-entry", 1, DebugOnEntryImpl)
 	MakePrimitiveFunction("debug", -1, DebugImpl)
 	MakePrimitiveFunction("dump", 0, DumpSymbolTableImpl)
 }
@@ -34,10 +35,24 @@ func DebugTraceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 	return BooleanWithValue(DebugTrace), nil
 }
 
+func DebugOnEntryImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	f, err := Eval(Car(args), env)
+	if err != nil {
+		return
+	}
+	if f == nil || TypeOf(f) != FunctionType {
+		err = errors.New("No such function")
+		return
+	}
+	f.Func.DebugOnEntry = true
+	return Car(args), nil
+}
+
 func DebugOnErrorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if Length(args) == 1 {
 		DebugOnError = BooleanValue(Car(args))
 	}
+
 	return BooleanWithValue(DebugOnError), nil
 }
 
@@ -65,6 +80,14 @@ func processState(tokens []string) (ok bool, state bool) {
 	}
 }
 
+func funcOrNil(fname string, env *SymbolTableFrame) *Data {
+	f := env.ValueOf(SymbolWithName(fname))
+	if f == nil || TypeOf(f) != FunctionType {
+		fmt.Printf("No such function\n")
+	}
+	return f
+}
+
 func DebugRepl(env *SymbolTableFrame) {
 	env.DumpHeader()
 	prompt := "D> "
@@ -80,16 +103,28 @@ func DebugRepl(env *SymbolTableFrame) {
 				cmd := strings.TrimPrefix(input, DebugCommandPrefix)
 				tokens := strings.Split(cmd, " ")
 				switch tokens[0] {
+				case "(+":
+					f := funcOrNil(tokens[1], env)
+					if f != nil {
+						f.Func.DebugOnEntry = true
+					}
+				case "(-":
+					f := funcOrNil(tokens[1], env)
+					if f != nil {
+						f.Func.DebugOnEntry = false
+					}
 				case "?":
 					fmt.Printf("SteelSeries/GoLisp Debugger\n")
 					fmt.Printf("---------------------------\n")
+					fmt.Printf(":(+ func  - debug on entry to func\n")
+					fmt.Printf(":(- func  - don't debug on entry to func\n")
 					fmt.Printf(":?        - show this command summary\n")
 					fmt.Printf(":b        - show the environment stack\n")
 					fmt.Printf(":c        - continue, exiting the debugger\n")
 					fmt.Printf(":d        - do a full of the environment stack\n")
 					fmt.Printf(":e on/off - Enable/disable debug on error\n")
 					fmt.Printf(":f frame# - do a full dump of a single environment frame\n")
-					fmt.Printf(":n        - step to next (run to the next evaluation in this frame)\n")
+					//fmt.Printf(":n        - step to next (run to the next evaluation in this frame)\n")
 					fmt.Printf(":q        - quit GoLisp\n")
 					fmt.Printf(":r sexpr  - return from the current evaluation with the specified value\n")
 					fmt.Printf(":s        - single step (run to the next evaluation)\n")
