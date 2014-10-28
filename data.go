@@ -837,6 +837,10 @@ func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
 					return
 				}
 
+				if !DebugEvalInDebugRepl && TypeOf(function) == FunctionType && function.Func.DebugOnEntry {
+					DebugRepl(env)
+				}
+
 				args := Cdr(d)
 				result, err = Apply(function, args, env)
 				if err != nil {

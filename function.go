@@ -19,6 +19,7 @@ type Function struct {
 	RequiredArgCount int
 	Body             *Data
 	Env              *SymbolTableFrame
+	DebugOnEntry     bool
 }
 
 func computeRequiredArgumentCount(args *Data) (requiredArgumentCount int, varArgs bool) {
