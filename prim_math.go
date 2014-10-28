@@ -8,7 +8,6 @@
 package golisp
 
 import (
-	"errors"
 	"fmt"
 	"math/rand"
 )
@@ -66,7 +65,7 @@ func addInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 func anyFloats(args *Data, env *SymbolTableFrame) (result bool, err error) {
 	for c := args; NotNilP(c); c = Cdr(c) {
 		if !NumberP(Car(c)) {
-			err = errors.New(fmt.Sprintf("Number expected, received %s", String(Car(c))))
+			err = ProcessError(fmt.Sprintf("Number expected, received %s", String(Car(c))), env)
 			return
 		}
 		if FloatP(Car(c)) {
@@ -227,7 +226,7 @@ func QuotientImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func RemainderImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if Length(args) != 2 {
-		err = errors.New(fmt.Sprintf("2 args expected, %d received", Length(args)))
+		err = ProcessError(fmt.Sprintf("2 args expected, %d received", Length(args)), env)
 		return
 	}
 
@@ -237,7 +236,7 @@ func RemainderImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 		return
 	}
 	if !IntegerP(dividend) {
-		err = errors.New(fmt.Sprintf("Number expected, received %s", String(dividend)))
+		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(dividend)), env)
 		return
 	}
 
@@ -247,7 +246,7 @@ func RemainderImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 		return
 	}
 	if !IntegerP(dividend) {
-		err = errors.New(fmt.Sprintf("Number expected, received %s", String(divisor)))
+		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(divisor)), env)
 		return
 	}
 
@@ -290,7 +289,7 @@ func ToIntImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !IntegerP(n) && !FloatP(n) {
-		err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
+		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(n)), env)
 		return
 	}
 
@@ -303,7 +302,7 @@ func ToFloatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !IntegerP(n) && !FloatP(n) {
-		err = errors.New(fmt.Sprintf("Number expected, received %s", String(n)))
+		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(n)), env)
 		return
 	}
 
@@ -388,7 +387,7 @@ func minInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if err != nil {
 		return
 	} else if !IntegerP(n) {
-		err = errors.New(fmt.Sprintf("Min requires numbers, received %s", String(n)))
+		err = ProcessError(fmt.Sprintf("Min requires numbers, received %s", String(n)), env)
 		return
 	}
 	var acc int64 = IntegerValue(n)
@@ -398,7 +397,7 @@ func minInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		if err != nil {
 			return
 		} else if !IntegerP(n) {
-			err = errors.New(fmt.Sprintf("Min requires numbers, received %s", String(n)))
+			err = ProcessError(fmt.Sprintf("Min requires numbers, received %s", String(n)), env)
 			return
 		}
 		if IntegerValue(n) < acc {
@@ -415,7 +414,7 @@ func minFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if err != nil {
 		return
 	} else if !NumberP(n) {
-		err = errors.New(fmt.Sprintf("Min requires numbers, received %s", String(n)))
+		err = ProcessError(fmt.Sprintf("Min requires numbers, received %s", String(n)), env)
 		return
 	}
 	var acc float32 = FloatValue(n)
@@ -425,7 +424,7 @@ func minFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		if err != nil {
 			return
 		} else if !NumberP(n) {
-			err = errors.New(fmt.Sprintf("Min requires numbers, received %s", String(n)))
+			err = ProcessError(fmt.Sprintf("Min requires numbers, received %s", String(n)), env)
 			return
 		}
 		if FloatValue(n) < acc {
@@ -440,7 +439,7 @@ func MinImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	numbers, err := Eval(Car(args), env)
 	if !ListP(numbers) {
-		err = errors.New(fmt.Sprintf("Min requires a list of numbers, received %s", String(numbers)))
+		err = ProcessError(fmt.Sprintf("Min requires a list of numbers, received %s", String(numbers)), env)
 		return
 	}
 	if Length(numbers) == 0 {
@@ -464,7 +463,7 @@ func maxInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if err != nil {
 		return
 	} else if !IntegerP(n) {
-		err = errors.New(fmt.Sprintf("Max requires numbers, received %s", String(n)))
+		err = ProcessError(fmt.Sprintf("Max requires numbers, received %s", String(n)), env)
 		return
 	}
 	var acc int64 = IntegerValue(n)
@@ -474,7 +473,7 @@ func maxInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		if err != nil {
 			return
 		} else if !IntegerP(n) {
-			err = errors.New(fmt.Sprintf("Max requires numbers, received %s", String(n)))
+			err = ProcessError(fmt.Sprintf("Max requires numbers, received %s", String(n)), env)
 			return
 		}
 		if IntegerValue(n) > acc {
@@ -491,7 +490,7 @@ func maxFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if err != nil {
 		return
 	} else if !NumberP(n) {
-		err = errors.New(fmt.Sprintf("Max requires numbers, received %s", String(n)))
+		err = ProcessError(fmt.Sprintf("Max requires numbers, received %s", String(n)), env)
 		return
 	}
 	var acc float32 = FloatValue(n)
@@ -501,7 +500,7 @@ func maxFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		if err != nil {
 			return
 		} else if !NumberP(n) {
-			err = errors.New(fmt.Sprintf("Max requires numbers, received %s", String(n)))
+			err = ProcessError(fmt.Sprintf("Max requires numbers, received %s", String(n)), env)
 			return
 		}
 		if FloatValue(n) > acc {
@@ -516,7 +515,7 @@ func MaxImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	numbers, err := Eval(Car(args), env)
 	if !ListP(numbers) {
-		err = errors.New(fmt.Sprintf("Max requires a list of numbers, received %s", String(numbers)))
+		err = ProcessError(fmt.Sprintf("Max requires a list of numbers, received %s", String(numbers)), env)
 		return
 	}
 

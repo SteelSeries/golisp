@@ -8,7 +8,6 @@
 package golisp
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -30,7 +29,7 @@ func RegisterRelativePrimitives() {
 
 func LessThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if Length(args) != 2 {
-		err = errors.New(fmt.Sprintf("2 args expected, %d received", Length(args)))
+		err = ProcessError(fmt.Sprintf("2 args expected, %d received", Length(args)), env)
 		return
 	}
 
@@ -40,7 +39,7 @@ func LessThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !IntegerP(arg1) && !FloatP(arg1) {
-		err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg1)))
+		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(arg1)), env)
 		return
 	}
 
@@ -50,7 +49,7 @@ func LessThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !IntegerP(arg2) && !FloatP(arg2) {
-		err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg2)))
+		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(arg2)), env)
 		return
 	}
 
@@ -60,7 +59,7 @@ func LessThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func GreaterThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if Length(args) != 2 {
-		err = errors.New(fmt.Sprintf("2 args expected, %d received", Length(args)))
+		err = ProcessError(fmt.Sprintf("2 args expected, %d received", Length(args)), env)
 		return
 	}
 
@@ -70,7 +69,7 @@ func GreaterThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 		return
 	}
 	if !IntegerP(arg1) && !FloatP(arg1) {
-		err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg1)))
+		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(arg1)), env)
 		return
 	}
 
@@ -80,7 +79,7 @@ func GreaterThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 		return
 	}
 	if !IntegerP(arg2) && !FloatP(arg2) {
-		err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg2)))
+		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(arg2)), env)
 		return
 	}
 
@@ -90,7 +89,7 @@ func GreaterThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 
 func EqualToImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if Length(args) != 2 {
-		err = errors.New(fmt.Sprintf("2 args expected, %d received", Length(args)))
+		err = ProcessError(fmt.Sprintf("2 args expected, %d received", Length(args)), env)
 		return
 	}
 
@@ -111,7 +110,7 @@ func EqualToImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func NotEqualImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if Length(args) != 2 {
-		err = errors.New(fmt.Sprintf("2 args expected, %d received", Length(args)))
+		err = ProcessError(fmt.Sprintf("2 args expected, %d received", Length(args)), env)
 		return
 	}
 
@@ -132,7 +131,7 @@ func NotEqualImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func LessThanOrEqualToImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if Length(args) != 2 {
-		err = errors.New(fmt.Sprintf("2 args expected, %d received", Length(args)))
+		err = ProcessError(fmt.Sprintf("2 args expected, %d received", Length(args)), env)
 		return
 	}
 
@@ -142,7 +141,7 @@ func LessThanOrEqualToImpl(args *Data, env *SymbolTableFrame) (result *Data, err
 		return
 	}
 	if !IntegerP(arg1) && !FloatP(arg1) {
-		err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg1)))
+		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(arg1)), env)
 		return
 	}
 
@@ -152,7 +151,7 @@ func LessThanOrEqualToImpl(args *Data, env *SymbolTableFrame) (result *Data, err
 		return
 	}
 	if !IntegerP(arg2) && !FloatP(arg2) {
-		err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg2)))
+		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(arg2)), env)
 		return
 	}
 
@@ -162,7 +161,7 @@ func LessThanOrEqualToImpl(args *Data, env *SymbolTableFrame) (result *Data, err
 
 func GreaterThanOrEqualToImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if Length(args) != 2 {
-		err = errors.New(fmt.Sprintf("2 args expected, %d received", Length(args)))
+		err = ProcessError(fmt.Sprintf("2 args expected, %d received", Length(args)), env)
 		return
 	}
 
@@ -172,7 +171,7 @@ func GreaterThanOrEqualToImpl(args *Data, env *SymbolTableFrame) (result *Data, 
 		return
 	}
 	if !IntegerP(arg1) && !FloatP(arg1) {
-		err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg1)))
+		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(arg1)), env)
 		return
 	}
 
@@ -182,7 +181,7 @@ func GreaterThanOrEqualToImpl(args *Data, env *SymbolTableFrame) (result *Data, 
 		return
 	}
 	if !IntegerP(arg2) && !FloatP(arg2) {
-		err = errors.New(fmt.Sprintf("Number expected, received %s", String(arg2)))
+		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(arg2)), env)
 		return
 	}
 
@@ -192,7 +191,7 @@ func GreaterThanOrEqualToImpl(args *Data, env *SymbolTableFrame) (result *Data, 
 
 func BooleanNotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if Length(args) != 1 {
-		err = errors.New(fmt.Sprintf("! requires 1 argument. Received %d.", Length(args)))
+		err = ProcessError(fmt.Sprintf("! requires 1 argument. Received %d.", Length(args)), env)
 		return
 	}
 

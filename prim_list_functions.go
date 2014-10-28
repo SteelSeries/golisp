@@ -8,7 +8,6 @@
 package golisp
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -26,7 +25,7 @@ func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !FunctionP(f) {
-		err = errors.New(fmt.Sprintf("map needs a function as its first argument, but got %s.", String(f)))
+		err = ProcessError(fmt.Sprintf("map needs a function as its first argument, but got %s.", String(f)), env)
 		return
 	}
 
@@ -35,7 +34,7 @@ func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !ListP(col) {
-		err = errors.New(fmt.Sprintf("map needs a list as its second argument, but got %s.", String(col)))
+		err = ProcessError(fmt.Sprintf("map needs a list as its second argument, but got %s.", String(col)), env)
 		return
 	}
 
@@ -58,7 +57,7 @@ func ReduceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !FunctionP(f) {
-		err = errors.New("reduce needs a function as its first argument")
+		err = ProcessError("reduce needs a function as its first argument", env)
 		return
 	}
 
@@ -72,7 +71,7 @@ func ReduceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !ListP(col) {
-		err = errors.New("map needs a list as its third argument")
+		err = ProcessError("map needs a list as its third argument", env)
 		return
 	}
 
@@ -101,7 +100,7 @@ func FilterImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !FunctionP(f) {
-		err = errors.New(fmt.Sprintf("filter needs a function as its first argument, but got %s.", String(f)))
+		err = ProcessError(fmt.Sprintf("filter needs a function as its first argument, but got %s.", String(f)), env)
 		return
 	}
 
@@ -110,7 +109,7 @@ func FilterImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !ListP(col) {
-		err = errors.New(fmt.Sprintf("filter needs a list as its second argument, but got %s.", String(col)))
+		err = ProcessError(fmt.Sprintf("filter needs a list as its second argument, but got %s.", String(col)), env)
 		return
 	}
 
@@ -122,7 +121,7 @@ func FilterImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 			return
 		}
 		if !BooleanP(v) {
-			err = errors.New("filter needs a predicate function as its first argument.")
+			err = ProcessError("filter needs a predicate function as its first argument.", env)
 			return
 		}
 
@@ -160,7 +159,7 @@ func MempImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !FunctionP(f) {
-		err = errors.New("memp needs a function as its first argument")
+		err = ProcessError("memp needs a function as its first argument", env)
 		return
 	}
 

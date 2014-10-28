@@ -8,7 +8,6 @@
 package golisp
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -34,7 +33,7 @@ func CondImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	for c := args; NotNilP(c); c = Cdr(c) {
 		clause := Car(c)
 		if !PairP(clause) {
-			err = errors.New("Cond expect a sequence of clauses that are lists")
+			err = ProcessError("Cond expect a sequence of clauses that are lists", env)
 			return
 		}
 		condition, err = Eval(Car(clause), env)
@@ -75,7 +74,7 @@ func CaseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	for clauseCell := Cdr(args); NotNilP(clauseCell); clauseCell = Cdr(clauseCell) {
 		clause := Car(clauseCell)
 		if !PairP(clause) {
-			err = errors.New("Case requires non-atomic clauses")
+			err = ProcessError("Case requires non-atomic clauses", env)
 			return
 		}
 		if ListP(Car(clause)) {
@@ -94,7 +93,7 @@ func CaseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func IfImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if Length(args) < 2 || Length(args) > 3 {
-		err = errors.New(fmt.Sprintf("IF requires 2 or 3 arguments. Received %d.", Length(args)))
+		err = ProcessError(fmt.Sprintf("IF requires 2 or 3 arguments. Received %d.", Length(args)), env)
 		return
 	}
 
@@ -132,13 +131,13 @@ func DefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		params := Cdr(thing)
 		thing = name
 		if !SymbolP(name) {
-			err = errors.New("Function name has to be a symbol")
+			err = ProcessError("Function name has to be a symbol", env)
 			return
 		}
 		body := Cdr(args)
 		value = FunctionWithNameParamsBodyAndParent(StringValue(name), params, body, env)
 	} else {
-		err = errors.New("Invalid definition")
+		err = ProcessError("Invalid definition", env)
 		return
 	}
 	env.BindLocallyTo(thing, value)
@@ -153,13 +152,13 @@ func DefmacroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		params := Cdr(thing)
 		thing = name
 		if !SymbolP(name) {
-			err = errors.New("Macro name has to be a symbol")
+			err = ProcessError("Macro name has to be a symbol", env)
 			return
 		}
 		body := Cadr(args)
 		value = MacroWithNameParamsBodyAndParent(StringValue(name), params, body, env)
 	} else {
-		err = errors.New("Invalid macro definition")
+		err = ProcessError("Invalid macro definition", env)
 		return
 	}
 	env.BindLocallyTo(thing, value)
@@ -173,12 +172,12 @@ func bindLetLocals(bindingForms *Data, env *SymbolTableFrame) (err error) {
 	for cell := bindingForms; NotNilP(cell); cell = Cdr(cell) {
 		bindingPair := Car(cell)
 		if !PairP(bindingPair) {
-			err = errors.New("Let requires a list of bindings (with are pairs) as it's first argument")
+			err = ProcessError("Let requires a list of bindings (with are pairs) as it's first argument", env)
 			return
 		}
 		name = Car(bindingPair)
 		if !SymbolP(name) {
-			err = errors.New("First part of a let binding pair must be a symbol")
+			err = ProcessError("First part of a let binding pair must be a symbol", env)
 		}
 		value, err = Eval(Cadr(bindingPair), env)
 		if err != nil {
@@ -191,12 +190,12 @@ func bindLetLocals(bindingForms *Data, env *SymbolTableFrame) (err error) {
 
 func LetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if Length(args) < 1 {
-		err = errors.New("Let requires at least a list of bindings")
+		err = ProcessError("Let requires at least a list of bindings", env)
 		return
 	}
 
 	if !PairP(Car(args)) {
-		err = errors.New("Let requires a list of bindings as it's first argument")
+		err = ProcessError("Let requires a list of bindings as it's first argument", env)
 		return
 	}
 
@@ -245,19 +244,19 @@ func rebindDoLocals(bindingForms *Data, env *SymbolTableFrame) (err error) {
 
 func DoImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if Length(args) < 2 {
-		err = errors.New("Do requires at least a list of bindings and a test clause")
+		err = ProcessError("Do requires at least a list of bindings and a test clause", env)
 		return
 	}
 
 	bindings := Car(args)
 	if !PairP(bindings) {
-		err = errors.New("Do requires a list of bindings as it's first argument")
+		err = ProcessError("Do requires a list of bindings as it's first argument", env)
 		return
 	}
 
 	testClause := Cadr(args)
 	if !PairP(testClause) {
-		err = errors.New("Do requires a list as it's second argument")
+		err = ProcessError("Do requires a list as it's second argument", env)
 		return
 	}
 
@@ -300,7 +299,7 @@ func DoImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func ApplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if Length(args) < 1 {
-		err = errors.New("apply requires at least one argument")
+		err = ProcessError("apply requires at least one argument", env)
 		return
 	}
 
@@ -310,7 +309,7 @@ func ApplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	if !FunctionP(f) {
-		err = errors.New(fmt.Sprintf("apply requires a function as it's first argument, but got %s.", String(f)))
+		err = ProcessError(fmt.Sprintf("apply requires a function as it's first argument, but got %s.", String(f)), env)
 	}
 
 	ary := make([]*Data, 0, Length(args)-1)
@@ -332,7 +331,7 @@ func ApplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 			argList = ary[0]
 		}
 	} else {
-		err = errors.New("The last argument to apply must be a list")
+		err = ProcessError("The last argument to apply must be a list", env)
 		return
 	}
 
@@ -345,14 +344,14 @@ func EvalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !ListP(sexpr) {
-		err = errors.New(fmt.Sprintf("eval expect a list argument, received a %s.", TypeName(TypeOf(sexpr))))
+		err = ProcessError(fmt.Sprintf("eval expect a list argument, received a %s.", TypeName(TypeOf(sexpr))), env)
 	}
 	return Eval(sexpr, env)
 }
 
 func ChainImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if Length(args) == 0 {
-		err = errors.New("-> requires at least an initial value.")
+		err = ProcessError("-> requires at least an initial value.", env)
 		return
 	}
 
@@ -382,7 +381,7 @@ func ChainImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func TapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if Length(args) == 0 {
-		err = errors.New("tap requires at least an initial value.")
+		err = ProcessError("tap requires at least an initial value.", env)
 		return
 	}
 
@@ -423,7 +422,7 @@ func DefinitionOfImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 		return
 	}
 	if !FunctionP(f) {
-		err = errors.New(fmt.Sprintf("code requires a function argument, but received a %s.", TypeName(TypeOf(f))))
+		err = ProcessError(fmt.Sprintf("code requires a function argument, but received a %s.", TypeName(TypeOf(f))), env)
 		return
 	}
 
