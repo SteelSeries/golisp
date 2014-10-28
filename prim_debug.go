@@ -72,6 +72,9 @@ func DebugRepl(env *SymbolTableFrame) {
 						}
 					}
 				case "c":
+					DebugCurrentFrame = nil
+					DebugSingleStep = false
+					DebugEvalInDebugRepl = false
 					return
 				case "u":
 					DebugCurrentFrame = env
@@ -87,7 +90,9 @@ func DebugRepl(env *SymbolTableFrame) {
 				if err != nil {
 					fmt.Printf("Error: %s\n", err)
 				} else {
+					DebugEvalInDebugRepl = true
 					d, err := Eval(code, env)
+					DebugEvalInDebugRepl = false
 					if err != nil {
 						fmt.Printf("Error in evaluation: %s\n", err)
 					} else {

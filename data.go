@@ -55,6 +55,7 @@ var False *Data = &Data{Type: BooleanType, Integer: 0}
 var EvalDepth int = 0
 var DebugSingleStep bool = false
 var DebugCurrentFrame *SymbolTableFrame = nil
+var DebugEvalInDebugRepl bool = false
 
 func TypeOf(d *Data) int {
 	return d.Type
@@ -776,21 +777,21 @@ func postProcessFrameShortcuts(d *Data) *Data {
 }
 
 func logEval(d *Data) {
-	if DebugTrace {
+	if DebugTrace && !DebugEvalInDebugRepl {
 		fmt.Printf("%2d: %*sEvaling: %s\n", EvalDepth, EvalDepth, "", String(d))
 		EvalDepth += 1
 	}
 }
 
 func logApply(function *Data, args *Data) {
-	if DebugTrace {
+	if DebugTrace && !DebugEvalInDebugRepl {
 		fmt.Printf("%2d: %*sApplying: %s to %s\n", EvalDepth, EvalDepth, "", String(function), String(args))
 		EvalDepth += 1
 	}
 }
 
 func logResult(result *Data) {
-	if DebugTrace {
+	if DebugTrace && !DebugEvalInDebugRepl {
 		if EvalDepth > 0 {
 			EvalDepth -= 1
 		}
@@ -814,7 +815,10 @@ func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
 		switch d.Type {
 		case ConsCellType:
 			{
-				env.CurrentCode = fmt.Sprintf("Eval %s", String(d))
+				if !DebugEvalInDebugRepl {
+					env.CurrentCode = fmt.Sprintf("Eval %s", String(d))
+				}
+
 				d = postProcessFrameShortcuts(d)
 
 				var function *Data
@@ -868,7 +872,7 @@ func formatApply(function *Data, args *Data) string {
 
 func Apply(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	logApply(function, args)
-	if len(env.CurrentCode) == 0 {
+	if !DebugEvalInDebugRepl && len(env.CurrentCode) == 0 {
 		env.CurrentCode = formatApply(function, args)
 	}
 
@@ -891,7 +895,9 @@ func Apply(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err
 
 func ApplyWithoutEval(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	logApply(function, args)
-	env.CurrentCode = formatApply(function, args)
+	if !DebugEvalInDebugRepl && len(env.CurrentCode) == 0 {
+		env.CurrentCode = formatApply(function, args)
+	}
 
 	if function == nil {
 		err = errors.New("Nil when function or macro expected.")
