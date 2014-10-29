@@ -10,6 +10,7 @@ package golisp
 import (
 	"errors"
 	"fmt"
+	"gopkg.in/fatih/set.v0"
 	"strings"
 	"unsafe"
 )
@@ -60,6 +61,7 @@ var DebugErrorEnv *SymbolTableFrame = nil
 var DebugOnError bool = false
 var IsInteractive bool = false
 var DebugReturnValue *Data = nil
+var DebugOnEntry *set.Set = set.New()
 
 func TypeOf(d *Data) int {
 	return d.Type
@@ -837,7 +839,7 @@ func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
 					return
 				}
 
-				if !DebugEvalInDebugRepl && TypeOf(function) == FunctionType && function.Func.DebugOnEntry {
+				if TypeOf(function) == FunctionType && DebugOnEntry.Has(function.Func.Name) {
 					DebugRepl(env)
 				}
 
