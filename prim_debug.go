@@ -10,6 +10,7 @@ package golisp
 import (
 	"errors"
 	"fmt"
+	"gopkg.in/fatih/set.v0"
 	"strings"
 )
 
@@ -18,7 +19,7 @@ var DebugCommandPrefix string = ":"
 func RegisterDebugPrimitives() {
 	MakePrimitiveFunction("debug-trace", -1, DebugTraceImpl)
 	MakePrimitiveFunction("debug-on-error", -1, DebugOnErrorImpl)
-	MakePrimitiveFunction("debug-on-entry", 1, DebugOnEntryImpl)
+	MakePrimitiveFunction("debug-on-entry", -1, DebugOnEntryImpl)
 	MakePrimitiveFunction("debug", -1, DebugImpl)
 	MakePrimitiveFunction("dump", 0, DumpSymbolTableImpl)
 }
@@ -36,16 +37,28 @@ func DebugTraceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 }
 
 func DebugOnEntryImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	f, err := Eval(Car(args), env)
-	if err != nil {
+	var f *Data
+	if Length(args) == 1 {
+		f, err = Eval(Car(args), env)
+		if err != nil {
+			return
+		}
+		if f == nil || TypeOf(f) != FunctionType {
+			err = errors.New("No such function")
+			return
+		}
+		DebugOnEntry.Add(f.Func.Name)
+		return Car(args), nil
+	} else if Length(args) == 0 {
+		var names = make([]*Data, 0, 0)
+		for _, f := range set.StringSlice(DebugOnEntry) {
+			names = append(names, StringWithValue(f))
+		}
+		return ArrayToList(names), nil
+	} else {
+		err = errors.New(fmt.Sprintf("debug-on-entry requires either 0 or 1 arguments, but received %d.", Length(args)))
 		return
 	}
-	if f == nil || TypeOf(f) != FunctionType {
-		err = errors.New("No such function")
-		return
-	}
-	f.Func.DebugOnEntry = true
-	return Car(args), nil
 }
 
 func DebugOnErrorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -106,18 +119,23 @@ func DebugRepl(env *SymbolTableFrame) {
 				case "(+":
 					f := funcOrNil(tokens[1], env)
 					if f != nil {
-						f.Func.DebugOnEntry = true
+						DebugOnEntry.Add(f.Func.Name)
 					}
 				case "(-":
 					f := funcOrNil(tokens[1], env)
-					if f != nil {
-						f.Func.DebugOnEntry = false
+					if f != nil && DebugOnEntry.Has(f.Func.Name) {
+						DebugOnEntry.Remove(f.Func.Name)
+					}
+				case "(":
+					for _, f := range DebugOnEntry.List() {
+						fmt.Printf("%s\n", f)
 					}
 				case "?":
 					fmt.Printf("SteelSeries/GoLisp Debugger\n")
 					fmt.Printf("---------------------------\n")
 					fmt.Printf(":(+ func  - debug on entry to func\n")
 					fmt.Printf(":(- func  - don't debug on entry to func\n")
+					fmt.Printf(":(        - show functions marked as debug on entry\n")
 					fmt.Printf(":?        - show this command summary\n")
 					fmt.Printf(":b        - show the environment stack\n")
 					fmt.Printf(":c        - continue, exiting the debugger\n")
@@ -212,7 +230,7 @@ func DebugRepl(env *SymbolTableFrame) {
 }
 
 func ProcessError(errorMessage string, env *SymbolTableFrame) error {
-	if DebugOnError && IsInteractive && !DebugEvalInDebugRepl {
+	if DebugOnError && IsInteractive {
 		fmt.Printf("ERROR!  %s\n", errorMessage)
 		DebugRepl(env)
 		return nil
