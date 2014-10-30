@@ -22,7 +22,7 @@ func Repl() {
 	for true {
 		defer func() {
 			if x := recover(); x != nil {
-				println("BANG!")
+				println("Don't Panic!")
 			}
 		}()
 		DebugCurrentFrame = nil
