@@ -806,7 +806,7 @@ func logResult(result *Data) {
 }
 
 func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if !DebugEvalInDebugRepl && d.Type == ConsCellType {
+	if !DebugEvalInDebugRepl {
 		env.CurrentCode = fmt.Sprintf("Eval %s", String(d))
 	}
 
@@ -839,7 +839,7 @@ func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
 					return
 				}
 
-				if TypeOf(function) == FunctionType && DebugOnEntry.Has(function.Func.Name) {
+				if !DebugSingleStep && TypeOf(function) == FunctionType && DebugOnEntry.Has(function.Func.Name) {
 					DebugRepl(env)
 				}
 
@@ -886,10 +886,10 @@ func formatApply(function *Data, args *Data) string {
 }
 
 func Apply(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	logApply(function, args)
-	if !DebugEvalInDebugRepl && len(env.CurrentCode) == 0 {
-		env.CurrentCode = formatApply(function, args)
-	}
+	// logApply(function, args)
+	// if !DebugEvalInDebugRepl && len(env.CurrentCode) == 0 {
+	// 	env.CurrentCode = formatApply(function, args)
+	// }
 
 	if function == nil {
 		err = errors.New("Nil when function expected.")
@@ -904,15 +904,15 @@ func Apply(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err
 		result, err = function.Prim.Apply(args, env)
 	}
 
-	logResult(result)
+	// logResult(result)
 	return
 }
 
 func ApplyWithoutEval(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	logApply(function, args)
-	if !DebugEvalInDebugRepl && len(env.CurrentCode) == 0 {
-		env.CurrentCode = formatApply(function, args)
-	}
+	// logApply(function, args)
+	// if !DebugEvalInDebugRepl && len(env.CurrentCode) == 0 {
+	// 	env.CurrentCode = formatApply(function, args)
+	// }
 
 	if function == nil {
 		err = errors.New("Nil when function or macro expected.")
@@ -927,6 +927,6 @@ func ApplyWithoutEval(function *Data, args *Data, env *SymbolTableFrame) (result
 		result, err = function.Prim.ApplyWithoutEval(args, env)
 	}
 
-	logResult(result)
+	// logResult(result)
 	return
 }

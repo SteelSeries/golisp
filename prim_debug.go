@@ -19,7 +19,9 @@ var DebugCommandPrefix string = ":"
 func RegisterDebugPrimitives() {
 	MakePrimitiveFunction("debug-trace", -1, DebugTraceImpl)
 	MakePrimitiveFunction("debug-on-error", -1, DebugOnErrorImpl)
-	MakePrimitiveFunction("debug-on-entry", -1, DebugOnEntryImpl)
+	MakePrimitiveFunction("debug-on-entry", 0, DebugOnEntryImpl)
+	MakePrimitiveFunction("add-debug-on-entry", 1, AddDebugOnEntryImpl)
+	MakePrimitiveFunction("remove-debug-on-entry", 1, RemoveDebugOnEntryImpl)
 	MakePrimitiveFunction("debug", -1, DebugImpl)
 	MakePrimitiveFunction("dump", 0, DumpSymbolTableImpl)
 }
@@ -37,28 +39,39 @@ func DebugTraceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 }
 
 func DebugOnEntryImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var f *Data
-	if Length(args) == 1 {
-		f, err = Eval(Car(args), env)
-		if err != nil {
-			return
-		}
-		if f == nil || TypeOf(f) != FunctionType {
-			err = errors.New("No such function")
-			return
-		}
-		DebugOnEntry.Add(f.Func.Name)
-		return Car(args), nil
-	} else if Length(args) == 0 {
-		var names = make([]*Data, 0, 0)
-		for _, f := range set.StringSlice(DebugOnEntry) {
-			names = append(names, StringWithValue(f))
-		}
-		return ArrayToList(names), nil
-	} else {
-		err = errors.New(fmt.Sprintf("debug-on-entry requires either 0 or 1 arguments, but received %d.", Length(args)))
+	var names = make([]*Data, 0, 0)
+	for _, f := range set.StringSlice(DebugOnEntry) {
+		names = append(names, StringWithValue(f))
+	}
+	return ArrayToList(names), nil
+}
+
+func AddDebugOnEntryImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	f, err := Eval(Car(args), env)
+	if err != nil {
 		return
 	}
+	if f == nil || TypeOf(f) != FunctionType {
+		err = errors.New("No such function")
+		return
+	}
+	DebugOnEntry.Add(f.Func.Name)
+	return DebugOnEntryImpl(args, env)
+}
+
+func RemoveDebugOnEntryImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	f, err := Eval(Car(args), env)
+	if err != nil {
+		return
+	}
+	if f == nil || TypeOf(f) != FunctionType {
+		err = errors.New("No such function")
+		return
+	}
+	if DebugOnEntry.Has(f.Func.Name) {
+		DebugOnEntry.Remove(f.Func.Name)
+	}
+	return DebugOnEntryImpl(args, env)
 }
 
 func DebugOnErrorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -104,14 +117,19 @@ func funcOrNil(fname string, env *SymbolTableFrame) *Data {
 func DebugRepl(env *SymbolTableFrame) {
 	env.DumpHeader()
 	prompt := "D> "
+	lastInput := ""
 	for true {
 		defer func() {
 			if x := recover(); x != nil {
-				println("BANG!")
+				println("Don't Panic!")
 			}
 		}()
 		input := *ReadLine(&prompt)
 		if input != "" {
+			if input != lastInput {
+				AddHistory(input)
+			}
+			lastInput = input
 			if strings.HasPrefix(input, DebugCommandPrefix) {
 				cmd := strings.TrimPrefix(input, DebugCommandPrefix)
 				tokens := strings.Split(cmd, " ")
