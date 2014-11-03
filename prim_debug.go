@@ -110,6 +110,7 @@ func funcOrNil(fname string, env *SymbolTableFrame) *Data {
 	f := env.ValueOf(SymbolWithName(fname))
 	if f == nil || TypeOf(f) != FunctionType {
 		fmt.Printf("No such function\n")
+		return nil
 	}
 	return f
 }
