@@ -809,7 +809,6 @@ func logResult(result *Data, env *SymbolTableFrame) {
 
 func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if IsInteractive && !DebugEvalInDebugRepl {
-		fmt.Printf("Eval %s\n", String(d))
 		env.CurrentCode.PushFront(fmt.Sprintf("Eval %s", String(d)))
 	}
 
