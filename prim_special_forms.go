@@ -199,12 +199,13 @@ func LetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	localFrame := NewSymbolTableFrameBelow(env)
-	bindLetLocals(Car(args), localFrame)
+	localEnv := NewSymbolTableFrameBelow(env)
+	localEnv.Previous = env
+	bindLetLocals(Car(args), localEnv)
 
 	for cell := Cdr(args); NotNilP(cell); cell = Cdr(cell) {
 		sexpr := Car(cell)
-		result, err = Eval(sexpr, localFrame)
+		result, err = Eval(sexpr, localEnv)
 		if err != nil {
 			return
 		}
@@ -260,15 +261,16 @@ func DoImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	localFrame := NewSymbolTableFrameBelow(env)
-	bindLetLocals(bindings, localFrame)
+	localEnv := NewSymbolTableFrameBelow(env)
+	localEnv.Previous = env
+	bindLetLocals(bindings, localEnv)
 
 	body := Cddr(args)
 
 	var shouldExit *Data
 
 	for true {
-		shouldExit, err = Eval(Car(testClause), localFrame)
+		shouldExit, err = Eval(Car(testClause), localEnv)
 		if err != nil {
 			return
 		}
@@ -276,7 +278,7 @@ func DoImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		if BooleanValue(shouldExit) {
 			for cell := Cdr(testClause); NotNilP(cell); cell = Cdr(cell) {
 				sexpr := Car(cell)
-				result, err = Eval(sexpr, localFrame)
+				result, err = Eval(sexpr, localEnv)
 				if err != nil {
 					return
 				}
@@ -286,13 +288,13 @@ func DoImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 		for cell := body; NotNilP(cell); cell = Cdr(cell) {
 			sexpr := Car(cell)
-			result, err = Eval(sexpr, localFrame)
+			result, err = Eval(sexpr, localEnv)
 			if err != nil {
 				return
 			}
 		}
 
-		rebindDoLocals(bindings, localFrame)
+		rebindDoLocals(bindings, localEnv)
 	}
 	return
 }

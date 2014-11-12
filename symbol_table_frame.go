@@ -8,37 +8,39 @@
 package golisp
 
 import (
+	"container/list"
 	"errors"
 	"fmt"
 )
 
 type SymbolTableFrame struct {
 	Parent      *SymbolTableFrame
+	Previous    *SymbolTableFrame
 	Frame       *FrameMap
 	Bindings    map[string]*Binding
-	CurrentCode string
+	CurrentCode *list.List
 }
 
 var Global *SymbolTableFrame
 
 func (self *SymbolTableFrame) Depth() int {
-	if self.Parent == nil {
+	if self.Previous == nil {
 		return 1
 	} else {
-		return 1 + self.Parent.Depth()
+		return 1 + self.Previous.Depth()
 	}
 }
 
 func (self *SymbolTableFrame) InternalDump(frameNumber int) {
-	fmt.Printf("Frame %d: %s\n", frameNumber, self.CurrentCode)
+	fmt.Printf("Frame %d: %s\n", frameNumber, self.CurrentCode.Front().Value)
 	for _, b := range self.Bindings {
 		if b.Val == nil || TypeOf(b.Val) != PrimitiveType {
 			b.Dump()
 		}
 	}
 	fmt.Printf("\n")
-	if self.Parent != nil {
-		self.Parent.InternalDump(frameNumber + 1)
+	if self.Previous != nil {
+		self.Previous.InternalDump(frameNumber + 1)
 	}
 }
 
@@ -49,24 +51,24 @@ func (self *SymbolTableFrame) Dump() {
 
 func (self *SymbolTableFrame) DumpSingleFrame(frameNumber int) {
 	if frameNumber == 0 {
-		fmt.Printf("%s\n", self.CurrentCode)
+		fmt.Printf("%s\n", self.CurrentCode.Front().Value)
 		for _, b := range self.Bindings {
 			if b.Val == nil || TypeOf(b.Val) != PrimitiveType {
 				b.Dump()
 			}
 		}
 		fmt.Printf("\n")
-	} else if self.Parent != nil {
-		self.Parent.DumpSingleFrame(frameNumber - 1)
+	} else if self.Previous != nil {
+		self.Previous.DumpSingleFrame(frameNumber - 1)
 	} else {
 		fmt.Printf("Invalid frame selected.\n")
 	}
 }
 
 func (self *SymbolTableFrame) InternalDumpHeaders(frameNumber int) {
-	fmt.Printf("Frame %d: %s\n", frameNumber, self.CurrentCode)
-	if self.Parent != nil {
-		self.Parent.InternalDumpHeaders(frameNumber + 1)
+	fmt.Printf("Frame %d: %s\n", frameNumber, self.CurrentCode.Front().Value)
+	if self.Previous != nil {
+		self.Previous.InternalDumpHeaders(frameNumber + 1)
 	}
 }
 
@@ -76,7 +78,7 @@ func (self *SymbolTableFrame) DumpHeaders() {
 }
 
 func (self *SymbolTableFrame) DumpHeader() {
-	fmt.Printf("%s\n", self.CurrentCode)
+	fmt.Printf("%s\n", self.CurrentCode.Front().Value)
 }
 
 func NewSymbolTableFrameBelow(p *SymbolTableFrame) *SymbolTableFrame {
@@ -84,14 +86,14 @@ func NewSymbolTableFrameBelow(p *SymbolTableFrame) *SymbolTableFrame {
 	if p != nil {
 		f = p.Frame
 	}
-	return &SymbolTableFrame{Parent: p, Bindings: make(map[string]*Binding), Frame: f}
+	return &SymbolTableFrame{Parent: p, Bindings: make(map[string]*Binding), Frame: f, CurrentCode: list.New()}
 }
 
 func NewSymbolTableFrameBelowWithFrame(p *SymbolTableFrame, f *FrameMap) *SymbolTableFrame {
 	if f == nil {
 		f = p.Frame
 	}
-	return &SymbolTableFrame{Parent: p, Bindings: make(map[string]*Binding, 10), Frame: f}
+	return &SymbolTableFrame{Parent: p, Bindings: make(map[string]*Binding, 10), Frame: f, CurrentCode: list.New()}
 }
 
 func (self *SymbolTableFrame) HasFrame() bool {

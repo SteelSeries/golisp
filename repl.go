@@ -8,6 +8,7 @@
 package golisp
 
 import (
+	"container/list"
 	"fmt"
 )
 
@@ -22,13 +23,13 @@ func Repl() {
 	for true {
 		defer func() {
 			if x := recover(); x != nil {
-				println("Don't Panic!")
+				fmt.Printf("Don't Panic! %v\n", x)
 			}
 		}()
 		DebugCurrentFrame = nil
 		DebugSingleStep = false
 		DebugEvalInDebugRepl = false
-		Global.CurrentCode = ""
+		Global.CurrentCode = list.New()
 		input := *ReadLine(&prompt)
 		if input != "" {
 			if input != lastInput {
