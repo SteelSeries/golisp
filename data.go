@@ -808,8 +808,9 @@ func logResult(result *Data, env *SymbolTableFrame) {
 }
 
 func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if !DebugEvalInDebugRepl {
-		env.CurrentCode = fmt.Sprintf("Eval %s", String(d))
+	if IsInteractive && !DebugEvalInDebugRepl {
+		fmt.Printf("Eval %s\n", String(d))
+		env.CurrentCode.PushFront(fmt.Sprintf("Eval %s", String(d)))
 	}
 
 	logEval(d, env)
@@ -819,7 +820,7 @@ func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
 		DebugRepl(env)
 	}
 
-	if DebugCurrentFrame != nil && env == DebugCurrentFrame.Parent {
+	if DebugCurrentFrame != nil && env == DebugCurrentFrame.Previous {
 		DebugCurrentFrame = nil
 		DebugRepl(env)
 	}
@@ -865,6 +866,9 @@ func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
 		}
 	}
 	logResult(result, env)
+	if IsInteractive && !DebugEvalInDebugRepl {
+		env.CurrentCode.Remove(env.CurrentCode.Front())
+	}
 	return result, nil
 }
 
