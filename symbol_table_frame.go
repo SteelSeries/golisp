@@ -21,6 +21,14 @@ type SymbolTableFrame struct {
 
 var Global *SymbolTableFrame
 
+func (self *SymbolTableFrame) Depth() int {
+	if self.Parent == nil {
+		return 1
+	} else {
+		return 1 + self.Parent.Depth()
+	}
+}
+
 func (self *SymbolTableFrame) InternalDump(frameNumber int) {
 	fmt.Printf("Frame %d: %s\n", frameNumber, self.CurrentCode)
 	for _, b := range self.Bindings {
