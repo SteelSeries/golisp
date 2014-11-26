@@ -17,6 +17,7 @@ import (
 func RegisterSystemPrimitives() {
 	MakePrimitiveFunction("load", 1, LoadFileImpl)
 	MakePrimitiveFunction("sleep", 1, SleepImpl)
+	MakePrimitiveFunction("millis", 0, MillisImpl)
 	MakePrimitiveFunction("write-line", 1, WriteLineImpl)
 	MakePrimitiveFunction("str", -1, MakeStringImpl)
 	MakePrimitiveFunction("intern", 1, InternImpl)
@@ -51,6 +52,11 @@ func SleepImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 	millis := IntegerValue(n)
 	time.Sleep(time.Duration(millis) * time.Millisecond)
+	return
+}
+
+func MillisImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	result = IntegerWithValue(int64(time.Now().UnixNano() / 1e3))
 	return
 }
 
