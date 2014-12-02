@@ -31,8 +31,16 @@ func (self *SymbolTableFrame) Depth() int {
 	}
 }
 
+func (self *SymbolTableFrame) CurrentCodeString() string {
+	if self.CurrentCode.Len() > 0 {
+		return self.CurrentCode.Front().Value
+	} else {
+		return "Unknown code"
+	}
+}
+
 func (self *SymbolTableFrame) InternalDump(frameNumber int) {
-	fmt.Printf("Frame %d: %s\n", frameNumber, self.CurrentCode.Front().Value)
+	fmt.Printf("Frame %d: %s\n", frameNumber, self.CurrentCodeString())
 	for _, b := range self.Bindings {
 		if b.Val == nil || TypeOf(b.Val) != PrimitiveType {
 			b.Dump()
@@ -51,7 +59,7 @@ func (self *SymbolTableFrame) Dump() {
 
 func (self *SymbolTableFrame) DumpSingleFrame(frameNumber int) {
 	if frameNumber == 0 {
-		fmt.Printf("%s\n", self.CurrentCode.Front().Value)
+		fmt.Printf("%s\n", self.CurrentCodeString())
 		for _, b := range self.Bindings {
 			if b.Val == nil || TypeOf(b.Val) != PrimitiveType {
 				b.Dump()
@@ -66,7 +74,7 @@ func (self *SymbolTableFrame) DumpSingleFrame(frameNumber int) {
 }
 
 func (self *SymbolTableFrame) InternalDumpHeaders(frameNumber int) {
-	fmt.Printf("Frame %d: %s\n", frameNumber, self.CurrentCode.Front().Value)
+	fmt.Printf("Frame %d: %s\n", frameNumber, self.CurrentCodeString())
 	if self.Previous != nil {
 		self.Previous.InternalDumpHeaders(frameNumber + 1)
 	}
@@ -78,7 +86,7 @@ func (self *SymbolTableFrame) DumpHeaders() {
 }
 
 func (self *SymbolTableFrame) DumpHeader() {
-	fmt.Printf("%s\n", self.CurrentCode.Front().Value)
+	fmt.Printf("%s\n", self.CurrentCodeString())
 }
 
 func NewSymbolTableFrameBelow(p *SymbolTableFrame) *SymbolTableFrame {
