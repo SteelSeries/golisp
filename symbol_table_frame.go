@@ -33,7 +33,7 @@ func (self *SymbolTableFrame) Depth() int {
 
 func (self *SymbolTableFrame) CurrentCodeString() string {
 	if self.CurrentCode.Len() > 0 {
-		return self.CurrentCode.Front().Value
+		return self.CurrentCode.Front().Value.(string)
 	} else {
 		return "Unknown code"
 	}
