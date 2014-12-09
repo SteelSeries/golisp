@@ -12,3 +12,7 @@
       (sleep 10000)))
 
 
+(define (run-once proc)
+  (write-line "start")
+  (proc-sleep proc 1000)
+  (write-line "stop"))
