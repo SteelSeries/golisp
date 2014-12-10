@@ -127,3 +127,19 @@
             (== (b: f) 2)
             (a:! f 42)
             (== (a: f) 42)))
+
+(describe non-function-slots-dont-override-functions
+          (let ((f {map: 42
+                    foo: (lambda ()
+                           (map (lambda (x)
+                                  (+ x 1))
+                                '(1 2 3)))}))
+            (== (send f foo:) '(2 3 4))))
+
+(describe function-slots-override-functions
+          (let ((f {map: (lambda (x y) 42)
+                    foo: (lambda ()
+                           (map (lambda (x)
+                                  (+ x 1))
+                                '(1 2 3)))}))
+            (== (send f foo:) 42)))
