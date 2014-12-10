@@ -807,7 +807,7 @@ func logResult(result *Data, env *SymbolTableFrame) {
 	}
 }
 
-func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
+func evalHelper(d *Data, env *SymbolTableFrame, needFunction bool) (result *Data, err error) {
 	if IsInteractive && !DebugEvalInDebugRepl {
 		env.CurrentCode.PushFront(fmt.Sprintf("Eval %s", String(d)))
 	}
@@ -831,7 +831,7 @@ func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
 				d = postProcessFrameShortcuts(d)
 
 				var function *Data
-				function, err = Eval(Car(d), env)
+				function, err = evalHelper(Car(d), env, true)
 				if err != nil {
 					return
 				}
@@ -858,7 +858,7 @@ func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
 			if NakedP(d) {
 				result = d
 			} else {
-				result = env.ValueOf(d)
+				result = env.ValueOfWithFunctionSlotCheck(d, needFunction)
 			}
 		default:
 			result = d
@@ -869,6 +869,10 @@ func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
 		env.CurrentCode.Remove(env.CurrentCode.Front())
 	}
 	return result, nil
+}
+
+func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return evalHelper(d, env, false)
 }
 
 func formatApply(function *Data, args *Data) string {

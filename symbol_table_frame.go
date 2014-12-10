@@ -199,15 +199,21 @@ func (self *SymbolTableFrame) BindLocallyTo(symbol *Data, value *Data) *Data {
 	return value
 }
 
-func (self *SymbolTableFrame) ValueOf(symbol *Data) *Data {
+func (self *SymbolTableFrame) ValueOfWithFunctionSlotCheck(symbol *Data, needFunction bool) *Data {
 	localBinding, found := self.findBindingInLocalFrameFor(symbol)
 	if found {
 		return localBinding.Val
 	}
 
 	naked := StringValue(NakedSymbolFrom(symbol))
-	if self.HasFrame() && self.Frame.HasSlot(naked) {
-		return self.Frame.Get(naked)
+	if self.HasFrame() {
+		f := self.Frame
+		if f.HasSlot(naked) {
+			slotValue := f.Get(naked)
+			if !needFunction || FunctionP(slotValue) {
+				return slotValue
+			}
+		}
 	}
 
 	binding, found := self.findBindingFor(symbol)
@@ -216,4 +222,8 @@ func (self *SymbolTableFrame) ValueOf(symbol *Data) *Data {
 	} else {
 		return nil
 	}
+}
+
+func (self *SymbolTableFrame) ValueOf(symbol *Data) *Data {
+	return self.ValueOfWithFunctionSlotCheck(symbol, false)
 }
