@@ -87,12 +87,12 @@ func (self *Function) makeLocalBindings(args *Data, argEnv *SymbolTableFrame, lo
 	return nil
 }
 
-func (self *Function) internalApply(args *Data, argEnv *SymbolTableFrame, eval bool) (result *Data, err error) {
-	localEnv := NewSymbolTableFrameBelowWithFrame(self.Env, argEnv.Frame)
+func (self *Function) internalApply(args *Data, argEnv *SymbolTableFrame, frame *FrameMap, eval bool) (result *Data, err error) {
+	localEnv := NewSymbolTableFrameBelowWithFrame(self.Env, frame)
 	localEnv.Previous = argEnv
 	selfSym := SymbolWithName("self")
-	if argEnv.Frame != nil {
-		localEnv.BindLocallyTo(selfSym, FrameWithValue(argEnv.Frame))
+	if frame != nil {
+		localEnv.BindLocallyTo(selfSym, FrameWithValue(frame))
 	} else {
 		selfBinding, found := argEnv.findBindingInLocalFrameFor(selfSym)
 		if found {
@@ -113,11 +113,15 @@ func (self *Function) internalApply(args *Data, argEnv *SymbolTableFrame, eval b
 }
 
 func (self *Function) Apply(args *Data, argEnv *SymbolTableFrame) (result *Data, err error) {
-	return self.internalApply(args, argEnv, true)
+	return self.internalApply(args, argEnv, nil, true)
+}
+
+func (self *Function) ApplyWithFrame(args *Data, argEnv *SymbolTableFrame, frame *FrameMap) (result *Data, err error) {
+	return self.internalApply(args, argEnv, frame, true)
 }
 
 func (self *Function) ApplyWithoutEval(args *Data, argEnv *SymbolTableFrame) (result *Data, err error) {
-	return self.internalApply(args, argEnv, false)
+	return self.internalApply(args, argEnv, nil, false)
 }
 
 func (self *Function) ApplyOveriddingEnvironment(args *Data, argEnv *SymbolTableFrame) (result *Data, err error) {

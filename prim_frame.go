@@ -195,9 +195,7 @@ func SendImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	params := Cddr(args)
-	frameEnv := NewSymbolTableFrameBelowWithFrame(env, f.Frame)
-	frameEnv.BindLocallyTo(SymbolWithName("self"), f)
-	return fun.Func.Apply(params, frameEnv)
+	return fun.Func.ApplyWithFrame(params, env, f.Frame)
 }
 
 func getSuperFunction(selector string, env *SymbolTableFrame) *Data {
