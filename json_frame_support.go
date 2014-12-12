@@ -63,7 +63,7 @@ func JsonStringToLispWithFrames(jsonData string) (result *Data) {
 	var data interface{}
 	err := json.Unmarshal(b, &data)
 	if err != nil {
-		panic(errors.New(fmt.Sprintf("Badly formed json: '%s'", jsonData)))
+		panic(errors.New(fmt.Sprintf("Badly formed json: '%s'\n --> %v\n", jsonData, err)))
 	}
 	return JsonToLispWithFrames(data)
 }
