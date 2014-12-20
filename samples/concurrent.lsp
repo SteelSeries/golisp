@@ -14,5 +14,8 @@
 
 (define (run-once proc)
   (write-line "start")
-  (proc-sleep proc 1000)
+  (sleep 1000)
   (write-line "stop"))
+
+(define (run-delayed proc)
+  (write-line "running"))

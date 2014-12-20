@@ -53,6 +53,7 @@ func HasSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 	if !FrameP(f) {
 		err = ProcessError(fmt.Sprintf("has-slot? requires a frame as it's first argument, but was given %s.", String(f)), env)
+		return
 	}
 
 	k, err := Eval(Cadr(args), env)
@@ -74,6 +75,12 @@ func GetSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 	if !FrameP(f) {
 		err = ProcessError(fmt.Sprintf("get-slot requires a frame as it's first argument, but was given %s.", String(f)), env)
+		return
+	}
+
+	if f.Frame == nil {
+		err = ProcessError("get-slot received a nil frame.", env)
+		return
 	}
 
 	k, err := Eval(Cadr(args), env)
@@ -100,6 +107,7 @@ func GetSlotOrNilImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 	}
 	if !FrameP(f) {
 		err = ProcessError(fmt.Sprintf("get-slot-or-nil requires a frame as it's first argument, but was given %s.", String(f)), env)
+		return
 	}
 
 	k, err := Eval(Cadr(args), env)
@@ -126,6 +134,7 @@ func RemoveSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 
 	if !FrameP(f) {
 		err = ProcessError(fmt.Sprintf("remove-slot! requires a frame as it's first argument, but was given %s.", String(f)), env)
+		return
 	}
 
 	k, err := Eval(Cadr(args), env)
@@ -147,6 +156,7 @@ func SetSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 	if !FrameP(f) {
 		err = ProcessError(fmt.Sprintf("set-slot! requires a frame as it's first argument, but was given %s.", String(f)), env)
+		return
 	}
 
 	k, err := Eval(Cadr(args), env)
@@ -173,6 +183,7 @@ func SendImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 	if !FrameP(f) {
 		err = ProcessError(fmt.Sprintf("send requires a frame as it's first argument, but was given %s.", String(f)), env)
+		return
 	}
 
 	k, err := Eval(Cadr(args), env)
@@ -192,6 +203,7 @@ func SendImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	fun := f.Frame.Get(StringValue(k))
 	if !FunctionP(fun) {
 		err = ProcessError(fmt.Sprintf("send requires a function slot, but was given a slot containing a %s.", TypeName(TypeOf(fun))), env)
+		return
 	}
 
 	params := Cddr(args)
