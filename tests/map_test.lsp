@@ -8,4 +8,7 @@
     (== (map (lambda (x) (* x 5)) '(1 2 3)) '(5 10 15)))
 
 (describe map-with-prim
-    (== (map car '((1 2) (3 4) (5 6))) '(1 3 5)))
+          (== (map car '((1 2) (3 4) (5 6))) '(1 3 5)))
+
+(describe map-with-muliple-lists
+          (== (map + '(1 2 3) '(4 5 6)) '(5 7 9)))

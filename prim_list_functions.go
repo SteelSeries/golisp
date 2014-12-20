@@ -12,11 +12,19 @@ import (
 )
 
 func RegisterListFunctionsPrimitives() {
-	MakePrimitiveFunction("map", 2, MapImpl)
+	MakePrimitiveFunction("map", -1, MapImpl)
 	MakePrimitiveFunction("reduce", 3, ReduceImpl)
 	MakePrimitiveFunction("filter", 2, FilterImpl)
 	MakePrimitiveFunction("memq", 2, MemqImpl)
 	MakePrimitiveFunction("memp", 2, MempImpl)
+}
+
+func intMin(x, y int) int {
+	if x < y {
+		return x
+	} else {
+		return y
+	}
 }
 
 func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -29,19 +37,32 @@ func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	col, err := Eval(Second(args), env)
-	if err != nil {
-		return
-	}
-	if !ListP(col) {
-		err = ProcessError(fmt.Sprintf("map needs a list as its second argument, but got %s.", String(col)), env)
-		return
+	var collections []*Data = make([]*Data, 0, Length(args)-1)
+	var loopCount = 30000
+	var col *Data
+	for a := Cdr(args); NotNilP(a); a = Cdr(a) {
+		col, err = Eval(Car(a), env)
+		if err != nil {
+			return
+		}
+		if !ListP(col) {
+			err = ProcessError(fmt.Sprintf("map needs lists as its other arguments, but got %s.", String(col)), env)
+			return
+		}
+		collections = append(collections, col)
+		loopCount = intMin(loopCount, Length(col))
 	}
 
-	var d []*Data = make([]*Data, 0, Length(col))
+	var d []*Data = make([]*Data, 0, loopCount)
 	var v *Data
-	for c := col; NotNilP(c); c = Cdr(c) {
-		v, err = ApplyWithoutEval(f, Cons(Car(c), nil), env)
+	var a *Data
+	for index := 1; index <= loopCount; index++ {
+		mapArgs := make([]*Data, 0, len(collections))
+		for _, mapArgCollection := range collections {
+			a = Nth(mapArgCollection, index)
+			mapArgs = append(mapArgs, a)
+		}
+		v, err = ApplyWithoutEval(f, ArrayToList(mapArgs), env)
 		if err != nil {
 			return
 		}
