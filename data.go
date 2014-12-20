@@ -900,7 +900,11 @@ func Apply(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err
 	}
 	switch function.Type {
 	case FunctionType:
-		result, err = function.Func.Apply(args, env)
+		if env.HasFrame() {
+			result, err = function.Func.ApplyWithFrame(args, env, env.Frame)
+		} else {
+			result, err = function.Func.Apply(args, env)
+		}
 	case MacroType:
 		result, err = function.Mac.Apply(args, env)
 	case PrimitiveType:
