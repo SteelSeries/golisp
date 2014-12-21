@@ -21,7 +21,7 @@ func RegisterMathPrimitives() {
 	MakePrimitiveFunction("%", 2, RemainderImpl)
 	MakePrimitiveFunction("modulo", 2, RemainderImpl)
 	MakePrimitiveFunction("random-byte", 0, RandomByteImpl)
-	MakePrimitiveFunction("interval", 2, IntervalImpl)
+	MakePrimitiveFunction("interval", -1, IntervalImpl)
 	MakePrimitiveFunction("integer", 1, ToIntImpl)
 	MakePrimitiveFunction("float", 1, ToFloatImpl)
 	MakePrimitiveFunction("number->string", -1, NumberToStringImpl)
@@ -262,6 +262,11 @@ func RandomByteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 }
 
 func IntervalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if Length(args) < 2 || Length(args) > 3 {
+		err = ProcessError(fmt.Sprintf("interval expects 2 or 3 arguments, received %d", Length(args)), env)
+		return
+	}
+
 	startObj, err := Eval(Car(args), env)
 	if err != nil {
 		return
@@ -274,9 +279,21 @@ func IntervalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 	end := IntegerValue(endObj)
 
+	var step int64 = 1
+	if Length(args) == 3 {
+		stepObj, e := Eval(Caddr(args), env)
+		if e != nil {
+			return nil, e
+		}
+		step = IntegerValue(stepObj)
+		if step < 1 {
+			return nil, ProcessError(fmt.Sprintf("interval expects a positive step value, received %d", step), env)
+		}
+	}
+
 	var items []*Data = make([]*Data, 0, end-start+1)
 
-	for i := start; i <= end; i = i + 1 {
+	for i := start; i <= end; i = i + step {
 		items = append(items, IntegerWithValue(i))
 	}
 	result = ArrayToList(items)
