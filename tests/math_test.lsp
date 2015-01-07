@@ -58,3 +58,13 @@
 (describe float-max
           (== (max '(1.3 2.2)) 2.2)
           (== (max '(3 4.8 2 8 8.3 6 1)) 8.3))
+
+(describe floor
+          (== (floor 3.4) 3.0)
+          (== (floor -3.4) -4.0)
+          (== (floor 3) 3.0))
+
+(describe ceiling
+          (== (ceiling 3.4) 4.0)
+          (== (ceiling -3.4) -3.0)
+          (== (ceiling 3) 3.0))
