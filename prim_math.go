@@ -9,6 +9,7 @@ package golisp
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 )
 
@@ -28,6 +29,9 @@ func RegisterMathPrimitives() {
 	MakePrimitiveFunction("string->number", -1, StringToNumberImpl)
 	MakePrimitiveFunction("min", 1, MinImpl)
 	MakePrimitiveFunction("max", 1, MaxImpl)
+	MakePrimitiveFunction("floor", 1, FloorImpl)
+	MakePrimitiveFunction("ceiling", 1, CeilingImpl)
+
 }
 
 func IsEvenImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -549,4 +553,26 @@ func MaxImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	} else {
 		return maxInts(numbers, env)
 	}
+}
+
+func FloorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	val, err := Eval(Car(args), env)
+
+	if !NumberP(val) {
+		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(Car(args))), env)
+		return
+	}
+
+	return FloatWithValue(float32(math.Floor(float64(FloatValue(val))))), nil
+}
+
+func CeilingImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	val, err := Eval(Car(args), env)
+
+	if !NumberP(val) {
+		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(Car(args))), env)
+		return
+	}
+
+	return FloatWithValue(float32(math.Ceil(float64(FloatValue(val))))), nil
 }
