@@ -789,7 +789,7 @@ func printDashes(indent int) {
 }
 
 func logEval(d *Data, env *SymbolTableFrame) {
-	if DebugTrace && !DebugEvalInDebugRepl {
+	if LispTrace && !DebugEvalInDebugRepl {
 		depth := env.Depth()
 		fmt.Printf("%3d: ", depth)
 		printDashes(depth)
@@ -799,7 +799,7 @@ func logEval(d *Data, env *SymbolTableFrame) {
 }
 
 func logResult(result *Data, env *SymbolTableFrame) {
-	if DebugTrace && !DebugEvalInDebugRepl {
+	if LispTrace && !DebugEvalInDebugRepl {
 		depth := env.Depth()
 		fmt.Printf("%3d: <", depth)
 		printDashes(depth)
