@@ -360,3 +360,145 @@ func (s *BytearrayBuiltinsSuite) TestAppendInPlaceMultipleBytesResultingFromAnSe
         c.Assert(d, Equals, byte(i+1))
     }
 }
+
+//--------------------------------------------------------------------------------
+// Take
+
+func (s *BytearrayBuiltinsSuite) TestTakeByteArray(c *C) {
+    dataBytes := make([]byte, 5)
+    for i := 0; i < 5; i++ {
+        dataBytes[i] = byte(i + 1)
+    }
+    o := ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&dataBytes))
+    r, err := TakeImpl(InternalMakeList(IntegerWithValue(3), o), Global)
+    c.Assert(err, IsNil)
+    c.Assert(r, NotNil)
+
+    changedBytes := (*[]byte)(ObjectValue(r))
+    c.Assert(changedBytes, NotNil)
+    c.Assert(len(*changedBytes), Equals, 3)
+    for i, d := range *changedBytes {
+        c.Assert(d, Equals, byte(i+1))
+    }
+}
+
+func (s *BytearrayBuiltinsSuite) TestTakeByteArrayIndexGreaterThanLength(c *C) {
+    dataBytes := make([]byte, 5)
+    for i := 0; i < 5; i++ {
+        dataBytes[i] = byte(i + 1)
+    }
+    o := ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&dataBytes))
+    r, err := TakeImpl(InternalMakeList(IntegerWithValue(8), o), Global)
+    c.Assert(err, IsNil)
+    c.Assert(r, NotNil)
+
+    changedBytes := (*[]byte)(ObjectValue(r))
+    c.Assert(changedBytes, NotNil)
+    c.Assert(len(*changedBytes), Equals, 5)
+    for i, d := range *changedBytes {
+        c.Assert(d, Equals, byte(i+1))
+    }
+}
+
+//--------------------------------------------------------------------------------
+// Drop
+
+func (s *BytearrayBuiltinsSuite) TestDropByteArray(c *C) {
+    dataBytes := make([]byte, 5)
+    for i := 0; i < 5; i++ {
+        dataBytes[i] = byte(i + 1)
+    }
+    o := ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&dataBytes))
+    r, err := DropImpl(InternalMakeList(IntegerWithValue(2), o), Global)
+    c.Assert(err, IsNil)
+    c.Assert(r, NotNil)
+
+    changedBytes := (*[]byte)(ObjectValue(r))
+    c.Assert(changedBytes, NotNil)
+    c.Assert(len(*changedBytes), Equals, 3)
+    for i, d := range *changedBytes {
+        c.Assert(d, Equals, byte(i+3))
+    }
+}
+
+func (s *BytearrayBuiltinsSuite) TestDropByteArrayIndexGreaterThanLength(c *C) {
+    dataBytes := make([]byte, 5)
+    for i := 0; i < 5; i++ {
+        dataBytes[i] = byte(i + 1)
+    }
+    o := ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&dataBytes))
+    r, err := DropImpl(InternalMakeList(IntegerWithValue(8), o), Global)
+    c.Assert(err, IsNil)
+    c.Assert(r, NotNil)
+
+    changedBytes := (*[]byte)(ObjectValue(r))
+    c.Assert(changedBytes, NotNil)
+    c.Assert(len(*changedBytes), Equals, 0)
+}
+
+//--------------------------------------------------------------------------------
+// ExtractBytes
+//  (TODO)
+func (s *BytearrayBuiltinsSuite) TestExtractBytes(c *C) {
+    dataBytes := make([]byte, 5)
+    for i := 0; i < 5; i++ {
+        dataBytes[i] = byte(i + 1)
+    }
+    o := ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&dataBytes))
+
+    r, err := ExtractBytesImpl(InternalMakeList(o, IntegerWithValue(2), IntegerWithValue(3)), Global)
+    c.Assert(err, IsNil)
+    c.Assert(r, NotNil)
+
+    changedBytes := (*[]byte)(ObjectValue(r))
+    c.Assert(changedBytes, NotNil)
+    c.Assert(len(*changedBytes), Equals, 3)
+    for i, d := range *changedBytes {
+        c.Assert(d, Equals, byte(i+3))
+    }
+}
+
+func (s *BytearrayBuiltinsSuite) TestExtractBytesWithNilFirstArg(c *C) {
+    _, err := ExtractBytesImpl(InternalMakeList(nil, IntegerWithValue(3), IntegerWithValue(2)), Global)
+    c.Assert(err, NotNil)
+}
+
+func (s *BytearrayBuiltinsSuite) TestExtractBytesWithNilSecondArg(c *C) {
+    dataBytes := make([]byte, 5)
+    for i := 0; i < 5; i++ {
+        dataBytes[i] = byte(i + 1)
+    }
+    o := ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&dataBytes))
+    _, err := ExtractBytesImpl(InternalMakeList(o, nil, IntegerWithValue(2)), Global)
+    c.Assert(err, NotNil)
+}
+
+func (s *BytearrayBuiltinsSuite) TestExtractBytesWithNilThirdArg(c *C) {
+    dataBytes := make([]byte, 5)
+    for i := 0; i < 5; i++ {
+        dataBytes[i] = byte(i + 1)
+    }
+    o := ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&dataBytes))
+    _, err := ExtractBytesImpl(InternalMakeList(o, IntegerWithValue(3), nil), Global)
+    c.Assert(err, NotNil)
+}
+
+func (s *BytearrayBuiltinsSuite) TestExtractBytesWithIndexOutOfRange(c *C) {
+    dataBytes := make([]byte, 5)
+    for i := 0; i < 5; i++ {
+        dataBytes[i] = byte(i + 1)
+    }
+    o := ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&dataBytes))
+    _, err := ExtractBytesImpl(InternalMakeList(o, IntegerWithValue(10), IntegerWithValue(1)), Global)
+    c.Assert(err, NotNil)
+}
+
+func (s *BytearrayBuiltinsSuite) TestExtractBytesWithFinalIndexOutOfRange(c *C) {
+    dataBytes := make([]byte, 5)
+    for i := 0; i < 5; i++ {
+        dataBytes[i] = byte(i + 1)
+    }
+    o := ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&dataBytes))
+    _, err := ExtractBytesImpl(InternalMakeList(o, IntegerWithValue(1), IntegerWithValue(10)), Global)
+    c.Assert(err, NotNil)
+}
