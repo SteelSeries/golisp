@@ -20,6 +20,7 @@ func RegisterBytearrayPrimitives() {
 	MakePrimitiveFunction("extract-byte", 2, ExtractByteImpl)
 	MakePrimitiveFunction("append-bytes", -1, AppendBytesImpl)
 	MakePrimitiveFunction("append-bytes!", -1, AppendBytesBangImpl)
+	MakePrimitiveFunction("extract-bytes", 3, ExtractBytesImpl)
 }
 
 func ListToBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -262,5 +263,64 @@ func AppendBytesBangImpl(args *Data, env *SymbolTableFrame) (result *Data, err e
 	dataByteObject, _ := Eval(Car(args), env)
 	dataByteObject.Obj = unsafe.Pointer(newBytesPtr)
 	result = dataByteObject
+	return
+}
+
+func ExtractBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if Car(args) == nil {
+		err = ProcessError("extract-bytes requires a non-nil bytearray argument.", env)
+		return
+	}
+	if Cadr(args) == nil {
+		err = ProcessError("extract-bytes requires a non-nil index argument.", env)
+		return
+	}
+	if Caddr(args) == nil {
+		err = ProcessError("extract-bytes requires a non-nil number to extract argument.", env)
+		return
+	}
+
+	dataByteObject, err := Eval(Car(args), env)
+	if err != nil {
+		panic(err)
+	}
+	if !ObjectP(dataByteObject) || TypeOfObject(dataByteObject) != "[]byte" {
+		panic(ProcessError(fmt.Sprintf("Bytearray object should return []byte but returned %s.", TypeOfObject(dataByteObject)), env))
+	}
+
+	dataBytes := (*[]byte)(ObjectValue(dataByteObject))
+
+	indexObject, err := Eval(Cadr(args), env)
+	if err != nil {
+		panic(err)
+	}
+	if !IntegerP(indexObject) {
+		panic(ProcessError("Bytearray index should be a number.", env))
+	}
+	index := int(IntegerValue(indexObject))
+
+	numToExtractObject, err := Eval(Caddr(args), env)
+	if err != nil {
+		panic(err)
+	}
+	if !IntegerP(numToExtractObject) {
+		panic(ProcessError("Number to extract should be a number.", env))
+	}
+	numToExtract := int(IntegerValue(numToExtractObject))
+
+	if index >= len(*dataBytes) {
+		err = ProcessError(fmt.Sprintf("extract-bytes index was out of range. Was %d but bytearray has length of %d.", index, len(*dataBytes)), env)
+		return
+	}
+	if index + numToExtract > len(*dataBytes) {
+		err = ProcessError(fmt.Sprintf("extract-bytes final index was out of range.  Was %d but bytearray has length of %d.", index + numToExtract - 1, len(*dataBytes)), env)
+		return
+	}
+
+	result, err = DropImpl(InternalMakeList(indexObject,dataByteObject),Global)
+	if err != nil {
+		return
+	}
+	result, err = TakeImpl(InternalMakeList(numToExtractObject,result), Global)
 	return
 }

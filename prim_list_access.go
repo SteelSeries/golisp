@@ -7,7 +7,9 @@
 
 package golisp
 
-import ()
+import (
+	"unsafe"
+)
 
 func RegisterListAccessPrimitives() {
 	MakePrimitiveFunction("car", 1, CarImpl)
@@ -410,7 +412,7 @@ func TakeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !IntegerP(n) {
-		err = ProcessError("take requires a number as it's first argument.", env)
+		err = ProcessError("take requires a number as its first argument.", env)
 	}
 	size := int(IntegerValue(n))
 
@@ -418,15 +420,28 @@ func TakeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if err != nil {
 		return
 	}
-	if !ListP(l) {
-		err = ProcessError("take requires a list as it's second argument.", env)
+	if ListP(l) {
+		var items []*Data = make([]*Data, 0, Length(args))
+		for i, cell := 0, l; i < size && NotNilP(cell); i, cell = i+1, Cdr(cell) {
+			items = append(items, Car(cell))
+		}
+		result = ArrayToList(items)
+	} else if ObjectP(l) && TypeOfObject(l) == "[]byte" {
+		dataBytes := (*[]byte)(ObjectValue(l))
+		var bytesToCopy []byte
+		if size >= len(*dataBytes) {
+			bytesToCopy = *dataBytes
+		} else {
+			bytesToCopy = (*dataBytes)[:size]
+		}
+		newBytes := make([]byte, len(bytesToCopy))
+		for i, v := range bytesToCopy {
+			newBytes[i] = v
+		}
+		result = ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&newBytes))
+	} else {
+		err = ProcessError("take requires a list or bytearray as its second argument.", env)
 	}
-
-	var items []*Data = make([]*Data, 0, Length(args))
-	for i, cell := 0, l; i < size && NotNilP(cell); i, cell = i+1, Cdr(cell) {
-		items = append(items, Car(cell))
-	}
-	result = ArrayToList(items)
 	return
 }
 
@@ -436,7 +451,7 @@ func DropImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	if !IntegerP(n) {
-		err = ProcessError("drop requires a number as it's first argument.", env)
+		err = ProcessError("drop requires a number as its first argument.", env)
 	}
 	size := int(IntegerValue(n))
 
@@ -444,14 +459,27 @@ func DropImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if err != nil {
 		return
 	}
-	if !ListP(l) {
-		err = ProcessError("drop requires a list as it's second argument.", env)
-	}
 
-	var cell *Data
-	var i int
-	for i, cell = 0, l; i < size && NotNilP(cell); i, cell = i+1, Cdr(cell) {
+	if ListP(l) {
+		var cell *Data
+		var i int
+		for i, cell = 0, l; i < size && NotNilP(cell); i, cell = i+1, Cdr(cell) {
+		}
+		result = cell
+	} else if ObjectP(l) && TypeOfObject(l) == "[]byte" {
+		dataBytes := (*[]byte)(ObjectValue(l))
+		if size >= len(*dataBytes) {
+			newBytes := make([]byte,0)
+			result = ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&newBytes))
+		} else {
+			newBytes := make([]byte,len(*dataBytes) - size)
+			for i,v := range (*dataBytes)[size:] {
+				newBytes[i] = v
+			}
+			result = ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&newBytes))
+		}
+	} else {
+		err = ProcessError("drop requires a list or bytearray as its second argument.", env)
 	}
-	result = cell
 	return
 }
