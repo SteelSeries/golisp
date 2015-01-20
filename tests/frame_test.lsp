@@ -143,3 +143,7 @@
                                   (+ x 1))
                                 '(1 2 3)))}))
             (== (send f foo:) 42)))
+
+(describe keys_values
+          (== (keys {a: 1 b: 2 c: 3}) '(a: b: c:))
+          (== (values {a: 1 b: 2 c: 3}) '(1 2 3)))
