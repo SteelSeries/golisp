@@ -219,8 +219,8 @@ func (s *ParsingSuite) TestByteArray(c *C) {
 	sexpr, err := Parse("[1 2]")
 	c.Assert(err, IsNil)
 	c.Assert(TypeOf(sexpr), Equals, ObjectType)
-	c.Assert(sexpr.ObjType, Equals, "[]byte")
-	bytes := (*[]byte)(sexpr.Obj)
+	c.Assert(ObjectType(sexpr), Equals, "[]byte")
+	bytes := (*[]byte)(ObjectValue(sexpr))
 	c.Assert(len(*bytes), Equals, 2)
 	c.Assert((*bytes)[0], Equals, uint8(1))
 	c.Assert((*bytes)[1], Equals, uint8(2))
@@ -229,9 +229,9 @@ func (s *ParsingSuite) TestByteArray(c *C) {
 func (s *ParsingSuite) TestEmptyByteArray(c *C) {
 	sexpr, err := Parse("[]")
 	c.Assert(err, IsNil)
-	c.Assert(TypeOf(sexpr), Equals, ObjectType)
-	c.Assert(sexpr.ObjType, Equals, "[]byte")
-	bytes := (*[]byte)(sexpr.Obj)
+	c.Assert(TypeOf(sexpr), Equals, BoxedObjectType)
+	c.Assert(ObjectType(sexpr), Equals, "[]byte")
+	bytes := (*[]byte)(ObjectValue(sexpr))
 	c.Assert(len(*bytes), Equals, 0)
 }
 
