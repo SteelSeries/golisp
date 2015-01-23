@@ -60,8 +60,8 @@ func ProcSleepImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 		return
 	}
 
-	if !ObjectP(procObj) || TypeOfObject(procObj) != "Process" {
-		err = ProcessError(fmt.Sprintf("proc-sleep expects a Process object expected but received %s.", TypeOfObject(procObj)), env)
+	if !ObjectP(procObj) || ObjectType(procObj) != "Process" {
+		err = ProcessError(fmt.Sprintf("proc-sleep expects a Process object expected but received %s.", ObjectType(procObj)), env)
 		return
 	}
 
@@ -92,8 +92,8 @@ func WakeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	if !ObjectP(procObj) || TypeOfObject(procObj) != "Process" {
-		err = ProcessError(fmt.Sprintf("wake expects a Process object expected but received %s.", TypeOfObject(procObj)), env)
+	if !ObjectP(procObj) || ObjectType(procObj) != "Process" {
+		err = ProcessError(fmt.Sprintf("wake expects a Process object expected but received %s.", ObjectType(procObj)), env)
 		return
 	}
 
@@ -149,8 +149,8 @@ func AbandonImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	if !ObjectP(procObj) || TypeOfObject(procObj) != "Process" {
-		err = ProcessError(fmt.Sprintf("adandon expects a Process object expected but received %s.", TypeOfObject(procObj)), env)
+	if !ObjectP(procObj) || ObjectType(procObj) != "Process" {
+		err = ProcessError(fmt.Sprintf("adandon expects a Process object expected but received %s.", ObjectType(procObj)), env)
 		return
 	}
 

@@ -426,7 +426,7 @@ func TakeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 			items = append(items, Car(cell))
 		}
 		result = ArrayToList(items)
-	} else if ObjectP(l) && TypeOfObject(l) == "[]byte" {
+	} else if ObjectP(l) && ObjectType(l) == "[]byte" {
 		dataBytes := (*[]byte)(ObjectValue(l))
 		var bytesToCopy []byte
 		if size >= len(*dataBytes) {
@@ -466,14 +466,14 @@ func DropImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		for i, cell = 0, l; i < size && NotNilP(cell); i, cell = i+1, Cdr(cell) {
 		}
 		result = cell
-	} else if ObjectP(l) && TypeOfObject(l) == "[]byte" {
+	} else if ObjectP(l) && ObjectType(l) == "[]byte" {
 		dataBytes := (*[]byte)(ObjectValue(l))
 		if size >= len(*dataBytes) {
-			newBytes := make([]byte,0)
+			newBytes := make([]byte, 0)
 			result = ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&newBytes))
 		} else {
-			newBytes := make([]byte,len(*dataBytes) - size)
-			for i,v := range (*dataBytes)[size:] {
+			newBytes := make([]byte, len(*dataBytes)-size)
+			for i, v := range (*dataBytes)[size:] {
 				newBytes[i] = v
 			}
 			result = ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&newBytes))

@@ -428,7 +428,7 @@ func DefinitionOfImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 		return
 	}
 
-	function := f.Func
+	function := FunctionValue(f)
 	if function.Name == "anonymous" {
 		return Cons(SymbolWithName("define"), Cons(name, Cons(Cons(SymbolWithName("lambda"), Cons(function.Params, function.Body)), nil))), nil
 	} else {

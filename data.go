@@ -27,7 +27,7 @@ const (
 	FunctionType
 	MacroType
 	PrimitiveType
-	ObjectType
+	BoxedObjectType
 	FrameType
 )
 
@@ -38,11 +38,11 @@ type ConsCell struct {
 
 type BoxedObject struct {
 	ObjType string
-	Obj unsafe.Pointer
+	Obj     unsafe.Pointer
 }
 
 type Data struct {
-	Type uint8
+	Type  uint8
 	Value unsafe.Pointer
 }
 
@@ -111,7 +111,7 @@ func TypeName(t uint8) string {
 		return "Primitive"
 	case FrameType:
 		return "Frame"
-	case ObjectType:
+	case BoxedObjectType:
 		return "Go Object"
 	default:
 		return "Unknown"
@@ -177,7 +177,7 @@ func NumberP(d *Data) bool {
 }
 
 func ObjectP(d *Data) bool {
-	return d != nil && TypeOf(d) == ObjectType
+	return d != nil && TypeOf(d) == BoxedObjectType
 }
 
 func FunctionP(d *Data) bool {
@@ -345,7 +345,19 @@ func PrimitiveWithNameAndFunc(name string, f *PrimitiveFunction) *Data {
 
 func ObjectWithTypeAndValue(typeName string, o unsafe.Pointer) *Data {
 	bo := BoxedObject{ObjType: typeName, Obj: o}
-	return &Data{Type: ObjectType, Value: unsafe.Pointer(&bo)}
+	return &Data{Type: BoxedObjectType, Value: unsafe.Pointer(&bo)}
+}
+
+func ConsValue(d *Data) *ConsCell {
+	if d == nil {
+		return nil
+	}
+
+	if PairP(d) || AlistP(d) || DottedPairP(d) {
+		return (*ConsCell)(d.Value)
+	}
+
+	return nil
 }
 
 func Car(d *Data) *Data {
@@ -371,7 +383,6 @@ func Cdr(d *Data) *Data {
 
 	return nil
 }
-
 
 func IntegerValue(d *Data) int64 {
 	if d == nil {
@@ -477,7 +488,7 @@ func PrimitiveValue(d *Data) *PrimitiveFunction {
 	return nil
 }
 
-func TypeOfObject(d *Data) (oType string) {
+func ObjectType(d *Data) (oType string) {
 	if d == nil {
 		return
 	}
@@ -499,6 +510,18 @@ func ObjectValue(d *Data) (p unsafe.Pointer) {
 	}
 
 	return
+}
+
+func BoxedObjectValue(d *Data) *BoxedObject {
+	if d == nil {
+		return nil
+	}
+
+	if ObjectP(d) {
+		return (*BoxedObject)(d.Value)
+	}
+
+	return nil
 }
 
 func Length(d *Data) int {
@@ -809,8 +832,8 @@ func String(d *Data) string {
 		return fmt.Sprintf("<macro: %s>", MacroValue(d).Name)
 	case PrimitiveType:
 		return PrimitiveValue(d).String()
-	case ObjectType:
-		if TypeOfObject(d) == "[]byte" {
+	case BoxedObjectType:
+		if ObjectType(d) == "[]byte" {
 			bytes := (*[]byte)(ObjectValue(d))
 			contents := make([]string, 0, len(*bytes))
 			for _, b := range *bytes {
@@ -818,7 +841,7 @@ func String(d *Data) string {
 			}
 			return fmt.Sprintf("[%s]", strings.Join(contents, " "))
 		} else {
-			return fmt.Sprintf("<opaque Go object of type %s : 0x%x>", TypeOfObj(d), (*uint64)(ObjectValue(d)))
+			return fmt.Sprintf("<opaque Go object of type %s : 0x%x>", ObjectType(d), (*uint64)(ObjectValue(d)))
 		}
 	case FrameType:
 		pairs := make([]string, 0, len(*FrameValue(d)))

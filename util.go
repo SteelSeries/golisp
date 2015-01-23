@@ -8,32 +8,32 @@
 package golisp
 
 func ArrayToList(sexprs []*Data) *Data {
-    head := EmptyCons()
-    lastCell := head
-    for _, element := range sexprs {
-        newCell := Cons(element, nil)
-        lastCell.Cdr = newCell
-        lastCell = newCell
-    }
-    return head.Cdr
+	head := EmptyCons()
+	lastCell := head
+	for _, element := range sexprs {
+		newCell := Cons(element, nil)
+		ConsValue(lastCell).Cdr = newCell
+		lastCell = newCell
+	}
+	return Cdr(head)
 }
 
 func ArrayToListWithTail(sexprs []*Data, tail *Data) *Data {
-    head := EmptyCons()
-    lastCell := head
-    for _, element := range sexprs {
-        newCell := Cons(element, nil)
-        lastCell.Cdr = newCell
-        lastCell = newCell
-    }
-    lastCell.Cdr = tail
-    return head.Cdr
+	head := EmptyCons()
+	lastCell := head
+	for _, element := range sexprs {
+		newCell := Cons(element, nil)
+		ConsValue(lastCell).Cdr = newCell
+		lastCell = newCell
+	}
+	ConsValue(lastCell).Cdr = tail
+	return Cdr(head)
 }
 
 func ToArray(list *Data) []*Data {
-    result := make([]*Data, 0)
-    for c := list; NotNilP(c); c = Cdr(c) {
-        result = append(result, Car(c))
-    }
-    return result
+	result := make([]*Data, 0)
+	for c := list; NotNilP(c); c = Cdr(c) {
+		result = append(result, Car(c))
+	}
+	return result
 }

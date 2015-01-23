@@ -113,5 +113,5 @@ func ExpandImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		err = ProcessError(fmt.Sprintf("expand expected a macro, received %s", String(n)), env)
 		return
 	}
-	return n.Mac.Expand(Cdr(args), env)
+	return MacroValue(n).Expand(Cdr(args), env)
 }
