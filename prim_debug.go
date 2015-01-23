@@ -63,7 +63,7 @@ func AddDebugOnEntryImpl(args *Data, env *SymbolTableFrame) (result *Data, err e
 		err = errors.New("No such function")
 		return
 	}
-	DebugOnEntry.Add(f.Func.Name)
+	DebugOnEntry.Add(FunctionValue(f).Name)
 	return DebugOnEntryImpl(args, env)
 }
 
@@ -76,8 +76,8 @@ func RemoveDebugOnEntryImpl(args *Data, env *SymbolTableFrame) (result *Data, er
 		err = errors.New("No such function")
 		return
 	}
-	if DebugOnEntry.Has(f.Func.Name) {
-		DebugOnEntry.Remove(f.Func.Name)
+	if DebugOnEntry.Has(FunctionValue(f).Name) {
+		DebugOnEntry.Remove(FunctionValue(f).Name)
 	}
 	return DebugOnEntryImpl(args, env)
 }
@@ -146,12 +146,12 @@ func DebugRepl(env *SymbolTableFrame) {
 				case "(+":
 					f := funcOrNil(tokens[1], env)
 					if f != nil {
-						DebugOnEntry.Add(f.Func.Name)
+						DebugOnEntry.Add(FunctionValue(f).Name)
 					}
 				case "(-":
 					f := funcOrNil(tokens[1], env)
-					if f != nil && DebugOnEntry.Has(f.Func.Name) {
-						DebugOnEntry.Remove(f.Func.Name)
+					if f != nil && DebugOnEntry.Has(FunctionValue(f).Name) {
+						DebugOnEntry.Remove(FunctionValue(f).Name)
 					}
 				case "(":
 					for _, f := range DebugOnEntry.List() {

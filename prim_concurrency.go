@@ -39,8 +39,8 @@ func ForkImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	if f.Func.RequiredArgCount != 1 {
-		err = ProcessError(fmt.Sprintf("fork expected a function with arity of 1, but it was %d.", f.Func.RequiredArgCount), env)
+	if FunctionValue(f).RequiredArgCount != 1 {
+		err = ProcessError(fmt.Sprintf("fork expected a function with arity of 1, but it was %d.", FunctionValue(f).RequiredArgCount), env)
 		return
 	}
 
@@ -48,7 +48,7 @@ func ForkImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	procObj := ObjectWithTypeAndValue("Process", unsafe.Pointer(proc))
 
 	go func() {
-		_, err = f.Func.ApplyWithoutEval(InternalMakeList(procObj), env)
+		_, err = FunctionValue(f).ApplyWithoutEval(InternalMakeList(procObj), env)
 	}()
 
 	return procObj, nil
@@ -121,8 +121,8 @@ func ScheduleImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	if f.Func.RequiredArgCount != 1 {
-		err = ProcessError(fmt.Sprintf("schedule expected a function with arity of 1, but it was %d.", f.Func.RequiredArgCount), env)
+	if FunctionValue(f).RequiredArgCount != 1 {
+		err = ProcessError(fmt.Sprintf("schedule expected a function with arity of 1, but it was %d.", FunctionValue(f).RequiredArgCount), env)
 		return
 	}
 
@@ -135,7 +135,7 @@ func ScheduleImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		case <-proc.Abort:
 			aborted = true
 		case <-time.After(time.Duration(IntegerValue(millis)) * time.Millisecond):
-			_, err = f.Func.ApplyWithoutEval(InternalMakeList(procObj), env)
+			_, err = FunctionValue(f).ApplyWithoutEval(InternalMakeList(procObj), env)
 		}
 	}()
 

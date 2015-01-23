@@ -66,7 +66,7 @@ func HasSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	return BooleanWithValue(f.Frame.HasSlot(StringValue(k))), nil
+	return BooleanWithValue(FrameValue(f).HasSlot(StringValue(k))), nil
 }
 
 func GetSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -79,7 +79,7 @@ func GetSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	if f.Frame == nil {
+	if FrameValue(f) == nil {
 		err = ProcessError("get-slot received a nil frame.", env)
 		return
 	}
@@ -93,12 +93,12 @@ func GetSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	if !f.Frame.HasSlot(StringValue(k)) {
+	if !FrameValue(f).HasSlot(StringValue(k)) {
 		err = ProcessError(fmt.Sprintf("get-slot requires an existing slot, but was given %s.", String(k)), env)
 		return
 	}
 
-	return f.Frame.Get(StringValue(k)), nil
+	return FrameValue(f).Get(StringValue(k)), nil
 }
 
 func GetSlotOrNilImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

@@ -261,7 +261,8 @@ func AppendBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 func AppendBytesBangImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	newBytesPtr, err := internalAppendBytes(args, env)
 	dataByteObject, _ := Eval(Car(args), env)
-	dataByteObject.Obj = unsafe.Pointer(newBytesPtr)
+	objectData := ObjectValue(dataByteObject)
+	objectData.Obj = unsafe.Pointer(newBytesPtr)
 	result = dataByteObject
 	return
 }
