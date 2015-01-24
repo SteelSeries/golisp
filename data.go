@@ -52,11 +52,11 @@ type BooleanBox struct {
 	B bool
 }
 
-var b_true *BooleanBox = &BooleanBox{B: true}
-var b_false *BooleanBox = &BooleanBox{B: false}
+var b_true bool = true
+var b_false bool = false
 
-var LispTrue *Data = &Data{Type: BooleanType, Value: unsafe.Pointer(b_true)}
-var LispFalse *Data = &Data{Type: BooleanType, Value: unsafe.Pointer(b_false)}
+var LispTrue *Data = &Data{Type: BooleanType, Value: unsafe.Pointer(&b_true)}
+var LispFalse *Data = &Data{Type: BooleanType, Value: unsafe.Pointer(&b_false)}
 
 // Debug support
 
@@ -428,7 +428,7 @@ func BooleanValue(d *Data) bool {
 	}
 
 	if BooleanP(d) {
-		return ((*BooleanBox)(d.Value)).B
+		return *((*bool)(d.Value))
 	}
 
 	return true
