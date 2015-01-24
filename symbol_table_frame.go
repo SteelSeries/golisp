@@ -205,9 +205,9 @@ func (self *SymbolTableFrame) ValueOfWithFunctionSlotCheck(symbol *Data, needFun
 		return localBinding.Val
 	}
 
-	naked := StringValue(NakedSymbolFrom(symbol))
 	if self.HasFrame() {
 		f := self.Frame
+		naked := StringValue(NakedSymbolFrom(symbol))
 		if f.HasSlot(naked) {
 			slotValue := f.Get(naked)
 			if !needFunction || FunctionP(slotValue) {

@@ -8,13 +8,13 @@
 package golisp
 
 import (
-    "fmt"
-    . "launchpad.net/gocheck"
-    "math"
+	"fmt"
+	. "launchpad.net/gocheck"
+	"math"
 )
 
 type closeChecker struct {
-    *CheckerInfo
+	*CheckerInfo
 }
 
 // The Close checker verifies that the obtained value is within a tolerance of
@@ -25,17 +25,17 @@ type closeChecker struct {
 //     c.Assert(value, Close, 42, 0.01)
 //
 var Close Checker = &closeChecker{
-    &CheckerInfo{Name: "Close", Params: []string{"obtained", "expected", "tolerance"}},
+	&CheckerInfo{Name: "Close", Params: []string{"obtained", "expected", "tolerance"}},
 }
 
 func (checker *closeChecker) Check(params []interface{}, names []string) (result bool, error string) {
-    defer func() {
-        if v := recover(); v != nil {
-            result = false
-            error = fmt.Sprint(v)
-        }
-    }()
-    return math.Abs(float64(params[0].(float32)-params[1].(float32))) < params[2].(float64), ""
+	defer func() {
+		if v := recover(); v != nil {
+			result = false
+			error = fmt.Sprint(v)
+		}
+	}()
+	return math.Abs(float64(params[0].(float32)-params[1].(float32))) < params[2].(float64), ""
 }
 
 type FloatBuiltinsSuite struct {
@@ -44,51 +44,51 @@ type FloatBuiltinsSuite struct {
 var _ = Suite(&FloatBuiltinsSuite{})
 
 func (s *FloatBuiltinsSuite) SetUpSuite(c *C) {
-    Global = NewSymbolTableFrameBelow(nil)
-    InitBuiltins()
+	Global = NewSymbolTableFrameBelow(nil)
+	InitBuiltins()
 }
 
 func (s *FloatBuiltinsSuite) TestFloatAdd(c *C) {
-    code, _ := Parse("(+ 1.2 2.3)")
-    result, err := Eval(code, Global)
-    c.Assert(err, IsNil)
-    c.Assert(result, NotNil)
-    c.Assert(TypeOf(result), Equals, FloatType)
-    c.Assert(FloatValue(result), Close, float32(3.5), 0.01)
+	code, _ := Parse("(+ 1.2 2.3)")
+	result, err := Eval(code, Global)
+	c.Assert(err, IsNil)
+	c.Assert(result, NotNil)
+	c.Assert(int(TypeOf(result)), Equals, FloatType)
+	c.Assert(FloatValue(result), Close, float32(3.5), 0.01)
 }
 
 func (s *FloatBuiltinsSuite) TestFloatSubtract(c *C) {
-    code, _ := Parse("(- 2.3 1.2)")
-    result, err := Eval(code, Global)
-    c.Assert(err, IsNil)
-    c.Assert(result, NotNil)
-    c.Assert(TypeOf(result), Equals, FloatType)
-    c.Assert(FloatValue(result), Close, float32(1.1), 0.01)
+	code, _ := Parse("(- 2.3 1.2)")
+	result, err := Eval(code, Global)
+	c.Assert(err, IsNil)
+	c.Assert(result, NotNil)
+	c.Assert(int(TypeOf(result)), Equals, FloatType)
+	c.Assert(FloatValue(result), Close, float32(1.1), 0.01)
 }
 
 func (s *FloatBuiltinsSuite) TestFloatSubtractWithNegativeResult(c *C) {
-    code, _ := Parse("(- 1.2 2.3)")
-    result, err := Eval(code, Global)
-    c.Assert(err, IsNil)
-    c.Assert(result, NotNil)
-    c.Assert(TypeOf(result), Equals, FloatType)
-    c.Assert(FloatValue(result), Close, float32(-1.1), 0.01)
+	code, _ := Parse("(- 1.2 2.3)")
+	result, err := Eval(code, Global)
+	c.Assert(err, IsNil)
+	c.Assert(result, NotNil)
+	c.Assert(int(TypeOf(result)), Equals, FloatType)
+	c.Assert(FloatValue(result), Close, float32(-1.1), 0.01)
 }
 
 func (s *FloatBuiltinsSuite) TestFloatMultiply(c *C) {
-    code, _ := Parse("(* 2.3 1.2)")
-    result, err := Eval(code, Global)
-    c.Assert(err, IsNil)
-    c.Assert(result, NotNil)
-    c.Assert(TypeOf(result), Equals, FloatType)
-    c.Assert(FloatValue(result), Close, float32(2.76), 0.01)
+	code, _ := Parse("(* 2.3 1.2)")
+	result, err := Eval(code, Global)
+	c.Assert(err, IsNil)
+	c.Assert(result, NotNil)
+	c.Assert(int(TypeOf(result)), Equals, FloatType)
+	c.Assert(FloatValue(result), Close, float32(2.76), 0.01)
 }
 
 func (s *FloatBuiltinsSuite) TestFloatDivide(c *C) {
-    code, _ := Parse("(/ 2.3 1.2)")
-    result, err := Eval(code, Global)
-    c.Assert(err, IsNil)
-    c.Assert(result, NotNil)
-    c.Assert(TypeOf(result), Equals, FloatType)
-    c.Assert(FloatValue(result), Close, float32(1.9167), 0.01)
+	code, _ := Parse("(/ 2.3 1.2)")
+	result, err := Eval(code, Global)
+	c.Assert(err, IsNil)
+	c.Assert(result, NotNil)
+	c.Assert(int(TypeOf(result)), Equals, FloatType)
+	c.Assert(FloatValue(result), Close, float32(1.9167), 0.01)
 }

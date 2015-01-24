@@ -211,7 +211,7 @@ func BooleanAndImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 			return
 		}
 	}
-	result = True
+	result = LispTrue
 	return
 }
 
@@ -222,6 +222,6 @@ func BooleanOrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 			return
 		}
 	}
-	result = False
+	result = LispFalse
 	return
 }

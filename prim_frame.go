@@ -130,7 +130,7 @@ func RemoveSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 	}
 
 	if NilP(f) {
-		return False, nil
+		return LispFalse, nil
 	}
 
 	if !FrameP(f) {

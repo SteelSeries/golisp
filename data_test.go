@@ -8,8 +8,8 @@
 package golisp
 
 import (
-	. "launchpad.net/gocheck"
 	"fmt"
+	. "launchpad.net/gocheck"
 	"unsafe"
 )
 
@@ -24,5 +24,6 @@ func (s *SizeSuite) SetUpSuite(c *C) {
 
 func (s *SizeSuite) TestSize(c *C) {
 	d := *IntegerWithValue(42)
-	fmt.Printf("Data size is :%d\n", unsafe.Sizeof(d))
+	fmt.Printf("Data size is %d bytes\n", unsafe.Sizeof(d))
+	fmt.Printf("Data alignment is %d\n", unsafe.Alignof(d))
 }
