@@ -20,82 +20,82 @@ func (s *TypeSuite) TestList(c *C) {
 	sexpr := Cons(IntegerWithValue(5), nil)
 	c.Assert(ListP(sexpr), Equals, true)
 	c.Assert(PairP(sexpr), Equals, true)
-	c.Assert(TypeOf(sexpr), Equals, ConsCellType)
+	c.Assert(int(TypeOf(sexpr)), Equals, ConsCellType)
 	c.Assert(TypeName(ConsCellType), Equals, "List")
 }
 
-func (s *TypeSuite) TestAlist(c *C) {
-	sexpr := Acons(IntegerWithValue(5), StringWithValue("five"), nil)
-	c.Assert(AlistP(sexpr), Equals, true)
-	c.Assert(ListP(sexpr), Equals, true)
-	c.Assert(TypeOf(sexpr), Equals, AlistType)
-	c.Assert(TypeName(AlistType), Equals, "Association List")
+// func (s *TypeSuite) TestAlist(c *C) {
+// 	sexpr := Acons(IntegerWithValue(5), StringWithValue("five"), nil)
+// 	c.Assert(AlistP(sexpr), Equals, true)
+// 	c.Assert(ListP(sexpr), Equals, true)
+// 	c.Assert(int(TypeOf(sexpr)), Equals, AlistType)
+// 	c.Assert(TypeName(AlistType), Equals, "Association List")
 
-	c.Assert(DottedPairP(Car(sexpr)), Equals, true)
-	c.Assert(TypeOf(Car(sexpr)), Equals, AlistCellType)
-	c.Assert(TypeName(AlistCellType), Equals, "Association List Cell")
-}
+// 	c.Assert(DottedPairP(Car(sexpr)), Equals, true)
+// 	c.Assert(TypeOf(Car(sexpr)), Equals, AlistCellType)
+// 	c.Assert(TypeName(AlistCellType), Equals, "Association List Cell")
+// }
 
 func (s *TypeSuite) TestInteger(c *C) {
 	sexpr := IntegerWithValue(5)
 	c.Assert(IntegerP(sexpr), Equals, true)
-	c.Assert(TypeOf(sexpr), Equals, IntegerType)
+	c.Assert(int(TypeOf(sexpr)), Equals, IntegerType)
 	c.Assert(TypeName(IntegerType), Equals, "Integer")
 }
 
 func (s *TypeSuite) TestFloat(c *C) {
 	sexpr := FloatWithValue(5.0)
 	c.Assert(FloatP(sexpr), Equals, true)
-	c.Assert(TypeOf(sexpr), Equals, FloatType)
+	c.Assert(int(TypeOf(sexpr)), Equals, FloatType)
 	c.Assert(TypeName(FloatType), Equals, "Float")
 }
 
 func (s *TypeSuite) TestBoolean(c *C) {
 	sexpr := BooleanWithValue(true)
 	c.Assert(BooleanP(sexpr), Equals, true)
-	c.Assert(TypeOf(sexpr), Equals, BooleanType)
+	c.Assert(int(TypeOf(sexpr)), Equals, BooleanType)
 	c.Assert(TypeName(BooleanType), Equals, "Boolean")
 }
 
 func (s *TypeSuite) TestString(c *C) {
 	sexpr := StringWithValue("str")
 	c.Assert(StringP(sexpr), Equals, true)
-	c.Assert(TypeOf(sexpr), Equals, StringType)
+	c.Assert(int(TypeOf(sexpr)), Equals, StringType)
 	c.Assert(TypeName(StringType), Equals, "String")
 }
 
 func (s *TypeSuite) TestSymbol(c *C) {
 	sexpr := SymbolWithName("str")
 	c.Assert(SymbolP(sexpr), Equals, true)
-	c.Assert(TypeOf(sexpr), Equals, SymbolType)
+	c.Assert(int(TypeOf(sexpr)), Equals, SymbolType)
 	c.Assert(TypeName(SymbolType), Equals, "Symbol")
 }
 
 func (s *TypeSuite) TestFunction(c *C) {
 	sexpr := FunctionWithNameParamsBodyAndParent("func", nil, nil, nil)
 	c.Assert(FunctionP(sexpr), Equals, true)
-	c.Assert(TypeOf(sexpr), Equals, FunctionType)
+	c.Assert(int(TypeOf(sexpr)), Equals, FunctionType)
 	c.Assert(TypeName(FunctionType), Equals, "Function")
 }
 
 func (s *TypeSuite) TestMacro(c *C) {
 	sexpr := MacroWithNameParamsBodyAndParent("mac", nil, nil, nil)
 	c.Assert(MacroP(sexpr), Equals, true)
-	c.Assert(TypeOf(sexpr), Equals, MacroType)
+	c.Assert(int(TypeOf(sexpr)), Equals, MacroType)
 	c.Assert(TypeName(MacroType), Equals, "Macro")
 }
 
 func (s *TypeSuite) TestPrimitive(c *C) {
 	sexpr := PrimitiveWithNameAndFunc("prim", nil)
 	c.Assert(FunctionP(sexpr), Equals, true)
-	c.Assert(TypeOf(sexpr), Equals, PrimitiveType)
+	c.Assert(int(TypeOf(sexpr)), Equals, PrimitiveType)
 	c.Assert(TypeName(PrimitiveType), Equals, "Primitive")
 }
 
 func (s *TypeSuite) TestObject(c *C) {
 	sexpr := ObjectWithTypeAndValue("obj", nil)
 	c.Assert(ObjectP(sexpr), Equals, true)
-	c.Assert(TypeOf(sexpr), Equals, ObjectType)
+	c.Assert(int(TypeOf(sexpr)), Equals, BoxedObjectType)
 	c.Assert(TypeName(BoxedObjectType), Equals, "Go Object")
 }
 

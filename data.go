@@ -46,28 +46,17 @@ type Data struct {
 	Value unsafe.Pointer
 }
 
-// type Data struct {
-// 	Type    int                // data type
-// 	Car     *Data              // ConsCellType & AlistType
-// 	Cdr     *Data              // ConsCellType & AlistType
-// 	String  string             // StringType & SymbolType
-// 	Integer int64              // IntegerType & BooleanType
-// 	Float   float32            // FloatType
-// 	Func    *Function          // FunctionType
-// 	Mac     *Macro             // MacroType
-// 	Prim    *PrimitiveFunction // PrimitiveType
-// 	Frame   *FrameMap          // FrameType
-// 	ObjType string             // ObjectType
-// 	Obj     unsafe.Pointer     // ObjectType
-// }
-
 // Boolean constants
 
-var b_true = true
-var b_false = false
+type BooleanBox struct {
+	B bool
+}
 
-var True *Data = &Data{Type: BooleanType, Value: unsafe.Pointer(&b_true)}
-var False *Data = &Data{Type: BooleanType, Value: unsafe.Pointer(&b_false)}
+var b_true *BooleanBox = &BooleanBox{B: true}
+var b_false *BooleanBox = &BooleanBox{B: false}
+
+var LispTrue *Data = &Data{Type: BooleanType, Value: unsafe.Pointer(b_true)}
+var LispFalse *Data = &Data{Type: BooleanType, Value: unsafe.Pointer(b_false)}
 
 // Debug support
 
@@ -290,7 +279,7 @@ func EmptyCons() *Data {
 }
 
 func FrameWithValue(m *FrameMap) *Data {
-	return &Data{Type: FrameType, Value: unsafe.Pointer(&m)}
+	return &Data{Type: FrameType, Value: unsafe.Pointer(m)}
 }
 
 // func EmptyFrame() *Data {
@@ -307,9 +296,9 @@ func FloatWithValue(n float32) *Data {
 
 func BooleanWithValue(b bool) *Data {
 	if b {
-		return True
+		return LispTrue
 	} else {
-		return False
+		return LispFalse
 	}
 }
 
@@ -327,8 +316,7 @@ func NakedSymbolWithName(s string) *Data {
 }
 
 func NakedSymbolFrom(d *Data) *Data {
-	str := fmt.Sprintf("%s:", String(d))
-	return &Data{Type: SymbolType, Value: unsafe.Pointer(&str)}
+	return NakedSymbolWithName(StringValue(d))
 }
 
 func FunctionWithNameParamsBodyAndParent(name string, params *Data, body *Data, parentEnv *SymbolTableFrame) *Data {
@@ -366,7 +354,10 @@ func Car(d *Data) *Data {
 	}
 
 	if PairP(d) || AlistP(d) || DottedPairP(d) {
-		return ((*ConsCell)(d.Value)).Cdr
+		cell := ConsValue(d)
+		if cell != nil {
+			return cell.Car
+		}
 	}
 
 	return nil
@@ -378,7 +369,10 @@ func Cdr(d *Data) *Data {
 	}
 
 	if PairP(d) || AlistP(d) || DottedPairP(d) {
-		return ((*ConsCell)(d.Value)).Car
+		cell := ConsValue(d)
+		if cell != nil {
+			return cell.Cdr
+		}
 	}
 
 	return nil
@@ -434,7 +428,7 @@ func BooleanValue(d *Data) bool {
 	}
 
 	if BooleanP(d) {
-		return *((*bool)(d.Value))
+		return ((*BooleanBox)(d.Value)).B
 	}
 
 	return true
@@ -747,7 +741,28 @@ func IsEqual(d *Data, o *Data) bool {
 		return true
 	}
 
-	return *d == *o
+	switch TypeOf(d) {
+	case IntegerType:
+		return IntegerValue(d) == IntegerValue(o)
+	case FloatType:
+		return FloatValue(d) == FloatValue(o)
+	case BooleanType:
+		return BooleanValue(d) == BooleanValue(o)
+	case StringType:
+		return StringValue(d) == StringValue(o)
+	case SymbolType:
+		return StringValue(d) == StringValue(o)
+	case FunctionType:
+		return FunctionValue(d) == FunctionValue(o)
+	case MacroType:
+		return MacroValue(d) == MacroValue(o)
+	case PrimitiveType:
+		return PrimitiveValue(d) == PrimitiveValue(o)
+	case BoxedObjectType:
+		return (ObjectType(d) == ObjectType(o)) && (ObjectValue(d) == ObjectValue(o))
+	}
+
+	return false
 }
 
 func escapeQuotes(str string) string {
@@ -818,9 +833,9 @@ func String(d *Data) string {
 		}
 	case BooleanType:
 		if BooleanValue(d) {
-			return "#f"
-		} else {
 			return "#t"
+		} else {
+			return "#f"
 		}
 	case StringType:
 		return fmt.Sprintf(`"%s"`, escapeQuotes(StringValue(d)))
@@ -940,6 +955,7 @@ func evalHelper(d *Data, env *SymbolTableFrame, needFunction bool) (result *Data
 
 				var function *Data
 				function, err = evalHelper(Car(d), env, true)
+
 				if err != nil {
 					return
 				}
@@ -953,6 +969,7 @@ func evalHelper(d *Data, env *SymbolTableFrame, needFunction bool) (result *Data
 				}
 
 				args := Cdr(d)
+
 				result, err = Apply(function, args, env)
 				if err != nil {
 					err = errors.New(fmt.Sprintf("\nEvaling %s. %s", String(d), err))
@@ -1000,6 +1017,7 @@ func formatApply(function *Data, args *Data) string {
 	}
 	return fmt.Sprintf("Apply %s to %s", fname, String(args))
 }
+
 func Apply(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if function == nil {
 		err = errors.New("Nil when function expected.")
