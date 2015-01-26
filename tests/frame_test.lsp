@@ -144,6 +144,13 @@
                                 '(1 2 3)))}))
             (== (send f foo:) 42)))
 
-(describe keys_values
-          (== (keys {a: 1 b: 2 c: 3}) '(a: b: c:))
-          (== (values {a: 1 b: 2 c: 3}) '(1 2 3)))
+(describe keys_vals
+          (let ((f {a: 1 b: 2 c: 3})
+                (ks (keys f))
+                (vs (vals f)))
+            (== (not (memq a: ks)) #f)
+            (== (not (memq b: ks)) #f)
+            (== (not (memq c: ks)) #f)
+            (== (not (memq 1 vs)) #f)
+            (== (not (memq 2 vs)) #f)
+            (== (not (memq 3 vs)) #f)))
