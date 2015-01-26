@@ -24,7 +24,7 @@ func RegisterFramePrimitives() {
 	MakePrimitiveFunction("json->lisp", 1, JsonToLispImpl)
 	MakePrimitiveFunction("lisp->json", 1, LispToJsonImpl)
 	MakePrimitiveFunction("keys", 1, KeysImpl)
-	MakePrimitiveFunction("values", 1, ValuesImpl)
+	MakePrimitiveFunction("vals", 1, ValsImpl)
 }
 
 func MakeFrameImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -302,13 +302,13 @@ func KeysImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return ArrayToList(FrameValue(f).Keys()), nil
 }
 
-func ValuesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func ValsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f, err := Eval(Car(args), env)
 	if err != nil {
 		return
 	}
 	if !FrameP(f) {
-		err = ProcessError(fmt.Sprintf("values requires a frame as it's argument, but was given %s.", String(f)), env)
+		err = ProcessError(fmt.Sprintf("vals requires a frame as it's argument, but was given %s.", String(f)), env)
 		return
 	}
 
