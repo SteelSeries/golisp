@@ -31,12 +31,12 @@ func Repl() {
 		DebugEvalInDebugRepl = false
 		Global.CurrentCode = list.New()
 		inputp := ReadLine(&prompt)
-		fmt.Printf("inputp: %v\n", inputp)
+//		fmt.Printf("inputp: %v\n", inputp)
 		if inputp == nil {
 			QuitImpl(nil, nil)
 		} else {
 			input := *inputp
-			fmt.Printf("input: <%s>\n", inputp)
+//			fmt.Printf("input: <%s>\n", inputp)
 			if input != "" {
 				if input != lastInput {
 					AddHistory(input)
