@@ -990,7 +990,7 @@ func evalHelper(d *Data, env *SymbolTableFrame, needFunction bool) (result *Data
 		}
 	}
 	logResult(result, env)
-	if IsInteractive && !DebugEvalInDebugRepl {
+	if IsInteractive && !DebugEvalInDebugRepl && env.CurrentCode.Len() > 0 {
 		env.CurrentCode.Remove(env.CurrentCode.Front())
 	}
 	return result, nil
