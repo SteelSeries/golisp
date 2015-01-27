@@ -23,8 +23,8 @@ func RegisterFramePrimitives() {
 	MakePrimitiveFunction("clone", 1, CloneImpl)
 	MakePrimitiveFunction("json->lisp", 1, JsonToLispImpl)
 	MakePrimitiveFunction("lisp->json", 1, LispToJsonImpl)
-	MakePrimitiveFunction("keys", 1, KeysImpl)
-	MakePrimitiveFunction("vals", 1, ValsImpl)
+	MakePrimitiveFunction("frame-keys", 1, FrameKeysImpl)
+	MakePrimitiveFunction("frame-values", 1, FrameValuesImpl)
 }
 
 func MakeFrameImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -289,7 +289,7 @@ func LispToJsonImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 	return StringWithValue(LispWithFramesToJsonString(l)), nil
 }
 
-func KeysImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func FrameKeysImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f, err := Eval(Car(args), env)
 	if err != nil {
 		return
@@ -302,7 +302,7 @@ func KeysImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return ArrayToList(FrameValue(f).Keys()), nil
 }
 
-func ValsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func FrameValuesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f, err := Eval(Car(args), env)
 	if err != nil {
 		return
