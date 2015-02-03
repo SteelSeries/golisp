@@ -1,7 +1,14 @@
 (describe list-to-bytearray
+	;; Bytes
 	(== (list-to-bytearray '(1 2 3 4 5)) [1 2 3 4 5])
 	(== (list-to-bytearray '(255 64 83 2)) [255 64 83 2])
 	(== (list-to-bytearray (list)) [])
+
+	;; Bytearrays
+	(== (list-to-bytearray '([0 1 2] [3 4 5] [64 83 112])) [0 1 2 3 4 5 64 83 112])
+
+	;; Mixed
+	(== (list-to-bytearray '(0 [1 2] [3 4 5] 64 83 112)) [0 1 2 3 4 5 64 83 112])
 )
 
 (describe bytearray-to-list
@@ -66,6 +73,16 @@
 		(append-bytes a [6 7 8])
 		(== a [1 2 3 4 5])
 	)
+
+	;; Multiple bytearrays
+	(== (append-bytes [1 2 3 4 5] [] [] []) [1 2 3 4 5])
+	(== (append-bytes [1 2 3 4 5] [6 7 8] [9 10 11] [83 112]) [1 2 3 4 5 6 7 8 9 10 11 83 112])
+	;; The original should not be modified
+	(begin
+		(define a [1 2 3 4 5])
+		(append-bytes a [6 7 8] [9 10 11] [83 112])
+		(== a [1 2 3 4 5])
+	)	
 )
 
 (describe append-bytes!
