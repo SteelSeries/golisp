@@ -639,6 +639,22 @@ func IsEqual(d *Data, o *Data) bool {
 		return true
 	}
 
+	if ObjectP(d) && TypeOfObject(d) == "[]byte" && TypeOfObject(o) == "[]byte" {
+		dBytes := *(*[]byte)(ObjectValue(d))
+		oBytes := *(*[]byte)(ObjectValue(o))
+
+		if len(dBytes) != len(oBytes) {
+			return false
+		} else {
+			for i := 0; i < len(dBytes); i++ {
+				if dBytes[i] != oBytes[i] {
+					return false;
+				}
+			}
+		}
+		return true
+	}
+
 	return *d == *o
 }
 
