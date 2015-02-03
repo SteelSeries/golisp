@@ -116,6 +116,16 @@
 		(append-bytes! a [6 7 8])
 		(== a [1 2 3 4 5 6 7 8])
 	)
+
+	;; Multiple bytearrays
+	(== (append-bytes! [1 2 3 4 5] [] [] []) [1 2 3 4 5])
+	(== (append-bytes! [1 2 3 4 5] [6 7 8] [9 10 11] [83 112]) [1 2 3 4 5 6 7 8 9 10 11 83 112])
+	;; The original SHOULD be modified
+	(begin
+		(define a [1 2 3 4 5])
+		(append-bytes! a [6 7 8] [9 10 11] [83 112])
+		(== a [1 2 3 4 5 6 7 8 9 10 11 83 112])
+	)	
 )
 
 (describe take
