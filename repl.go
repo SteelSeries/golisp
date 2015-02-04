@@ -30,24 +30,31 @@ func Repl() {
 		DebugSingleStep = false
 		DebugEvalInDebugRepl = false
 		Global.CurrentCode = list.New()
-		input := *ReadLine(&prompt)
-		if input != "" {
-			if input != lastInput {
-				AddHistory(input)
-			}
-			lastInput = input
-			code, err := Parse(input)
-			if err != nil {
-				fmt.Printf("Error: %s\n", err)
-			} else {
-				d, err := Eval(code, Global)
+		inputp := ReadLine(&prompt)
+//		fmt.Printf("inputp: %v\n", inputp)
+		if inputp == nil {
+			QuitImpl(nil, nil)
+		} else {
+			input := *inputp
+//			fmt.Printf("input: <%s>\n", inputp)
+			if input != "" {
+				if input != lastInput {
+					AddHistory(input)
+				}
+				lastInput = input
+				code, err := Parse(input)
 				if err != nil {
-					fmt.Printf("Error in evaluation: %s\n", err)
-					if DebugOnError {
-						DebugRepl(DebugErrorEnv)
-					}
+					fmt.Printf("Error: %s\n", err)
 				} else {
-					fmt.Printf("==> %s\n", String(d))
+					d, err := Eval(code, Global)
+					if err != nil {
+						fmt.Printf("Error in evaluation: %s\n", err)
+						if DebugOnError {
+							DebugRepl(DebugErrorEnv)
+						}
+					} else {
+						fmt.Printf("==> %s\n", String(d))
+					}
 				}
 			}
 		}
