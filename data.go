@@ -741,6 +741,23 @@ func IsEqual(d *Data, o *Data) bool {
 		return true
 	}
 
+	// special case for byte arrays
+	if ObjectP(d) && TypeOfObject(d) == "[]byte" && TypeOfObject(o) == "[]byte" {
+		dBytes := *(*[]byte)(ObjectValue(d))
+		oBytes := *(*[]byte)(ObjectValue(o))
+
+		if len(dBytes) != len(oBytes) {
+			return false
+		} else {
+			for i := 0; i < len(dBytes); i++ {
+				if dBytes[i] != oBytes[i] {
+					return false
+				}
+			}
+		}
+		return true
+	}
+
 	switch TypeOf(d) {
 	case IntegerType:
 		return IntegerValue(d) == IntegerValue(o)
@@ -762,7 +779,7 @@ func IsEqual(d *Data, o *Data) bool {
 		return (ObjectType(d) == ObjectType(o)) && (ObjectValue(d) == ObjectValue(o))
 	}
 
-	return false
+	return *d == *o
 }
 
 func escapeQuotes(str string) string {
