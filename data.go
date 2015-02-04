@@ -742,7 +742,7 @@ func IsEqual(d *Data, o *Data) bool {
 	}
 
 	// special case for byte arrays
-	if ObjectP(d) && TypeOfObject(d) == "[]byte" && TypeOfObject(o) == "[]byte" {
+	if ObjectP(d) && ObjectType(d) == "[]byte" && ObjectType(o) == "[]byte" {
 		dBytes := *(*[]byte)(ObjectValue(d))
 		oBytes := *(*[]byte)(ObjectValue(o))
 
