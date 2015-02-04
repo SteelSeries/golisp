@@ -171,7 +171,7 @@ func MemqImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		}
 	}
 
-	return False, nil
+	return LispFalse, nil
 }
 
 func MempImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -197,5 +197,5 @@ func MempImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		}
 	}
 
-	return False, nil
+	return LispFalse, nil
 }

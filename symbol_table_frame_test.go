@@ -8,54 +8,54 @@
 package golisp
 
 import (
-    . "launchpad.net/gocheck"
+	. "launchpad.net/gocheck"
 )
 
 type SymbolTableFrameSuite struct {
-    frame *SymbolTableFrame
+	frame *SymbolTableFrame
 }
 
 var _ = Suite(&SymbolTableFrameSuite{})
 
 func (s *SymbolTableFrameSuite) SetUpTest(c *C) {
-    s.frame = NewSymbolTableFrameBelow(nil)
+	s.frame = NewSymbolTableFrameBelow(nil)
 }
 
 func (s *SymbolTableFrameSuite) TestFetching(c *C) {
-    sym := SymbolWithName("test")
-    b := BindingWithSymbolAndValue(sym, IntegerWithValue(42))
-    s.frame.SetBindingAt("test", b)
+	sym := SymbolWithName("test")
+	b := BindingWithSymbolAndValue(sym, IntegerWithValue(42))
+	s.frame.SetBindingAt("test", b)
 
-    fetched, found := s.frame.BindingNamed("test")
-    c.Assert(fetched, NotNil)
-    c.Assert(found, Equals, true)
+	fetched, found := s.frame.BindingNamed("test")
+	c.Assert(fetched, NotNil)
+	c.Assert(found, Equals, true)
 
-    c.Assert(StringValue(fetched.Sym), Equals, "test")
-    c.Assert(IntegerValue(fetched.Val), Equals, int64(42))
+	c.Assert(StringValue(fetched.Sym), Equals, "test")
+	c.Assert(IntegerValue(fetched.Val), Equals, int64(42))
 }
 
 func (s *SymbolTableFrameSuite) TestInterning(c *C) {
-    s.frame.Intern("test")
-    sym, found := s.frame.findSymbol("test")
-    c.Assert(found, Equals, true)
-    c.Assert(TypeOf(sym), Equals, SymbolType)
-    c.Assert(StringValue(sym), Equals, "test")
+	s.frame.Intern("test")
+	sym, found := s.frame.findSymbol("test")
+	c.Assert(found, Equals, true)
+	c.Assert(int(TypeOf(sym)), Equals, SymbolType)
+	c.Assert(StringValue(sym), Equals, "test")
 }
 
 func (s *SymbolTableFrameSuite) TestBinding(c *C) {
-    sym := s.frame.Intern("test")
-    s.frame.BindTo(sym, IntegerWithValue(42))
+	sym := s.frame.Intern("test")
+	s.frame.BindTo(sym, IntegerWithValue(42))
 
-    binding, found := s.frame.Bindings["test"]
-    c.Assert(found, Equals, true)
-    c.Assert(binding, NotNil)
+	binding, found := s.frame.Bindings["test"]
+	c.Assert(found, Equals, true)
+	c.Assert(binding, NotNil)
 }
 
 func (s *SymbolTableFrameSuite) TestSymbolValue(c *C) {
-    sym := s.frame.Intern("test")
-    s.frame.BindTo(sym, IntegerWithValue(42))
-    val := s.frame.ValueOf(sym)
-    c.Assert(val, NotNil)
-    c.Assert(TypeOf(val), Equals, IntegerType)
-    c.Assert(IntegerValue(val), Equals, int64(42))
+	sym := s.frame.Intern("test")
+	s.frame.BindTo(sym, IntegerWithValue(42))
+	val := s.frame.ValueOf(sym)
+	c.Assert(val, NotNil)
+	c.Assert(int(TypeOf(val)), Equals, IntegerType)
+	c.Assert(IntegerValue(val), Equals, int64(42))
 }

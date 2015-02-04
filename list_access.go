@@ -30,30 +30,6 @@ func WalkList(d *Data, path string) *Data {
 	return c
 }
 
-func Car(d *Data) *Data {
-	if d == nil {
-		return nil
-	}
-
-	if PairP(d) || AlistP(d) || DottedPairP(d) {
-		return d.Car
-	}
-
-	return nil
-}
-
-func Cdr(d *Data) *Data {
-	if d == nil {
-		return nil
-	}
-
-	if PairP(d) || AlistP(d) || DottedPairP(d) {
-		return d.Cdr
-	}
-
-	return nil
-}
-
 // Cxxr
 
 func Caar(d *Data) *Data {

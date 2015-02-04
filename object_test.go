@@ -25,18 +25,18 @@ type TestStruct struct {
 func (s *ObjectAtomSuite) TestObject(c *C) {
 	obj := &TestStruct{D: 5}
 	s.o = ObjectWithTypeAndValue("TestStruct", unsafe.Pointer(obj))
-	c.Assert(s.o.ObjType, Equals, "TestStruct")
+	c.Assert(ObjectType(s.o), Equals, "TestStruct")
 	c.Assert((*TestStruct)(ObjectValue(s.o)), Equals, obj)
 	c.Assert((*TestStruct)(ObjectValue(s.o)).D, Equals, 5)
 }
 
 func (s *ObjectAtomSuite) TestObjectForNil(c *C) {
 	c.Assert(ObjectValue(nil), Equals, unsafe.Pointer(nil))
-	c.Assert(TypeOfObject(nil), Equals, "")
+	c.Assert(ObjectType(nil), Equals, "")
 }
 
 func (s *ObjectAtomSuite) TestObjectForNonObject(c *C) {
 	o := IntegerWithValue(0)
 	c.Assert(ObjectValue(o), Equals, unsafe.Pointer(nil))
-	c.Assert(TypeOfObject(o), Equals, "")
+	c.Assert(ObjectType(o), Equals, "")
 }

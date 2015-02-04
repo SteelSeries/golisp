@@ -99,7 +99,7 @@ func LispWithFramesToJson(d *Data) (result interface{}) {
 
 	if FrameP(d) {
 		dict := make(map[string]interface{}, Length(d))
-		for k, v := range *d.Frame {
+		for k, v := range *FrameValue(d) {
 			if !FunctionP(v) {
 				dict[strings.TrimRight(k, ":")] = LispWithFramesToJson(v)
 			}
