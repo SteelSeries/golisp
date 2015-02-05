@@ -37,7 +37,7 @@ func SetCarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if err != nil {
 		return
 	}
-	pair.Car = value
+	ConsValue(pair).Car = value
 	return value, nil
 }
 
@@ -50,7 +50,8 @@ func SetCdrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if err != nil {
 		return
 	}
-	pair.Cdr = value
+	ConsValue(pair).Cdr = value
+
 	return value, nil
 }
 
@@ -71,7 +72,7 @@ func SetNthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	for i := IntegerValue(index); i > 1; l, i = Cdr(l), i-1 {
 	}
 	if !NilP(l) {
-		l.Car = value
+		ConsValue(l).Car = value
 	}
 
 	return value, nil

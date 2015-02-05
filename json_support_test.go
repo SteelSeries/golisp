@@ -103,66 +103,66 @@ func (s *JsonLispSuite) TestLispToJsonNil(c *C) {
 	c.Assert(data, Equals, `""`)
 }
 
-func (s *JsonLispSuite) TestSimpleJsonTransformation(c *C) {
-	jsonData := Acons(StringWithValue("map"), Acons(StringWithValue("f1"), InternalMakeList(IntegerWithValue(47), IntegerWithValue(75)), Acons(StringWithValue("f2"), IntegerWithValue(185), nil)), Acons(StringWithValue("f3"), IntegerWithValue(85), nil))
+// func (s *JsonLispSuite) TestSimpleJsonTransformation(c *C) {
+// 	jsonData := Acons(StringWithValue("map"), Acons(StringWithValue("f1"), InternalMakeList(IntegerWithValue(47), IntegerWithValue(75)), Acons(StringWithValue("f2"), IntegerWithValue(185), nil)), Acons(StringWithValue("f3"), IntegerWithValue(85), nil))
 
-	xform, err := Parse(`(lambda (node parent) (acons "f3" 42 parent))`)
-	c.Assert(err, IsNil)
-	parent := jsonData
-	pair, _ := Assoc(StringWithValue("f3"), jsonData)
-	_, err = TransformJson(xform, Cdr(pair), parent)
-	c.Assert(err, IsNil)
+// 	xform, err := Parse(`(lambda (node parent) (acons "f3" 42 parent))`)
+// 	c.Assert(err, IsNil)
+// 	parent := jsonData
+// 	pair, _ := Assoc(StringWithValue("f3"), jsonData)
+// 	_, err = TransformJson(xform, Cdr(pair), parent)
+// 	c.Assert(err, IsNil)
 
-	var newNode *Data
-	newNode, err = Assoc(StringWithValue("f3"), jsonData)
-	c.Assert(err, IsNil)
-	c.Assert(IntegerValue(Cdr(newNode)), Equals, int64(42))
-}
+// 	var newNode *Data
+// 	newNode, err = Assoc(StringWithValue("f3"), jsonData)
+// 	c.Assert(err, IsNil)
+// 	c.Assert(IntegerValue(Cdr(newNode)), Equals, int64(42))
+// }
 
-func (s *JsonLispSuite) TestSimpleJsonTransformationReturnsNewValue(c *C) {
-	jsonData := Acons(StringWithValue("map"), Acons(StringWithValue("f1"), InternalMakeList(IntegerWithValue(47), IntegerWithValue(75)), Acons(StringWithValue("f2"), IntegerWithValue(185), nil)), Acons(StringWithValue("f3"), IntegerWithValue(85), nil))
+// func (s *JsonLispSuite) TestSimpleJsonTransformationReturnsNewValue(c *C) {
+// 	jsonData := Acons(StringWithValue("map"), Acons(StringWithValue("f1"), InternalMakeList(IntegerWithValue(47), IntegerWithValue(75)), Acons(StringWithValue("f2"), IntegerWithValue(185), nil)), Acons(StringWithValue("f3"), IntegerWithValue(85), nil))
 
-	xform, err := Parse(`(lambda (node parent) (+ node 5))`)
-	c.Assert(err, IsNil)
-	parent := jsonData
-	pair, _ := Assoc(StringWithValue("f3"), jsonData)
-	newValue, err := TransformJson(xform, Cdr(pair), parent)
-	c.Assert(err, IsNil)
+// 	xform, err := Parse(`(lambda (node parent) (+ node 5))`)
+// 	c.Assert(err, IsNil)
+// 	parent := jsonData
+// 	pair, _ := Assoc(StringWithValue("f3"), jsonData)
+// 	newValue, err := TransformJson(xform, Cdr(pair), parent)
+// 	c.Assert(err, IsNil)
 
-	c.Assert(IntegerValue(newValue), Equals, int64(90))
-}
+// 	c.Assert(IntegerValue(newValue), Equals, int64(90))
+// }
 
-func (s *JsonLispSuite) TestMoreComplexJsonTransformation(c *C) {
-	jsonData := Acons(StringWithValue("map"), Acons(StringWithValue("f1"), InternalMakeList(IntegerWithValue(47), IntegerWithValue(75)), Acons(StringWithValue("f2"), IntegerWithValue(185), nil)), Acons(StringWithValue("f3"), IntegerWithValue(85), nil))
+// func (s *JsonLispSuite) TestMoreComplexJsonTransformation(c *C) {
+// 	jsonData := Acons(StringWithValue("map"), Acons(StringWithValue("f1"), InternalMakeList(IntegerWithValue(47), IntegerWithValue(75)), Acons(StringWithValue("f2"), IntegerWithValue(185), nil)), Acons(StringWithValue("f3"), IntegerWithValue(85), nil))
 
-	xform, err := Parse(`(lambda (node parent) (acons "f3" '(1 2 3) parent))`)
-	c.Assert(err, IsNil)
-	parent := jsonData
-	pair, _ := Assoc(StringWithValue("f3"), jsonData)
-	_, err = TransformJson(xform, Cdr(pair), parent)
-	c.Assert(err, IsNil)
+// 	xform, err := Parse(`(lambda (node parent) (acons "f3" '(1 2 3) parent))`)
+// 	c.Assert(err, IsNil)
+// 	parent := jsonData
+// 	pair, _ := Assoc(StringWithValue("f3"), jsonData)
+// 	_, err = TransformJson(xform, Cdr(pair), parent)
+// 	c.Assert(err, IsNil)
 
-	var newNode *Data
-	newNode, err = Assoc(StringWithValue("f3"), jsonData)
-	c.Assert(err, IsNil)
-	c.Assert(IsEqual(Cdr(newNode), InternalMakeList(IntegerWithValue(1), IntegerWithValue(2), IntegerWithValue(3))), Equals, true)
-}
+// 	var newNode *Data
+// 	newNode, err = Assoc(StringWithValue("f3"), jsonData)
+// 	c.Assert(err, IsNil)
+// 	c.Assert(IsEqual(Cdr(newNode), InternalMakeList(IntegerWithValue(1), IntegerWithValue(2), IntegerWithValue(3))), Equals, true)
+// }
 
-func (s *JsonLispSuite) TestEvenMoreComplexJsonTransformation(c *C) {
-	jsonData := Acons(StringWithValue("map"), Acons(StringWithValue("f1"), InternalMakeList(IntegerWithValue(47), IntegerWithValue(75)), Acons(StringWithValue("f2"), IntegerWithValue(185), nil)), Acons(StringWithValue("f3"), IntegerWithValue(85), nil))
+// func (s *JsonLispSuite) TestEvenMoreComplexJsonTransformation(c *C) {
+// 	jsonData := Acons(StringWithValue("map"), Acons(StringWithValue("f1"), InternalMakeList(IntegerWithValue(47), IntegerWithValue(75)), Acons(StringWithValue("f2"), IntegerWithValue(185), nil)), Acons(StringWithValue("f3"), IntegerWithValue(85), nil))
 
-	xform, err := Parse(`(lambda (node parent) (acons "f3" (acons "a" (+ node 1) nil) parent))`)
-	c.Assert(err, IsNil)
-	parent := jsonData
-	pair, _ := Assoc(StringWithValue("f3"), jsonData)
-	_, err = TransformJson(xform, Cdr(pair), parent)
-	c.Assert(err, IsNil)
+// 	xform, err := Parse(`(lambda (node parent) (acons "f3" (acons "a" (+ node 1) nil) parent))`)
+// 	c.Assert(err, IsNil)
+// 	parent := jsonData
+// 	pair, _ := Assoc(StringWithValue("f3"), jsonData)
+// 	_, err = TransformJson(xform, Cdr(pair), parent)
+// 	c.Assert(err, IsNil)
 
-	var newNode *Data
-	var newerNode *Data
-	newNode, err = Assoc(StringWithValue("f3"), jsonData)
-	c.Assert(err, IsNil)
-	newerNode, err = Assoc(StringWithValue("a"), Cdr(newNode))
-	c.Assert(err, IsNil)
-	c.Assert(IntegerValue(Cdr(newerNode)), Equals, int64(86))
-}
+// 	var newNode *Data
+// 	var newerNode *Data
+// 	newNode, err = Assoc(StringWithValue("f3"), jsonData)
+// 	c.Assert(err, IsNil)
+// 	newerNode, err = Assoc(StringWithValue("a"), Cdr(newNode))
+// 	c.Assert(err, IsNil)
+// 	c.Assert(IntegerValue(Cdr(newerNode)), Equals, int64(86))
+// }
