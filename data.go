@@ -27,29 +27,36 @@ const (
 	FunctionType
 	MacroType
 	PrimitiveType
-	ObjectType
+	BoxedObjectType
 	FrameType
 )
 
+type ConsCell struct {
+	Car *Data
+	Cdr *Data
+}
+
+type BoxedObject struct {
+	ObjType string
+	Obj     unsafe.Pointer
+}
+
 type Data struct {
-	Type    int                // data type
-	Car     *Data              // ConsCellType & AlistType
-	Cdr     *Data              // ConsCellType & AlistType
-	String  string             // StringType & SymbolType
-	Integer int64              // IntegerType & BooleanType
-	Float   float32            // FloatType
-	Func    *Function          // FunctionType
-	Mac     *Macro             // MacroType
-	Prim    *PrimitiveFunction // PrimitiveType
-	Frame   *FrameMap          // FrameType
-	ObjType string             // ObjectType
-	Obj     unsafe.Pointer     // ObjectType
+	Type  uint8
+	Value unsafe.Pointer
 }
 
 // Boolean constants
 
-var True *Data = &Data{Type: BooleanType, Integer: 1}
-var False *Data = &Data{Type: BooleanType, Integer: 0}
+type BooleanBox struct {
+	B bool
+}
+
+var b_true bool = true
+var b_false bool = false
+
+var LispTrue *Data = &Data{Type: BooleanType, Value: unsafe.Pointer(&b_true)}
+var LispFalse *Data = &Data{Type: BooleanType, Value: unsafe.Pointer(&b_false)}
 
 // Debug support
 
@@ -63,11 +70,11 @@ var IsInteractive bool = false
 var DebugReturnValue *Data = nil
 var DebugOnEntry *set.Set = set.New()
 
-func TypeOf(d *Data) int {
+func TypeOf(d *Data) uint8 {
 	return d.Type
 }
 
-func TypeName(t int) string {
+func TypeName(t uint8) string {
 	switch t {
 	case ConsCellType:
 		return "List"
@@ -93,7 +100,7 @@ func TypeName(t int) string {
 		return "Primitive"
 	case FrameType:
 		return "Frame"
-	case ObjectType:
+	case BoxedObjectType:
 		return "Go Object"
 	default:
 		return "Unknown"
@@ -139,7 +146,7 @@ func SymbolP(d *Data) bool {
 }
 
 func NakedP(d *Data) bool {
-	return d != nil && TypeOf(d) == SymbolType && strings.HasSuffix(d.String, ":")
+	return d != nil && TypeOf(d) == SymbolType && strings.HasSuffix(StringValue(d), ":")
 }
 
 func StringP(d *Data) bool {
@@ -159,7 +166,7 @@ func NumberP(d *Data) bool {
 }
 
 func ObjectP(d *Data) bool {
-	return d != nil && TypeOf(d) == ObjectType
+	return d != nil && TypeOf(d) == BoxedObjectType
 }
 
 func FunctionP(d *Data) bool {
@@ -175,7 +182,8 @@ func FrameP(d *Data) bool {
 }
 
 func Cons(car *Data, cdr *Data) *Data {
-	return &Data{Type: ConsCellType, Car: car, Cdr: cdr, String: "", Integer: 0, Func: nil, Prim: nil}
+	cell := ConsCell{Car: car, Cdr: cdr}
+	return &Data{Type: ConsCellType, Value: unsafe.Pointer(&cell)}
 }
 
 func AppendBang(l *Data, value *Data) *Data {
@@ -184,10 +192,10 @@ func AppendBang(l *Data, value *Data) *Data {
 	}
 
 	var c *Data
-	for c = l; NotNilP(c.Cdr); c = Cdr(c) {
+	for c = l; NotNilP(Cdr(c)); c = Cdr(c) {
 	}
 
-	c.Cdr = Cons(value, nil)
+	((*ConsCell)(c.Value)).Cdr = Cons(value, nil)
 
 	return l
 }
@@ -198,10 +206,10 @@ func AppendBangList(l *Data, otherList *Data) *Data {
 	}
 
 	var c *Data
-	for c = l; NotNilP(c.Cdr); c = Cdr(c) {
+	for c = l; NotNilP(Cdr(c)); c = Cdr(c) {
 	}
 
-	c.Cdr = otherList
+	((*ConsCell)(c.Value)).Cdr = otherList
 
 	return l
 }
@@ -213,10 +221,10 @@ func Append(l *Data, value *Data) *Data {
 
 	var newList = Copy(l)
 	var c *Data
-	for c = newList; NotNilP(c.Cdr); c = Cdr(c) {
+	for c = newList; NotNilP(Cdr(c)); c = Cdr(c) {
 	}
 
-	c.Cdr = Cons(value, nil)
+	((*ConsCell)(c.Value)).Cdr = Cons(value, nil)
 
 	return newList
 }
@@ -228,10 +236,10 @@ func AppendList(l *Data, otherList *Data) *Data {
 
 	var newList = Copy(l)
 	var c *Data
-	for c = newList; NotNilP(c.Cdr); c = Cdr(c) {
+	for c = newList; NotNilP(Cdr(c)); c = Cdr(c) {
 	}
 
-	c.Cdr = otherList
+	((*ConsCell)(c.Value)).Cdr = otherList
 
 	return newList
 }
@@ -239,10 +247,12 @@ func AppendList(l *Data, otherList *Data) *Data {
 func Acons(car *Data, cdr *Data, alist *Data) *Data {
 	pair, _ := Assoc(car, alist)
 	if NilP(pair) {
-		cell := &Data{Type: AlistCellType, Car: car, Cdr: cdr, String: "", Integer: 0, Func: nil, Prim: nil}
-		return &Data{Type: AlistType, Car: cell, Cdr: alist, String: "", Integer: 0, Func: nil, Prim: nil}
+		p := ConsCell{Car: car, Cdr: cdr}
+		cell := Data{Type: AlistCellType, Value: unsafe.Pointer(&p)}
+		conscell := ConsCell{Car: &cell, Cdr: alist}
+		return &Data{Type: AlistType, Value: unsafe.Pointer(&conscell)}
 	} else {
-		pair.Cdr = cdr
+		((*ConsCell)(pair.Value)).Cdr = cdr
 		return alist
 	}
 }
@@ -269,7 +279,7 @@ func EmptyCons() *Data {
 }
 
 func FrameWithValue(m *FrameMap) *Data {
-	return &Data{Type: FrameType, Frame: m}
+	return &Data{Type: FrameType, Value: unsafe.Pointer(m)}
 }
 
 // func EmptyFrame() *Data {
@@ -277,51 +287,95 @@ func FrameWithValue(m *FrameMap) *Data {
 // }
 
 func IntegerWithValue(n int64) *Data {
-	return &Data{Type: IntegerType, Integer: n}
+	return &Data{Type: IntegerType, Value: unsafe.Pointer(&n)}
 }
 
 func FloatWithValue(n float32) *Data {
-	return &Data{Type: FloatType, Float: n}
+	return &Data{Type: FloatType, Value: unsafe.Pointer(&n)}
 }
 
 func BooleanWithValue(b bool) *Data {
 	if b {
-		return True
+		return LispTrue
 	} else {
-		return False
+		return LispFalse
 	}
 }
 
 func StringWithValue(s string) *Data {
-	return &Data{Type: StringType, String: s}
+	return &Data{Type: StringType, Value: unsafe.Pointer(&s)}
 }
 
 func SymbolWithName(s string) *Data {
-	return &Data{Type: SymbolType, String: s}
+	return &Data{Type: SymbolType, Value: unsafe.Pointer(&s)}
 }
 
 func NakedSymbolWithName(s string) *Data {
-	return &Data{Type: SymbolType, String: fmt.Sprintf("%s:", s)}
+	str := fmt.Sprintf("%s:", s)
+	return &Data{Type: SymbolType, Value: unsafe.Pointer(&str)}
 }
 
 func NakedSymbolFrom(d *Data) *Data {
-	return &Data{Type: SymbolType, String: fmt.Sprintf("%s:", String(d))}
+	return NakedSymbolWithName(StringValue(d))
 }
 
 func FunctionWithNameParamsBodyAndParent(name string, params *Data, body *Data, parentEnv *SymbolTableFrame) *Data {
-	return &Data{Type: FunctionType, Func: MakeFunction(name, params, body, parentEnv)}
+	return &Data{Type: FunctionType, Value: unsafe.Pointer(MakeFunction(name, params, body, parentEnv))}
 }
 
 func MacroWithNameParamsBodyAndParent(name string, params *Data, body *Data, parentEnv *SymbolTableFrame) *Data {
-	return &Data{Type: MacroType, Mac: MakeMacro(name, params, body, parentEnv)}
+	return &Data{Type: MacroType, Value: unsafe.Pointer(MakeMacro(name, params, body, parentEnv))}
 }
 
 func PrimitiveWithNameAndFunc(name string, f *PrimitiveFunction) *Data {
-	return &Data{Type: PrimitiveType, Prim: f}
+	return &Data{Type: PrimitiveType, Value: unsafe.Pointer(f)}
 }
 
 func ObjectWithTypeAndValue(typeName string, o unsafe.Pointer) *Data {
-	return &Data{Type: ObjectType, ObjType: typeName, Obj: o}
+	bo := BoxedObject{ObjType: typeName, Obj: o}
+	return &Data{Type: BoxedObjectType, Value: unsafe.Pointer(&bo)}
+}
+
+func ConsValue(d *Data) *ConsCell {
+	if d == nil {
+		return nil
+	}
+
+	if PairP(d) || AlistP(d) || DottedPairP(d) {
+		return (*ConsCell)(d.Value)
+	}
+
+	return nil
+}
+
+func Car(d *Data) *Data {
+	if d == nil {
+		return nil
+	}
+
+	if PairP(d) || AlistP(d) || DottedPairP(d) {
+		cell := ConsValue(d)
+		if cell != nil {
+			return cell.Car
+		}
+	}
+
+	return nil
+}
+
+func Cdr(d *Data) *Data {
+	if d == nil {
+		return nil
+	}
+
+	if PairP(d) || AlistP(d) || DottedPairP(d) {
+		cell := ConsValue(d)
+		if cell != nil {
+			return cell.Cdr
+		}
+	}
+
+	return nil
 }
 
 func IntegerValue(d *Data) int64 {
@@ -330,11 +384,11 @@ func IntegerValue(d *Data) int64 {
 	}
 
 	if IntegerP(d) {
-		return d.Integer
+		return *((*int64)(d.Value))
 	}
 
 	if FloatP(d) {
-		return int64(d.Float)
+		return int64(*((*float32)(d.Value)))
 	}
 
 	return 0
@@ -346,11 +400,11 @@ func FloatValue(d *Data) float32 {
 	}
 
 	if FloatP(d) {
-		return d.Float
+		return *((*float32)(d.Value))
 	}
 
 	if IntegerP(d) {
-		return float32(d.Integer)
+		return float32(*((*int64)(d.Value)))
 	}
 
 	return 0
@@ -362,7 +416,7 @@ func StringValue(d *Data) string {
 	}
 
 	if StringP(d) || SymbolP(d) {
-		return d.String
+		return *((*string)(d.Value))
 	}
 
 	return ""
@@ -374,7 +428,7 @@ func BooleanValue(d *Data) bool {
 	}
 
 	if BooleanP(d) {
-		return d.Integer != 0
+		return *((*bool)(d.Value))
 	}
 
 	return true
@@ -386,19 +440,55 @@ func FrameValue(d *Data) *FrameMap {
 	}
 
 	if FrameP(d) {
-		return d.Frame
+		return (*FrameMap)(d.Value)
 	}
 
 	return nil
 }
 
-func TypeOfObject(d *Data) (oType string) {
+func FunctionValue(d *Data) *Function {
+	if d == nil {
+		return nil
+	}
+
+	if d.Type == FunctionType {
+		return (*Function)(d.Value)
+	}
+
+	return nil
+}
+
+func MacroValue(d *Data) *Macro {
+	if d == nil {
+		return nil
+	}
+
+	if d.Type == MacroType {
+		return (*Macro)(d.Value)
+	}
+
+	return nil
+}
+
+func PrimitiveValue(d *Data) *PrimitiveFunction {
+	if d == nil {
+		return nil
+	}
+
+	if d.Type == PrimitiveType {
+		return (*PrimitiveFunction)(d.Value)
+	}
+
+	return nil
+}
+
+func ObjectType(d *Data) (oType string) {
 	if d == nil {
 		return
 	}
 
 	if ObjectP(d) {
-		return d.ObjType
+		return (*((*BoxedObject)(d.Value))).ObjType
 	}
 
 	return
@@ -410,10 +500,22 @@ func ObjectValue(d *Data) (p unsafe.Pointer) {
 	}
 
 	if ObjectP(d) {
-		return d.Obj
+		return (*((*BoxedObject)(d.Value))).Obj
 	}
 
 	return
+}
+
+func BoxedObjectValue(d *Data) *BoxedObject {
+	if d == nil {
+		return nil
+	}
+
+	if ObjectP(d) {
+		return (*BoxedObject)(d.Value)
+	}
+
+	return nil
 }
 
 func Length(d *Data) int {
@@ -422,11 +524,11 @@ func Length(d *Data) int {
 	}
 
 	if ListP(d) || AlistP(d) {
-		return 1 + Length(d.Cdr)
+		return 1 + Length(Cdr(d))
 	}
 
 	if FrameP(d) {
-		return len(*d.Frame)
+		return len(*FrameValue(d))
 	}
 
 	return 0
@@ -567,7 +669,7 @@ func Copy(d *Data) *Data {
 	case FrameType:
 		{
 			m := make(FrameMap)
-			for k, v := range *d.Frame {
+			for k, v := range *(FrameValue(d)) {
 				m[k] = Copy(v)
 			}
 			return FrameWithValue(&m)
@@ -628,15 +730,53 @@ func IsEqual(d *Data, o *Data) bool {
 	}
 
 	if FrameP(d) {
-		if len(*d.Frame) != len(*o.Frame) {
+		if len(*(FrameValue(d))) != len(*(FrameValue(o))) {
 			return false
 		}
-		for k, v := range *d.Frame {
-			if !IsEqual(v, (*o.Frame)[k]) {
+		for k, v := range *FrameValue(d) {
+			if !IsEqual(v, (*(FrameValue(o)))[k]) {
 				return false
 			}
 		}
 		return true
+	}
+
+	// special case for byte arrays
+	if ObjectP(d) && ObjectType(d) == "[]byte" && ObjectType(o) == "[]byte" {
+		dBytes := *(*[]byte)(ObjectValue(d))
+		oBytes := *(*[]byte)(ObjectValue(o))
+
+		if len(dBytes) != len(oBytes) {
+			return false
+		} else {
+			for i := 0; i < len(dBytes); i++ {
+				if dBytes[i] != oBytes[i] {
+					return false
+				}
+			}
+		}
+		return true
+	}
+
+	switch TypeOf(d) {
+	case IntegerType:
+		return IntegerValue(d) == IntegerValue(o)
+	case FloatType:
+		return FloatValue(d) == FloatValue(o)
+	case BooleanType:
+		return BooleanValue(d) == BooleanValue(o)
+	case StringType:
+		return StringValue(d) == StringValue(o)
+	case SymbolType:
+		return StringValue(d) == StringValue(o)
+	case FunctionType:
+		return FunctionValue(d) == FunctionValue(o)
+	case MacroType:
+		return MacroValue(d) == MacroValue(o)
+	case PrimitiveType:
+		return PrimitiveValue(d) == PrimitiveValue(o)
+	case BoxedObjectType:
+		return (ObjectType(d) == ObjectType(o)) && (ObjectValue(d) == ObjectValue(o))
 	}
 
 	return *d == *o
@@ -699,45 +839,45 @@ func String(d *Data) string {
 	case AlistCellType:
 		return fmt.Sprintf("(%s . %s)", String(Car(d)), String(Cdr(d)))
 	case IntegerType:
-		return fmt.Sprintf("%d", d.Integer)
+		return fmt.Sprintf("%d", IntegerValue(d))
 	case FloatType:
 		{
-			raw := fmt.Sprintf("%g", d.Float)
+			raw := fmt.Sprintf("%g", FloatValue(d))
 			if strings.ContainsRune(raw, '.') {
 				return raw
 			}
 			return fmt.Sprintf("%s.0", raw)
 		}
 	case BooleanType:
-		if d.Integer == 0 {
-			return "#f"
-		} else {
+		if BooleanValue(d) {
 			return "#t"
+		} else {
+			return "#f"
 		}
 	case StringType:
-		return fmt.Sprintf(`"%s"`, escapeQuotes(d.String))
+		return fmt.Sprintf(`"%s"`, escapeQuotes(StringValue(d)))
 	case SymbolType:
-		return d.String
+		return StringValue(d)
 	case FunctionType:
-		return fmt.Sprintf("<function: %s>", d.Func.Name)
+		return fmt.Sprintf("<function: %s>", FunctionValue(d).Name)
 	case MacroType:
-		return fmt.Sprintf("<macro: %s>", d.Mac.Name)
+		return fmt.Sprintf("<macro: %s>", MacroValue(d).Name)
 	case PrimitiveType:
-		return d.Prim.String()
-	case ObjectType:
-		if d.ObjType == "[]byte" {
-			bytes := (*[]byte)(d.Obj)
+		return PrimitiveValue(d).String()
+	case BoxedObjectType:
+		if ObjectType(d) == "[]byte" {
+			bytes := (*[]byte)(ObjectValue(d))
 			contents := make([]string, 0, len(*bytes))
 			for _, b := range *bytes {
 				contents = append(contents, fmt.Sprintf("%d", b))
 			}
 			return fmt.Sprintf("[%s]", strings.Join(contents, " "))
 		} else {
-			return fmt.Sprintf("<opaque Go object of type %s : 0x%x>", d.ObjType, (*uint64)(d.Obj))
+			return fmt.Sprintf("<opaque Go object of type %s : 0x%x>", ObjectType(d), (*uint64)(ObjectValue(d)))
 		}
 	case FrameType:
-		pairs := make([]string, 0, len(*d.Frame))
-		for key, val := range *d.Frame {
+		pairs := make([]string, 0, len(*FrameValue(d)))
+		for key, val := range *FrameValue(d) {
 			var valString string
 			if FrameP(val) {
 				valString = "{...}"
@@ -754,7 +894,7 @@ func String(d *Data) string {
 
 func PrintString(d *Data) string {
 	if StringP(d) {
-		return d.String
+		return StringValue(d)
 	} else {
 		return String(d)
 	}
@@ -832,6 +972,7 @@ func evalHelper(d *Data, env *SymbolTableFrame, needFunction bool) (result *Data
 
 				var function *Data
 				function, err = evalHelper(Car(d), env, true)
+
 				if err != nil {
 					return
 				}
@@ -840,11 +981,12 @@ func evalHelper(d *Data, env *SymbolTableFrame, needFunction bool) (result *Data
 					return
 				}
 
-				if !DebugSingleStep && TypeOf(function) == FunctionType && DebugOnEntry.Has(function.Func.Name) {
+				if !DebugSingleStep && TypeOf(function) == FunctionType && DebugOnEntry.Has(FunctionValue(function).Name) {
 					DebugRepl(env)
 				}
 
 				args := Cdr(d)
+
 				result, err = Apply(function, args, env)
 				if err != nil {
 					err = errors.New(fmt.Sprintf("\nEvaling %s. %s", String(d), err))
@@ -865,7 +1007,7 @@ func evalHelper(d *Data, env *SymbolTableFrame, needFunction bool) (result *Data
 		}
 	}
 	logResult(result, env)
-	if IsInteractive && !DebugEvalInDebugRepl {
+	if IsInteractive && !DebugEvalInDebugRepl && env.CurrentCode.Len() > 0 {
 		env.CurrentCode.Remove(env.CurrentCode.Front())
 	}
 	return result, nil
@@ -884,11 +1026,11 @@ func formatApply(function *Data, args *Data) string {
 
 	switch function.Type {
 	case FunctionType:
-		fname = function.Func.Name
+		fname = FunctionValue(function).Name
 	case MacroType:
-		fname = function.Mac.Name
+		fname = MacroValue(function).Name
 	case PrimitiveType:
-		fname = function.Prim.Name
+		fname = PrimitiveValue(function).Name
 	}
 	return fmt.Sprintf("Apply %s to %s", fname, String(args))
 }
@@ -901,14 +1043,14 @@ func Apply(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err
 	switch function.Type {
 	case FunctionType:
 		if env.HasFrame() {
-			result, err = function.Func.ApplyWithFrame(args, env, env.Frame)
+			result, err = FunctionValue(function).ApplyWithFrame(args, env, env.Frame)
 		} else {
-			result, err = function.Func.Apply(args, env)
+			result, err = FunctionValue(function).Apply(args, env)
 		}
 	case MacroType:
-		result, err = function.Mac.Apply(args, env)
+		result, err = MacroValue(function).Apply(args, env)
 	case PrimitiveType:
-		result, err = function.Prim.Apply(args, env)
+		result, err = PrimitiveValue(function).Apply(args, env)
 	}
 
 	return
@@ -921,11 +1063,11 @@ func ApplyWithoutEval(function *Data, args *Data, env *SymbolTableFrame) (result
 	}
 	switch function.Type {
 	case FunctionType:
-		result, err = function.Func.ApplyWithoutEval(args, env)
+		result, err = FunctionValue(function).ApplyWithoutEval(args, env)
 	case MacroType:
-		result, err = function.Mac.ApplyWithoutEval(args, env)
+		result, err = MacroValue(function).ApplyWithoutEval(args, env)
 	case PrimitiveType:
-		result, err = function.Prim.ApplyWithoutEval(args, env)
+		result, err = PrimitiveValue(function).ApplyWithoutEval(args, env)
 	}
 
 	return

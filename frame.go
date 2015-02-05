@@ -155,3 +155,11 @@ func (self *FrameMap) Keys() []*Data {
 	}
 	return keys
 }
+
+func (self *FrameMap) Values() []*Data {
+	values := make([]*Data, 0, len(*self))
+	for _, v := range *self {
+		values = append(values, v)
+	}
+	return values
+}

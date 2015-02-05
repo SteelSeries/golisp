@@ -37,16 +37,22 @@ func ListToBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 	for c := list; NotNilP(c); c = Cdr(c) {
 		var n *Data
 		n, err = Eval(Car(c), env)
-		if !IntegerP(n) {
+		if !IntegerP(n) && !(ObjectP(n) && ObjectType(n) == "[]byte") {
 			err = ProcessError(fmt.Sprintf("Byte arrays can only contain numbers, but found %v.", n), env)
 			return
 		}
-		b := IntegerValue(n)
-		if b > 255 {
-			err = ProcessError(fmt.Sprintf("Byte arrays can only contain bytes, but found %d.", b), env)
-			return
+
+		if IntegerP(n) {
+			b := IntegerValue(n)
+			if b > 255 {
+				err = ProcessError(fmt.Sprintf("Byte arrays can only contain bytes, but found %d.", b), env)
+				return
+			}
+			bytes = append(bytes, byte(b))
+		} else {
+			otherArrayBytes := *(*[]byte)(ObjectValue(n))
+			bytes = append(bytes, otherArrayBytes...)
 		}
-		bytes = append(bytes, byte(b))
 	}
 	return ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&bytes)), nil
 }
@@ -56,8 +62,8 @@ func BytesToListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 	if err != nil {
 		panic(err)
 	}
-	if !ObjectP(dataByteObject) || TypeOfObject(dataByteObject) != "[]byte" {
-		err = ProcessError(fmt.Sprintf("Bytearray object should return []byte but returned %s.", TypeOfObject(dataByteObject)), env)
+	if !ObjectP(dataByteObject) || ObjectType(dataByteObject) != "[]byte" {
+		err = ProcessError(fmt.Sprintf("Bytearray object should return []byte but returned %s.", ObjectType(dataByteObject)), env)
 		return
 	}
 
@@ -91,8 +97,8 @@ func internalReplaceByte(args *Data, env *SymbolTableFrame, makeCopy bool) (resu
 	if err != nil {
 		panic(err)
 	}
-	if !ObjectP(dataByteObject) || TypeOfObject(dataByteObject) != "[]byte" {
-		err = ProcessError(fmt.Sprintf("Bytearray object should return []byte but returned %s.", TypeOfObject(dataByteObject)), env)
+	if !ObjectP(dataByteObject) || ObjectType(dataByteObject) != "[]byte" {
+		err = ProcessError(fmt.Sprintf("Bytearray object should return []byte but returned %s.", ObjectType(dataByteObject)), env)
 		return
 	}
 
@@ -172,8 +178,8 @@ func ExtractByteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 	if err != nil {
 		panic(err)
 	}
-	if !ObjectP(dataByteObject) || TypeOfObject(dataByteObject) != "[]byte" {
-		panic(ProcessError(fmt.Sprintf("Bytearray object should return []byte but returned %s.", TypeOfObject(dataByteObject)), env))
+	if !ObjectP(dataByteObject) || ObjectType(dataByteObject) != "[]byte" {
+		panic(ProcessError(fmt.Sprintf("Bytearray object should return []byte but returned %s.", ObjectType(dataByteObject)), env))
 	}
 
 	dataBytes := (*[]byte)(ObjectValue(dataByteObject))
@@ -211,8 +217,8 @@ func internalAppendBytes(args *Data, env *SymbolTableFrame) (newBytes *[]byte, e
 	if err != nil {
 		panic(err)
 	}
-	if !ObjectP(dataByteObject) || TypeOfObject(dataByteObject) != "[]byte" {
-		panic(ProcessError(fmt.Sprintf("Bytearray object should return []byte but returned %s.", TypeOfObject(dataByteObject)), env))
+	if !ObjectP(dataByteObject) || ObjectType(dataByteObject) != "[]byte" {
+		panic(ProcessError(fmt.Sprintf("Bytearray object should return []byte but returned %s.", ObjectType(dataByteObject)), env))
 	}
 
 	dataBytes := (*[]byte)(ObjectValue(dataByteObject))
@@ -224,7 +230,7 @@ func internalAppendBytes(args *Data, env *SymbolTableFrame) (newBytes *[]byte, e
 		if err != nil {
 			return
 		}
-		if ObjectP(evaledArg) && TypeOfObject(evaledArg) == "[]byte" {
+		if ObjectP(evaledArg) && ObjectType(evaledArg) == "[]byte" {
 			extraByteObj = evaledArg
 		} else if ListP(evaledArg) {
 			extraByteObj, err = ListToBytesImpl(InternalMakeList(QuoteIt(evaledArg)), env)
@@ -261,7 +267,8 @@ func AppendBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 func AppendBytesBangImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	newBytesPtr, err := internalAppendBytes(args, env)
 	dataByteObject, _ := Eval(Car(args), env)
-	dataByteObject.Obj = unsafe.Pointer(newBytesPtr)
+	objectData := BoxedObjectValue(dataByteObject)
+	objectData.Obj = unsafe.Pointer(newBytesPtr)
 	result = dataByteObject
 	return
 }
@@ -284,8 +291,8 @@ func ExtractBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 	if err != nil {
 		panic(err)
 	}
-	if !ObjectP(dataByteObject) || TypeOfObject(dataByteObject) != "[]byte" {
-		panic(ProcessError(fmt.Sprintf("Bytearray object should return []byte but returned %s.", TypeOfObject(dataByteObject)), env))
+	if !ObjectP(dataByteObject) || ObjectType(dataByteObject) != "[]byte" {
+		panic(ProcessError(fmt.Sprintf("Bytearray object should return []byte but returned %s.", ObjectType(dataByteObject)), env))
 	}
 
 	dataBytes := (*[]byte)(ObjectValue(dataByteObject))
@@ -312,15 +319,15 @@ func ExtractBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 		err = ProcessError(fmt.Sprintf("extract-bytes index was out of range. Was %d but bytearray has length of %d.", index, len(*dataBytes)), env)
 		return
 	}
-	if index + numToExtract > len(*dataBytes) {
-		err = ProcessError(fmt.Sprintf("extract-bytes final index was out of range.  Was %d but bytearray has length of %d.", index + numToExtract - 1, len(*dataBytes)), env)
+	if index+numToExtract > len(*dataBytes) {
+		err = ProcessError(fmt.Sprintf("extract-bytes final index was out of range.  Was %d but bytearray has length of %d.", index+numToExtract-1, len(*dataBytes)), env)
 		return
 	}
 
-	result, err = DropImpl(InternalMakeList(indexObject,dataByteObject),Global)
+	result, err = DropImpl(InternalMakeList(indexObject, dataByteObject), Global)
 	if err != nil {
 		return
 	}
-	result, err = TakeImpl(InternalMakeList(numToExtractObject,result), Global)
+	result, err = TakeImpl(InternalMakeList(numToExtractObject, result), Global)
 	return
 }

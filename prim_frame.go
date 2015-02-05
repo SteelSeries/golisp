@@ -23,7 +23,8 @@ func RegisterFramePrimitives() {
 	MakePrimitiveFunction("clone", 1, CloneImpl)
 	MakePrimitiveFunction("json->lisp", 1, JsonToLispImpl)
 	MakePrimitiveFunction("lisp->json", 1, LispToJsonImpl)
-	MakePrimitiveFunction("keys", 1, KeysImpl)
+	MakePrimitiveFunction("frame-keys", 1, FrameKeysImpl)
+	MakePrimitiveFunction("frame-values", 1, FrameValuesImpl)
 }
 
 func MakeFrameImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -65,7 +66,7 @@ func HasSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	return BooleanWithValue(f.Frame.HasSlot(StringValue(k))), nil
+	return BooleanWithValue(FrameValue(f).HasSlot(StringValue(k))), nil
 }
 
 func GetSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -78,7 +79,7 @@ func GetSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	if f.Frame == nil {
+	if FrameValue(f) == nil {
 		err = ProcessError("get-slot received a nil frame.", env)
 		return
 	}
@@ -92,12 +93,12 @@ func GetSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	if !f.Frame.HasSlot(StringValue(k)) {
+	if !FrameValue(f).HasSlot(StringValue(k)) {
 		err = ProcessError(fmt.Sprintf("get-slot requires an existing slot, but was given %s.", String(k)), env)
 		return
 	}
 
-	return f.Frame.Get(StringValue(k)), nil
+	return FrameValue(f).Get(StringValue(k)), nil
 }
 
 func GetSlotOrNilImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -119,7 +120,7 @@ func GetSlotOrNilImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 		return
 	}
 
-	return f.Frame.Get(StringValue(k)), nil
+	return FrameValue(f).Get(StringValue(k)), nil
 }
 
 func RemoveSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -129,7 +130,7 @@ func RemoveSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 	}
 
 	if NilP(f) {
-		return False, nil
+		return LispFalse, nil
 	}
 
 	if !FrameP(f) {
@@ -146,7 +147,7 @@ func RemoveSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 		return
 	}
 
-	return BooleanWithValue(f.Frame.Remove(StringValue(k))), nil
+	return BooleanWithValue(FrameValue(f).Remove(StringValue(k))), nil
 }
 
 func SetSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -173,7 +174,7 @@ func SetSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	return f.Frame.Set(StringValue(k), v), nil
+	return FrameValue(f).Set(StringValue(k), v), nil
 }
 
 func SendImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -195,19 +196,19 @@ func SendImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	if !f.Frame.HasSlot(StringValue(k)) {
+	if !FrameValue(f).HasSlot(StringValue(k)) {
 		err = ProcessError(fmt.Sprintf("send requires an existing slot, but was given %s.", String(k)), env)
 		return
 	}
 
-	fun := f.Frame.Get(StringValue(k))
+	fun := FrameValue(f).Get(StringValue(k))
 	if !FunctionP(fun) {
 		err = ProcessError(fmt.Sprintf("send requires a function slot, but was given a slot containing a %s.", TypeName(TypeOf(fun))), env)
 		return
 	}
 
 	params := Cddr(args)
-	return fun.Func.ApplyWithFrame(params, env, f.Frame)
+	return FunctionValue(fun).ApplyWithFrame(params, env, FrameValue(f))
 }
 
 func getSuperFunction(selector string, env *SymbolTableFrame) *Data {
@@ -250,7 +251,7 @@ func SendSuperImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 	params := Cdr(args)
 	frameEnv := NewSymbolTableFrameBelowWithFrame(env, env.Frame)
 	frameEnv.BindLocallyTo(SymbolWithName("self"), FrameWithValue(env.Frame))
-	return fun.Func.Apply(params, frameEnv)
+	return FunctionValue(fun).Apply(params, frameEnv)
 }
 
 func CloneImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -263,7 +264,7 @@ func CloneImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	return FrameWithValue(f.Frame.Clone()), nil
+	return FrameWithValue(FrameValue(f).Clone()), nil
 }
 
 func JsonToLispImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -288,7 +289,7 @@ func LispToJsonImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 	return StringWithValue(LispWithFramesToJsonString(l)), nil
 }
 
-func KeysImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func FrameKeysImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f, err := Eval(Car(args), env)
 	if err != nil {
 		return
@@ -299,4 +300,17 @@ func KeysImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	return ArrayToList(FrameValue(f).Keys()), nil
+}
+
+func FrameValuesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	f, err := Eval(Car(args), env)
+	if err != nil {
+		return
+	}
+	if !FrameP(f) {
+		err = ProcessError(fmt.Sprintf("vals requires a frame as it's argument, but was given %s.", String(f)), env)
+		return
+	}
+
+	return ArrayToList(FrameValue(f).Values()), nil
 }

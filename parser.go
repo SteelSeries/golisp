@@ -232,11 +232,11 @@ func parseExpression(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 			return
 		case FALSE:
 			s.ConsumeToken()
-			sexpr = False
+			sexpr = LispFalse
 			return
 		case TRUE:
 			s.ConsumeToken()
-			sexpr = True
+			sexpr = LispTrue
 			return
 		case QUOTE:
 			s.ConsumeToken()

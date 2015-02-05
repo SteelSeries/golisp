@@ -37,7 +37,7 @@ func RegisterMathPrimitives() {
 func IsEvenImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	evaluated, _ := Eval(Car(args), env)
 	if !IntegerP(evaluated) {
-		return False, nil
+		return LispFalse, nil
 	}
 	return BooleanWithValue((IntegerValue(evaluated) % 2) == 0), nil
 }
@@ -45,7 +45,7 @@ func IsEvenImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 func IsOddImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	evaluated, _ := Eval(Car(args), env)
 	if !IntegerP(evaluated) {
-		return False, nil
+		return LispFalse, nil
 	}
 	return BooleanWithValue((IntegerValue(evaluated) % 2) == 1), nil
 }
