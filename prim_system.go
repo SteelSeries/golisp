@@ -26,7 +26,10 @@ func RegisterSystemPrimitives() {
 }
 
 func LoadFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	filename := Eval(Car(args), env)
+	filename, err := Eval(Car(args), env)
+	if err != nil {
+		return
+	}
 	if !StringP(filename) {
 		err = ProcessError("Filename must be a string", env)
 		return
