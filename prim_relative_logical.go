@@ -17,6 +17,7 @@ func RegisterRelativePrimitives() {
 	MakePrimitiveFunction("==", 2, EqualToImpl)
 	MakePrimitiveFunction("eq?", 2, EqualToImpl)
 	MakePrimitiveFunction("!=", 2, NotEqualImpl)
+	MakePrimitiveFunction("neq?", 2, NotEqualImpl)
 	MakePrimitiveFunction("<=", -1, LessThanOrEqualToImpl)
 	MakePrimitiveFunction(">=", -1, GreaterThanOrEqualToImpl)
 	MakePrimitiveFunction("!", 1, BooleanNotImpl)
