@@ -14,6 +14,8 @@ import (
 	"time"
 )
 
+var symbolCounts map[string]int = make(map[string]int)
+
 func RegisterSystemPrimitives() {
 	MakePrimitiveFunction("load", 1, LoadFileImpl)
 	MakePrimitiveFunction("sleep", 1, SleepImpl)
@@ -23,6 +25,7 @@ func RegisterSystemPrimitives() {
 	MakePrimitiveFunction("intern", 1, InternImpl)
 	MakePrimitiveFunction("time", 1, TimeImpl)
 	MakePrimitiveFunction("quit", 0, QuitImpl)
+	MakePrimitiveFunction("gensym", -1, GensymImpl)
 }
 
 func LoadFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -111,4 +114,36 @@ func InternImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	return SymbolWithName(StringValue(sym)), nil
+}
+
+func GensymImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	var prefix string
+	if Length(args) > 1 {
+		err = ProcessError(fmt.Sprintf("gensym expects 0 or 1 argument, but received %d.", Length(args)), env)
+		return
+	}
+
+	if Length(args) == 0 {
+		prefix = "GENSYM"
+	} else {
+		arg, argerr := Eval(Car(args), env)
+		if argerr != nil {
+			err = argerr
+			return
+		}
+		if !StringP(arg) && !SymbolP(arg) {
+			err = ProcessError(fmt.Sprintf("gensym expects a string or symbol, but recieved %s.", String(arg)), env)
+		}
+		prefix = StringValue(arg)
+	}
+
+	count := symbolCounts[prefix]
+	if count == 0 {
+		count = 1
+	} else {
+		count += 1
+	}
+	symbolCounts[prefix] = count
+	result = SymbolWithName(fmt.Sprintf("%s%d", prefix, count))
+	return
 }
