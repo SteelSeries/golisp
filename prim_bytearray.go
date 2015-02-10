@@ -117,7 +117,8 @@ func internalReplaceByte(args *Data, env *SymbolTableFrame, makeCopy bool) (resu
 		panic(err)
 	}
 	if !IntegerP(indexObject) {
-		panic(ProcessError("Bytearray index should be a number.", env))
+		err = ProcessError("Bytearray index should be a number.", env)
+		return
 	}
 	index := int(IntegerValue(indexObject))
 
@@ -136,7 +137,8 @@ func internalReplaceByte(args *Data, env *SymbolTableFrame, makeCopy bool) (resu
 		panic(err)
 	}
 	if !IntegerP(valueObject) {
-		panic(ProcessError("Bytearray value should be a number.", env))
+		err = ProcessError("Bytearray value should be a number.", env)
+		return
 	}
 
 	value := byte(IntegerValue(valueObject))
@@ -179,7 +181,8 @@ func ExtractByteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 		panic(err)
 	}
 	if !ObjectP(dataByteObject) || ObjectType(dataByteObject) != "[]byte" {
-		panic(ProcessError(fmt.Sprintf("Bytearray object should return []byte but returned %s.", ObjectType(dataByteObject)), env))
+		err = ProcessError(fmt.Sprintf("Bytearray object should return []byte but returned %s.", ObjectType(dataByteObject)), env)
+		return
 	}
 
 	dataBytes := (*[]byte)(ObjectValue(dataByteObject))
@@ -189,7 +192,8 @@ func ExtractByteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 		panic(err)
 	}
 	if !IntegerP(indexObject) {
-		panic(ProcessError("Bytearray index should be a number.", env))
+		err = ProcessError("Bytearray index should be a number.", env)
+		return
 	}
 	index := int(IntegerValue(indexObject))
 
@@ -218,7 +222,8 @@ func internalAppendBytes(args *Data, env *SymbolTableFrame) (newBytes *[]byte, e
 		panic(err)
 	}
 	if !ObjectP(dataByteObject) || ObjectType(dataByteObject) != "[]byte" {
-		panic(ProcessError(fmt.Sprintf("Bytearray object should return []byte but returned %s.", ObjectType(dataByteObject)), env))
+		err = ProcessError(fmt.Sprintf("Bytearray object should return []byte but returned %s.", ObjectType(dataByteObject)), env)
+		return
 	}
 
 	dataBytes := (*[]byte)(ObjectValue(dataByteObject))
@@ -292,7 +297,8 @@ func ExtractBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 		panic(err)
 	}
 	if !ObjectP(dataByteObject) || ObjectType(dataByteObject) != "[]byte" {
-		panic(ProcessError(fmt.Sprintf("Bytearray object should return []byte but returned %s.", ObjectType(dataByteObject)), env))
+		err = ProcessError(fmt.Sprintf("Bytearray object should return []byte but returned %s.", ObjectType(dataByteObject)), env)
+		return
 	}
 
 	dataBytes := (*[]byte)(ObjectValue(dataByteObject))
@@ -302,7 +308,8 @@ func ExtractBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 		panic(err)
 	}
 	if !IntegerP(indexObject) {
-		panic(ProcessError("Bytearray index should be a number.", env))
+		err = ProcessError("Bytearray index should be a number.", env)
+		return
 	}
 	index := int(IntegerValue(indexObject))
 
@@ -311,7 +318,8 @@ func ExtractBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 		panic(err)
 	}
 	if !IntegerP(numToExtractObject) {
-		panic(ProcessError("Number to extract should be a number.", env))
+		err = ProcessError("Number to extract should be a number.", env)
+		return
 	}
 	numToExtract := int(IntegerValue(numToExtractObject))
 
