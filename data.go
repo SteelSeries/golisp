@@ -976,7 +976,7 @@ func evalHelper(d *Data, env *SymbolTableFrame, needFunction bool) (result *Data
 
 				// catch empty cons cell
 				if Car(d) == nil && Cdr(d) == nil {
-					return
+					return nil, nil
 				}
 
 				var function *Data
