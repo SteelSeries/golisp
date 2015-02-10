@@ -181,7 +181,15 @@ func FrameP(d *Data) bool {
 	return d != nil && TypeOf(d) == FrameType
 }
 
+func EmptyCons() *Data {
+	cell := ConsCell{Car: nil, Cdr: nil}
+	return &Data{Type: ConsCellType, Value: unsafe.Pointer(&cell)}
+}
+
 func Cons(car *Data, cdr *Data) *Data {
+	if car == nil {
+		car = EmptyCons()
+	}
 	cell := ConsCell{Car: car, Cdr: cdr}
 	return &Data{Type: ConsCellType, Value: unsafe.Pointer(&cell)}
 }
@@ -272,10 +280,6 @@ func Alist(d *Data) *Data {
 
 func InternalMakeList(c ...*Data) *Data {
 	return ArrayToList(c)
-}
-
-func EmptyCons() *Data {
-	return Cons(nil, nil)
 }
 
 func FrameWithValue(m *FrameMap) *Data {
@@ -969,6 +973,11 @@ func evalHelper(d *Data, env *SymbolTableFrame, needFunction bool) (result *Data
 		case ConsCellType:
 			{
 				d = postProcessFrameShortcuts(d)
+
+				// catch empty cons cell
+				if Car(d) == nil && Cdr(d) == nil {
+					return
+				}
 
 				var function *Data
 				function, err = evalHelper(Car(d), env, true)
