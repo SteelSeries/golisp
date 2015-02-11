@@ -252,6 +252,21 @@ func AppendList(l *Data, otherList *Data) *Data {
 	return newList
 }
 
+func RemoveFromListBang(l *Data, item *Data) (result *Data) {
+	var prev *Data
+	result = l
+	for cell := l; NotNilP(cell); cell = Cdr(cell) {
+		if IsEqual(item, Car(cell)) {
+			if NilP(prev) {
+				return Cdr(cell)
+			}
+			((*ConsCell)(prev.Value)).Cdr = Cdr(cell)
+			return
+		}
+	}
+	return
+}
+
 func Acons(car *Data, cdr *Data, alist *Data) *Data {
 	pair, _ := Assoc(car, alist)
 	if NilP(pair) {
