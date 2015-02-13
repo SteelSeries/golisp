@@ -22,7 +22,7 @@ type Function struct {
 	DebugOnEntry     bool
 }
 
-func computeRequiredArgumentCount(args *Data) (requiredArgumentCount int, varArgs bool) {
+func ComputeRequiredArgumentCount(args *Data) (requiredArgumentCount int, varArgs bool) {
 	requiredArgumentCount = 0
 	varArgs = false
 	for a := args; NotNilP(a); a = Cdr(a) {
@@ -45,7 +45,7 @@ func (self *Function) String() string {
 	return fmt.Sprintf("<func: %s>", self.Name)
 }
 
-func (self *Function) makeLocalBindings(args *Data, argEnv *SymbolTableFrame, localEnv *SymbolTableFrame, eval bool) (err error) {
+func (self *Function) MakeLocalBindings(args *Data, argEnv *SymbolTableFrame, localEnv *SymbolTableFrame, eval bool) (err error) {
 	if self.VarArgs {
 		if Length(args) < self.RequiredArgCount {
 			return errors.New(fmt.Sprintf("%s expected at least %d parameters, received %d.", self.Name, self.RequiredArgCount, Length(args)))
