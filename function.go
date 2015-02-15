@@ -37,7 +37,7 @@ func ComputeRequiredArgumentCount(args *Data) (requiredArgumentCount int, varArg
 }
 
 func MakeFunction(name string, params *Data, body *Data, parentEnv *SymbolTableFrame) *Function {
-	requiredArgs, varArgs := computeRequiredArgumentCount(params)
+	requiredArgs, varArgs := ComputeRequiredArgumentCount(params)
 	return &Function{Name: name, Params: params, VarArgs: varArgs, RequiredArgCount: requiredArgs, Body: body, Env: parentEnv}
 }
 
@@ -45,7 +45,7 @@ func (self *Function) String() string {
 	return fmt.Sprintf("<func: %s>", self.Name)
 }
 
-func (self *Function) MakeLocalBindings(args *Data, argEnv *SymbolTableFrame, localEnv *SymbolTableFrame, eval bool) (err error) {
+func (self *Function) makeLocalBindings(args *Data, argEnv *SymbolTableFrame, localEnv *SymbolTableFrame, eval bool) (err error) {
 	if self.VarArgs {
 		if Length(args) < self.RequiredArgCount {
 			return errors.New(fmt.Sprintf("%s expected at least %d parameters, received %d.", self.Name, self.RequiredArgCount, Length(args)))
