@@ -187,9 +187,6 @@ func EmptyCons() *Data {
 }
 
 func Cons(car *Data, cdr *Data) *Data {
-	if car == nil {
-		car = EmptyCons()
-	}
 	cell := ConsCell{Car: car, Cdr: cdr}
 	return &Data{Type: ConsCellType, Value: unsafe.Pointer(&cell)}
 }
