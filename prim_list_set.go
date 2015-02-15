@@ -47,14 +47,22 @@ func UnionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func IntersectionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var col *Data
-	result = Car(args)
+	result, err = Eval(Car(args), env)
+	if err != nil {
+		return
+	}
+	if !ListP(result) {
+		err = ProcessError(fmt.Sprintf("intersection needs lists as its arguments, but got %s.", String(result)), env)
+		return
+	}
+
 	for a := Cdr(args); NotNilP(a); a = Cdr(a) {
 		col, err = Eval(Car(a), env)
 		if err != nil {
 			return
 		}
 		if !ListP(col) {
-			err = ProcessError(fmt.Sprintf("union needs lists as its arguments, but got %s.", String(col)), env)
+			err = ProcessError(fmt.Sprintf("intersection needs lists as its arguments, but got %s.", String(col)), env)
 			return
 		}
 		for cell := result; NotNilP(cell); cell = Cdr(cell) {
