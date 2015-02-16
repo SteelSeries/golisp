@@ -23,6 +23,17 @@ type SymbolTableFrame struct {
 
 var Global *SymbolTableFrame
 
+var internedSymbols map[string]*Data = make(map[string]*Data, 256)
+
+func Intern(name string) (sym *Data) {
+	sym = internedSymbols[name]
+	if sym == nil {
+		sym = SymbolWithName(name)
+		internedSymbols[name] = sym
+	}
+	return
+}
+
 func (self *SymbolTableFrame) Depth() int {
 	if self.Previous == nil {
 		return 1
@@ -141,14 +152,9 @@ func (self *SymbolTableFrame) findBindingFor(symbol *Data) (binding *Binding, fo
 }
 
 func (self *SymbolTableFrame) Intern(name string) (sym *Data) {
-	sym, found := self.findSymbol(name)
-	if !found {
-		sym = SymbolWithName(name)
-		self.BindTo(sym, nil)
-		return
-	} else {
-		return nil
-	}
+	sym = Intern(name)
+	self.BindTo(sym, nil)
+	return
 }
 
 func (self *SymbolTableFrame) BindTo(symbol *Data, value *Data) *Data {

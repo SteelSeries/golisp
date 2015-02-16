@@ -151,7 +151,7 @@ func (self *FrameMap) Clone() *FrameMap {
 func (self *FrameMap) Keys() []*Data {
 	keys := make([]*Data, 0, len(*self))
 	for k, _ := range *self {
-		keys = append(keys, SymbolWithName(k))
+		keys = append(keys, Intern(k))
 	}
 	return keys
 }

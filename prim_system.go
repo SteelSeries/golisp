@@ -116,7 +116,7 @@ func InternImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	return SymbolWithName(StringValue(sym)), nil
+	return Intern(StringValue(sym)), nil
 }
 
 func GensymImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -147,6 +147,6 @@ func GensymImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		count += 1
 	}
 	symbolCounts[prefix] = count
-	result = SymbolWithName(fmt.Sprintf("%s%d", prefix, count))
+	result = Intern(fmt.Sprintf("%s%d", prefix, count))
 	return
 }
