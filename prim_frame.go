@@ -250,7 +250,7 @@ func SendSuperImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 
 	params := Cdr(args)
 	frameEnv := NewSymbolTableFrameBelowWithFrame(env, env.Frame)
-	frameEnv.BindLocallyTo(SymbolWithName("self"), FrameWithValue(env.Frame))
+	frameEnv.BindLocallyTo(Intern("self"), FrameWithValue(env.Frame))
 	return FunctionValue(fun).Apply(params, frameEnv)
 }
 

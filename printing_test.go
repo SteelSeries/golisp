@@ -68,7 +68,7 @@ func (s *PrintingSuite) TestDottedPair(c *C) {
 }
 
 func (s *PrintingSuite) TestQuotedEmptyList(c *C) {
-	sexpr := Cons(SymbolWithName("quote"), nil)
+	sexpr := Cons(Intern("quote"), nil)
 	c.Assert(String(sexpr), Equals, "'()")
 }
 

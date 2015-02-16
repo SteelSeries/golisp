@@ -327,8 +327,7 @@ func SymbolWithName(s string) *Data {
 }
 
 func NakedSymbolWithName(s string) *Data {
-	str := fmt.Sprintf("%s:", s)
-	return &Data{Type: SymbolType, Value: unsafe.Pointer(&str)}
+	return Intern(fmt.Sprintf("%s:", s))
 }
 
 func NakedSymbolFrom(d *Data) *Data {
@@ -619,7 +618,7 @@ func RecursiveFlatten(d *Data) (result *Data, err error) {
 }
 
 func QuoteIt(value *Data) (result *Data) {
-	return InternalMakeList(SymbolWithName("quote"), value)
+	return InternalMakeList(Intern("quote"), value)
 }
 
 func QuoteAll(d *Data) (result *Data) {
@@ -928,11 +927,11 @@ func postProcessFrameShortcuts(d *Data) *Data {
 	s := StringValue(key)
 	switch {
 	case strings.HasSuffix(s, ":"):
-		return InternalMakeList(SymbolWithName("get-slot"), frame, key)
+		return InternalMakeList(Intern("get-slot"), frame, key)
 	case strings.HasSuffix(s, ":!"):
-		return InternalMakeList(SymbolWithName("set-slot!"), frame, SymbolWithName(strings.TrimSuffix(s, "!")), value)
+		return InternalMakeList(Intern("set-slot!"), frame, Intern(strings.TrimSuffix(s, "!")), value)
 	case strings.HasSuffix(s, ":?"):
-		return InternalMakeList(SymbolWithName("has-slot?"), frame, SymbolWithName(strings.TrimSuffix(s, "?")))
+		return InternalMakeList(Intern("has-slot?"), frame, Intern(strings.TrimSuffix(s, "?")))
 	default:
 		return d
 	}

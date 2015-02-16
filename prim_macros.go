@@ -31,7 +31,7 @@ func processQuasiquoted(sexpr *Data, level int, env *SymbolTableFrame) (result *
 		if err != nil {
 			return nil, err
 		}
-		return Cons(Cons(SymbolWithName("quasiquote"), processed), nil), nil
+		return Cons(Cons(Intern("quasiquote"), processed), nil), nil
 	} else if SymbolP(Car(sexpr)) && StringValue(Car(sexpr)) == "unquote" {
 		if level == 1 {
 			processed, err := processQuasiquoted(Cadr(sexpr), level, env)
@@ -48,7 +48,7 @@ func processQuasiquoted(sexpr *Data, level int, env *SymbolTableFrame) (result *
 			if err != nil {
 				return nil, err
 			}
-			return Cons(Cons(SymbolWithName("unquote"), processed), nil), nil
+			return Cons(Cons(Intern("unquote"), processed), nil), nil
 		}
 	} else if SymbolP(Car(sexpr)) && StringValue(Car(sexpr)) == "unquote-splicing" {
 		if level == 1 {
@@ -66,7 +66,7 @@ func processQuasiquoted(sexpr *Data, level int, env *SymbolTableFrame) (result *
 			if err != nil {
 				return nil, err
 			}
-			return Cons(Cons(SymbolWithName("unquote-splicing"), processed), nil), nil
+			return Cons(Cons(Intern("unquote-splicing"), processed), nil), nil
 		}
 	} else {
 		parts := make([]*Data, 0, Length(Cdr(sexpr)))

@@ -84,7 +84,7 @@ func CaseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 					return evalList(Cdr(clause), env)
 				}
 			}
-		} else if IsEqual(Car(clause), SymbolWithName("else")) {
+		} else if IsEqual(Car(clause), Intern("else")) {
 			return evalList(Cdr(clause), env)
 		}
 	}
@@ -428,7 +428,7 @@ func DefinitionOfImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 	if SymbolP(Car(args)) {
 		name = Car(args)
 	} else {
-		name = SymbolWithName("anonymous")
+		name = Intern("anonymous")
 	}
 
 	f, err := Eval(Car(args), env)
@@ -442,8 +442,8 @@ func DefinitionOfImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 
 	function := FunctionValue(f)
 	if function.Name == "anonymous" {
-		return Cons(SymbolWithName("define"), Cons(name, Cons(Cons(SymbolWithName("lambda"), Cons(function.Params, function.Body)), nil))), nil
+		return Cons(Intern("define"), Cons(name, Cons(Cons(Intern("lambda"), Cons(function.Params, function.Body)), nil))), nil
 	} else {
-		return Cons(SymbolWithName("define"), Cons(Cons(SymbolWithName(function.Name), function.Params), function.Body)), nil
+		return Cons(Intern("define"), Cons(Cons(Intern(function.Name), function.Params), function.Body)), nil
 	}
 }

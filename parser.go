@@ -50,7 +50,7 @@ func makeString(str string) (s *Data, err error) {
 }
 
 func makeSymbol(str string) (s *Data, err error) {
-	s = SymbolWithName(str)
+	s = Intern(str)
 	return
 }
 
@@ -153,7 +153,7 @@ func parseBytearray(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 	if allIntegers(cells) {
 		sexpr = listToBytearray(cells)
 	} else {
-		sexpr = InternalMakeList(SymbolWithName("list-to-bytearray"), QuoteIt(ArrayToList(cells)))
+		sexpr = InternalMakeList(Intern("list-to-bytearray"), QuoteIt(ArrayToList(cells)))
 	}
 	return
 }
@@ -183,7 +183,7 @@ func parseFrame(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 	}
 
 	s.ConsumeToken()
-	sexpr = Cons(SymbolWithName("make-frame"), ArrayToList(cells))
+	sexpr = Cons(Intern("make-frame"), ArrayToList(cells))
 	return
 }
 
@@ -242,28 +242,28 @@ func parseExpression(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 			s.ConsumeToken()
 			sexpr, eof, err = parseExpression(s)
 			if sexpr != nil {
-				sexpr = Cons(SymbolWithName("quote"), Cons(sexpr, nil))
+				sexpr = Cons(Intern("quote"), Cons(sexpr, nil))
 			}
 			return
 		case BACKQUOTE:
 			s.ConsumeToken()
 			sexpr, eof, err = parseExpression(s)
 			if sexpr != nil {
-				sexpr = Cons(SymbolWithName("quasiquote"), Cons(sexpr, nil))
+				sexpr = Cons(Intern("quasiquote"), Cons(sexpr, nil))
 			}
 			return
 		case COMMA:
 			s.ConsumeToken()
 			sexpr, eof, err = parseExpression(s)
 			if sexpr != nil {
-				sexpr = Cons(SymbolWithName("unquote"), Cons(sexpr, nil))
+				sexpr = Cons(Intern("unquote"), Cons(sexpr, nil))
 			}
 			return
 		case COMMAAT:
 			s.ConsumeToken()
 			sexpr, eof, err = parseExpression(s)
 			if sexpr != nil {
-				sexpr = Cons(SymbolWithName("unquote-splicing"), Cons(sexpr, nil))
+				sexpr = Cons(Intern("unquote-splicing"), Cons(sexpr, nil))
 			}
 			return
 		case ILLEGAL:

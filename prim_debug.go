@@ -115,7 +115,7 @@ func processState(tokens []string) (ok bool, state bool) {
 }
 
 func funcOrNil(fname string, env *SymbolTableFrame) *Data {
-	f := env.ValueOf(SymbolWithName(fname))
+	f := env.ValueOf(Intern(fname))
 	if f == nil || TypeOf(f) != FunctionType {
 		fmt.Printf("No such function\n")
 		return nil
