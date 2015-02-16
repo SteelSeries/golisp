@@ -703,6 +703,10 @@ func IsEqual(d *Data, o *Data) bool {
 		return false
 	}
 
+	if SymbolP(d) && SymbolP(o) {
+		return d == o
+	}
+
 	if AlistP(d) {
 		if !AlistP(o) && !ListP(o) {
 			return false
