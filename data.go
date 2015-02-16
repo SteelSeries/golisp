@@ -25,6 +25,7 @@ const (
 	StringType
 	SymbolType
 	FunctionType
+	CompiledFunctionType
 	MacroType
 	PrimitiveType
 	BoxedObjectType
@@ -94,6 +95,8 @@ func TypeName(t uint8) string {
 		return "Symbol"
 	case FunctionType:
 		return "Function"
+	case CompiledFunctionType:
+		return "CompiledFunction"
 	case MacroType:
 		return "Macro"
 	case PrimitiveType:
@@ -171,6 +174,18 @@ func ObjectP(d *Data) bool {
 
 func FunctionP(d *Data) bool {
 	return d != nil && (TypeOf(d) == FunctionType || TypeOf(d) == PrimitiveType)
+}
+
+func LispFunctionP(d *Data) bool {
+	return d != nil && TypeOf(d) == FunctionType
+}
+
+func CompiledFunctionP(d *Data) bool {
+	return d != nil && TypeOf(d) == CompiledFunctionType
+}
+
+func PrimitiveP(d *Data) bool {
+	return d != nil && TypeOf(d) == PrimitiveType
 }
 
 func MacroP(d *Data) bool {
@@ -339,6 +354,10 @@ func FunctionWithNameParamsBodyAndParent(name string, params *Data, body *Data, 
 	return &Data{Type: FunctionType, Value: unsafe.Pointer(MakeFunction(name, params, body, parentEnv))}
 }
 
+func CompiledFunctionWithNameParamsBodyAndParent(name string, params *Data, body []uint16, parentEnv *SymbolTableFrame) *Data {
+	return &Data{Type: CompiledFunctionType, Value: unsafe.Pointer(MakeCompiledFunction(name, params, body, parentEnv))}
+}
+
 func MacroWithNameParamsBodyAndParent(name string, params *Data, body *Data, parentEnv *SymbolTableFrame) *Data {
 	return &Data{Type: MacroType, Value: unsafe.Pointer(MakeMacro(name, params, body, parentEnv))}
 }
@@ -469,6 +488,18 @@ func FunctionValue(d *Data) *Function {
 
 	if d.Type == FunctionType {
 		return (*Function)(d.Value)
+	}
+
+	return nil
+}
+
+func CompiledFunctionValue(d *Data) *CompiledFunction {
+	if d == nil {
+		return nil
+	}
+
+	if d.Type == CompiledFunctionType {
+		return (*CompiledFunction)(d.Value)
 	}
 
 	return nil

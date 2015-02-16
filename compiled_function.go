@@ -17,12 +17,11 @@ type CompiledFunction struct {
 	Params           *Data
 	VarArgs          bool
 	RequiredArgCount int
-	Body             []uint32
-	ProgramCounter   uint32
+	Body             []uint16
 	Env              *SymbolTableFrame
 }
 
-func MakeCompiledFunction(name string, params *Data, body []uint32, parentEnv *SymbolTableFrame) *CompiledFunction {
+func MakeCompiledFunction(name string, params *Data, body []uint16, parentEnv *SymbolTableFrame) *CompiledFunction {
 	requiredArgs, varArgs := ComputeRequiredArgumentCount(params)
 	return &CompiledFunction{Name: name, Params: params, VarArgs: varArgs, RequiredArgCount: requiredArgs, Body: body, Env: parentEnv}
 }
@@ -92,13 +91,7 @@ func (self *CompiledFunction) internalApply(args *Data, argEnv *SymbolTableFrame
 
 	// Now we have to execute the bytecodes
 
-	// for s := self.Body; NotNilP(s); s = Cdr(s) {
-	// 	result, err = Eval(Car(s), localEnv)
-	// 	if err != nil {
-	// 		return nil, errors.New(fmt.Sprintf("In '%s': %s", self.Name, err))
-	// 	}
-	// }
-	return
+	return ExecuteBytecode(self.Body, localEnv)
 }
 
 func (self *CompiledFunction) Apply(args *Data, argEnv *SymbolTableFrame) (result *Data, err error) {
