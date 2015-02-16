@@ -703,10 +703,6 @@ func IsEqual(d *Data, o *Data) bool {
 		return false
 	}
 
-	if SymbolP(d) && SymbolP(o) {
-		return d == o
-	}
-
 	if AlistP(d) {
 		if !AlistP(o) && !ListP(o) {
 			return false
@@ -785,8 +781,6 @@ func IsEqual(d *Data, o *Data) bool {
 	case BooleanType:
 		return BooleanValue(d) == BooleanValue(o)
 	case StringType:
-		return StringValue(d) == StringValue(o)
-	case SymbolType:
 		return StringValue(d) == StringValue(o)
 	case FunctionType:
 		return FunctionValue(d) == FunctionValue(o)
