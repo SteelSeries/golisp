@@ -31,6 +31,7 @@ func RegisterMathPrimitives() {
 	MakePrimitiveFunction("max", 1, MaxImpl)
 	MakePrimitiveFunction("floor", 1, FloorImpl)
 	MakePrimitiveFunction("ceiling", 1, CeilingImpl)
+	MakePrimitiveFunction("abs", 1, AbsImpl)
 
 }
 
@@ -575,4 +576,21 @@ func CeilingImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	return FloatWithValue(float32(math.Ceil(float64(FloatValue(val))))), nil
+}
+
+func AbsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	val, err := Eval(Car(args), env)
+
+	if !NumberP(val) {
+		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(Car(args))), env)
+		return
+	}
+
+	absval := math.Abs(float64(FloatValue(val)))
+	if IntegerP(val) {
+		result = IntegerWithValue(int64(absval))
+	} else {
+		result = FloatWithValue(float32(absval))
+	}
+	return
 }
