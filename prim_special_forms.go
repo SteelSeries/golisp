@@ -15,6 +15,8 @@ func RegisterSpecialFormPrimitives() {
 	MakePrimitiveFunction("cond", -1, CondImpl)
 	MakePrimitiveFunction("case", -1, CaseImpl)
 	MakePrimitiveFunction("if", -1, IfImpl)
+	MakePrimitiveFunction("when", -1, WhenImpl)
+	MakePrimitiveFunction("unless", -1, UnlessImpl)
 	MakePrimitiveFunction("lambda", -1, LambdaImpl)
 	MakePrimitiveFunction("define", -1, DefineImpl)
 	MakePrimitiveFunction("defmacro", -1, DefmacroImpl)
@@ -111,6 +113,54 @@ func IfImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	} else {
 		return Eval(elseClause, env)
 	}
+}
+
+func WhenImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if Length(args) < 2 {
+		err = ProcessError(fmt.Sprintf("when requires at least 2 arguments. Received %d.", Length(args)), env)
+		return
+	}
+
+	c, err := Eval(Car(args), env)
+	if err != nil {
+		return
+	}
+	condition := BooleanValue(c)
+
+	if condition {
+		for cell := Cdr(args); NotNilP(cell); cell = Cdr(cell) {
+			sexpr := Car(cell)
+			result, err = Eval(sexpr, env)
+			if err != nil {
+				return
+			}
+		}
+	}
+	return
+}
+
+func UnlessImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if Length(args) < 2 {
+		err = ProcessError(fmt.Sprintf("unless requires at least 2 arguments. Received %d.", Length(args)), env)
+		return
+	}
+
+	c, err := Eval(Car(args), env)
+	if err != nil {
+		return
+	}
+	condition := BooleanValue(c)
+
+	if !condition {
+		for cell := Cdr(args); NotNilP(cell); cell = Cdr(cell) {
+			sexpr := Car(cell)
+			result, err = Eval(sexpr, env)
+			if err != nil {
+				return
+			}
+		}
+	}
+	return
 }
 
 func LambdaImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
