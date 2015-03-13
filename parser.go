@@ -355,3 +355,43 @@ func ParseAndEval(src string) (result *Data, err error) {
 	}
 	return
 }
+
+func ParseAndEvalAllInEnvironment(src string, env *SymbolTableFrame) (result *Data, err error) {
+	s := NewTokenizer(src)
+	var sexpr *Data
+	var eof bool
+	for {
+		sexpr, eof, err = parseExpression(s)
+		if err != nil {
+			return
+		}
+		if eof {
+			return
+		}
+		if NilP(sexpr) {
+			return
+		}
+		result, err = Eval(sexpr, env)
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+
+func ParseAndEvalInEnvironment(src string, env *SymbolTableFrame) (result *Data, err error) {
+	s := NewTokenizer(src)
+	var sexpr *Data
+	sexpr, _, err = parseExpression(s)
+	if err != nil {
+		return
+	}
+	if NilP(sexpr) {
+		return
+	}
+	result, err = Eval(sexpr, env)
+	if err != nil {
+		return
+	}
+	return
+}
