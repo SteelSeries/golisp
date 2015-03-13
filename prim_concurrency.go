@@ -18,6 +18,8 @@ type Process struct {
 	Code  *Data
 	Wake  chan bool
 	Abort chan bool
+	Restart chan bool
+	ScheduleTimer *time.Timer
 }
 
 func RegisterConcurrencyPrimitives() {
@@ -25,6 +27,7 @@ func RegisterConcurrencyPrimitives() {
 	MakePrimitiveFunction("proc-sleep", 2, ProcSleepImpl)
 	MakePrimitiveFunction("wake", 1, WakeImpl)
 	MakePrimitiveFunction("schedule", 2, ScheduleImpl)
+	MakePrimitiveFunction("reset-timeout", 1, ResetTimeoutImpl)
 	MakePrimitiveFunction("abandon", 1, AbandonImpl)
 }
 
@@ -44,7 +47,7 @@ func ForkImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	proc := &Process{Env: env, Code: f, Wake: make(chan bool, 1), Abort: make(chan bool, 1)}
+	proc := &Process{Env: env, Code: f, Wake: make(chan bool, 1), Abort: make(chan bool, 1), Restart: make(chan bool, 1)}
 	procObj := ObjectWithTypeAndValue("Process", unsafe.Pointer(proc))
 
 	go func() {
@@ -126,16 +129,29 @@ func ScheduleImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	proc := &Process{Env: env, Code: f, Wake: make(chan bool, 1), Abort: make(chan bool, 1)}
+	proc := &Process{
+		Env: env,
+		Code: f,
+		Wake: make(chan bool, 1),
+		Abort: make(chan bool, 1),
+		Restart: make(chan bool, 1),
+		ScheduleTimer: time.NewTimer(time.Duration(IntegerValue(millis)) * time.Millisecond) }
 	procObj := ObjectWithTypeAndValue("Process", unsafe.Pointer(proc))
 
 	aborted := false
 	go func() {
-		select {
-		case <-proc.Abort:
-			aborted = true
-		case <-time.After(time.Duration(IntegerValue(millis)) * time.Millisecond):
-			_, err = FunctionValue(f).ApplyWithoutEval(InternalMakeList(procObj), env)
+	Loop:
+		for {
+			select {
+			case <-proc.Abort:
+				aborted = true
+				break Loop
+			case <-proc.Restart:
+				proc.ScheduleTimer.Reset(time.Duration(IntegerValue(millis)) * time.Millisecond)
+			case <-proc.ScheduleTimer.C:
+				_, err = FunctionValue(f).ApplyWithoutEval(InternalMakeList(procObj), env)
+				break Loop
+			}
 		}
 	}()
 
@@ -156,5 +172,22 @@ func AbandonImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	proc := (*Process)(ObjectValue(procObj))
 	proc.Abort <- true
+	return StringWithValue("OK"), nil
+}
+
+
+func ResetTimeoutImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	procObj, err := Eval(Car(args), env)
+	if err != nil {
+		return
+	}
+
+	if !ObjectP(procObj) || ObjectType(procObj) != "Process" {
+		err = ProcessError(fmt.Sprintf("restart expects a Process object expected but received %s.", ObjectType(procObj)), env)
+		return
+	}
+
+	proc := (*Process)(ObjectValue(procObj))
+	proc.Restart <- true
 	return StringWithValue("OK"), nil
 }
