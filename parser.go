@@ -356,6 +356,15 @@ func ParseAndEval(src string) (result *Data, err error) {
 	return
 }
 
+func ProcessFileInEnvironment(filename string, env *SymbolTableFrame) (result *Data, err error) {
+	src, err := ReadFile(filename)
+	if err != nil {
+		return
+	}
+	result, err = ParseAndEvalAllInEnvironment(src, env)
+	return
+}
+
 func ParseAndEvalAllInEnvironment(src string, env *SymbolTableFrame) (result *Data, err error) {
 	s := NewTokenizer(src)
 	var sexpr *Data
