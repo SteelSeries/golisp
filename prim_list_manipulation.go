@@ -16,7 +16,7 @@ func RegisterListManipulationPrimitives() {
 	MakePrimitiveFunction("reverse", 1, ReverseImpl)
 	MakePrimitiveFunction("flatten", 1, FlattenImpl)
 	MakePrimitiveFunction("flatten*", 1, RecursiveFlattenImpl)
-	MakePrimitiveFunction("append", 2, AppendImpl)
+	MakePrimitiveFunction("append", -1, AppendImpl)
 	MakePrimitiveFunction("append!", 2, AppendBangImpl)
 	MakePrimitiveFunction("copy", 1, CopyImpl)
 	MakePrimitiveFunction("partition", 2, PartitionImpl)
@@ -117,21 +117,28 @@ func AppendBangImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 }
 
 func AppendImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	firstList, err := Eval(Car(args), env)
-	if err != nil {
+	// No args -> empty list
+	if Length(args) == 0 {
 		return
 	}
 
-	second, err := Eval(Cadr(args), env)
-	if err != nil {
-		return
+	// step through args, accumulating elements
+	var items []*Data = make([]*Data, 0, 10)
+	var item *Data
+	for cell := args; NotNilP(cell); cell = Cdr(cell) {
+		item, err = Eval(Car(cell), env)
+		if err != nil {
+			return
+		}
+		if ListP(item) {
+			for itemCell := item; NotNilP(itemCell); itemCell = Cdr(itemCell) {
+				items = append(items, Car(itemCell))
+			}
+		} else {
+			items = append(items, item)
+		}
 	}
-
-	if ListP(second) {
-		result = AppendList(Copy(firstList), second)
-	} else {
-		result = Append(Copy(firstList), second)
-	}
+	result = ArrayToList(items)
 	return
 }
 
