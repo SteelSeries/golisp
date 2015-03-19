@@ -124,6 +124,10 @@ func (self *Function) ApplyWithoutEval(args *Data, argEnv *SymbolTableFrame) (re
 	return self.internalApply(args, argEnv, nil, false)
 }
 
+func (self *Function) ApplyWithoutEvalWithFrame(args *Data, argEnv *SymbolTableFrame, frame *FrameMap) (result *Data, err error) {
+	return self.internalApply(args, argEnv, frame, false)
+}
+
 func (self *Function) ApplyOveriddingEnvironment(args *Data, argEnv *SymbolTableFrame) (result *Data, err error) {
 	localEnv := NewSymbolTableFrameBelow(argEnv)
 	err = self.makeLocalBindings(args, argEnv, localEnv, true)

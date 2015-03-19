@@ -20,7 +20,7 @@ func RegsterStringPrimitives() {
 }
 
 func SplitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	theString := Eval(First(args)
+	theString := First(args)
 	if !StringP(theString) {
 		err = ProcessError(fmt.Sprintf("trim requires string arguments but was given %s.", String(theString)), env)
 		return

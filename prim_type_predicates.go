@@ -8,96 +8,55 @@
 package golisp
 
 func RegisterTypePredicatePrimitives() {
-    MakePrimitiveFunction("list?", 1, IsPairImpl)
-    MakePrimitiveFunction("pair?", 1, IsPairImpl)
-    MakePrimitiveFunction("alist?", 1, IsAlistImpl)
-    MakePrimitiveFunction("nil?", 1, NilPImpl)
-    MakePrimitiveFunction("notnil?", 1, NotNilPImpl)
-    MakePrimitiveFunction("symbol?", 1, IsSymbolImpl)
-    MakePrimitiveFunction("string?", 1, IsStringImpl)
-    MakePrimitiveFunction("integer?", 1, IsIntegerImpl)
-    MakePrimitiveFunction("number?", 1, IsNumberImpl)
-    MakePrimitiveFunction("float?", 1, IsFloatImpl)
-    MakePrimitiveFunction("function?", 1, IsFunctionImpl)
+	MakePrimitiveFunction("list?", 1, IsPairImpl)
+	MakePrimitiveFunction("pair?", 1, IsPairImpl)
+	MakePrimitiveFunction("alist?", 1, IsAlistImpl)
+	MakePrimitiveFunction("nil?", 1, NilPImpl)
+	MakePrimitiveFunction("notnil?", 1, NotNilPImpl)
+	MakePrimitiveFunction("symbol?", 1, IsSymbolImpl)
+	MakePrimitiveFunction("string?", 1, IsStringImpl)
+	MakePrimitiveFunction("integer?", 1, IsIntegerImpl)
+	MakePrimitiveFunction("number?", 1, IsNumberImpl)
+	MakePrimitiveFunction("float?", 1, IsFloatImpl)
+	MakePrimitiveFunction("function?", 1, IsFunctionImpl)
 }
 
 func IsPairImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    val, err := Eval(Car(args), env)
-    if err != nil {
-        return
-    }
-    return BooleanWithValue(PairP(val)), nil
+	return BooleanWithValue(PairP(Car(args))), nil
 }
 
 func IsAlistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    val, err := Eval(Car(args), env)
-    if err != nil {
-        return
-    }
-    return BooleanWithValue(AlistP(val)), nil
+	return BooleanWithValue(AlistP(Car(args))), nil
 }
 
 func NilPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    val, err := Eval(Car(args), env)
-    if err != nil {
-        return
-    }
-    return BooleanWithValue(NilP(val)), nil
+	return BooleanWithValue(NilP(Car(args))), nil
 }
 
 func NotNilPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    val, err := Eval(Car(args), env)
-    if err != nil {
-        return
-    }
-    return BooleanWithValue(NotNilP(val)), nil
+	return BooleanWithValue(NotNilP(Car(args))), nil
 }
 
 func IsSymbolImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    val, err := Eval(Car(args), env)
-    if err != nil {
-        return
-    }
-    return BooleanWithValue(SymbolP(val)), nil
+	return BooleanWithValue(SymbolP(Car(args))), nil
 }
 
 func IsStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    val, err := Eval(Car(args), env)
-    if err != nil {
-        return
-    }
-    return BooleanWithValue(StringP(val)), nil
+	return BooleanWithValue(StringP(Car(args))), nil
 }
 
 func IsIntegerImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    val, err := Eval(Car(args), env)
-    if err != nil {
-        return
-    }
-    return BooleanWithValue(IntegerP(val)), nil
+	return BooleanWithValue(IntegerP(Car(args))), nil
 }
 
 func IsNumberImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    val, err := Eval(Car(args), env)
-    if err != nil {
-        return
-    }
-    return BooleanWithValue(NumberP(val)), nil
+	return BooleanWithValue(NumberP(Car(args))), nil
 }
 
 func IsFloatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    val, err := Eval(Car(args), env)
-    if err != nil {
-        return
-    }
-    return BooleanWithValue(FloatP(val)), nil
+	return BooleanWithValue(FloatP(Car(args))), nil
 }
 
 func IsFunctionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    val, err := Eval(Car(args), env)
-    if err != nil {
-        return
-    }
-    return BooleanWithValue(FunctionP(val)), nil
+	return BooleanWithValue(FunctionP(Car(args))), nil
 }
-

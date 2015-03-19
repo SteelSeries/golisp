@@ -177,12 +177,12 @@ func internalAppendBytes(args *Data, env *SymbolTableFrame) (newBytes *[]byte, e
 		if ObjectP(evaledArg) && ObjectType(evaledArg) == "[]byte" {
 			extraByteObj = evaledArg
 		} else if ListP(evaledArg) {
-			extraByteObj, err = ListToBytesImpl(InternalMakeList(QuoteIt(evaledArg)), env)
+			extraByteObj, err = ListToBytesImpl(InternalMakeList(evaledArg), env)
 		} else {
-			extraByteObj, err = ListToBytesImpl(InternalMakeList(QuoteIt(Cdr(args))), env)
+			extraByteObj, err = ListToBytesImpl(InternalMakeList(Cdr(args)), env)
 		}
 	} else {
-		extraByteObj, err = ListToBytesImpl(InternalMakeList(QuoteIt(Cdr(args))), env)
+		extraByteObj, err = ListToBytesImpl(InternalMakeList(Cdr(args)), env)
 	}
 
 	if err != nil {

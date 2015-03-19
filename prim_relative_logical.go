@@ -36,7 +36,7 @@ func LessThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	arg2 := Cadr(args)
-	if !Number(arg2) {
+	if !NumberP(arg2) {
 		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(arg2)), env)
 		return
 	}
@@ -47,7 +47,7 @@ func LessThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func GreaterThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	arg1 := Car(args)
-	if !numberP(arg1) {
+	if !NumberP(arg1) {
 		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(arg1)), env)
 		return
 	}
