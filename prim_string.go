@@ -20,19 +20,13 @@ func RegsterStringPrimitives() {
 }
 
 func SplitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	theString, err := Eval(First(args), env)
-	if err != nil {
-		return
-	}
+	theString := Eval(First(args)
 	if !StringP(theString) {
 		err = ProcessError(fmt.Sprintf("trim requires string arguments but was given %s.", String(theString)), env)
 		return
 	}
 
-	theSeparator, err := Eval(Second(args), env)
-	if err != nil {
-		return
-	}
+	theSeparator := Second(args)
 	if !StringP(theSeparator) {
 		err = ProcessError(fmt.Sprintf("trim requires string arguments but was given %s.", String(theSeparator)), env)
 		return
@@ -47,17 +41,10 @@ func SplitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func TrimImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	theString, err := Eval(First(args), env)
-	if err != nil {
-		return
-	}
+	theString := First(args)
 
 	if Length(args) == 2 {
-		theTrimSet, err := Eval(Second(args), env)
-		if err != nil {
-			return nil, err
-		}
-
+		theTrimSet := Second(args)
 		result = StringWithValue(strings.Trim(StringValue(theString), StringValue(theTrimSet)))
 	} else {
 		result = StringWithValue(strings.TrimSpace(StringValue(theString)))
@@ -66,10 +53,7 @@ func TrimImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func UpcaseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	theString, err := Eval(First(args), env)
-	if err != nil {
-		return
-	}
+	theString := First(args)
 	if !StringP(theString) {
 		err = ProcessError(fmt.Sprintf("string-upcase requires a string argument but was given %s.", String(theString)), env)
 		return
@@ -78,10 +62,7 @@ func UpcaseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func DowncaseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	theString, err := Eval(First(args), env)
-	if err != nil {
-		return
-	}
+	theString := First(args)
 	if !StringP(theString) {
 		err = ProcessError(fmt.Sprintf("string-downcase requires a string argument but was given %s.", String(theString)), env)
 		return

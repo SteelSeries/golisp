@@ -29,10 +29,7 @@ func RegisterSystemPrimitives() {
 }
 
 func LoadFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	filename, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
+	filename := Car(args)
 	if !StringP(filename) {
 		err = ProcessError("Filename must be a string", env)
 		return
@@ -48,10 +45,7 @@ func QuitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func SleepImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	n, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
+	n := Car(args)
 	if !IntegerP(n) {
 		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(n)), env)
 		return
@@ -67,10 +61,7 @@ func MillisImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func WriteLineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	data, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
+	data := Car(args)
 	println(PrintString(data))
 	return
 }
@@ -78,12 +69,7 @@ func WriteLineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 func MakeStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	pieces := make([]string, 2)
 	for cell := args; NotNilP(cell); cell = Cdr(cell) {
-		sexpr := Car(cell)
-		s, err := Eval(sexpr, env)
-		if err != nil {
-			break
-		}
-		pieces = append(pieces, PrintString(s))
+		pieces = append(pieces, PrintString(Car(cell)))
 	}
 	return StringWithValue(strings.Join(pieces, "")), nil
 }

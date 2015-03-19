@@ -55,10 +55,7 @@ func DebugOnEntryImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 }
 
 func AddDebugOnEntryImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	f, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
+	f := Car(args)
 	if f == nil || TypeOf(f) != FunctionType {
 		err = errors.New("No such function")
 		return
@@ -68,10 +65,7 @@ func AddDebugOnEntryImpl(args *Data, env *SymbolTableFrame) (result *Data, err e
 }
 
 func RemoveDebugOnEntryImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	f, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
+	f := Car(args)
 	if f == nil || TypeOf(f) != FunctionType {
 		err = errors.New("No such function")
 		return

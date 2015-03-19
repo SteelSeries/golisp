@@ -66,338 +66,172 @@ func RegisterListAccessPrimitives() {
 }
 
 func CarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "a"), nil
+	return WalkList(Car(args), "a"), nil
 }
 
 func CdrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "d"), nil
+	return WalkList(Car(args), "d"), nil
 }
 
 func CaarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "aa"), nil
+	return WalkList(Car(args), "aa"), nil
 }
 
 func CadrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "ad"), nil
+	return WalkList(Car(args), "ad"), nil
 }
 
 func CdarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "da"), nil
+	return WalkList(Car(args), "da"), nil
 }
 
 func CddrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "dd"), nil
+	return WalkList(Car(args), "dd"), nil
 }
 
 func CaaarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "aaa"), nil
+	return WalkList(Car(args), "aaa"), nil
 }
 
 func CaadrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "aad"), nil
+	return WalkList(Car(args), "aad"), nil
 }
 
 func CadarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "ada"), nil
+	return WalkList(Car(args), "ada"), nil
 }
 
 func CaddrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "add"), nil
+	return WalkList(Car(args), "add"), nil
 }
 
 func CdaarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "daa"), nil
+	return WalkList(Car(args), "daa"), nil
 }
 
 func CdadrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "dad"), nil
+	return WalkList(Car(args), "dad"), nil
 }
 
 func CddarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "dda"), nil
+	return WalkList(Car(args), "dda"), nil
 }
 
 func CdddrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "ddd"), nil
+	return WalkList(Car(args), "ddd"), nil
 }
 
 func CaaaarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "aaaa"), nil
+	return WalkList(Car(args), "aaaa"), nil
 }
 
 func CaaadrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "aaad"), nil
+	return WalkList(Car(args), "aaad"), nil
 }
 
 func CaadarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "aada"), nil
+	return WalkList(Car(args), "aada"), nil
 }
 
 func CaaddrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "aadd"), nil
+	return WalkList(Car(args), "aadd"), nil
 }
 
 func CadaarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "adaa"), nil
+	return WalkList(Car(args), "adaa"), nil
 }
 
 func CadadrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "adad"), nil
+	return WalkList(Car(args), "adad"), nil
 }
 
 func CaddarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "adda"), nil
+	return WalkList(Car(args), "adda"), nil
 }
 
 func CadddrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "addd"), nil
+	return WalkList(Car(args), "addd"), nil
 }
 
 func CdaaarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "daaa"), nil
+	return WalkList(Car(args), "daaa"), nil
 }
 
 func CdaadrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "daad"), nil
+	return WalkList(Car(args), "daad"), nil
 }
 
 func CdadarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "dada"), nil
+	return WalkList(Car(args), "dada"), nil
 }
 
 func CdaddrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "dadd"), nil
+	return WalkList(Car(args), "dadd"), nil
 }
 
 func CddaarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "ddaa"), nil
+	return WalkList(Car(args), "ddaa"), nil
 }
 
 func CddadrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "ddad"), nil
+	return WalkList(Car(args), "ddad"), nil
 }
 
 func CdddarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "ddda"), nil
+	return WalkList(Car(args), "ddda"), nil
 }
 
 func CddddrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return WalkList(l, "dddd"), nil
+	return WalkList(Car(args), "dddd"), nil
 }
 
 func FirstImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return First(l), nil
+	return First(Car(args)), nil
 }
 
 func SecondImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return Second(l), nil
+	return Second(Car(args)), nil
 }
 
 func ThirdImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return Third(l), nil
+	return Third(Car(args)), nil
 }
 
 func FourthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return Fourth(l), nil
+	return Fourth(Car(args)), nil
 }
 
 func FifthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return Fifth(l), nil
+	return Fifth(Car(args)), nil
 }
 
 func SixthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return Sixth(l), nil
+	return Sixth(Car(args)), nil
 }
 
 func SeventhImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return Seventh(l), nil
+	return Seventh(Car(args)), nil
 }
 
 func EighthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return Eighth(l), nil
+	return Eighth(Car(args)), nil
 }
 
 func NinthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return Ninth(l), nil
+	return Ninth(Car(args)), nil
 }
 
 func TenthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return Tenth(l), nil
+	return Tenth(Car(args)), nil
 }
 
 func NthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	col, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
+	col := Car(args)
 	if !PairP(col) {
 		err = ProcessError("First arg to nth must be a list", env)
 		return
 	}
-	count, err := Eval(Cadr(args), env)
-	if err != nil {
-		return
-	}
+	count := Cadr(args)
 	if !IntegerP(count) {
 		err = ProcessError("Second arg to nth must be a number", env)
 		return
@@ -407,19 +241,13 @@ func NthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func TakeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	n, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
+	n := Car(args)
 	if !IntegerP(n) {
 		err = ProcessError("take requires a number as its first argument.", env)
 	}
 	size := int(IntegerValue(n))
 
-	l, err := Eval(Cadr(args), env)
-	if err != nil {
-		return
-	}
+	l := Cadr(args)
 	if ListP(l) {
 		var items []*Data = make([]*Data, 0, Length(args))
 		for i, cell := 0, l; i < size && NotNilP(cell); i, cell = i+1, Cdr(cell) {
@@ -446,19 +274,13 @@ func TakeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func DropImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	n, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
+	n := Car(args)
 	if !IntegerP(n) {
 		err = ProcessError("drop requires a number as its first argument.", env)
 	}
 	size := int(IntegerValue(n))
 
-	l, err := Eval(Cadr(args), env)
-	if err != nil {
-		return
-	}
+	l := Cadr(args)
 
 	if ListP(l) {
 		var cell *Data
