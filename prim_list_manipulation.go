@@ -25,83 +25,39 @@ func RegisterListManipulationPrimitives() {
 
 func MakeListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var items []*Data = make([]*Data, 0, Length(args))
-	var item *Data
 	for cell := args; NotNilP(cell); cell = Cdr(cell) {
-		item, err = Eval(Car(cell), env)
-		if err != nil {
-			return
-		}
-		items = append(items, item)
+		items = append(items, Car(cell))
 	}
 	result = ArrayToList(items)
 	return
 }
 
 func ListLengthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	d, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	return IntegerWithValue(int64(Length(d))), nil
+	return IntegerWithValue(int64(Length(Car(args)))), nil
 }
 
 func ConsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var car *Data
-	car, err = Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-
-	var cdr *Data
-	cdr, err = Eval(Cadr(args), env)
-	if err != nil {
-		return
-	}
-
-	result = Cons(car, cdr)
-	return
+	car := Car(args)
+	cdr = Cadr(args)
+	return Cons(car, cdr), nil
 }
 
 func ReverseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var val *Data
-	val, err = Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	result = Reverse(val)
-	return
+	return Reverse(Car(args))
 }
 
 func FlattenImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var val *Data
-	val, err = Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	result, err = Flatten(val)
-	return
+	return Flatten(Car(args))
 }
 
 func RecursiveFlattenImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var val *Data
-	val, err = Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	result, err = RecursiveFlatten(val)
-	return
+	return = RecursiveFlatten(Car(args))
 }
 
 func AppendBangImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	firstList, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
+	firstList := Car(args)
 
-	second, err := Eval(Cadr(args), env)
-	if err != nil {
-		return
-	}
+	second := Cadr(args)
 
 	if ListP(second) {
 		result = AppendBangList(firstList, second)
@@ -126,10 +82,7 @@ func AppendImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var items []*Data = make([]*Data, 0, 10)
 	var item *Data
 	for cell := args; NotNilP(cell); cell = Cdr(cell) {
-		item, err = Eval(Car(cell), env)
-		if err != nil {
-			return
-		}
+		item = Car(cell)
 		if ListP(item) {
 			for itemCell := item; NotNilP(itemCell); itemCell = Cdr(itemCell) {
 				items = append(items, Car(itemCell))
@@ -143,28 +96,17 @@ func AppendImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func CopyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	d, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-
-	return Copy(d), nil
+	return Copy(Car(args)), nil
 }
 
 func PartitionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	n, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
+	n := Car(args)
 	if !IntegerP(n) {
 		err = ProcessError("partition requires a number as it's first argument.", env)
 	}
 	size := int(IntegerValue(n))
 
-	l, err := Eval(Cadr(args), env)
-	if err != nil {
-		return
-	}
+	l := Cadr(args)
 	if !ListP(l) {
 		err = ProcessError("partition requires a list as it's second argument.", env)
 	}
@@ -188,19 +130,13 @@ func PartitionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 }
 
 func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	n, err := Eval(First(args), env)
-	if err != nil {
-		return
-	}
+	n := First(args)
 	if !IntegerP(n) {
 		err = ProcessError("sublist requires a number as it's first argument.", env)
 	}
 	first := int(IntegerValue(n))
 
-	n, err = Eval(Second(args), env)
-	if err != nil {
-		return
-	}
+	n = Second(args)
 	if !IntegerP(n) {
 		err = ProcessError("sublist requires a number as it's second argument.", env)
 	}
@@ -211,10 +147,7 @@ func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	l, err := Eval(Third(args), env)
-	if err != nil {
-		return
-	}
+	l := Third(args)
 	if !ListP(l) {
 		err = ProcessError("sublist requires a list as it's third argument.", env)
 	}

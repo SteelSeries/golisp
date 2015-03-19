@@ -12,11 +12,11 @@ import (
 )
 
 func RegisterMacroPrimitives() {
-	MakePrimitiveFunction("quote", 1, QuoteImpl)
-	MakePrimitiveFunction("quasiquote", 1, QuasiquoteImpl)
-	MakePrimitiveFunction("unquote", 1, UnquoteImpl)
-	MakePrimitiveFunction("unquote-splicing", 1, UnquoteSplicingImpl)
-	MakePrimitiveFunction("expand", -1, ExpandImpl)
+	MakeSpecialForm("quote", 1, QuoteImpl)
+	MakeSpecialForm("quasiquote", 1, QuasiquoteImpl)
+	MakeSpecialForm("unquote", 1, UnquoteImpl)
+	MakeSpecialForm("unquote-splicing", 1, UnquoteSplicingImpl)
+	MakeSpecialForm("expand", -1, ExpandImpl)
 }
 
 func QuoteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

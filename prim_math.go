@@ -35,7 +35,7 @@ func RegisterMathPrimitives() {
 }
 
 func IsEvenImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	evaluated, _ := Eval(Car(args), env)
+	evaluated := Car(args)
 	if !IntegerP(evaluated) {
 		return LispFalse, nil
 	}
@@ -43,7 +43,7 @@ func IsEvenImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func IsOddImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	evaluated, _ := Eval(Car(args), env)
+	evaluated := Car(args)
 	if !IntegerP(evaluated) {
 		return LispFalse, nil
 	}
@@ -80,24 +80,14 @@ func anyFloats(args *Data, env *SymbolTableFrame) (result bool, err error) {
 }
 
 func AddImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var n *Data
-	nums := make([]*Data, 0, Length(args))
-	for c := args; NotNilP(c); c = Cdr(c) {
-		n, err = Eval(Car(c), env)
-		if err != nil {
-			return
-		}
-		nums = append(nums, n)
-	}
-	numbers := ArrayToList(nums)
-	areFloats, err := anyFloats(numbers, env)
+	areFloats, err := anyFloats(args, env)
 	if err != nil {
 		return
 	}
 	if areFloats {
-		return addFloats(numbers, env)
+		return addFloats(args, env)
 	} else {
-		return addInts(numbers, env)
+		return addInts(args, env)
 	}
 }
 
@@ -118,24 +108,14 @@ func subtractFloats(args *Data, env *SymbolTableFrame) (result *Data, err error)
 }
 
 func SubtractImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var n *Data
-	nums := make([]*Data, 0, Length(args))
-	for c := args; NotNilP(c); c = Cdr(c) {
-		n, err = Eval(Car(c), env)
-		if err != nil {
-			return
-		}
-		nums = append(nums, n)
-	}
-	numbers := ArrayToList(nums)
-	areFloats, err := anyFloats(numbers, env)
+	areFloats, err := anyFloats(args, env)
 	if err != nil {
 		return
 	}
 	if areFloats {
-		return subtractFloats(numbers, env)
+		return subtractFloats(args, env)
 	} else {
-		return subtractInts(numbers, env)
+		return subtractInts(args, env)
 	}
 }
 
@@ -156,24 +136,14 @@ func multiplyFloats(args *Data, env *SymbolTableFrame) (result *Data, err error)
 }
 
 func MultiplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var n *Data
-	nums := make([]*Data, 0, Length(args))
-	for c := args; NotNilP(c); c = Cdr(c) {
-		n, err = Eval(Car(c), env)
-		if err != nil {
-			return
-		}
-		nums = append(nums, n)
-	}
-	numbers := ArrayToList(nums)
-	areFloats, err := anyFloats(numbers, env)
+	areFloats, err := anyFloats(args, env)
 	if err != nil {
 		return
 	}
 	if areFloats {
-		return multiplyFloats(numbers, env)
+		return multiplyFloats(args, env)
 	} else {
-		return multiplyInts(numbers, env)
+		return multiplyInts(args, env)
 	}
 }
 
@@ -206,25 +176,14 @@ func quotientFloats(args *Data, env *SymbolTableFrame) (result *Data, err error)
 }
 
 func QuotientImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	nums := make([]*Data, 0, Length(args))
-	var n *Data
-	for c := args; NotNilP(c); c = Cdr(c) {
-		n, err = Eval(Car(c), env)
-		if err != nil {
-			return
-		}
-		nums = append(nums, n)
-	}
-	numbers := ArrayToList(nums)
-
-	areFloats, err := anyFloats(numbers, env)
+	areFloats, err := anyFloats(args, env)
 	if err != nil {
 		return
 	}
 	if areFloats {
-		return quotientFloats(numbers, env)
+		return quotientFloats(args, env)
 	} else {
-		return quotientInts(numbers, env)
+		return quotientInts(args, env)
 	}
 }
 
@@ -234,21 +193,13 @@ func RemainderImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 		return
 	}
 
-	var dividend *Data
-	dividend, err = Eval(Car(args), env)
-	if err != nil {
-		return
-	}
+	dividend := Car(args)
 	if !IntegerP(dividend) {
 		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(dividend)), env)
 		return
 	}
 
-	var divisor *Data
-	divisor, err = Eval(Cadr(args), env)
-	if err != nil {
-		return
-	}
+	divisor := Cadr(args)
 	if !IntegerP(dividend) {
 		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(divisor)), env)
 		return
@@ -271,24 +222,15 @@ func IntervalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	startObj, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
+	startObj := Car(args)
 	start := IntegerValue(startObj)
 
-	endObj, err := Eval(Cadr(args), env)
-	if err != nil {
-		return
-	}
+	endObj := Cadr(args)
 	end := IntegerValue(endObj)
 
 	var step int64 = 1
 	if Length(args) == 3 {
-		stepObj, e := Eval(Caddr(args), env)
-		if e != nil {
-			return nil, e
-		}
+		stepObj := Caddr(args)
 		step = IntegerValue(stepObj)
 		if step < 1 {
 			return nil, ProcessError(fmt.Sprintf("interval expects a positive step value, received %d", step), env)
@@ -305,10 +247,7 @@ func IntervalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func ToIntImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	n, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
+	n := Car(args)
 	if !IntegerP(n) && !FloatP(n) {
 		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(n)), env)
 		return
@@ -318,10 +257,7 @@ func ToIntImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func ToFloatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	n, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
+	n := Car(args)
 	if !IntegerP(n) && !FloatP(n) {
 		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(n)), env)
 		return
@@ -331,17 +267,11 @@ func ToFloatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func NumberToStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	valObj, err := Eval(First(args), env)
-	if err != nil {
-		return nil, err
-	}
+	valObj := First(args)
 	val := IntegerValue(valObj)
 	var base int64
 	if Length(args) == 2 {
-		baseObj, err := Eval(Second(args), env)
-		if err != nil {
-			return nil, err
-		}
+		baseObj := Second(args)
 		base = IntegerValue(baseObj)
 	} else {
 		base = 10
@@ -365,17 +295,11 @@ func NumberToStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err er
 }
 
 func StringToNumberImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	strObj, err := Eval(First(args), env)
-	if err != nil {
-		return nil, err
-	}
+	strObj := First(args)
 	str := StringValue(strObj)
 	var base int64
 	if Length(args) == 2 {
-		baseObj, err := Eval(Second(args), env)
-		if err != nil {
-			return nil, err
-		}
+		baseObj := Second(args)
 		base = IntegerValue(baseObj)
 	} else {
 		base = 10
@@ -403,21 +327,16 @@ func StringToNumberImpl(args *Data, env *SymbolTableFrame) (result *Data, err er
 }
 
 func minInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var n *Data
-	n, err = Eval(Car(args), env)
-	if err != nil {
-		return
-	} else if !IntegerP(n) {
+	n := Car(args)
+	if !IntegerP(n) {
 		err = ProcessError(fmt.Sprintf("Min requires numbers, received %s", String(n)), env)
 		return
 	}
 	var acc int64 = IntegerValue(n)
 
 	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-		n, err = Eval(Car(c), env)
-		if err != nil {
-			return
-		} else if !IntegerP(n) {
+		n = Car(c)
+		if !IntegerP(n) {
 			err = ProcessError(fmt.Sprintf("Min requires numbers, received %s", String(n)), env)
 			return
 		}
@@ -430,21 +349,16 @@ func minInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func minFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var n *Data
-	n, err = Eval(Car(args), env)
-	if err != nil {
-		return
-	} else if !NumberP(n) {
+	n := Car(args)
+	if !NumberP(n) {
 		err = ProcessError(fmt.Sprintf("Min requires numbers, received %s", String(n)), env)
 		return
 	}
 	var acc float32 = FloatValue(n)
 
 	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-		n, err = Eval(Car(c), env)
-		if err != nil {
-			return
-		} else if !NumberP(n) {
+		n = Car(c)
+		if !NumberP(n) {
 			err = ProcessError(fmt.Sprintf("Min requires numbers, received %s", String(n)), env)
 			return
 		}
@@ -457,8 +371,7 @@ func minFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func MinImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-
-	numbers, err := Eval(Car(args), env)
+	numbers := Car(args)
 	if !ListP(numbers) {
 		err = ProcessError(fmt.Sprintf("Min requires a list of numbers, received %s", String(numbers)), env)
 		return
@@ -479,21 +392,16 @@ func MinImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func maxInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var n *Data
-	n, err = Eval(Car(args), env)
-	if err != nil {
-		return
-	} else if !IntegerP(n) {
+	n := Car(args)
+	if !IntegerP(n) {
 		err = ProcessError(fmt.Sprintf("Max requires numbers, received %s", String(n)), env)
 		return
 	}
 	var acc int64 = IntegerValue(n)
 
 	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-		n, err = Eval(Car(c), env)
-		if err != nil {
-			return
-		} else if !IntegerP(n) {
+		n = Car(c)
+		if !IntegerP(n) {
 			err = ProcessError(fmt.Sprintf("Max requires numbers, received %s", String(n)), env)
 			return
 		}
@@ -506,21 +414,16 @@ func maxInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func maxFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var n *Data
-	n, err = Eval(Car(args), env)
-	if err != nil {
-		return
-	} else if !NumberP(n) {
+	n := Car(args)
+	if !NumberP(n) {
 		err = ProcessError(fmt.Sprintf("Max requires numbers, received %s", String(n)), env)
 		return
 	}
 	var acc float32 = FloatValue(n)
 
 	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-		n, err = Eval(Car(c), env)
-		if err != nil {
-			return
-		} else if !NumberP(n) {
+		n = Car(c)
+		if !NumberP(n) {
 			err = ProcessError(fmt.Sprintf("Max requires numbers, received %s", String(n)), env)
 			return
 		}
@@ -533,8 +436,7 @@ func maxFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func MaxImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-
-	numbers, err := Eval(Car(args), env)
+	numbers := Car(args)
 	if !ListP(numbers) {
 		err = ProcessError(fmt.Sprintf("Max requires a list of numbers, received %s", String(numbers)), env)
 		return
@@ -556,7 +458,7 @@ func MaxImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func FloorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	val, err := Eval(Car(args), env)
+	val := Car(args)
 
 	if !NumberP(val) {
 		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(Car(args))), env)
@@ -567,7 +469,7 @@ func FloorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func CeilingImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	val, err := Eval(Car(args), env)
+	val := Car(args)
 
 	if !NumberP(val) {
 		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(Car(args))), env)
