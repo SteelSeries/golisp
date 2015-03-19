@@ -23,7 +23,7 @@ func RegisterSystemPrimitives() {
 	MakePrimitiveFunction("write-line", 1, WriteLineImpl)
 	MakePrimitiveFunction("str", -1, MakeStringImpl)
 	MakePrimitiveFunction("intern", 1, InternImpl)
-	MakePrimitiveFunction("time", 1, TimeImpl)
+	MakeSpecialForm("time", 1, TimeImpl)
 	MakePrimitiveFunction("quit", 0, QuitImpl)
 	MakePrimitiveFunction("gensym", -1, GensymImpl)
 }
@@ -60,6 +60,8 @@ func MillisImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return
 }
 
+// TODO: make this take multiple args and act like MakeStrImpl (write
+// the concatenation of the printstrings of the args
 func WriteLineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	data := Car(args)
 	println(PrintString(data))
@@ -93,10 +95,7 @@ func TimeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func InternImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	sym, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
+	sym := Car(args)
 	if !StringP(sym) {
 		err = ProcessError(fmt.Sprintf("intern expects a string, but received %s.", String(sym)), env)
 		return
@@ -115,11 +114,7 @@ func GensymImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if Length(args) == 0 {
 		prefix = "GENSYM"
 	} else {
-		arg, argerr := Eval(Car(args), env)
-		if argerr != nil {
-			err = argerr
-			return
-		}
+		arg := Car(args)
 		if !StringP(arg) && !SymbolP(arg) {
 			err = ProcessError(fmt.Sprintf("gensym expects a string or symbol, but recieved %s.", String(arg)), env)
 		}
@@ -133,6 +128,6 @@ func GensymImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		count += 1
 	}
 	symbolCounts[prefix] = count
-	result = Intern(fmt.Sprintf("%s%d", prefix, count))
+	result = Intern(fmt.Sprintf("%s-%d", prefix, count))
 	return
 }

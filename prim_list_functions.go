@@ -28,10 +28,7 @@ func intMin(x, y int) int {
 }
 
 func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	f, err := Eval(First(args), env)
-	if err != nil {
-		return
-	}
+	f := First(args)
 	if !FunctionP(f) {
 		err = ProcessError(fmt.Sprintf("map needs a function as its first argument, but got %s.", String(f)), env)
 		return
@@ -41,10 +38,7 @@ func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var loopCount = 30000
 	var col *Data
 	for a := Cdr(args); NotNilP(a); a = Cdr(a) {
-		col, err = Eval(Car(a), env)
-		if err != nil {
-			return
-		}
+		col = Car(a)
 		if !ListP(col) {
 			err = ProcessError(fmt.Sprintf("map needs lists as its other arguments, but got %s.", String(col)), env)
 			return
@@ -73,24 +67,15 @@ func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func ReduceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	f, err := Eval(First(args), env)
-	if err != nil {
-		return
-	}
+	f := First(args)
 	if !FunctionP(f) {
 		err = ProcessError("reduce needs a function as its first argument", env)
 		return
 	}
 
-	initial, err := Eval(Second(args), env)
-	if err != nil {
-		return
-	}
+	initial := Second(args)
+	col := Third(args)
 
-	col, err := Eval(Third(args), env)
-	if err != nil {
-		return
-	}
 	if !ListP(col) {
 		err = ProcessError("map needs a list as its third argument", env)
 		return
@@ -116,19 +101,13 @@ func ReduceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func FilterImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	f, err := Eval(First(args), env)
-	if err != nil {
-		return
-	}
+	f := First(args)
 	if !FunctionP(f) {
 		err = ProcessError(fmt.Sprintf("filter needs a function as its first argument, but got %s.", String(f)), env)
 		return
 	}
 
-	col, err := Eval(Second(args), env)
-	if err != nil {
-		return
-	}
+	col := Second(args)
 	if !ListP(col) {
 		err = ProcessError(fmt.Sprintf("filter needs a list as its second argument, but got %s.", String(col)), env)
 		return
@@ -155,15 +134,9 @@ func FilterImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func MemqImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	key, err := Eval(First(args), env)
-	if err != nil {
-		return
-	}
+	key := First(args)
 
-	l, err := Eval(Second(args), env)
-	if err != nil {
-		return
-	}
+	l := Second(args)
 
 	for c := l; NotNilP(c); c = Cdr(c) {
 		if IsEqual(key, Car(c)) {
@@ -175,19 +148,13 @@ func MemqImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func MempImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	f, err := Eval(First(args), env)
-	if err != nil {
-		return
-	}
+	f := First(args)
 	if !FunctionP(f) {
 		err = ProcessError("memp needs a function as its first argument", env)
 		return
 	}
 
-	l, err := Eval(Second(args), env)
-	if err != nil {
-		return
-	}
+	l := Second(args)
 
 	var found *Data
 	for c := l; NotNilP(c); c = Cdr(c) {

@@ -38,12 +38,12 @@ func ListLengthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 
 func ConsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	car := Car(args)
-	cdr = Cadr(args)
+	cdr := Cadr(args)
 	return Cons(car, cdr), nil
 }
 
 func ReverseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return Reverse(Car(args))
+	return Reverse(Car(args)), nil
 }
 
 func FlattenImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -51,7 +51,7 @@ func FlattenImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func RecursiveFlattenImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return = RecursiveFlatten(Car(args))
+	return RecursiveFlatten(Car(args))
 }
 
 func AppendBangImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
