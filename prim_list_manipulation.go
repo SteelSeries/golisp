@@ -17,19 +17,19 @@ func RegisterListManipulationPrimitives() {
 	MakePrimitiveFunction("flatten", 1, FlattenImpl)
 	MakePrimitiveFunction("flatten*", 1, RecursiveFlattenImpl)
 	MakePrimitiveFunction("append", -1, AppendImpl)
-	MakePrimitiveFunction("append!", 2, AppendBangImpl)
+	MakeSpecialForm("append!", 2, AppendBangImpl)
 	MakePrimitiveFunction("copy", 1, CopyImpl)
 	MakePrimitiveFunction("partition", 2, PartitionImpl)
 	MakePrimitiveFunction("sublist", 3, SublistImpl)
 }
 
 func MakeListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var items []*Data = make([]*Data, 0, Length(args))
-	for cell := args; NotNilP(cell); cell = Cdr(cell) {
-		items = append(items, Car(cell))
-	}
-	result = ArrayToList(items)
-	return
+	// var items []*Data = make([]*Data, 0, Length(args))
+	// for cell := args; NotNilP(cell); cell = Cdr(cell) {
+	// 	items = append(items, Car(cell))
+	// }
+	// result = ArrayToList(items)
+	return args, nil
 }
 
 func ListLengthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -55,9 +55,15 @@ func RecursiveFlattenImpl(args *Data, env *SymbolTableFrame) (result *Data, err 
 }
 
 func AppendBangImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	firstList := Car(args)
+	firstList, err := Eval(Car(args), env)
+	if err != nil {
+		return
+	}
 
-	second := Cadr(args)
+	second, err := Eval(Cadr(args), env)
+	if err != nil {
+		return
+	}
 
 	if ListP(second) {
 		result = AppendBangList(firstList, second)

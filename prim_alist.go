@@ -19,71 +19,46 @@ func RegisterAListPrimitives() {
 }
 
 func AlistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
+	l := Car(args)
 	result = Alist(l)
 	return
 }
 
 func AconsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var key *Data
-	var value *Data
-	var alist *Data
-
 	if Length(args) < 2 || Length(args) > 3 {
 		err = ProcessError("acons must have 2 or 3 arguments", env)
 		return
 	}
 
-	key, err = Eval(First(args), env)
-	if err != nil {
-		return
-	}
-
+	key := First(args)
 	if PairP(key) {
 		err = ProcessError("Alist key can not be a list", env)
 		return
 	}
 
-	value, err = Eval(Second(args), env)
-	if err != nil {
-		return
-	}
+	value := Second(args)
 
+	var alist *Data = nil
 	if Length(args) == 3 {
-		alist, err = Eval(Third(args), env)
-		if err != nil {
-			return
-		}
+		alist = Third(args)
 	}
 
-	result = Acons(key, value, alist)
-	return
+	return Acons(key, value, alist), nil
 }
 
 func PairlisImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var keys *Data
-	var values *Data
 	if Length(args) > 3 {
 		err = ProcessError("pairlis takes at most three arguments", env)
 		return
 	}
 
-	keys, err = Eval(Car(args), env)
-	if err != nil {
-		return
-	}
+	keys := Car(args)
 	if !PairP(keys) {
 		err = ProcessError("First arg of pairlis must be a list", env)
 		return
 	}
 
-	values, err = Eval(Cadr(args), env)
-	if err != nil {
-		return
-	}
+	values := Cadr(args)
 
 	if !PairP(values) {
 		err = ProcessError("Second arg of Pairlis must be a list", env)
@@ -95,10 +70,7 @@ func PairlisImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	result, err = Eval(Third(args), env)
-	if err != nil {
-		return
-	}
+	result = Third(args)
 
 	if NotNilP(result) {
 		if !PairP(result) {
@@ -120,36 +92,14 @@ func PairlisImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func AssocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var key *Data
-	var list *Data
-
-	key, err = Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-
-	list, err = Eval(Cadr(args), env)
-	if err != nil {
-		return
-	}
-
-	result, err = Assoc(key, list)
-	return
+	key := Car(args)
+	list := Cadr(args)
+	return Assoc(key, list)
 }
 
 func RassocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var value *Data
-	var list *Data
-
-	value, err = Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-
-	list, err = Eval(Cadr(args), env)
-	if err != nil {
-		return
-	}
+	value := Car(args)
+	list := Cadr(args)
 
 	for c := list; NotNilP(c); c = Cdr(c) {
 		pair := Car(c)
@@ -166,19 +116,7 @@ func RassocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func DissocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var key *Data
-	var list *Data
-
-	key, err = Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-
-	list, err = Eval(Cadr(args), env)
-	if err != nil {
-		return
-	}
-
-	result, err = Dissoc(key, list)
-	return
+	key := Car(args)
+	list := Cadr(args)
+	return Dissoc(key, list)
 }

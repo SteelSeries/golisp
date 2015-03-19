@@ -69,6 +69,10 @@ func WriteLineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 }
 
 func MakeStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if NilP(args) || Length(args) == 0 {
+		return StringWithValue("()"), nil
+	}
+
 	pieces := make([]string, 2)
 	for cell := args; NotNilP(cell); cell = Cdr(cell) {
 		pieces = append(pieces, PrintString(Car(cell)))
