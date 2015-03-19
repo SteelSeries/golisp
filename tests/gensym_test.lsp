@@ -1,12 +1,12 @@
 (describe gensym-with-default
-          (== (gensym) 'GENSYM1)
-          (== (gensym) 'GENSYM2)
-          (== (gensym) 'GENSYM3)
-          (== (gensym) 'GENSYM4))
+          (== (gensym) 'GENSYM-1)
+          (== (gensym) 'GENSYM-2)
+          (== (gensym) 'GENSYM-3)
+          (== (gensym) 'GENSYM-4))
 
 (describe gensym-with-prefix
-          (== (gensym 'hi) 'hi1)
-          (== (gensym "hi") 'hi2)
-          (== (gensym 'ho) 'ho1)
-          (== (gensym 'ho) 'ho2)
-          (== (gensym 'hi) 'hi3))
+          (== (gensym 'hi) 'hi-1)
+          (== (gensym "hi") 'hi-2)
+          (== (gensym 'ho) 'ho-1)
+          (== (gensym 'ho) 'ho-2)
+          (== (gensym 'hi) 'hi-3))

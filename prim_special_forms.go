@@ -241,7 +241,6 @@ func bindLetLocals(bindingForms *Data, env *SymbolTableFrame) (err error) {
 
 func LetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if Length(args) < 1 {
-		err = ProcessError("Let requires at least a list of bindings", env)
 		return
 	}
 

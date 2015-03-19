@@ -25,8 +25,12 @@ func RegisterBytearrayPrimitives() {
 
 func ListToBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	list := Car(args)
+	if NilP(list) {
+		err = ProcessError("Argument to ListToBytes can not be nil.", env)
+		return
+	}
 	if !ListP(list) {
-		err = ProcessError("Argument to ListToByutes can not be nil.", env)
+		err = ProcessError("Argument to ListToBytes must be a list.", env)
 		return
 	}
 
@@ -168,16 +172,15 @@ func internalAppendBytes(args *Data, env *SymbolTableFrame) (newBytes *[]byte, e
 	dataBytes := (*[]byte)(ObjectValue(dataByteObject))
 
 	var extraByteObj *Data
-	var evaledArg *Data
-	if NilP(Cddr(args)) {
-		evaledArg = Cadr(args)
+	if Length(args) == 2 {
+		secondArg := Cadr(args)
 		if err != nil {
 			return
 		}
-		if ObjectP(evaledArg) && ObjectType(evaledArg) == "[]byte" {
-			extraByteObj = evaledArg
-		} else if ListP(evaledArg) {
-			extraByteObj, err = ListToBytesImpl(InternalMakeList(evaledArg), env)
+		if ObjectP(secondArg) && ObjectType(secondArg) == "[]byte" {
+			extraByteObj = secondArg
+		} else if ListP(secondArg) {
+			extraByteObj, err = ListToBytesImpl(InternalMakeList(secondArg), env)
 		} else {
 			extraByteObj, err = ListToBytesImpl(InternalMakeList(Cdr(args)), env)
 		}
