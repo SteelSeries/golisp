@@ -931,6 +931,8 @@ func postProcessFrameShortcuts(d *Data) *Data {
 		return InternalMakeList(Intern("has-slot?"), frame, Intern(strings.TrimSuffix(s, "?")))
 	case strings.HasSuffix(s, ":>"):
 		return AppendBangList(InternalMakeList(Intern("send"), frame, Intern(strings.TrimSuffix(s, ">"))), Cddr(d))
+	case strings.HasSuffix(s, ":^"):
+		return AppendBangList(InternalMakeList(Intern("send-super"), Intern(strings.TrimSuffix(s, "^"))), Cdr(d))
 	default:
 		return d
 	}
