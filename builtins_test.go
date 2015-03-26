@@ -17,7 +17,7 @@ type BuiltinsSuite struct {
 var _ = Suite(&BuiltinsSuite{})
 
 func (s *BuiltinsSuite) SetUpSuite(c *C) {
-	Global = NewSymbolTableFrameBelow(nil)
+	Global = NewSymbolTableFrameBelow(nil, "SystemGlobal")
 	InitBuiltins()
 }
 

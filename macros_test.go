@@ -8,7 +8,7 @@
 package golisp
 
 import (
-    . "launchpad.net/gocheck"
+	. "launchpad.net/gocheck"
 )
 
 type MacrosSuite struct {
@@ -17,49 +17,49 @@ type MacrosSuite struct {
 var _ = Suite(&BuiltinsSuite{})
 
 func (s *MacrosSuite) SetUpSuite(c *C) {
-    Global = NewSymbolTableFrameBelow(nil)
-    InitBuiltins()
+	Global = NewSymbolTableFrameBelow(nil, "SystemGlobal")
+	InitBuiltins()
 }
 
 func (s *BuiltinsSuite) TestNoUnquoting(c *C) {
-    code, _ := Parse("`(+ a 1)")
-    result, err := Eval(code, Global)
-    c.Assert(err, IsNil)
-    c.Assert(result, NotNil)
-    c.Assert(String(result), Equals, "(+ a 1)")
+	code, _ := Parse("`(+ a 1)")
+	result, err := Eval(code, Global)
+	c.Assert(err, IsNil)
+	c.Assert(result, NotNil)
+	c.Assert(String(result), Equals, "(+ a 1)")
 }
 
 func (s *BuiltinsSuite) TestUnquotingInteger(c *C) {
-    code, _ := Parse("`(+ a ,1)")
-    result, err := Eval(code, Global)
-    c.Assert(err, IsNil)
-    c.Assert(result, NotNil)
-    c.Assert(String(result), Equals, "(+ a 1)")
+	code, _ := Parse("`(+ a ,1)")
+	result, err := Eval(code, Global)
+	c.Assert(err, IsNil)
+	c.Assert(result, NotNil)
+	c.Assert(String(result), Equals, "(+ a 1)")
 }
 
 func (s *BuiltinsSuite) TestUnquotingSymbol(c *C) {
-    Global.BindTo(SymbolWithName("a"), IntegerWithValue(5))
-    code, _ := Parse("`(+ ,a 1)")
-    result, err := Eval(code, Global)
-    c.Assert(err, IsNil)
-    c.Assert(result, NotNil)
-    c.Assert(String(result), Equals, "(+ 5 1)")
+	Global.BindTo(SymbolWithName("a"), IntegerWithValue(5))
+	code, _ := Parse("`(+ ,a 1)")
+	result, err := Eval(code, Global)
+	c.Assert(err, IsNil)
+	c.Assert(result, NotNil)
+	c.Assert(String(result), Equals, "(+ 5 1)")
 }
 
 func (s *BuiltinsSuite) TestUnquotingExpression(c *C) {
-    Global.BindTo(SymbolWithName("a"), IntegerWithValue(5))
-    code, _ := Parse("`(+ ,(+ a 1) 1)")
-    result, err := Eval(code, Global)
-    c.Assert(err, IsNil)
-    c.Assert(result, NotNil)
-    c.Assert(String(result), Equals, "(+ 6 1)")
+	Global.BindTo(SymbolWithName("a"), IntegerWithValue(5))
+	code, _ := Parse("`(+ ,(+ a 1) 1)")
+	result, err := Eval(code, Global)
+	c.Assert(err, IsNil)
+	c.Assert(result, NotNil)
+	c.Assert(String(result), Equals, "(+ 6 1)")
 }
 
 func (s *BuiltinsSuite) TestUnquoteSplicing(c *C) {
-    Global.BindTo(SymbolWithName("a"), IntegerWithValue(5))
-    code, _ := Parse("`(+ ,@(list 1 2 3) 1)")
-    result, err := Eval(code, Global)
-    c.Assert(err, IsNil)
-    c.Assert(result, NotNil)
-    c.Assert(String(result), Equals, "(+ 1 2 3 1)")
+	Global.BindTo(SymbolWithName("a"), IntegerWithValue(5))
+	code, _ := Parse("`(+ ,@(list 1 2 3) 1)")
+	result, err := Eval(code, Global)
+	c.Assert(err, IsNil)
+	c.Assert(result, NotNil)
+	c.Assert(String(result), Equals, "(+ 1 2 3 1)")
 }
