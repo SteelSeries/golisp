@@ -14,6 +14,7 @@ import (
 )
 
 type SymbolTableFrame struct {
+	Name        string
 	Parent      *SymbolTableFrame
 	Previous    *SymbolTableFrame
 	Frame       *FrameMap
@@ -100,19 +101,19 @@ func (self *SymbolTableFrame) DumpHeader() {
 	fmt.Printf("%s\n", self.CurrentCodeString())
 }
 
-func NewSymbolTableFrameBelow(p *SymbolTableFrame) *SymbolTableFrame {
+func NewSymbolTableFrameBelow(p *SymbolTableFrame, name string) *SymbolTableFrame {
 	var f *FrameMap = nil
 	if p != nil {
 		f = p.Frame
 	}
-	return &SymbolTableFrame{Parent: p, Bindings: make(map[string]*Binding), Frame: f, CurrentCode: list.New()}
+	return &SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding), Frame: f, CurrentCode: list.New()}
 }
 
-func NewSymbolTableFrameBelowWithFrame(p *SymbolTableFrame, f *FrameMap) *SymbolTableFrame {
+func NewSymbolTableFrameBelowWithFrame(p *SymbolTableFrame, f *FrameMap, name string) *SymbolTableFrame {
 	if f == nil {
 		f = p.Frame
 	}
-	return &SymbolTableFrame{Parent: p, Bindings: make(map[string]*Binding, 10), Frame: f, CurrentCode: list.New()}
+	return &SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding, 10), Frame: f, CurrentCode: list.New()}
 }
 
 func (self *SymbolTableFrame) HasFrame() bool {

@@ -18,7 +18,7 @@ type SymbolTableFrameSuite struct {
 var _ = Suite(&SymbolTableFrameSuite{})
 
 func (s *SymbolTableFrameSuite) SetUpTest(c *C) {
-	s.frame = NewSymbolTableFrameBelow(nil)
+	s.frame = NewSymbolTableFrameBelow(nil, "test")
 }
 
 func (s *SymbolTableFrameSuite) TestFetching(c *C) {

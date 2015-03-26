@@ -17,7 +17,7 @@ type EvalSuite struct {
 var _ = Suite(&EvalSuite{})
 
 func (s *EvalSuite) SetUpSuite(c *C) {
-	Global = NewSymbolTableFrameBelow(nil)
+	Global = NewSymbolTableFrameBelow(nil, "SystemGlobal")
 	InitBuiltins()
 }
 

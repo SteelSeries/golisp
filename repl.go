@@ -20,6 +20,7 @@ func Repl() {
 	prompt := "> "
 	LoadHistoryFromFile(".golisp_history")
 	lastInput := ""
+	replEnv := NewSymbolTableFrameBelow(Global, "Repl")
 	for true {
 		defer func() {
 			if x := recover(); x != nil {
@@ -29,14 +30,14 @@ func Repl() {
 		DebugCurrentFrame = nil
 		DebugSingleStep = false
 		DebugEvalInDebugRepl = false
-		Global.CurrentCode = list.New()
+		replEnv.CurrentCode = list.New()
 		inputp := ReadLine(&prompt)
-//		fmt.Printf("inputp: %v\n", inputp)
+		//		fmt.Printf("inputp: %v\n", inputp)
 		if inputp == nil {
 			QuitImpl(nil, nil)
 		} else {
 			input := *inputp
-//			fmt.Printf("input: <%s>\n", inputp)
+			//			fmt.Printf("input: <%s>\n", inputp)
 			if input != "" {
 				if input != lastInput {
 					AddHistory(input)
@@ -46,7 +47,7 @@ func Repl() {
 				if err != nil {
 					fmt.Printf("Error: %s\n", err)
 				} else {
-					d, err := Eval(code, Global)
+					d, err := Eval(code, replEnv)
 					if err != nil {
 						fmt.Printf("Error in evaluation: %s\n", err)
 						if DebugOnError {

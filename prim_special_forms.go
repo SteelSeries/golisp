@@ -24,8 +24,6 @@ func RegisterSpecialFormPrimitives() {
 	MakeSpecialForm("begin", -1, BeginImpl)
 	MakeSpecialForm("do", -1, DoImpl)
 	MakeSpecialForm("apply", -1, ApplyImpl)
-	MakeSpecialForm("eval", 1, EvalImpl)
-	MakeSpecialForm("global-eval", 1, GlobalEvalImpl)
 	MakeSpecialForm("->", -1, ChainImpl)
 	MakeSpecialForm("=>", -1, TapImpl)
 	MakeSpecialForm("definition-of", 1, DefinitionOfImpl)
@@ -249,7 +247,7 @@ func LetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	localEnv := NewSymbolTableFrameBelow(env)
+	localEnv := NewSymbolTableFrameBelow(env, "let")
 	localEnv.Previous = env
 	bindLetLocals(Car(args), localEnv)
 
@@ -311,7 +309,7 @@ func DoImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	localEnv := NewSymbolTableFrameBelow(env)
+	localEnv := NewSymbolTableFrameBelow(env, "do")
 	localEnv.Previous = env
 	bindLetLocals(bindings, localEnv)
 
@@ -388,28 +386,6 @@ func ApplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	return Apply(f, argList, env)
-}
-
-func EvalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	sexpr, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	if !ListP(sexpr) {
-		err = ProcessError(fmt.Sprintf("eval expect a list argument, received a %s.", TypeName(TypeOf(sexpr))), env)
-	}
-	return Eval(sexpr, env)
-}
-
-func GlobalEvalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	sexpr, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	if !ListP(sexpr) {
-		err = ProcessError(fmt.Sprintf("eval expect a list argument, received a %s.", TypeName(TypeOf(sexpr))), env)
-	}
-	return Eval(sexpr, Global)
 }
 
 func ChainImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
