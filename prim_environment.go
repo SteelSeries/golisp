@@ -29,6 +29,7 @@ func RegisterEnvironmentPrimitives() {
 	MakePrimitiveFunction("system-global-environment", 0, SystemGlobalEnvironmentImpl)
 	MakePrimitiveFunction("the-environment", 0, TheEnvironmentImpl)
 	MakePrimitiveFunction("make-top-level-environment", -1, MakeTopLevelEnvironmentImpl)
+	MakePrimitiveFunction("find-top-level-environment", 1, FindTopLevelEnvironmentImpl)
 }
 
 func EnvironmentPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -244,4 +245,17 @@ func MakeTopLevelEnvironmentImpl(args *Data, env *SymbolTableFrame) (result *Dat
 	}
 
 	return EnvironmentWithValue(newEnv), nil
+}
+
+func FindTopLevelEnvironmentImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if !StringP(Car(args)) && !SymbolP(Car(args)) {
+		err = ProcessError("find-top-level-environment expects a symbol or string environment name", env)
+		return
+	}
+	e := TopLevelEnvironments[StringValue(Car(args))]
+	if e == nil {
+		return nil, nil
+	} else {
+		return EnvironmentWithValue(e), nil
+	}
 }

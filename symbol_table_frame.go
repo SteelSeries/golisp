@@ -23,6 +23,7 @@ type SymbolTableFrame struct {
 }
 
 var Global *SymbolTableFrame
+var TopLevelEnvironments map[string]*SymbolTableFrame
 
 var internedSymbols map[string]*Data = make(map[string]*Data, 256)
 
@@ -106,14 +107,22 @@ func NewSymbolTableFrameBelow(p *SymbolTableFrame, name string) *SymbolTableFram
 	if p != nil {
 		f = p.Frame
 	}
-	return &SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding), Frame: f, CurrentCode: list.New()}
+	env := &SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding), Frame: f, CurrentCode: list.New()}
+	if p == nil || p == Global {
+		TopLevelEnvironments[name] = env
+	}
+	return env
 }
 
 func NewSymbolTableFrameBelowWithFrame(p *SymbolTableFrame, f *FrameMap, name string) *SymbolTableFrame {
 	if f == nil {
 		f = p.Frame
 	}
-	return &SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding, 10), Frame: f, CurrentCode: list.New()}
+	env := &SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding, 10), Frame: f, CurrentCode: list.New()}
+	if p == nil || p == Global {
+		TopLevelEnvironments[name] = env
+	}
+	return env
 }
 
 func (self *SymbolTableFrame) HasFrame() bool {
