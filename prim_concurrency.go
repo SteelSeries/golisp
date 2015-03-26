@@ -187,12 +187,12 @@ func ResetTimeoutImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 	}
 
 	proc := (*Process)(ObjectValue(procObj))
-	var result string
+	var str string
 	select {
 	case proc.Restart <- true:
-		result = "OK"
+		str = "OK"
 	default:
-		result = "task was already completed or abandoned"
+		str = "task was already completed or abandoned"
 	}
-	return StringWithValue(result), nil
+	return StringWithValue(str), nil
 }
