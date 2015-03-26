@@ -14,11 +14,11 @@ import (
 )
 
 type Process struct {
-	Env   *SymbolTableFrame
-	Code  *Data
-	Wake  chan bool
-	Abort chan bool
-	Restart chan bool
+	Env           *SymbolTableFrame
+	Code          *Data
+	Wake          chan bool
+	Abort         chan bool
+	Restart       chan bool
 	ScheduleTimer *time.Timer
 }
 
@@ -130,12 +130,12 @@ func ScheduleImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	proc := &Process{
-		Env: env,
-		Code: f,
-		Wake: make(chan bool, 1),
-		Abort: make(chan bool, 1),
-		Restart: make(chan bool, 1),
-		ScheduleTimer: time.NewTimer(time.Duration(IntegerValue(millis)) * time.Millisecond) }
+		Env:           env,
+		Code:          f,
+		Wake:          make(chan bool, 1),
+		Abort:         make(chan bool, 1),
+		Restart:       make(chan bool, 1),
+		ScheduleTimer: time.NewTimer(time.Duration(IntegerValue(millis)) * time.Millisecond)}
 	procObj := ObjectWithTypeAndValue("Process", unsafe.Pointer(proc))
 
 	aborted := false
@@ -175,7 +175,6 @@ func AbandonImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return StringWithValue("OK"), nil
 }
 
-
 func ResetTimeoutImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	procObj, err := Eval(Car(args), env)
 	if err != nil {
@@ -188,6 +187,12 @@ func ResetTimeoutImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 	}
 
 	proc := (*Process)(ObjectValue(procObj))
-	proc.Restart <- true
-	return StringWithValue("OK"), nil
+	var result string
+	select {
+	case proc.Restart <- true:
+		result = "OK"
+	default:
+		result = "task was already completed or abandoned"
+	}
+	return StringWithValue(result), nil
 }
