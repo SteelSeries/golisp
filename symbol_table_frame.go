@@ -149,13 +149,13 @@ func (self *SymbolTableFrame) findSymbol(name string) (symbol *Data, found bool)
 	}
 }
 
-func (self *SymbolTableFrame) findBindingFor(symbol *Data) (binding *Binding, found bool) {
+func (self *SymbolTableFrame) FindBindingFor(symbol *Data) (binding *Binding, found bool) {
 	name := StringValue(symbol)
 	binding, found = self.BindingNamed(name)
 	if found {
 		return
 	} else if self.Parent != nil {
-		return self.Parent.findBindingFor(symbol)
+		return self.Parent.FindBindingFor(symbol)
 	} else {
 		return nil, false
 	}
@@ -168,7 +168,7 @@ func (self *SymbolTableFrame) Intern(name string) (sym *Data) {
 }
 
 func (self *SymbolTableFrame) BindTo(symbol *Data, value *Data) *Data {
-	binding, found := self.findBindingFor(symbol)
+	binding, found := self.FindBindingFor(symbol)
 	if found {
 		binding.Val = value
 	} else {
@@ -191,7 +191,7 @@ func (self *SymbolTableFrame) SetTo(symbol *Data, value *Data) (result *Data, er
 		return value, nil
 	}
 
-	binding, found := self.findBindingFor(symbol)
+	binding, found := self.FindBindingFor(symbol)
 	if found {
 		binding.Val = value
 		return value, nil
@@ -232,7 +232,7 @@ func (self *SymbolTableFrame) ValueOfWithFunctionSlotCheck(symbol *Data, needFun
 		}
 	}
 
-	binding, found := self.findBindingFor(symbol)
+	binding, found := self.FindBindingFor(symbol)
 	if found {
 		return binding.Val
 	} else {
