@@ -25,7 +25,6 @@ func RegisterEnvironmentPrimitives() {
 	MakePrimitiveFunction("environment-assign!", 3, EnvironmentAssignBangImpl)
 	MakePrimitiveFunction("environment-definable?", 2, EnvironmentDefinablePImpl)
 	MakePrimitiveFunction("environment-define", 3, EnvironmentDefineImpl)
-	MakePrimitiveFunction("environment-define-macro", 3, EnvironmentDefineMacroImpl)
 	MakePrimitiveFunction("system-global-environment", 0, SystemGlobalEnvironmentImpl)
 	MakePrimitiveFunction("the-environment", 0, TheEnvironmentImpl)
 	MakePrimitiveFunction("make-top-level-environment", -1, MakeTopLevelEnvironmentImpl)
@@ -105,23 +104,66 @@ func EnvironmentBindingsImpl(args *Data, env *SymbolTableFrame) (result *Data, e
 
 func EnvironmentReferenceTypeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if !EnvironmentP(Car(args)) {
-		err = ProcessError("environment-has-parent? requires an environment as it's argument", env)
+		err = ProcessError("environment-reference-type? requires an environment as it's first argument", env)
 		return
+	}
+	if !SymbolP(Cadr(args)) {
+		err = ProcessError("environment-reference-type? requires a symbol as it's second argument", env)
+		return
+	}
+
+	localEnv := EnvironmentValue(Car(args))
+	binding, found := localEnv.FindBindingFor(Cadr(args))
+	if !found {
+		result = Intern("unbound")
+	} else if binding.Val == nil {
+		result = Intern("unassigned")
+	} else if MacroP(binding.Val) {
+		result = Intern("macro")
+	} else {
+		result = Intern("normal")
 	}
 	return
 }
 
 func EnvironmentBoundPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if !EnvironmentP(Car(args)) {
-		err = ProcessError("environment-has-parent? requires an environment as it's argument", env)
+		err = ProcessError("environment-bound? requires an environment as it's first argument", env)
 		return
 	}
-	return
+	if !SymbolP(Cadr(args)) {
+		err = ProcessError("environment-bound? requires a symbol as it's second argument", env)
+		return
+	}
+
+	localEnv := EnvironmentValue(Car(args))
+	_, found := localEnv.FindBindingFor(Cadr(args))
+	return BooleanWithValue(found), nil
 }
 
 func EnvironmentAssignedPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if !EnvironmentP(Car(args)) {
-		err = ProcessError("environment-has-parent? requires an environment as it's argument", env)
+		err = ProcessError("environment-asigned? requires an environment as it's first argument", env)
+		return
+	}
+	if !SymbolP(Cadr(args)) {
+		err = ProcessError("environment-assigned? requires a symbol as it's second argument", env)
+		return
+	}
+
+	localEnv := EnvironmentValue(Car(args))
+	binding, found := localEnv.FindBindingFor(Cadr(args))
+	if found {
+		if binding.Val == nil {
+			result = LispFalse
+		} else if MacroP(binding.Val) {
+			err = ProcessError("environment-assigned?: name is bound to a macro", env)
+			return
+		} else {
+			result = LispTrue
+		}
+	} else {
+		err = ProcessError("environment-assigned?: name is unbound", env)
 		return
 	}
 	return
@@ -129,58 +171,110 @@ func EnvironmentAssignedPImpl(args *Data, env *SymbolTableFrame) (result *Data, 
 
 func EnvironmentLookupImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if !EnvironmentP(Car(args)) {
-		err = ProcessError("environment-has-parent? requires an environment as it's argument", env)
+		err = ProcessError("environment-lookup requires an environment as it's first argument", env)
 		return
 	}
-	return
+	if !SymbolP(Cadr(args)) {
+		err = ProcessError("environment-lookup requires a symbol as it's second argument", env)
+		return
+	}
+
+	localEnv := EnvironmentValue(Car(args))
+	binding, found := localEnv.FindBindingFor(Cadr(args))
+	if found {
+		if binding.Val == nil {
+			err = ProcessError("environment-lookup: name is unassigned", env)
+			return
+		} else if MacroP(binding.Val) {
+			err = ProcessError("environment-lookup: name is bound to a macro", env)
+			return
+		} else {
+			return binding.Val, nil
+		}
+	} else {
+		err = ProcessError("environment-lookup: name is unbound", env)
+		return
+	}
 }
 
 func EnvironmentLookupMacroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if !EnvironmentP(Car(args)) {
-		err = ProcessError("environment-has-parent? requires an environment as it's argument", env)
+		err = ProcessError("environment-lookup-macro requires an environment as it's first argument", env)
 		return
+	}
+	if !SymbolP(Cadr(args)) {
+		err = ProcessError("environment-lookup-macro requires a symbol as it's second argument", env)
+		return
+	}
+
+	localEnv := EnvironmentValue(Car(args))
+	binding, found := localEnv.FindBindingFor(Cadr(args))
+	if found && MacroP(binding.Val) {
+		result = binding.Val
+	} else {
+		result = LispFalse
 	}
 	return
 }
 
 func EnvironmentAssignablePImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if !EnvironmentP(Car(args)) {
-		err = ProcessError("environment-has-parent? requires an environment as it's argument", env)
+		err = ProcessError("environment-assignable? requires an environment as it's first argument", env)
 		return
 	}
-	return
+	if !SymbolP(Cadr(args)) {
+		err = ProcessError("environment-assignable? requires a symbol as it's second argument", env)
+		return
+	}
+
+	localEnv := EnvironmentValue(Car(args))
+	_, found := localEnv.FindBindingFor(Cadr(args))
+	return BooleanWithValue(found), nil
 }
 
 func EnvironmentAssignBangImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if !EnvironmentP(Car(args)) {
-		err = ProcessError("environment-has-parent? requires an environment as it's argument", env)
+		err = ProcessError("environment-assign! requires an environment as it's first argument", env)
 		return
+	}
+	if !SymbolP(Cadr(args)) {
+		err = ProcessError("environment-assign! requires a symbol as it's second argument", env)
+		return
+	}
+
+	localEnv := EnvironmentValue(Car(args))
+	binding, found := localEnv.FindBindingFor(Cadr(args))
+	if found {
+		result = Caddr(args)
+		binding.Val = result
 	}
 	return
 }
 
 func EnvironmentDefinablePImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if !EnvironmentP(Car(args)) {
-		err = ProcessError("environment-has-parent? requires an environment as it's argument", env)
+		err = ProcessError("environment-definable? requires an environment as it's first argument", env)
 		return
 	}
-	return
+	if !SymbolP(Cadr(args)) {
+		err = ProcessError("environment-definable? requires a symbol as it's second argument", env)
+		return
+	}
+
+	return LispTrue, nil
 }
 
 func EnvironmentDefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if !EnvironmentP(Car(args)) {
-		err = ProcessError("environment-has-parent? requires an environment as it's argument", env)
+		err = ProcessError("environment-define requires an environment as it's first argument", env)
 		return
 	}
-	return
-}
-
-func EnvironmentDefineMacroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if !EnvironmentP(Car(args)) {
-		err = ProcessError("environment-has-parent? requires an environment as it's argument", env)
+	if !SymbolP(Cadr(args)) {
+		err = ProcessError("environment-define requires a symbol as it's second argument", env)
 		return
 	}
-	return
+	EnvironmentValue(Car(args)).BindLocallyTo(Cadr(args), Caddr(args))
+	return Caddr(args), nil
 }
 
 func SystemGlobalEnvironmentImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
