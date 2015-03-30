@@ -29,6 +29,7 @@ const (
 	PrimitiveType
 	BoxedObjectType
 	FrameType
+	EnvironmentType
 )
 
 type ConsCell struct {
@@ -102,6 +103,8 @@ func TypeName(t uint8) string {
 		return "Frame"
 	case BoxedObjectType:
 		return "Go Object"
+	case EnvironmentType:
+		return "Environment"
 	default:
 		return "Unknown"
 	}
@@ -179,6 +182,10 @@ func MacroP(d *Data) bool {
 
 func FrameP(d *Data) bool {
 	return d != nil && TypeOf(d) == FrameType
+}
+
+func EnvironmentP(d *Data) bool {
+	return d != nil && TypeOf(d) == EnvironmentType
 }
 
 func EmptyCons() *Data {
@@ -349,6 +356,10 @@ func PrimitiveWithNameAndFunc(name string, f *PrimitiveFunction) *Data {
 func ObjectWithTypeAndValue(typeName string, o unsafe.Pointer) *Data {
 	bo := BoxedObject{ObjType: typeName, Obj: o}
 	return &Data{Type: BoxedObjectType, Value: unsafe.Pointer(&bo)}
+}
+
+func EnvironmentWithValue(e *SymbolTableFrame) *Data {
+	return &Data{Type: EnvironmentType, Value: unsafe.Pointer(e)}
 }
 
 func ConsValue(d *Data) *ConsCell {
@@ -528,6 +539,18 @@ func BoxedObjectValue(d *Data) *BoxedObject {
 
 	if ObjectP(d) {
 		return (*BoxedObject)(d.Value)
+	}
+
+	return nil
+}
+
+func EnvironmentValue(d *Data) *SymbolTableFrame {
+	if d == nil {
+		return nil
+	}
+
+	if EnvironmentP(d) {
+		return (*SymbolTableFrame)(d.Value)
 	}
 
 	return nil
@@ -876,7 +899,7 @@ func String(d *Data) string {
 	case MacroType:
 		return fmt.Sprintf("<macro: %s>", MacroValue(d).Name)
 	case PrimitiveType:
-		return PrimitiveValue(d).String()
+		return fmt.Sprintf("<prim: %s>", PrimitiveValue(d).Name)
 	case BoxedObjectType:
 		if ObjectType(d) == "[]byte" {
 			bytes := (*[]byte)(ObjectValue(d))
@@ -900,6 +923,8 @@ func String(d *Data) string {
 			pairs = append(pairs, fmt.Sprintf("%s %s", key, valString))
 		}
 		return fmt.Sprintf("{%s}", strings.Join(pairs, " "))
+	case EnvironmentType:
+		return fmt.Sprintf("<environment: %s>", EnvironmentValue(d).Name)
 	}
 
 	return ""
@@ -916,6 +941,7 @@ func PrintString(d *Data) string {
 func postProcessFrameShortcuts(d *Data) *Data {
 	key := Car(d)
 	frame := Cadr(d)
+	value := Caddr(d)
 
 	if !SymbolP(key) {
 		return d
@@ -926,13 +952,9 @@ func postProcessFrameShortcuts(d *Data) *Data {
 	case strings.HasSuffix(s, ":"):
 		return InternalMakeList(Intern("get-slot"), frame, key)
 	case strings.HasSuffix(s, ":!"):
-		return InternalMakeList(Intern("set-slot!"), frame, Intern(strings.TrimSuffix(s, "!")), Caddr(d))
+		return InternalMakeList(Intern("set-slot!"), frame, Intern(strings.TrimSuffix(s, "!")), value)
 	case strings.HasSuffix(s, ":?"):
 		return InternalMakeList(Intern("has-slot?"), frame, Intern(strings.TrimSuffix(s, "?")))
-	case strings.HasSuffix(s, ":>"):
-		return AppendBangList(InternalMakeList(Intern("send"), frame, Intern(strings.TrimSuffix(s, ">"))), Cddr(d))
-	case strings.HasSuffix(s, ":^"):
-		return AppendBangList(InternalMakeList(Intern("send-super"), Intern(strings.TrimSuffix(s, "^"))), Cdr(d))
 	default:
 		return d
 	}

@@ -12,7 +12,8 @@ var LispTrace = false
 var quasiquoteLevel = 1
 
 func init() {
-	Global = NewSymbolTableFrameBelow(nil)
+	TopLevelEnvironments = make(map[string]*SymbolTableFrame, 5)
+	Global = NewSymbolTableFrameBelow(nil, "SystemGlobal")
 	Global.Intern("nil")
 	InitBuiltins()
 }
@@ -37,4 +38,5 @@ func InitBuiltins() {
 	RegisterTestingPrimitives()
 	RegisterFramePrimitives()
 	RegisterConcurrencyPrimitives()
+	RegisterEnvironmentPrimitives()
 }
