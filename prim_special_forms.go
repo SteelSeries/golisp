@@ -24,8 +24,6 @@ func RegisterSpecialFormPrimitives() {
 	MakePrimitiveFunction("begin", -1, BeginImpl)
 	MakePrimitiveFunction("do", -1, DoImpl)
 	MakePrimitiveFunction("apply", -1, ApplyImpl)
-	MakePrimitiveFunction("eval", 1, EvalImpl)
-	MakePrimitiveFunction("global-eval", 1, GlobalEvalImpl)
 	MakePrimitiveFunction("->", -1, ChainImpl)
 	MakePrimitiveFunction("=>", -1, TapImpl)
 	MakePrimitiveFunction("definition-of", 1, DefinitionOfImpl)
@@ -250,7 +248,7 @@ func LetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	localEnv := NewSymbolTableFrameBelow(env)
+	localEnv := NewSymbolTableFrameBelow(env, "let")
 	localEnv.Previous = env
 	bindLetLocals(Car(args), localEnv)
 
@@ -312,7 +310,7 @@ func DoImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	localEnv := NewSymbolTableFrameBelow(env)
+	localEnv := NewSymbolTableFrameBelow(env, "do")
 	localEnv.Previous = env
 	bindLetLocals(bindings, localEnv)
 
@@ -389,28 +387,6 @@ func ApplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	return Apply(f, argList, env)
-}
-
-func EvalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	sexpr, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	if !ListP(sexpr) {
-		err = ProcessError(fmt.Sprintf("eval expect a list argument, received a %s.", TypeName(TypeOf(sexpr))), env)
-	}
-	return Eval(sexpr, env)
-}
-
-func GlobalEvalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	sexpr, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	if !ListP(sexpr) {
-		err = ProcessError(fmt.Sprintf("eval expect a list argument, received a %s.", TypeName(TypeOf(sexpr))), env)
-	}
-	return Eval(sexpr, Global)
 }
 
 func ChainImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

@@ -26,6 +26,8 @@ func RegisterSystemPrimitives() {
 	MakePrimitiveFunction("time", 1, TimeImpl)
 	MakePrimitiveFunction("quit", 0, QuitImpl)
 	MakePrimitiveFunction("gensym", -1, GensymImpl)
+	MakePrimitiveFunction("eval", -1, EvalImpl)
+	MakePrimitiveFunction("global-eval", 1, GlobalEvalImpl)
 }
 
 func LoadFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -149,4 +151,40 @@ func GensymImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	symbolCounts[prefix] = count
 	result = Intern(fmt.Sprintf("%s%d", prefix, count))
 	return
+}
+
+func EvalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	var evalEnv *SymbolTableFrame
+	sexpr, err := Eval(Car(args), env)
+	if err != nil {
+		return
+	}
+
+	if Length(args) != 1 && Length(args) != 2 {
+		err = ProcessError(fmt.Sprintf("eval expects 1 or 2 arguments, but recieved %d.", Length(args)), env)
+		return
+	}
+	if Length(args) == 2 {
+		ev, everr := Eval(Cadr(args), env)
+		if everr != nil {
+			return
+		}
+		if !EnvironmentP(ev) {
+			err = ProcessError(fmt.Sprintf("eval expects an environment as it's second argument, but recieved %s.", String(Cadr(args))), env)
+			return
+		}
+		evalEnv = EnvironmentValue(ev)
+	} else {
+		evalEnv = env
+	}
+	return Eval(sexpr, evalEnv)
+}
+
+func GlobalEvalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	sexpr, err := Eval(Car(args), env)
+	if err != nil {
+		return
+	}
+
+	return Eval(sexpr, Global)
 }
