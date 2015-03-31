@@ -128,7 +128,7 @@ func EnvironmentReferenceTypeImpl(args *Data, env *SymbolTableFrame) (result *Da
 		return
 	}
 	if !EnvironmentP(eo) {
-		err = ProcessError("environment-reference-type? requires an environment as it's first argument", env)
+		err = ProcessError("environment-reference-type requires an environment as it's first argument", env)
 		return
 	}
 
@@ -136,8 +136,8 @@ func EnvironmentReferenceTypeImpl(args *Data, env *SymbolTableFrame) (result *Da
 	if err != nil {
 		return
 	}
-	if !SymbolP(Cadr(args)) {
-		err = ProcessError("environment-reference-type? requires a symbol as it's second argument", env)
+	if !SymbolP(sym) {
+		err = ProcessError("environment-reference-type requires a symbol as it's second argument", env)
 		return
 	}
 
