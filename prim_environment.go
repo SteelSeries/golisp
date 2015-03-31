@@ -194,7 +194,7 @@ func EnvironmentAssignedPImpl(args *Data, env *SymbolTableFrame) (result *Data, 
 	if err != nil {
 		return
 	}
-	if !SymbolP(Cadr(args)) {
+	if !SymbolP(sym) {
 		err = ProcessError("environment-assigned? requires a symbol as it's second argument", env)
 		return
 	}
@@ -223,7 +223,7 @@ func EnvironmentLookupImpl(args *Data, env *SymbolTableFrame) (result *Data, err
 		return
 	}
 	if !EnvironmentP(eo) {
-		err = ProcessError("environment-assigned? requires an environment as it's first argument", env)
+		err = ProcessError("environment-lookup requires an environment as it's first argument", env)
 		return
 	}
 
@@ -231,8 +231,8 @@ func EnvironmentLookupImpl(args *Data, env *SymbolTableFrame) (result *Data, err
 	if err != nil {
 		return
 	}
-	if !SymbolP(Cadr(args)) {
-		err = ProcessError("environment-assigned? requires a symbol as it's second argument", env)
+	if !SymbolP(sym) {
+		err = ProcessError("environment-lookup requires a symbol as it's second argument", env)
 		return
 	}
 
@@ -260,7 +260,7 @@ func EnvironmentLookupMacroImpl(args *Data, env *SymbolTableFrame) (result *Data
 		return
 	}
 	if !EnvironmentP(eo) {
-		err = ProcessError("environment-assigned? requires an environment as it's first argument", env)
+		err = ProcessError("environment-lookup-macro requires an environment as it's first argument", env)
 		return
 	}
 
@@ -268,8 +268,8 @@ func EnvironmentLookupMacroImpl(args *Data, env *SymbolTableFrame) (result *Data
 	if err != nil {
 		return
 	}
-	if !SymbolP(Cadr(args)) {
-		err = ProcessError("environment-assigned? requires a symbol as it's second argument", env)
+	if !SymbolP(sym) {
+		err = ProcessError("environment-lookup-macro requires a symbol as it's second argument", env)
 		return
 	}
 
@@ -289,7 +289,7 @@ func EnvironmentAssignablePImpl(args *Data, env *SymbolTableFrame) (result *Data
 		return
 	}
 	if !EnvironmentP(eo) {
-		err = ProcessError("environment-assigned? requires an environment as it's first argument", env)
+		err = ProcessError("environment-assignable? requires an environment as it's first argument", env)
 		return
 	}
 
@@ -297,8 +297,8 @@ func EnvironmentAssignablePImpl(args *Data, env *SymbolTableFrame) (result *Data
 	if err != nil {
 		return
 	}
-	if !SymbolP(Cadr(args)) {
-		err = ProcessError("environment-assigned? requires a symbol as it's second argument", env)
+	if !SymbolP(sym) {
+		err = ProcessError("environment-assignable? requires a symbol as it's second argument", env)
 		return
 	}
 
@@ -313,7 +313,7 @@ func EnvironmentAssignBangImpl(args *Data, env *SymbolTableFrame) (result *Data,
 		return
 	}
 	if !EnvironmentP(eo) {
-		err = ProcessError("environment-assigned? requires an environment as it's first argument", env)
+		err = ProcessError("environment-assign! requires an environment as it's first argument", env)
 		return
 	}
 
@@ -321,8 +321,8 @@ func EnvironmentAssignBangImpl(args *Data, env *SymbolTableFrame) (result *Data,
 	if err != nil {
 		return
 	}
-	if !SymbolP(Cadr(args)) {
-		err = ProcessError("environment-assigned? requires a symbol as it's second argument", env)
+	if !SymbolP(sym) {
+		err = ProcessError("environment-assign! requires a symbol as it's second argument", env)
 		return
 	}
 
@@ -346,7 +346,7 @@ func EnvironmentDefinablePImpl(args *Data, env *SymbolTableFrame) (result *Data,
 		return
 	}
 	if !EnvironmentP(eo) {
-		err = ProcessError("environment-assigned? requires an environment as it's first argument", env)
+		err = ProcessError("environment-definable? requires an environment as it's first argument", env)
 		return
 	}
 
@@ -355,7 +355,7 @@ func EnvironmentDefinablePImpl(args *Data, env *SymbolTableFrame) (result *Data,
 		return
 	}
 	if !SymbolP(sym) {
-		err = ProcessError("environment-assigned? requires a symbol as it's second argument", env)
+		err = ProcessError("environment-definable? requires a symbol as it's second argument", env)
 		return
 	}
 
@@ -368,7 +368,7 @@ func EnvironmentDefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err
 		return
 	}
 	if !EnvironmentP(eo) {
-		err = ProcessError("environment-assigned? requires an environment as it's first argument", env)
+		err = ProcessError("environment-define requires an environment as it's first argument", env)
 		return
 	}
 
@@ -376,8 +376,8 @@ func EnvironmentDefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err
 	if err != nil {
 		return
 	}
-	if !SymbolP(Cadr(args)) {
-		err = ProcessError("environment-assigned? requires a symbol as it's second argument", env)
+	if !SymbolP(sym) {
+		err = ProcessError("environment-define requires a symbol as it's second argument", env)
 		return
 	}
 
