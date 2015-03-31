@@ -45,6 +45,7 @@ func LoadFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func QuitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	WriteHistoryToFile(".golisp_history")
+	fmt.Printf("\n\nGoodbye.\n\n")
 	os.Exit(0)
 	return
 }
