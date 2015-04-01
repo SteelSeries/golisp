@@ -20,7 +20,11 @@ func RegisterMacroPrimitives() {
 }
 
 func QuoteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return Car(args), nil
+	if Car(args) == nil {
+		return EmptyCons(), nil
+	} else {
+		return Car(args), nil
+	}
 }
 
 func processQuasiquoted(sexpr *Data, level int, env *SymbolTableFrame) (result *Data, err error) {

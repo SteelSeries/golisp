@@ -618,13 +618,21 @@ func RecursiveFlatten(d *Data) (result *Data, err error) {
 }
 
 func QuoteIt(value *Data) (result *Data) {
-	return InternalMakeList(Intern("quote"), value)
+	if value == nil {
+		return InternalMakeList(Intern("quote"), Cons(nil, nil))
+	} else {
+		return InternalMakeList(Intern("quote"), value)
+	}
 }
 
 func QuoteAll(d *Data) (result *Data) {
 	var l []*Data = make([]*Data, 0, 10)
-	for c := d; NotNilP(c); c = Cdr(c) {
-		l = append(l, QuoteIt(Car(c)))
+	if d == nil {
+		l = append(l, QuoteIt(nil))
+	} else {
+		for c := d; c != nil; c = Cdr(c) {
+			l = append(l, QuoteIt(Car(c)))
+		}
 	}
 	return ArrayToList(l)
 }

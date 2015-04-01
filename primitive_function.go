@@ -8,40 +8,40 @@
 package golisp
 
 import (
-    "errors"
-    "fmt"
+	"errors"
+	"fmt"
 )
 
 type PrimitiveFunction struct {
-    Name         string
-    NumberOfArgs int
-    Body         func(d *Data, env *SymbolTableFrame) (*Data, error)
+	Name         string
+	NumberOfArgs int
+	Body         func(d *Data, env *SymbolTableFrame) (*Data, error)
 }
 
 func MakePrimitiveFunction(name string, argCount int, function func(*Data, *SymbolTableFrame) (*Data, error)) {
-    f := &PrimitiveFunction{Name: name, NumberOfArgs: argCount, Body: function}
-    sym := Global.Intern(name)
-    Global.BindTo(sym, PrimitiveWithNameAndFunc(name, f))
+	f := &PrimitiveFunction{Name: name, NumberOfArgs: argCount, Body: function}
+	sym := Global.Intern(name)
+	Global.BindTo(sym, PrimitiveWithNameAndFunc(name, f))
 }
 
 func (self *PrimitiveFunction) String() string {
-    return fmt.Sprintf("<prim: %s, %v>", self.Name, self.Body)
+	return fmt.Sprintf("<prim: %s, %v>", self.Name, self.Body)
 }
 
 func (self *PrimitiveFunction) Apply(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    argCount := Length(args)
-    expectedArgs := self.NumberOfArgs
-    anyNumberArgs := expectedArgs == -1
-    exactNumberOfArgs := self.NumberOfArgs == argCount
-    var stringArgCount string = fmt.Sprintf("%d", self.NumberOfArgs)
-    if !(anyNumberArgs || exactNumberOfArgs) {
-        err = errors.New(fmt.Sprintf("Wrong number of args to %s. Expected %s but got %d.\n", self.Name, stringArgCount, argCount))
-        return
-    }
+	argCount := Length(args)
+	expectedArgs := self.NumberOfArgs
+	anyNumberArgs := expectedArgs == -1
+	exactNumberOfArgs := self.NumberOfArgs == argCount
+	var stringArgCount string = fmt.Sprintf("%d", self.NumberOfArgs)
+	if !(anyNumberArgs || exactNumberOfArgs) {
+		err = errors.New(fmt.Sprintf("Wrong number of args to %s. Expected %s but got %d.\n", self.Name, stringArgCount, argCount))
+		return
+	}
 
-    return (self.Body)(args, env)
+	return (self.Body)(args, env)
 }
 
 func (self *PrimitiveFunction) ApplyWithoutEval(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    return self.Apply(QuoteAll(args), env)
+	return self.Apply(QuoteAll(args), env)
 }
