@@ -26,8 +26,8 @@ func RegisterSystemPrimitives() {
 	MakeSpecialForm("time", 1, TimeImpl)
 	MakePrimitiveFunction("quit", 0, QuitImpl)
 	MakePrimitiveFunction("gensym", -1, GensymImpl)
-	MakeSpecialForm("eval", -1, EvalImpl)
-	MakeSpecialForm("global-eval", 1, GlobalEvalImpl)
+	MakePrimitiveFunction("eval", -1, EvalImpl)
+	MakePrimitiveFunction("global-eval", 1, GlobalEvalImpl)
 }
 
 func LoadFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -42,6 +42,7 @@ func LoadFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func QuitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	WriteHistoryToFile(".golisp_history")
+	fmt.Printf("\n\nGoodbye.\n\n")
 	os.Exit(0)
 	return
 }

@@ -9,7 +9,6 @@ package golisp
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math"
 	"strings"
@@ -63,7 +62,9 @@ func JsonStringToLispWithFrames(jsonData string) (result *Data) {
 	var data interface{}
 	err := json.Unmarshal(b, &data)
 	if err != nil {
-		panic(errors.New(fmt.Sprintf("Badly formed json: '%s'\n --> %v\n", jsonData, err)))
+		fmt.Printf("Returning empty frame because of badly formed json: '%s'\n --> %v\n", jsonData, err)
+		m := make(FrameMap, 0)
+		return FrameWithValue(&m)
 	}
 	return JsonToLispWithFrames(data)
 }
