@@ -15,7 +15,7 @@ import (
 func Repl() {
 	IsInteractive = true
 	fmt.Printf("Welcome to GoLisp\n")
-	fmt.Printf("Copyright 2014 SteelSeries\n")
+	fmt.Printf("Copyright 2015 SteelSeries\n")
 	fmt.Printf("Evaluate '(quit)' to exit.\n\n")
 	prompt := "> "
 	LoadHistoryFromFile(".golisp_history")
@@ -32,21 +32,20 @@ func Repl() {
 		DebugEvalInDebugRepl = false
 		replEnv.CurrentCode = list.New()
 		inputp := ReadLine(&prompt)
-		//		fmt.Printf("inputp: %v\n", inputp)
 		if inputp == nil {
 			QuitImpl(nil, nil)
 		} else {
 			input := *inputp
 			//			fmt.Printf("input: <%s>\n", inputp)
 			if input != "" {
-				if input != lastInput {
-					AddHistory(input)
-				}
-				lastInput = input
 				code, err := Parse(input)
 				if err != nil {
 					fmt.Printf("Error: %s\n", err)
 				} else {
+					if input != lastInput {
+						AddHistory(input)
+						lastInput = input
+					}
 					d, err := Eval(code, replEnv)
 					if err != nil {
 						fmt.Printf("Error in evaluation: %s\n", err)
