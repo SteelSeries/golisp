@@ -28,20 +28,20 @@
             (== (get-slot f b:) 6)))
 
 (describe prototypes
-          (let ((f {a: 2
-                   b: 1})
-                (g {parent*: f
-                   a: 3}))
+          (let* ((f {a: 2
+                     b: 1})
+                 (g {parent*: f
+                     a: 3}))
             (== (get-slot g b:) 1)
             (== (get-slot g a:) 3)
             (set-slot! g a: 1)
             (== (get-slot g a:) 1)
             (set-slot! g b: 10)
             (== (get-slot g b:) 10))
-          (let ((adder {add: (lambda (x)
-                               (+ x a))})
-                (incrementor {parent*: adder
-                             a: 1}))
+          (let* ((adder {add: (lambda (x)
+                                (+ x a))})
+                 (incrementor {parent*: adder
+                               a: 1}))
             (== (send incrementor add: 3) 4)))
 
 (describe new-slots
@@ -59,42 +59,42 @@
             (== (send f bar:) 7)))
 
 (describe inherited-function-slot-use
-          (let ((f {a: 5
-                   foo: (lambda (x)
-                          (+ x a))})
-                (g {parent*: f
-                   b: 2
-                   bar: (lambda ()
-                          (foo b))}))
+          (let* ((f {a: 5
+                     foo: (lambda (x)
+                            (+ x a))})
+                 (g {parent*: f
+                     b: 2
+                     bar: (lambda ()
+                            (foo b))}))
             (== (send g bar:) 7)))
 
 (describe multiple-parents
-          (let ((e {a: 5})
-                (f {b: 2})
-                (g {parent-e*: e
-                   parent-f*: f
-                   foo: (lambda (x)
-                          (+ x a))
-                   bar: (lambda ()
-                          (foo b))}))
+          (let* ((e {a: 5})
+                 (f {b: 2})
+                 (g {parent-e*: e
+                     parent-f*: f
+                     foo: (lambda (x)
+                            (+ x a))
+                     bar: (lambda ()
+                            (foo b))}))
             (== (send g bar:) 7)
             (set-slot! g a: 10)
             (== (get-slot g a:) 10)
             (== (get-slot e a:) 5)))
 
 (describe calling-super
-          (let ((f {foo: (lambda () 42)})
-                (g {parent*: f  foo: (lambda () (+ 1 (send-super foo:)))}))
+          (let* ((f {foo: (lambda () 42)})
+                 (g {parent*: f  foo: (lambda () (+ 1 (send-super foo:)))}))
             (== (send g foo:) 43)))
 
 (describe locals-override-slots
-          (let ((f {a: 42})
-                (g {parent*: f  foo: (lambda () (let ((a 10)) (+ 1 a)))}))
+          (let* ((f {a: 42})
+                 (g {parent*: f  foo: (lambda () (let ((a 10)) (+ 1 a)))}))
             (== (send g foo:) 11)))
 
 (describe cloning
-          (let ((f {a: 1 b: 2})
-                (g (clone f)))
+          (let* ((f {a: 1 b: 2})
+                 (g (clone f)))
             (== f g)
             (set-slot! f a: 42)
             (== (get-slot f a:) 42)
@@ -107,12 +107,12 @@
             (== (has-slot? f c:) #f)))
 
 (describe remove-slots
-          (let ((e {a: 5})
-                (f {b: 2})
-                (g {parent-e*: e
-                   parent-f*: f
-                   foo: 3
-                   bar: 10}))
+          (let* ((e {a: 5})
+                 (f {b: 2})
+                 (g {parent-e*: e
+                     parent-f*: f
+                     foo: 3
+                     bar: 10}))
             (== (remove-slot! g foo:) #t)
             (== (has-slot? g foo:) #f)
             (== (remove-slot! g a:) #f)
@@ -145,9 +145,9 @@
             (== (send f foo:) 42)))
 
 (describe keys_values
-          (let ((f {a: 1 b: 2 c: 3})
-                (ks (frame-keys f))
-                (vs (frame-values f)))
+          (let* ((f {a: 1 b: 2 c: 3})
+                 (ks (frame-keys f))
+                 (vs (frame-values f)))
             (== (not (memq a: ks)) #f)
             (== (not (memq b: ks)) #f)
             (== (not (memq c: ks)) #f)

@@ -21,6 +21,7 @@ func RegisterSpecialFormPrimitives() {
 	MakeSpecialForm("define", -1, DefineImpl)
 	MakeSpecialForm("defmacro", -1, DefmacroImpl)
 	MakeSpecialForm("let", -1, LetImpl)
+	MakeSpecialForm("let*", -1, LetStarImpl)
 	MakeSpecialForm("begin", -1, BeginImpl)
 	MakeSpecialForm("do", -1, DoImpl)
 	MakeSpecialForm("apply", -1, ApplyImpl)
@@ -214,30 +215,30 @@ func DefmacroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return value, nil
 }
 
-func bindLetLocals(bindingForms *Data, env *SymbolTableFrame) (err error) {
+func bindLetLocals(bindingForms *Data, localEnv *SymbolTableFrame, evalEnv *SymbolTableFrame) (err error) {
 	var name *Data
 	var value *Data
 
 	for cell := bindingForms; NotNilP(cell); cell = Cdr(cell) {
 		bindingPair := Car(cell)
 		if !PairP(bindingPair) {
-			err = ProcessError("Let requires a list of bindings (with are pairs) as it's first argument", env)
+			err = ProcessError("Let requires a list of bindings (with are pairs) as it's first argument", evalEnv)
 			return
 		}
 		name = Car(bindingPair)
 		if !SymbolP(name) {
-			err = ProcessError("First part of a let binding pair must be a symbol", env)
+			err = ProcessError("First part of a let binding pair must be a symbol", evalEnv)
 		}
-		value, err = Eval(Cadr(bindingPair), env)
+		value, err = Eval(Cadr(bindingPair), evalEnv)
 		if err != nil {
 			return
 		}
-		env.BindLocallyTo(name, value)
+		localEnv.BindLocallyTo(name, value)
 	}
 	return
 }
 
-func LetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func LetCommon(args *Data, env *SymbolTableFrame, star bool) (result *Data, err error) {
 	if Length(args) < 1 {
 		return
 	}
@@ -249,7 +250,13 @@ func LetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	localEnv := NewSymbolTableFrameBelow(env, "let")
 	localEnv.Previous = env
-	bindLetLocals(Car(args), localEnv)
+	var evalEnv *SymbolTableFrame
+	if star {
+		evalEnv = localEnv
+	} else {
+		evalEnv = env
+	}
+	bindLetLocals(Car(args), localEnv, evalEnv)
 
 	for cell := Cdr(args); NotNilP(cell); cell = Cdr(cell) {
 		sexpr := Car(cell)
@@ -260,6 +267,14 @@ func LetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	return
+}
+
+func LetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return LetCommon(args, env, false)
+}
+
+func LetStarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return LetCommon(args, env, true)
 }
 
 func BeginImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -311,7 +326,7 @@ func DoImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	localEnv := NewSymbolTableFrameBelow(env, "do")
 	localEnv.Previous = env
-	bindLetLocals(bindings, localEnv)
+	bindLetLocals(bindings, localEnv, env)
 
 	body := Cddr(args)
 
