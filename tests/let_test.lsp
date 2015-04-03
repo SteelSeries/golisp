@@ -12,14 +12,15 @@
               2))
 
 (describe let-bindings
-          (== (let ((x 1)
-                    (y 2))
+          (== (let* ((x 1)
+                     (y 2))
                 (+ x y))
               3)
-          (== (let ((x 1)
-                    (y (+ x 1)))
-                y)
-              2))
+          (let ((x 2))
+            (== (let ((x 1)
+                      (y (+ x 1)))
+                  y)
+                3)))
 
 
 (describe let-binding-scope
