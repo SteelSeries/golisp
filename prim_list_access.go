@@ -8,6 +8,7 @@
 package golisp
 
 import (
+	"errors"
 	"unsafe"
 )
 
@@ -48,6 +49,7 @@ func RegisterListAccessPrimitives() {
 	MakePrimitiveFunction("cddadr", 1, CddadrImpl)
 	MakePrimitiveFunction("cdddar", 1, CdddarImpl)
 	MakePrimitiveFunction("cddddr", 1, CddddrImpl)
+	MakePrimitiveFunction("general-car-cdr", 2, GeneralCarCdrImpl)
 
 	MakePrimitiveFunction("first", 1, FirstImpl)
 	MakePrimitiveFunction("second", 1, SecondImpl)
@@ -183,6 +185,25 @@ func CdddarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func CddddrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return WalkList(Car(args), "dddd"), nil
+}
+
+func GeneralCarCdrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	list := Car(args)
+	path := IntegerValue(Cadr(args))
+	if path == 0 {
+		err = errors.New("general-car-cdr requires a non-zero path specifier")
+		return
+	}
+	for path != 1 {
+		code := path & 0x1
+		if code == 0 {
+			list = Cdr(list)
+		} else {
+			list = Car(list)
+		}
+		path = path >> 1
+	}
+	return list, nil
 }
 
 func FirstImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

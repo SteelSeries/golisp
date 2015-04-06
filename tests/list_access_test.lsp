@@ -177,4 +177,8 @@
           (== (cdddr '(1)) nil)
           (== (cdddr '(1 2 3 4)) '(4)))
 
+(describe general-car-cdr
+          (== (general-car-cdr '(1 2 3 4) #b1100) 3)
+          (== (general-car-cdr '(1 2 (3 4)) #b1100) '(3 4))
+          (== (general-car-cdr '(1 2 (3 4)) #b110100) 4))
 
