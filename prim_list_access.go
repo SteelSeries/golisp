@@ -65,6 +65,8 @@ func RegisterListAccessPrimitives() {
 	MakePrimitiveFunction("nth", 2, NthImpl)
 	MakePrimitiveFunction("take", 2, TakeImpl)
 	MakePrimitiveFunction("drop", 2, DropImpl)
+	MakePrimitiveFunction("list-head", 2, ListHeadImpl)
+	MakePrimitiveFunction("list-tail", 2, ListTailImpl)
 }
 
 func CarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -323,6 +325,47 @@ func DropImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		}
 	} else {
 		err = ProcessError("drop requires a list or bytearray as its second argument.", env)
+	}
+	return
+}
+
+func ListHeadImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	n := Cadr(args)
+	if !IntegerP(n) {
+		err = ProcessError("list-head requires a number as its second argument.", env)
+	}
+	size := int(IntegerValue(n))
+
+	l := Car(args)
+	if ListP(l) {
+		var items []*Data = make([]*Data, 0, Length(args))
+		for i, cell := 0, l; i < size && NotNilP(cell); i, cell = i+1, Cdr(cell) {
+			items = append(items, Car(cell))
+		}
+		result = ArrayToList(items)
+	} else {
+		err = ProcessError("list-head requires a list as its first argument.", env)
+	}
+	return
+}
+
+func ListTailImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	n := Cadr(args)
+	if !IntegerP(n) {
+		err = ProcessError("list-tail requires a number as its second argument.", env)
+	}
+	size := int(IntegerValue(n))
+
+	l := Car(args)
+
+	if ListP(l) {
+		var cell *Data
+		var i int
+		for i, cell = 0, l; i < size && NotNilP(cell); i, cell = i+1, Cdr(cell) {
+		}
+		result = cell
+	} else {
+		err = ProcessError("list-tail requires a list or bytearray as its first argument.", env)
 	}
 	return
 }
