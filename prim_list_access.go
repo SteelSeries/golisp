@@ -65,6 +65,8 @@ func RegisterListAccessPrimitives() {
 	MakePrimitiveFunction("nth", 2, NthImpl)
 	MakePrimitiveFunction("take", 2, TakeImpl)
 	MakePrimitiveFunction("drop", 2, DropImpl)
+
+	MakePrimitiveFunction("list-ref", 2, ListRefImpl)
 	MakePrimitiveFunction("list-head", 2, ListHeadImpl)
 	MakePrimitiveFunction("list-tail", 2, ListTailImpl)
 }
@@ -327,6 +329,21 @@ func DropImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		err = ProcessError("drop requires a list or bytearray as its second argument.", env)
 	}
 	return
+}
+
+func ListRefImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	col := Car(args)
+	if !PairP(col) {
+		err = ProcessError("First arg to list-ref must be a list", env)
+		return
+	}
+	count := Cadr(args)
+	if !IntegerP(count) {
+		err = ProcessError("Second arg to list-ref must be a number", env)
+		return
+	}
+
+	return Nth(col, int(IntegerValue(count))+1), nil
 }
 
 func ListHeadImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
