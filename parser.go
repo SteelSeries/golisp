@@ -24,9 +24,19 @@ func makeInteger(str string) (n *Data, err error) {
 	return
 }
 
+func makeBinaryInteger(str string) (n *Data, err error) {
+	var i int64
+	_, err = fmt.Sscanf(str, "%b", &i)
+	if err != nil {
+		return
+	}
+	n = IntegerWithValue(i)
+	return
+}
+
 func makeHexInteger(str string) (n *Data, err error) {
 	var i int64
-	_, err = fmt.Sscanf(str, "%v", &i)
+	_, err = fmt.Sscanf(str, "%x", &i)
 	if err != nil {
 		return
 	}
@@ -205,6 +215,10 @@ func parseExpression(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 		case HEXNUMBER:
 			s.ConsumeToken()
 			sexpr, err = makeHexInteger(lit)
+			return
+		case BINARYNUMBER:
+			s.ConsumeToken()
+			sexpr, err = makeBinaryInteger(lit)
 			return
 		case FLOAT:
 			s.ConsumeToken()

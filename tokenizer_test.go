@@ -107,18 +107,32 @@ func (s *TokenizerSuite) TestNegativeInteger(c *C) {
 	c.Assert(lit, Equals, "-42")
 }
 
+func (s *TokenizerSuite) TestBinaryInteger(c *C) {
+	t := NewTokenizer("#b1010 a")
+	tok, lit := t.NextToken()
+	c.Assert(tok, Equals, BINARYNUMBER)
+	c.Assert(lit, Equals, "1010")
+}
+
+func (s *TokenizerSuite) TestProperHexInteger(c *C) {
+	t := NewTokenizer("#x1f a")
+	tok, lit := t.NextToken()
+	c.Assert(tok, Equals, HEXNUMBER)
+	c.Assert(lit, Equals, "1f")
+}
+
 func (s *TokenizerSuite) TestHexInteger(c *C) {
 	t := NewTokenizer("0x1f a")
 	tok, lit := t.NextToken()
 	c.Assert(tok, Equals, HEXNUMBER)
-	c.Assert(lit, Equals, "0x1f")
+	c.Assert(lit, Equals, "1f")
 }
 
 func (s *TokenizerSuite) TestUppercaseHexInteger(c *C) {
 	t := NewTokenizer("0x1F a")
 	tok, lit := t.NextToken()
 	c.Assert(tok, Equals, HEXNUMBER)
-	c.Assert(lit, Equals, "0x1F")
+	c.Assert(lit, Equals, "1F")
 }
 
 func (s *TokenizerSuite) TestFloat(c *C) {

@@ -17,6 +17,7 @@ const (
 	SYMBOL
 	NUMBER
 	HEXNUMBER
+	BINARYNUMBER
 	FLOAT
 	STRING
 	QUOTE
@@ -67,6 +68,8 @@ func (self *Tokenizer) readSymbol() (token int, lit string) {
 
 func isHexChar(ch rune) bool {
 	switch ch {
+	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
+		return true
 	case 'a', 'b', 'c', 'd', 'e', 'f', 'A', 'B', 'C', 'D', 'E', 'F':
 		return true
 	default:
@@ -74,9 +77,49 @@ func isHexChar(ch rune) bool {
 	}
 }
 
+func isBinaryChar(ch rune) bool {
+	switch ch {
+	case '0', '1':
+		return true
+	default:
+		return false
+	}
+}
+
+func (self *Tokenizer) readHexNumber() (token int, lit string) {
+	start := self.Position
+	for !self.isEof() {
+		ch := rune(self.Source[self.Position])
+		if isHexChar(ch) {
+			self.Position++
+		} else {
+			break
+		}
+	}
+
+	lit = self.Source[start:self.Position]
+	token = HEXNUMBER
+	return
+}
+
+func (self *Tokenizer) readBinaryNumber() (token int, lit string) {
+	start := self.Position
+	for !self.isEof() {
+		ch := rune(self.Source[self.Position])
+		if isBinaryChar(ch) {
+			self.Position++
+		} else {
+			break
+		}
+	}
+
+	lit = self.Source[start:self.Position]
+	token = BINARYNUMBER
+	return
+}
+
 func (self *Tokenizer) readNumber() (token int, lit string) {
 	start := self.Position
-	isHex := false
 	isFloat := false
 	sawDecimal := false
 	for !self.isEof() {
@@ -89,20 +132,13 @@ func (self *Tokenizer) readNumber() (token int, lit string) {
 			self.Position++
 		} else if unicode.IsNumber(ch) {
 			self.Position++
-		} else if (start == self.Position-1) && ch == 'x' {
-			isHex = true
-			self.Position++
-		} else if isHex && isHexChar(ch) {
-			self.Position++
 		} else {
 			break
 		}
 	}
 
 	lit = self.Source[start:self.Position]
-	if isHex {
-		token = HEXNUMBER
-	} else if isFloat {
+	if isFloat {
 		token = FLOAT
 	} else {
 		token = NUMBER
@@ -152,6 +188,9 @@ func (self *Tokenizer) readNextToken() (token int, lit string) {
 	}
 	if unicode.IsLetter(currentChar) || currentChar == '_' {
 		return self.readSymbol()
+	} else if currentChar == '0' && nextChar == 'x' {
+		self.Position += 2
+		return self.readHexNumber()
 	} else if unicode.IsNumber(currentChar) {
 		return self.readNumber()
 	} else if currentChar == '-' && unicode.IsNumber(nextChar) {
@@ -240,8 +279,14 @@ func (self *Tokenizer) readNextToken() (token int, lit string) {
 		self.Position += 2
 		if nextChar == 't' {
 			return TRUE, "#t"
-		} else {
+		} else if nextChar == 'f' {
 			return FALSE, "#f"
+		} else if nextChar == 'x' {
+			return self.readHexNumber()
+		} else if nextChar == 'b' {
+			return self.readBinaryNumber()
+		} else {
+			return ILLEGAL, fmt.Sprintf("#%c", nextChar)
 		}
 	} else if currentChar == ';' {
 		start := self.Position
