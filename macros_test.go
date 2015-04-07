@@ -17,8 +17,7 @@ type MacrosSuite struct {
 var _ = Suite(&BuiltinsSuite{})
 
 func (s *MacrosSuite) SetUpSuite(c *C) {
-	Global = NewSymbolTableFrameBelow(nil, "SystemGlobal")
-	InitBuiltins()
+	InitLisp()
 }
 
 func (s *BuiltinsSuite) TestNoUnquoting(c *C) {

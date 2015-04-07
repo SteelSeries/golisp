@@ -18,8 +18,7 @@ type BytearrayBuiltinsSuite struct {
 var _ = Suite(&BytearrayBuiltinsSuite{})
 
 func (s *BytearrayBuiltinsSuite) SetUpSuite(c *C) {
-	Global = NewSymbolTableFrameBelow(nil, "SystemGlobal")
-	InitBuiltins()
+	InitLisp()
 }
 
 //--------------------------------------------------------------------------------

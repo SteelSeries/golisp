@@ -25,7 +25,6 @@ func RegisterEnvironmentPrimitives() {
 	MakePrimitiveFunction("environment-assign!", 3, EnvironmentAssignBangImpl)
 	MakePrimitiveFunction("environment-definable?", 2, EnvironmentDefinablePImpl)
 	MakePrimitiveFunction("environment-define", 3, EnvironmentDefineImpl)
-	MakePrimitiveFunction("system-global-environment", 0, SystemGlobalEnvironmentImpl)
 	MakePrimitiveFunction("the-environment", 0, TheEnvironmentImpl)
 	MakePrimitiveFunction("make-top-level-environment", -1, MakeTopLevelEnvironmentImpl)
 	MakePrimitiveFunction("find-top-level-environment", 1, FindTopLevelEnvironmentImpl)
