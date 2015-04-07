@@ -31,23 +31,12 @@ func RegisterMathPrimitives() {
 	MakePrimitiveFunction("max", 1, MaxImpl)
 	MakePrimitiveFunction("floor", 1, FloorImpl)
 	MakePrimitiveFunction("ceiling", 1, CeilingImpl)
+	MakePrimitiveFunction("zero?", 1, ZeroImpl)
+	MakePrimitiveFunction("positive?", 1, PositiveImpl)
+	MakePrimitiveFunction("negative?", 1, NegativeImpl)
+	MakePrimitiveFunction("even?", 1, EvenImpl)
+	MakePrimitiveFunction("odd?", 1, OddImpl)
 
-}
-
-func IsEvenImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	evaluated := Car(args)
-	if !IntegerP(evaluated) {
-		return LispFalse, nil
-	}
-	return BooleanWithValue((IntegerValue(evaluated) % 2) == 0), nil
-}
-
-func IsOddImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	evaluated := Car(args)
-	if !IntegerP(evaluated) {
-		return LispFalse, nil
-	}
-	return BooleanWithValue((IntegerValue(evaluated) % 2) == 1), nil
 }
 
 func addFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -195,13 +184,13 @@ func RemainderImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 
 	dividend := Car(args)
 	if !IntegerP(dividend) {
-		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(dividend)), env)
+		err = ProcessError(fmt.Sprintf("Integer expected for first arg, received %s", String(dividend)), env)
 		return
 	}
 
 	divisor := Cadr(args)
 	if !IntegerP(dividend) {
-		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(divisor)), env)
+		err = ProcessError(fmt.Sprintf("Integer expected for second arg, received %s", String(divisor)), env)
 		return
 	}
 
@@ -477,4 +466,49 @@ func CeilingImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	return FloatWithValue(float32(math.Ceil(float64(FloatValue(val))))), nil
+}
+
+func ZeroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	val := Car(args)
+	if !NumberP(val) {
+		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(Car(args))), env)
+		return
+	}
+	return BooleanWithValue(FloatValue(val) == 0.0), nil
+}
+
+func PositiveImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	val := Car(args)
+	if !NumberP(val) {
+		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(Car(args))), env)
+		return
+	}
+	return BooleanWithValue(FloatValue(val) > 0.0), nil
+}
+
+func NegativeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	val := Car(args)
+	if !NumberP(val) {
+		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(Car(args))), env)
+		return
+	}
+	return BooleanWithValue(FloatValue(val) < 0.0), nil
+}
+
+func EvenImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	val := Car(args)
+	if !IntegerP(val) {
+		err = ProcessError(fmt.Sprintf("Integer expected, received %s", String(Car(args))), env)
+		return
+	}
+	return BooleanWithValue(IntegerValue(val)%2 == 0), nil
+}
+
+func OddImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	val := Car(args)
+	if !IntegerP(val) {
+		err = ProcessError(fmt.Sprintf("Integer expected, received %s", String(Car(args))), env)
+		return
+	}
+	return BooleanWithValue(IntegerValue(val)%2 != 0), nil
 }
