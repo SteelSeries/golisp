@@ -22,6 +22,7 @@ func RegisterSpecialFormPrimitives() {
 	MakeSpecialForm("defmacro", -1, DefmacroImpl)
 	MakeSpecialForm("let", -1, LetImpl)
 	MakeSpecialForm("let*", -1, LetStarImpl)
+	MakeSpecialForm("letrec", -1, LetRecImpl)
 	MakeSpecialForm("begin", -1, BeginImpl)
 	MakeSpecialForm("do", -1, DoImpl)
 	MakeSpecialForm("apply", -1, ApplyImpl)
@@ -215,7 +216,7 @@ func DefmacroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return value, nil
 }
 
-func bindLetLocals(bindingForms *Data, localEnv *SymbolTableFrame, evalEnv *SymbolTableFrame) (err error) {
+func bindLetLocals(bindingForms *Data, rec bool, localEnv *SymbolTableFrame, evalEnv *SymbolTableFrame) (err error) {
 	var name *Data
 	var value *Data
 
@@ -229,6 +230,15 @@ func bindLetLocals(bindingForms *Data, localEnv *SymbolTableFrame, evalEnv *Symb
 		if !SymbolP(name) {
 			err = ProcessError("First part of a let binding pair must be a symbol", evalEnv)
 		}
+
+		if rec {
+			localEnv.BindLocallyTo(name, nil)
+		}
+	}
+
+	for cell := bindingForms; NotNilP(cell); cell = Cdr(cell) {
+		bindingPair := Car(cell)
+		name = Car(bindingPair)
 		value, err = Eval(Cadr(bindingPair), evalEnv)
 		if err != nil {
 			return
@@ -238,7 +248,7 @@ func bindLetLocals(bindingForms *Data, localEnv *SymbolTableFrame, evalEnv *Symb
 	return
 }
 
-func LetCommon(args *Data, env *SymbolTableFrame, star bool) (result *Data, err error) {
+func LetCommon(args *Data, env *SymbolTableFrame, star bool, rec bool) (result *Data, err error) {
 	if Length(args) < 1 {
 		return
 	}
@@ -251,12 +261,12 @@ func LetCommon(args *Data, env *SymbolTableFrame, star bool) (result *Data, err 
 	localEnv := NewSymbolTableFrameBelow(env, "let")
 	localEnv.Previous = env
 	var evalEnv *SymbolTableFrame
-	if star {
+	if star || rec {
 		evalEnv = localEnv
 	} else {
 		evalEnv = env
 	}
-	bindLetLocals(Car(args), localEnv, evalEnv)
+	bindLetLocals(Car(args), rec, localEnv, evalEnv)
 
 	for cell := Cdr(args); NotNilP(cell); cell = Cdr(cell) {
 		sexpr := Car(cell)
@@ -270,11 +280,15 @@ func LetCommon(args *Data, env *SymbolTableFrame, star bool) (result *Data, err 
 }
 
 func LetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return LetCommon(args, env, false)
+	return LetCommon(args, env, false, false)
 }
 
 func LetStarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return LetCommon(args, env, true)
+	return LetCommon(args, env, true, false)
+}
+
+func LetRecImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return LetCommon(args, env, false, true)
 }
 
 func BeginImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -326,7 +340,7 @@ func DoImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	localEnv := NewSymbolTableFrameBelow(env, "do")
 	localEnv.Previous = env
-	bindLetLocals(bindings, localEnv, env)
+	bindLetLocals(bindings, false, localEnv, env)
 
 	body := Cddr(args)
 
