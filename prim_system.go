@@ -20,14 +20,16 @@ func RegisterSystemPrimitives() {
 	MakePrimitiveFunction("load", 1, LoadFileImpl)
 	MakePrimitiveFunction("sleep", 1, SleepImpl)
 	MakePrimitiveFunction("millis", 0, MillisImpl)
+	MakePrimitiveFunction("newline", 0, NewlineImpl)
+	MakePrimitiveFunction("write", 1, WriteImpl)
 	MakePrimitiveFunction("write-line", 1, WriteLineImpl)
 	MakePrimitiveFunction("str", -1, MakeStringImpl)
 	MakePrimitiveFunction("intern", 1, InternImpl)
-	MakeSpecialForm("time", 1, TimeImpl)
 	MakePrimitiveFunction("quit", 0, QuitImpl)
 	MakePrimitiveFunction("gensym", -1, GensymImpl)
 	MakePrimitiveFunction("eval", -1, EvalImpl)
 	MakePrimitiveFunction("global-eval", 1, GlobalEvalImpl)
+	MakeSpecialForm("time", 1, TimeImpl)
 }
 
 func LoadFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -63,11 +65,18 @@ func MillisImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return
 }
 
-// TODO: make this take multiple args and act like MakeStrImpl (write
-// the concatenation of the printstrings of the args
+func NewlineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	fmt.Printf("\n")
+	return
+}
+
+func WriteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	fmt.Printf(PrintString(Car(args)))
+	return
+}
+
 func WriteLineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	data := Car(args)
-	println(PrintString(data))
+	fmt.Printf("%s\n", PrintString(Car(args)))
 	return
 }
 
