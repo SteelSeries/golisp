@@ -12,10 +12,19 @@ var LispTrace = false
 var quasiquoteLevel = 1
 
 func init() {
+	InitLisp()
+}
+
+func InitLisp() {
+	InitEnvironments()
+	InitBuiltins()
+}
+
+func InitEnvironments() {
 	TopLevelEnvironments = make(map[string]*SymbolTableFrame, 5)
 	Global = NewSymbolTableFrameBelow(nil, "SystemGlobal")
 	Global.Intern("nil")
-	InitBuiltins()
+	Global.BindTo(Intern("system-global-environment"), EnvironmentWithValue(Global))
 }
 
 func InitBuiltins() {
