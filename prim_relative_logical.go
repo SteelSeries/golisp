@@ -12,18 +12,18 @@ import (
 )
 
 func RegisterRelativePrimitives() {
-	MakePrimitiveFunction("<", 2, LessThanImpl)
-	MakePrimitiveFunction(">", 2, GreaterThanImpl)
-	MakePrimitiveFunction("==", 2, EqualToImpl)
-	MakePrimitiveFunction("eq?", 2, EqualToImpl)
-	MakePrimitiveFunction("!=", 2, NotEqualImpl)
-	MakePrimitiveFunction("neq?", 2, NotEqualImpl)
-	MakePrimitiveFunction("<=", 2, LessThanOrEqualToImpl)
-	MakePrimitiveFunction(">=", 2, GreaterThanOrEqualToImpl)
-	MakePrimitiveFunction("!", 1, BooleanNotImpl)
-	MakePrimitiveFunction("not", 1, BooleanNotImpl)
-	MakePrimitiveFunction("and", -1, BooleanAndImpl)
-	MakePrimitiveFunction("or", -1, BooleanOrImpl)
+	MakePrimitiveFunction("<", "2", LessThanImpl)
+	MakePrimitiveFunction(">", "2", GreaterThanImpl)
+	MakePrimitiveFunction("==", "2", EqualToImpl)
+	MakePrimitiveFunction("eq?", "2", EqualToImpl)
+	MakePrimitiveFunction("!=", "2", NotEqualImpl)
+	MakePrimitiveFunction("neq?", "2", NotEqualImpl)
+	MakePrimitiveFunction("<=", "2", LessThanOrEqualToImpl)
+	MakePrimitiveFunction(">=", "2", GreaterThanOrEqualToImpl)
+	MakePrimitiveFunction("!", "1", BooleanNotImpl)
+	MakePrimitiveFunction("not", "1", BooleanNotImpl)
+	MakePrimitiveFunction("and", "*", BooleanAndImpl)
+	MakePrimitiveFunction("or", "*", BooleanOrImpl)
 }
 
 func LessThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

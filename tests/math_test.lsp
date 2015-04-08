@@ -38,10 +38,9 @@
     (== (and (> xx z) (> y z))  #f)
     (== (even? 2) #t)
     (== (even? 3) #f)
-    (== (even? "hi") #f)
     (== (odd? 3) #t)
     (== (odd? 2) #f)
-    (== (odd? "hi") #f))
+)
 
 (describe int-min
           (== (min '(1 2)) 1)

@@ -13,14 +13,14 @@ import (
 )
 
 func RegisterBytearrayPrimitives() {
-	MakePrimitiveFunction("list-to-bytearray", 1, ListToBytesImpl)
-	MakePrimitiveFunction("bytearray-to-list", 1, BytesToListImpl)
-	MakePrimitiveFunction("replace-byte", 3, ReplaceByteImpl)
-	MakePrimitiveFunction("replace-byte!", 3, ReplaceByteBangImpl)
-	MakePrimitiveFunction("extract-byte", 2, ExtractByteImpl)
-	MakePrimitiveFunction("append-bytes", -1, AppendBytesImpl)
-	MakePrimitiveFunction("append-bytes!", -1, AppendBytesBangImpl)
-	MakePrimitiveFunction("extract-bytes", 3, ExtractBytesImpl)
+	MakePrimitiveFunction("list-to-bytearray", "1", ListToBytesImpl)
+	MakePrimitiveFunction("bytearray-to-list", "1", BytesToListImpl)
+	MakePrimitiveFunction("replace-byte", "3", ReplaceByteImpl)
+	MakePrimitiveFunction("replace-byte!", "3", ReplaceByteBangImpl)
+	MakePrimitiveFunction("extract-byte", "2", ExtractByteImpl)
+	MakePrimitiveFunction("append-bytes", "*", AppendBytesImpl)
+	MakePrimitiveFunction("append-bytes!", "*", AppendBytesBangImpl)
+	MakePrimitiveFunction("extract-bytes", "3", ExtractBytesImpl)
 }
 
 func ListToBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -46,6 +46,7 @@ func ListToBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 		if IntegerP(n) {
 			b := IntegerValue(n)
 			if b > 255 {
+
 				err = ProcessError(fmt.Sprintf("Byte arrays can only contain bytes, but found %d.", b), env)
 				return
 			}

@@ -12,23 +12,33 @@ import (
 )
 
 func RegisterSpecialFormPrimitives() {
-	MakeSpecialForm("cond", -1, CondImpl)
-	MakeSpecialForm("case", -1, CaseImpl)
-	MakeSpecialForm("if", -1, IfImpl)
-	MakeSpecialForm("when", -1, WhenImpl)
-	MakeSpecialForm("unless", -1, UnlessImpl)
-	MakeSpecialForm("lambda", -1, LambdaImpl)
-	MakeSpecialForm("define", -1, DefineImpl)
-	MakeSpecialForm("defmacro", -1, DefmacroImpl)
-	MakeSpecialForm("let", -1, LetImpl)
-	MakeSpecialForm("let*", -1, LetStarImpl)
-	MakeSpecialForm("letrec", -1, LetRecImpl)
-	MakeSpecialForm("begin", -1, BeginImpl)
-	MakeSpecialForm("do", -1, DoImpl)
-	MakeSpecialForm("apply", -1, ApplyImpl)
-	MakeSpecialForm("->", -1, ChainImpl)
-	MakeSpecialForm("=>", -1, TapImpl)
-	MakeSpecialForm("definition-of", 1, DefinitionOfImpl)
+	MakeSpecialForm("cond", "*", CondImpl)
+	MakeSpecialForm("case", ">=1", CaseImpl)
+	MakeSpecialForm("if", "2|3", IfImpl)
+	MakeSpecialForm("when", ">=2", WhenImpl)
+	MakeSpecialForm("unless", ">=2", UnlessImpl)
+	MakeSpecialForm("lambda", ">=1", LambdaImpl)
+	MakeSpecialForm("define", ">=1", DefineImpl)
+	MakeSpecialForm("defmacro", ">=1", DefmacroImpl)
+	MakeSpecialForm("let", ">=1", LetImpl)
+	MakeSpecialForm("let*", ">=1", LetStarImpl)
+	MakeSpecialForm("letrec", ">=1", LetRecImpl)
+	MakeSpecialForm("begin", "*", BeginImpl)
+	MakeSpecialForm("do", ">=2", DoImpl)
+	MakeSpecialForm("apply", ">=1", ApplyImpl)
+	MakeSpecialForm("->", ">=1", ChainImpl)
+	MakeSpecialForm("=>", ">=1", TapImpl)
+	MakeSpecialForm("definition-of", "1", DefinitionOfImpl)
+}
+
+func evaluateBody(sexprs *Data, env *SymbolTableFrame) (result *Data, err error) {
+	for e := sexprs; NotNilP(e); e = Cdr(e) {
+		result, err = Eval(Car(e), env)
+		if err != nil {
+			return
+		}
+	}
+	return
 }
 
 func CondImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -39,28 +49,16 @@ func CondImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 			err = ProcessError("Cond expect a sequence of clauses that are lists", env)
 			return
 		}
-		condition, err = Eval(Car(clause), env)
-		if err != nil {
-			return
-		}
-		if BooleanValue(condition) || StringValue(Car(clause)) == "else" {
-			for e := Cdr(clause); NotNilP(e); e = Cdr(e) {
-				result, err = Eval(Car(e), env)
-				if err != nil {
-					return
-				}
+		if IsEqual(Car(clause), Intern("else")) {
+			return evaluateBody(Cdr(clause), env)
+		} else {
+			condition, err = Eval(Car(clause), env)
+			if err != nil {
+				return
 			}
-			return
-		}
-	}
-	return
-}
-
-func evalList(l *Data, env *SymbolTableFrame) (result *Data, err error) {
-	for sexpr := l; NotNilP(sexpr); sexpr = Cdr(sexpr) {
-		result, err = Eval(Car(sexpr), env)
-		if err != nil {
-			return
+			if BooleanValue(condition) {
+				return evaluateBody(Cdr(clause), env)
+			}
 		}
 	}
 	return
@@ -80,14 +78,14 @@ func CaseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 			err = ProcessError("Case requires non-atomic clauses", env)
 			return
 		}
-		if ListP(Car(clause)) {
+		if IsEqual(Car(clause), Intern("else")) {
+			return evaluateBody(Cdr(clause), env)
+		} else if ListP(Car(clause)) {
 			for v := Car(clause); NotNilP(v); v = Cdr(v) {
 				if IsEqual(Car(v), keyValue) {
-					return evalList(Cdr(clause), env)
+					return evaluateBody(Cdr(clause), env)
 				}
 			}
-		} else if IsEqual(Car(clause), Intern("else")) {
-			return evalList(Cdr(clause), env)
 		}
 	}
 
@@ -95,39 +93,25 @@ func CaseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func IfImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if Length(args) < 2 || Length(args) > 3 {
-		err = ProcessError(fmt.Sprintf("IF requires 2 or 3 arguments. Received %d.", Length(args)), env)
-		return
-	}
-
 	c, err := Eval(Car(args), env)
 	if err != nil {
 		return
 	}
-	condition := BooleanValue(c)
-	thenClause := Second(args)
-	elseClause := Third(args)
 
-	if condition {
-		return Eval(thenClause, env)
+	if BooleanValue(c) {
+		return Eval(Second(args), env)
 	} else {
-		return Eval(elseClause, env)
+		return Eval(Third(args), env)
 	}
 }
 
 func WhenImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if Length(args) < 2 {
-		err = ProcessError(fmt.Sprintf("when requires at least 2 arguments. Received %d.", Length(args)), env)
-		return
-	}
-
 	c, err := Eval(Car(args), env)
 	if err != nil {
 		return
 	}
-	condition := BooleanValue(c)
 
-	if condition {
+	if BooleanValue(c) {
 		for cell := Cdr(args); NotNilP(cell); cell = Cdr(cell) {
 			sexpr := Car(cell)
 			result, err = Eval(sexpr, env)
@@ -140,18 +124,12 @@ func WhenImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func UnlessImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if Length(args) < 2 {
-		err = ProcessError(fmt.Sprintf("unless requires at least 2 arguments. Received %d.", Length(args)), env)
-		return
-	}
-
 	c, err := Eval(Car(args), env)
 	if err != nil {
 		return
 	}
-	condition := BooleanValue(c)
 
-	if !condition {
+	if !BooleanValue(c) {
 		for cell := Cdr(args); NotNilP(cell); cell = Cdr(cell) {
 			sexpr := Car(cell)
 			result, err = Eval(sexpr, env)
@@ -249,10 +227,6 @@ func bindLetLocals(bindingForms *Data, rec bool, localEnv *SymbolTableFrame, eva
 }
 
 func LetCommon(args *Data, env *SymbolTableFrame, star bool, rec bool) (result *Data, err error) {
-	if Length(args) < 1 {
-		return
-	}
-
 	if !PairP(Car(args)) {
 		err = ProcessError("Let requires a list of bindings as it's first argument", env)
 		return
@@ -321,11 +295,6 @@ func rebindDoLocals(bindingForms *Data, env *SymbolTableFrame) (err error) {
 }
 
 func DoImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if Length(args) < 2 {
-		err = ProcessError("Do requires at least a list of bindings and a test clause", env)
-		return
-	}
-
 	bindings := Car(args)
 	if !PairP(bindings) {
 		err = ProcessError("Do requires a list of bindings as it's first argument", env)
@@ -377,11 +346,6 @@ func DoImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func ApplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if Length(args) < 1 {
-		err = ProcessError("apply requires at least one argument", env)
-		return
-	}
-
 	f, err := Eval(Car(args), env)
 	if err != nil {
 		return
@@ -418,11 +382,6 @@ func ApplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func ChainImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if Length(args) == 0 {
-		err = ProcessError("-> requires at least an initial value.", env)
-		return
-	}
-
 	var value *Data
 
 	value, err = Eval(Car(args), env)
@@ -448,11 +407,6 @@ func ChainImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func TapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if Length(args) == 0 {
-		err = ProcessError("tap requires at least an initial value.", env)
-		return
-	}
-
 	var value *Data
 
 	value, err = Eval(Car(args), env)

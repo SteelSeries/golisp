@@ -1,4 +1,4 @@
-// Copyright 2014 SteelSeries ApS.  All rights reserved.
+// Copyright "2"014 SteelSeries ApS.  All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -12,19 +12,19 @@ import (
 )
 
 func RegisterFramePrimitives() {
-	MakePrimitiveFunction("make-frame", -1, MakeFrameImpl)
-	MakePrimitiveFunction("has-slot?", 2, HasSlotImpl)
-	MakePrimitiveFunction("get-slot", 2, GetSlotImpl)
-	MakePrimitiveFunction("get-slot-or-nil", 2, GetSlotOrNilImpl)
-	MakePrimitiveFunction("remove-slot!", 2, RemoveSlotImpl)
-	MakePrimitiveFunction("set-slot!", 3, SetSlotImpl)
-	MakePrimitiveFunction("send", -1, SendImpl)
-	MakePrimitiveFunction("send-super", -1, SendSuperImpl)
-	MakePrimitiveFunction("clone", 1, CloneImpl)
-	MakePrimitiveFunction("json->lisp", 1, JsonToLispImpl)
-	MakePrimitiveFunction("lisp->json", 1, LispToJsonImpl)
-	MakePrimitiveFunction("frame-keys", 1, FrameKeysImpl)
-	MakePrimitiveFunction("frame-values", 1, FrameValuesImpl)
+	MakePrimitiveFunction("make-frame", "*", MakeFrameImpl)
+	MakePrimitiveFunction("has-slot?", "2", HasSlotImpl)
+	MakePrimitiveFunction("get-slot", "2", GetSlotImpl)
+	MakePrimitiveFunction("get-slot-or-nil", "2", GetSlotOrNilImpl)
+	MakePrimitiveFunction("remove-slot!", "2", RemoveSlotImpl)
+	MakePrimitiveFunction("set-slot!", "3", SetSlotImpl)
+	MakePrimitiveFunction("send", ">=2", SendImpl)
+	MakePrimitiveFunction("send-super", ">=1", SendSuperImpl)
+	MakePrimitiveFunction("clone", "1", CloneImpl)
+	MakePrimitiveFunction("json->lisp", "1", JsonToLispImpl)
+	MakePrimitiveFunction("lisp->json", "1", LispToJsonImpl)
+	MakePrimitiveFunction("frame-keys", "1", FrameKeysImpl)
+	MakePrimitiveFunction("frame-values", "1", FrameValuesImpl)
 }
 
 func MakeFrameImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

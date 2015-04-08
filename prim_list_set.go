@@ -12,8 +12,8 @@ import (
 )
 
 func RegisterListSetPrimitives() {
-	MakePrimitiveFunction("union", -1, UnionImpl)
-	MakePrimitiveFunction("intersection", -1, IntersectionImpl)
+	MakePrimitiveFunction("union", "*", UnionImpl)
+	MakePrimitiveFunction("intersection", "*", IntersectionImpl)
 }
 
 func memp(i *Data, l *Data) bool {

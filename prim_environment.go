@@ -10,24 +10,24 @@ package golisp
 import ()
 
 func RegisterEnvironmentPrimitives() {
-	MakePrimitiveFunction("environment?", 1, EnvironmentPImpl)
-	MakePrimitiveFunction("environment-has-parent?", 1, EnvironmentParentPImpl)
-	MakePrimitiveFunction("environment-parent", 1, EnvironmentParentImpl)
-	MakePrimitiveFunction("environment-bound-names", 1, EnvironmentBoundNamesImpl)
-	MakePrimitiveFunction("environment-macro-names", 1, EnvironmentMacroNamesImpl)
-	MakePrimitiveFunction("environment-bindings", 1, EnvironmentBindingsImpl)
-	MakePrimitiveFunction("environment-reference-type", 2, EnvironmentReferenceTypeImpl)
-	MakePrimitiveFunction("environment-bound?", 2, EnvironmentBoundPImpl)
-	MakePrimitiveFunction("environment-assigned?", 2, EnvironmentAssignedPImpl)
-	MakePrimitiveFunction("environment-lookup", 2, EnvironmentLookupImpl)
-	MakePrimitiveFunction("environment-lookup-macro", 2, EnvironmentLookupMacroImpl)
-	MakePrimitiveFunction("environment-assignable?", 2, EnvironmentAssignablePImpl)
-	MakePrimitiveFunction("environment-assign!", 3, EnvironmentAssignBangImpl)
-	MakePrimitiveFunction("environment-definable?", 2, EnvironmentDefinablePImpl)
-	MakePrimitiveFunction("environment-define", 3, EnvironmentDefineImpl)
-	MakePrimitiveFunction("the-environment", 0, TheEnvironmentImpl)
-	MakePrimitiveFunction("make-top-level-environment", -1, MakeTopLevelEnvironmentImpl)
-	MakePrimitiveFunction("find-top-level-environment", 1, FindTopLevelEnvironmentImpl)
+	MakePrimitiveFunction("environment?", "1", EnvironmentPImpl)
+	MakePrimitiveFunction("environment-has-parent?", "1", EnvironmentParentPImpl)
+	MakePrimitiveFunction("environment-parent", "1", EnvironmentParentImpl)
+	MakePrimitiveFunction("environment-bound-names", "1", EnvironmentBoundNamesImpl)
+	MakePrimitiveFunction("environment-macro-names", "1", EnvironmentMacroNamesImpl)
+	MakePrimitiveFunction("environment-bindings", "1", EnvironmentBindingsImpl)
+	MakePrimitiveFunction("environment-reference-type", "2", EnvironmentReferenceTypeImpl)
+	MakePrimitiveFunction("environment-bound?", "2", EnvironmentBoundPImpl)
+	MakePrimitiveFunction("environment-assigned?", "2", EnvironmentAssignedPImpl)
+	MakePrimitiveFunction("environment-lookup", "2", EnvironmentLookupImpl)
+	MakePrimitiveFunction("environment-lookup-macro", "2", EnvironmentLookupMacroImpl)
+	MakePrimitiveFunction("environment-assignable?", "2", EnvironmentAssignablePImpl)
+	MakePrimitiveFunction("environment-assign!", "3", EnvironmentAssignBangImpl)
+	MakePrimitiveFunction("environment-definable?", "2", EnvironmentDefinablePImpl)
+	MakePrimitiveFunction("environment-define", "3", EnvironmentDefineImpl)
+	MakePrimitiveFunction("the-environment", "0", TheEnvironmentImpl)
+	MakePrimitiveFunction("make-top-level-environment", "1|2|3", MakeTopLevelEnvironmentImpl)
+	MakePrimitiveFunction("find-top-level-environment", "1", FindTopLevelEnvironmentImpl)
 }
 
 func EnvironmentPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -299,10 +299,6 @@ func MakeTopLevelEnvironmentImpl(args *Data, env *SymbolTableFrame) (result *Dat
 		name = "anonymous top level"
 	}
 	newEnv := NewSymbolTableFrameBelow(Global, name)
-	if Length(args) > 2 {
-		err = ProcessError("make-top-level-environment can have at most 3 arguments", env)
-		return
-	}
 	if Length(args) == 1 {
 		if !ListP(Car(args)) {
 			err = ProcessError("make-top-level-environment expects binding names to be a list", env)

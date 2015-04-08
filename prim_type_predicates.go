@@ -8,17 +8,17 @@
 package golisp
 
 func RegisterTypePredicatePrimitives() {
-	MakePrimitiveFunction("list?", 1, IsPairImpl)
-	MakePrimitiveFunction("pair?", 1, IsPairImpl)
-	MakePrimitiveFunction("alist?", 1, IsAlistImpl)
-	MakePrimitiveFunction("nil?", 1, NilPImpl)
-	MakePrimitiveFunction("notnil?", 1, NotNilPImpl)
-	MakePrimitiveFunction("symbol?", 1, IsSymbolImpl)
-	MakePrimitiveFunction("string?", 1, IsStringImpl)
-	MakePrimitiveFunction("integer?", 1, IsIntegerImpl)
-	MakePrimitiveFunction("number?", 1, IsNumberImpl)
-	MakePrimitiveFunction("float?", 1, IsFloatImpl)
-	MakePrimitiveFunction("function?", 1, IsFunctionImpl)
+	MakePrimitiveFunction("list?", "1", IsPairImpl)
+	MakePrimitiveFunction("pair?", "1", IsPairImpl)
+	MakePrimitiveFunction("alist?", "1", IsAlistImpl)
+	MakePrimitiveFunction("nil?", "1", NilPImpl)
+	MakePrimitiveFunction("notnil?", "1", NotNilPImpl)
+	MakePrimitiveFunction("symbol?", "1", IsSymbolImpl)
+	MakePrimitiveFunction("string?", "1", IsStringImpl)
+	MakePrimitiveFunction("integer?", "1", IsIntegerImpl)
+	MakePrimitiveFunction("number?", "1", IsNumberImpl)
+	MakePrimitiveFunction("float?", "1", IsFloatImpl)
+	MakePrimitiveFunction("function?", "1", IsFunctionImpl)
 }
 
 func IsPairImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

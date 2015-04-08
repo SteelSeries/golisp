@@ -10,12 +10,12 @@ package golisp
 import ()
 
 func RegisterAListPrimitives() {
-	MakePrimitiveFunction("acons", -1, AconsImpl)
-	MakePrimitiveFunction("pairlis", -1, PairlisImpl)
-	MakePrimitiveFunction("assoc", 2, AssocImpl)
-	MakePrimitiveFunction("dissoc", 2, DissocImpl)
-	MakePrimitiveFunction("rassoc", 2, RassocImpl)
-	MakePrimitiveFunction("alist", 1, AlistImpl)
+	MakePrimitiveFunction("acons", "2|3", AconsImpl)
+	MakePrimitiveFunction("pairlis", "2|3", PairlisImpl)
+	MakePrimitiveFunction("assoc", "2", AssocImpl)
+	MakePrimitiveFunction("dissoc", "2", DissocImpl)
+	MakePrimitiveFunction("rassoc", "2", RassocImpl)
+	MakePrimitiveFunction("alist", "1", AlistImpl)
 }
 
 func AlistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -25,11 +25,6 @@ func AlistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func AconsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if Length(args) < 2 || Length(args) > 3 {
-		err = ProcessError("acons must have 2 or 3 arguments", env)
-		return
-	}
-
 	key := First(args)
 	if PairP(key) {
 		err = ProcessError("Alist key can not be a list", env)
@@ -47,11 +42,6 @@ func AconsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func PairlisImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if Length(args) > 3 {
-		err = ProcessError("pairlis takes at most three arguments", env)
-		return
-	}
-
 	keys := Car(args)
 	if !PairP(keys) {
 		err = ProcessError("First arg of pairlis must be a list", env)

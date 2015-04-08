@@ -12,11 +12,11 @@ import (
 )
 
 func RegisterBinaryPrimitives() {
-	MakePrimitiveFunction("binary-and", 2, BinaryAndImpl)
-	MakePrimitiveFunction("binary-or", 2, BinaryOrImpl)
-	MakePrimitiveFunction("binary-not", 1, BinaryNotImpl)
-	MakePrimitiveFunction("left-shift", 2, LeftShiftImpl)
-	MakePrimitiveFunction("right-shift", 2, RightShiftImpl)
+	MakePrimitiveFunction("binary-and", "2", BinaryAndImpl)
+	MakePrimitiveFunction("binary-or", "2", BinaryOrImpl)
+	MakePrimitiveFunction("binary-not", "1", BinaryNotImpl)
+	MakePrimitiveFunction("left-shift", "2", LeftShiftImpl)
+	MakePrimitiveFunction("right-shift", "2", RightShiftImpl)
 }
 
 func BinaryAndImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

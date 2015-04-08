@@ -12,11 +12,11 @@ import (
 )
 
 func RegisterListFunctionsPrimitives() {
-	MakePrimitiveFunction("map", -1, MapImpl)
-	MakePrimitiveFunction("reduce", 3, ReduceImpl)
-	MakePrimitiveFunction("filter", 2, FilterImpl)
-	MakePrimitiveFunction("memq", 2, MemqImpl)
-	MakePrimitiveFunction("memp", 2, MempImpl)
+	MakePrimitiveFunction("map", ">=2", MapImpl)
+	MakePrimitiveFunction("reduce", "3", ReduceImpl)
+	MakePrimitiveFunction("filter", "2", FilterImpl)
+	MakePrimitiveFunction("memq", "2", MemqImpl)
+	MakePrimitiveFunction("memp", "2", MempImpl)
 }
 
 func intMin(x, y int) int {

@@ -23,12 +23,12 @@ type Process struct {
 }
 
 func RegisterConcurrencyPrimitives() {
-	MakePrimitiveFunction("fork", 1, ForkImpl)
-	MakePrimitiveFunction("proc-sleep", 2, ProcSleepImpl)
-	MakePrimitiveFunction("wake", 1, WakeImpl)
-	MakePrimitiveFunction("schedule", 2, ScheduleImpl)
-	MakePrimitiveFunction("reset-timeout", 1, ResetTimeoutImpl)
-	MakePrimitiveFunction("abandon", 1, AbandonImpl)
+	MakePrimitiveFunction("fork", "1", ForkImpl)
+	MakePrimitiveFunction("proc-sleep", "2", ProcSleepImpl)
+	MakePrimitiveFunction("wake", "1", WakeImpl)
+	MakePrimitiveFunction("schedule", "2", ScheduleImpl)
+	MakePrimitiveFunction("reset-timeout", "1", ResetTimeoutImpl)
+	MakePrimitiveFunction("abandon", "1", AbandonImpl)
 }
 
 func ForkImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
