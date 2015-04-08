@@ -17,14 +17,14 @@ import (
 var DebugCommandPrefix string = ":"
 
 func RegisterDebugPrimitives() {
-	MakePrimitiveFunction("debug-trace", -1, DebugTraceImpl)
-	MakePrimitiveFunction("lisp-trace", -1, LispTraceImpl)
-	MakePrimitiveFunction("debug-on-error", -1, DebugOnErrorImpl)
-	MakePrimitiveFunction("debug-on-entry", 0, DebugOnEntryImpl)
-	MakePrimitiveFunction("add-debug-on-entry", 1, AddDebugOnEntryImpl)
-	MakePrimitiveFunction("remove-debug-on-entry", 1, RemoveDebugOnEntryImpl)
-	MakePrimitiveFunction("debug", -1, DebugImpl)
-	MakePrimitiveFunction("dump", 0, DumpSymbolTableImpl)
+	MakePrimitiveFunction("debug-trace", "0|1", DebugTraceImpl)
+	MakePrimitiveFunction("lisp-trace", "0|1", LispTraceImpl)
+	MakePrimitiveFunction("debug-on-error", "0|1", DebugOnErrorImpl)
+	MakePrimitiveFunction("debug-on-entry", "0", DebugOnEntryImpl)
+	MakePrimitiveFunction("add-debug-on-entry", "1", AddDebugOnEntryImpl)
+	MakePrimitiveFunction("remove-debug-on-entry", "1", RemoveDebugOnEntryImpl)
+	MakePrimitiveFunction("debug", "0", DebugImpl)
+	MakePrimitiveFunction("dump", "0", DumpSymbolTableImpl)
 }
 
 func DumpSymbolTableImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

@@ -17,19 +17,19 @@ import (
 var symbolCounts map[string]int = make(map[string]int)
 
 func RegisterSystemPrimitives() {
-	MakePrimitiveFunction("load", 1, LoadFileImpl)
-	MakePrimitiveFunction("sleep", 1, SleepImpl)
-	MakePrimitiveFunction("millis", 0, MillisImpl)
-	MakePrimitiveFunction("newline", 0, NewlineImpl)
-	MakePrimitiveFunction("write", 1, WriteImpl)
-	MakePrimitiveFunction("write-line", 1, WriteLineImpl)
-	MakePrimitiveFunction("str", -1, MakeStringImpl)
-	MakePrimitiveFunction("intern", 1, InternImpl)
-	MakePrimitiveFunction("quit", 0, QuitImpl)
-	MakePrimitiveFunction("gensym", -1, GensymImpl)
-	MakePrimitiveFunction("eval", -1, EvalImpl)
-	MakePrimitiveFunction("global-eval", 1, GlobalEvalImpl)
-	MakeSpecialForm("time", 1, TimeImpl)
+	MakePrimitiveFunction("load", "1", LoadFileImpl)
+	MakePrimitiveFunction("sleep", "1", SleepImpl)
+	MakePrimitiveFunction("millis", "0", MillisImpl)
+	MakePrimitiveFunction("newline", "0", NewlineImpl)
+	MakePrimitiveFunction("write", "1", WriteImpl)
+	MakePrimitiveFunction("write-line", "1", WriteLineImpl)
+	MakePrimitiveFunction("str", "*", MakeStringImpl)
+	MakePrimitiveFunction("intern", "1", InternImpl)
+	MakePrimitiveFunction("quit", "0", QuitImpl)
+	MakePrimitiveFunction("gensym", "0|1", GensymImpl)
+	MakePrimitiveFunction("eval", "1|2", EvalImpl)
+	MakePrimitiveFunction("global-eval", "1", GlobalEvalImpl)
+	MakeSpecialForm("time", "1", TimeImpl)
 }
 
 func LoadFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -152,10 +152,6 @@ func GensymImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 func EvalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var evalEnv *SymbolTableFrame
 	sexpr := Car(args)
-	if Length(args) != 1 && Length(args) != 2 {
-		err = ProcessError(fmt.Sprintf("eval expects 1 or 2 arguments, but recieved %d.", Length(args)), env)
-		return
-	}
 	if Length(args) == 2 {
 		if !EnvironmentP(Cadr(args)) {
 			err = ProcessError(fmt.Sprintf("eval expects an environment as it's second argument, but recieved %s.", String(Cadr(args))), env)

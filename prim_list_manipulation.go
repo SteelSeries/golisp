@@ -10,17 +10,17 @@ package golisp
 import ()
 
 func RegisterListManipulationPrimitives() {
-	MakePrimitiveFunction("list", -1, MakeListImpl)
-	MakePrimitiveFunction("length", 1, ListLengthImpl)
-	MakePrimitiveFunction("cons", 2, ConsImpl)
-	MakePrimitiveFunction("reverse", 1, ReverseImpl)
-	MakePrimitiveFunction("flatten", 1, FlattenImpl)
-	MakePrimitiveFunction("flatten*", 1, RecursiveFlattenImpl)
-	MakePrimitiveFunction("append", -1, AppendImpl)
-	MakeSpecialForm("append!", 2, AppendBangImpl)
-	MakePrimitiveFunction("copy", 1, CopyImpl)
-	MakePrimitiveFunction("partition", 2, PartitionImpl)
-	MakePrimitiveFunction("sublist", 3, SublistImpl)
+	MakePrimitiveFunction("list", "*", MakeListImpl)
+	MakePrimitiveFunction("length", "1", ListLengthImpl)
+	MakePrimitiveFunction("cons", "2", ConsImpl)
+	MakePrimitiveFunction("reverse", "1", ReverseImpl)
+	MakePrimitiveFunction("flatten", "1", FlattenImpl)
+	MakePrimitiveFunction("flatten*", "1", RecursiveFlattenImpl)
+	MakePrimitiveFunction("append", "*", AppendImpl)
+	MakeSpecialForm("append!", "2", AppendBangImpl)
+	MakePrimitiveFunction("copy", "1", CopyImpl)
+	MakePrimitiveFunction("partition", "2", PartitionImpl)
+	MakePrimitiveFunction("sublist", "3", SublistImpl)
 }
 
 func MakeListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

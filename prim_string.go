@@ -13,10 +13,10 @@ import (
 )
 
 func RegsterStringPrimitives() {
-	MakePrimitiveFunction("split", 2, SplitImpl)
-	MakePrimitiveFunction("trim", -1, TrimImpl)
-	MakePrimitiveFunction("string-upcase", 1, UpcaseImpl)
-	MakePrimitiveFunction("string-downcase", 1, DowncaseImpl)
+	MakePrimitiveFunction("split", "2", SplitImpl)
+	MakePrimitiveFunction("trim", "1|2", TrimImpl)
+	MakePrimitiveFunction("string-upcase", "1", UpcaseImpl)
+	MakePrimitiveFunction("string-downcase", "1", DowncaseImpl)
 }
 
 func SplitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

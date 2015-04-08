@@ -14,28 +14,28 @@ import (
 )
 
 func RegisterMathPrimitives() {
-	MakePrimitiveFunction("+", -1, AddImpl)
-	MakePrimitiveFunction("-", -1, SubtractImpl)
-	MakePrimitiveFunction("*", -1, MultiplyImpl)
-	MakePrimitiveFunction("/", -1, QuotientImpl)
-	MakePrimitiveFunction("quotient", -1, QuotientImpl)
-	MakePrimitiveFunction("%", 2, RemainderImpl)
-	MakePrimitiveFunction("modulo", 2, RemainderImpl)
-	MakePrimitiveFunction("random-byte", 0, RandomByteImpl)
-	MakePrimitiveFunction("interval", -1, IntervalImpl)
-	MakePrimitiveFunction("integer", 1, ToIntImpl)
-	MakePrimitiveFunction("float", 1, ToFloatImpl)
-	MakePrimitiveFunction("number->string", -1, NumberToStringImpl)
-	MakePrimitiveFunction("string->number", -1, StringToNumberImpl)
-	MakePrimitiveFunction("min", 1, MinImpl)
-	MakePrimitiveFunction("max", 1, MaxImpl)
-	MakePrimitiveFunction("floor", 1, FloorImpl)
-	MakePrimitiveFunction("ceiling", 1, CeilingImpl)
-	MakePrimitiveFunction("zero?", 1, ZeroImpl)
-	MakePrimitiveFunction("positive?", 1, PositiveImpl)
-	MakePrimitiveFunction("negative?", 1, NegativeImpl)
-	MakePrimitiveFunction("even?", 1, EvenImpl)
-	MakePrimitiveFunction("odd?", 1, OddImpl)
+	MakePrimitiveFunction("+", "*", AddImpl)
+	MakePrimitiveFunction("-", "*", SubtractImpl)
+	MakePrimitiveFunction("*", "*", MultiplyImpl)
+	MakePrimitiveFunction("/", "*", QuotientImpl)
+	MakePrimitiveFunction("quotient", "*", QuotientImpl)
+	MakePrimitiveFunction("%", "2", RemainderImpl)
+	MakePrimitiveFunction("modulo", "2", RemainderImpl)
+	MakePrimitiveFunction("random-byte", "0", RandomByteImpl)
+	MakePrimitiveFunction("interval", "2|3", IntervalImpl)
+	MakePrimitiveFunction("integer", "1", ToIntImpl)
+	MakePrimitiveFunction("float", "1", ToFloatImpl)
+	MakePrimitiveFunction("number->string", "1|2", NumberToStringImpl)
+	MakePrimitiveFunction("string->number", "1|2", StringToNumberImpl)
+	MakePrimitiveFunction("min", "1", MinImpl)
+	MakePrimitiveFunction("max", "1", MaxImpl)
+	MakePrimitiveFunction("floor", "1", FloorImpl)
+	MakePrimitiveFunction("ceiling", "1", CeilingImpl)
+	MakePrimitiveFunction("zero?", "1", ZeroImpl)
+	MakePrimitiveFunction("positive?", "1", PositiveImpl)
+	MakePrimitiveFunction("negative?", "1", NegativeImpl)
+	MakePrimitiveFunction("even?", "1", EvenImpl)
+	MakePrimitiveFunction("odd?", "1", OddImpl)
 
 }
 
@@ -206,11 +206,6 @@ func RandomByteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 }
 
 func IntervalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if Length(args) < 2 || Length(args) > 3 {
-		err = ProcessError(fmt.Sprintf("interval expects 2 or 3 arguments, received %d", Length(args)), env)
-		return
-	}
-
 	startObj := Car(args)
 	start := IntegerValue(startObj)
 

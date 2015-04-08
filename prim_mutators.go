@@ -10,10 +10,10 @@ package golisp
 import ()
 
 func RegisterMutatorPrimitives() {
-	MakeSpecialForm("set!", 2, SetVarImpl)
-	MakeSpecialForm("set-car!", 2, SetCarImpl)
-	MakeSpecialForm("set-cdr!", 2, SetCdrImpl)
-	MakeSpecialForm("set-nth!", 3, SetNthImpl)
+	MakeSpecialForm("set!", "2", SetVarImpl)
+	MakeSpecialForm("set-car!", "2", SetCarImpl)
+	MakeSpecialForm("set-cdr!", "2", SetCdrImpl)
+	MakeSpecialForm("set-nth!", "3", SetNthImpl)
 }
 
 func SetVarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
