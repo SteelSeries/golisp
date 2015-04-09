@@ -19,6 +19,7 @@ func RegisterTypePredicatePrimitives() {
 	MakePrimitiveFunction("number?", "1", IsNumberImpl)
 	MakePrimitiveFunction("float?", "1", IsFloatImpl)
 	MakePrimitiveFunction("function?", "1", IsFunctionImpl)
+	MakePrimitiveFunction("macro?", "1", IsMacroImpl)
 }
 
 func IsPairImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -59,4 +60,8 @@ func IsFloatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func IsFunctionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return BooleanWithValue(FunctionP(Car(args))), nil
+}
+
+func IsMacroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return BooleanWithValue(MacroP(Car(args))), nil
 }
