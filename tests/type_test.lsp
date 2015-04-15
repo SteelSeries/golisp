@@ -27,4 +27,9 @@
     (== (number? "bar")       #f)
     (== (function? foo)       #t)
     (== (function? 1)         #f)
+    (== (frame? {a: 1})       #t)
+    (== (frame? 1)            #f)
+    (== (bytearray? [1 2])    #t)
+    (== (bytearray? 1)        #f)
 )
+
