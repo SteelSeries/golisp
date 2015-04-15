@@ -12,7 +12,9 @@ func RegisterTypePredicatePrimitives() {
 	MakePrimitiveFunction("pair?", "1", IsPairImpl)
 	MakePrimitiveFunction("alist?", "1", IsAlistImpl)
 	MakePrimitiveFunction("nil?", "1", NilPImpl)
+	MakePrimitiveFunction("null?", "1", NilPImpl)
 	MakePrimitiveFunction("notnil?", "1", NotNilPImpl)
+	MakePrimitiveFunction("notnull?", "1", NotNilPImpl)
 	MakePrimitiveFunction("symbol?", "1", IsSymbolImpl)
 	MakePrimitiveFunction("string?", "1", IsStringImpl)
 	MakePrimitiveFunction("integer?", "1", IsIntegerImpl)
@@ -20,6 +22,8 @@ func RegisterTypePredicatePrimitives() {
 	MakePrimitiveFunction("float?", "1", IsFloatImpl)
 	MakePrimitiveFunction("function?", "1", IsFunctionImpl)
 	MakePrimitiveFunction("macro?", "1", IsMacroImpl)
+	MakePrimitiveFunction("frame?", "1", IsFrameImpl)
+	MakePrimitiveFunction("bytearray?", "1", IsByteArrayImpl)
 }
 
 func IsPairImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -64,4 +68,12 @@ func IsFunctionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 
 func IsMacroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return BooleanWithValue(MacroP(Car(args))), nil
+}
+
+func IsFrameImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return BooleanWithValue(FrameP(Car(args))), nil
+}
+
+func IsByteArrayImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return BooleanWithValue(ObjectP(Car(args)) && ObjectType(Car(args)) == "[]byte"), nil
 }
