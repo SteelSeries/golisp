@@ -28,6 +28,7 @@ func RegisterEnvironmentPrimitives() {
 	MakePrimitiveFunction("the-environment", "0", TheEnvironmentImpl)
 	MakePrimitiveFunction("make-top-level-environment", "1|2|3", MakeTopLevelEnvironmentImpl)
 	MakePrimitiveFunction("find-top-level-environment", "1", FindTopLevelEnvironmentImpl)
+	MakePrimitiveFunction("procedure-environment", "1", ProcedureEnvironmentImpl)
 }
 
 func EnvironmentPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -347,4 +348,13 @@ func FindTopLevelEnvironmentImpl(args *Data, env *SymbolTableFrame) (result *Dat
 	} else {
 		return EnvironmentWithValue(e), nil
 	}
+}
+
+func ProcedureEnvironmentImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if TypeOf(Car(args)) != FunctionType {
+		err = ProcessError("procedure-environment requires a user written function as it's argument", env)
+		return
+	}
+
+	return EnvironmentWithValue(FunctionValue(Car(args)).Env), nil
 }
