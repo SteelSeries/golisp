@@ -26,3 +26,17 @@
           (== (begin (let ((zz 2)) zz)
                      zz)
               nil))
+
+;;; test cascading.  LET will change in v1.0
+
+(describe let
+          (== (let* ((a 1)
+                     (b (+ a 1)))
+                b)
+              2))
+
+(describe let*
+          (== (let* ((a 1)
+                     (b (+ a 1)))
+                b)
+              2))

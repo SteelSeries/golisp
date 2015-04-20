@@ -21,6 +21,7 @@ func RegisterSpecialFormPrimitives() {
 	MakePrimitiveFunction("define", -1, DefineImpl)
 	MakePrimitiveFunction("defmacro", -1, DefmacroImpl)
 	MakePrimitiveFunction("let", -1, LetImpl)
+	MakePrimitiveFunction("let*", -1, LetImpl)
 	MakePrimitiveFunction("begin", -1, BeginImpl)
 	MakePrimitiveFunction("do", -1, DoImpl)
 	MakePrimitiveFunction("apply", -1, ApplyImpl)
