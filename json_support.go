@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 )
 
 func JsonToLisp(json interface{}) (result *Data) {
@@ -34,9 +35,13 @@ func JsonToLisp(json interface{}) (result *Data) {
 		return Reverse(ary)
 	}
 
-	intValue, ok := json.(float64)
+	floatValue, ok := json.(float64)
 	if ok {
-		return IntegerWithValue(int64(intValue))
+		if math.Mod(floatValue, 1) == 0 {
+			return IntegerWithValue(int64(floatValue))
+		} else {
+			return FloatWithValue(float32(floatValue))
+		}
 	}
 
 	strValue, ok := json.(string)
@@ -69,6 +74,10 @@ func LispToJson(d *Data) (result interface{}) {
 
 	if IntegerP(d) {
 		return IntegerValue(d)
+	}
+
+	if FloatP(d) {
+		return FloatValue(d)
 	}
 
 	if StringP(d) {

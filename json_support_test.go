@@ -49,7 +49,7 @@ func (s *JsonLispSuite) TestJsonToLispBool(c *C) {
 }
 
 func (s *JsonLispSuite) TestJsonToLispMixed(c *C) {
-	jsonData := `{"map": {"f1": [47, 75], "f2": 185}, "f3": 85}`
+	jsonData := `{"map": {"f1": [47, 75], "f2": 185}, "f3": 85, "f4": 2.2}`
 	sexpr := JsonStringToLisp(jsonData)
 
 	expected := Acons(StringWithValue("map"),
@@ -58,7 +58,8 @@ func (s *JsonLispSuite) TestJsonToLispMixed(c *C) {
 			Acons(StringWithValue("f2"),
 				IntegerWithValue(185), nil)),
 		Acons(StringWithValue("f3"),
-			IntegerWithValue(85), nil))
+			IntegerWithValue(85),
+		Acons(StringWithValue("f4"), 			FloatWithValue(2.2), nil)))
 
 	c.Assert(IsEqual(sexpr, expected), Equals, true)
 }
@@ -87,9 +88,9 @@ func (s *JsonLispSuite) TestLispToJsonArray(c *C) {
 }
 
 func (s *JsonLispSuite) TestLispToJsonMixed(c *C) {
-	alist := Acons(StringWithValue("map"), Acons(StringWithValue("f1"), InternalMakeList(IntegerWithValue(47), IntegerWithValue(75)), Acons(StringWithValue("f2"), IntegerWithValue(185), nil)), Acons(StringWithValue("f3"), IntegerWithValue(85), nil))
+	alist := Acons(StringWithValue("map"), Acons(StringWithValue("f1"), InternalMakeList(IntegerWithValue(47), IntegerWithValue(75)), Acons(StringWithValue("f2"), IntegerWithValue(185), nil)), Acons(StringWithValue("f3"), IntegerWithValue(85), Acons(StringWithValue("f4"), FloatWithValue(2.2), nil)))
 	data := LispToJsonString(alist)
-	c.Assert(data, Equals, `{"f3":85,"map":{"f1":[47,75],"f2":185}}`)
+	c.Assert(data, Equals, `{"f3":85,"f4":2.2,"map":{"f1":[47,75],"f2":185}}`)
 }
 
 func (s *JsonLispSuite) TestLispWithFramesToJsonMixed(c *C) {
