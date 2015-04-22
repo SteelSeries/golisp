@@ -9,6 +9,7 @@ package golisp
 
 import (
 	"fmt"
+	"strings"
 	"unicode"
 )
 
@@ -55,7 +56,7 @@ func (self *Tokenizer) NextToken() (token int, lit string) {
 }
 
 func (self *Tokenizer) isSymbolCharacter(ch rune) bool {
-	return unicode.IsLetter(ch) || unicode.IsNumber(ch) || ch == '*' || ch == '-' || ch == '?' || ch == '!' || ch == '_' || ch == '>' || ch == ':' || ch == '^'
+	return unicode.IsGraphic(ch) && !unicode.IsSpace(ch) && !strings.ContainsRune("();\"'`|[]{}#,", ch)
 }
 
 func (self *Tokenizer) readSymbol() (token int, lit string) {
@@ -186,9 +187,7 @@ func (self *Tokenizer) readNextToken() (token int, lit string) {
 	if !self.isAlmostEof() {
 		nextChar = rune(self.Source[self.Position+1])
 	}
-	if unicode.IsLetter(currentChar) || currentChar == '_' {
-		return self.readSymbol()
-	} else if currentChar == '0' && nextChar == 'x' {
+	if currentChar == '0' && nextChar == 'x' {
 		self.Position += 2
 		return self.readHexNumber()
 	} else if unicode.IsNumber(currentChar) {
@@ -227,54 +226,11 @@ func (self *Tokenizer) readNextToken() (token int, lit string) {
 	} else if currentChar == '}' {
 		self.Position++
 		return RBRACE, "}"
-	} else if currentChar == '.' {
+	} else if currentChar == '.' && nextChar == ' ' {
 		self.Position++
 		return PERIOD, "."
-	} else if currentChar == '-' && nextChar == '>' {
-		self.Position += 2
-		return SYMBOL, "->"
-	} else if currentChar == '=' && nextChar == '>' {
-		self.Position += 2
-		return SYMBOL, "=>"
-	} else if currentChar == '+' {
-		self.Position++
-		return SYMBOL, "+"
-	} else if currentChar == '-' {
-		self.Position++
-		return SYMBOL, "-"
-	} else if currentChar == '*' {
-		self.Position++
-		return SYMBOL, "*"
-	} else if currentChar == '/' {
-		self.Position++
-		return SYMBOL, "/"
-	} else if currentChar == '%' {
-		self.Position++
-		return SYMBOL, "%"
-	} else if currentChar == '<' && nextChar == '=' {
-		self.Position += 2
-		return SYMBOL, "<="
-	} else if currentChar == '<' {
-		self.Position++
-		return SYMBOL, "<"
-	} else if currentChar == '>' && nextChar == '=' {
-		self.Position += 2
-		return SYMBOL, ">="
-	} else if currentChar == '>' {
-		self.Position++
-		return SYMBOL, ">"
-	} else if currentChar == '=' && nextChar == '=' {
-		self.Position += 2
-		return SYMBOL, "=="
-	} else if currentChar == '=' {
-		self.Position++
-		return SYMBOL, "="
-	} else if currentChar == '!' && nextChar == '=' {
-		self.Position += 2
-		return SYMBOL, "!="
-	} else if currentChar == '!' {
-		self.Position++
-		return SYMBOL, "!"
+	} else if self.isSymbolCharacter(currentChar) {
+		return self.readSymbol()
 	} else if currentChar == '#' {
 		self.Position += 2
 		if nextChar == 't' {
