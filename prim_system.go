@@ -20,7 +20,7 @@ func RegisterSystemPrimitives() {
 	MakePrimitiveFunction("load", 1, LoadFileImpl)
 	MakePrimitiveFunction("sleep", 1, SleepImpl)
 	MakePrimitiveFunction("millis", 0, MillisImpl)
-	MakePrimitiveFunction("write-line", 1, WriteLineImpl)
+	MakePrimitiveFunction("write-line", -1, WriteLineImpl)
 	MakePrimitiveFunction("str", -1, MakeStringImpl)
 	MakePrimitiveFunction("intern", 1, InternImpl)
 	MakePrimitiveFunction("time", 1, TimeImpl)
@@ -69,26 +69,35 @@ func MillisImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return
 }
 
+func concatStringForms(args *Data, env *SymbolTableFrame) (str string, err error) {
+	pieces := make([]string, 2)
+	var d *Data
+	for cell := args; NotNilP(cell); cell = Cdr(cell) {
+		sexpr := Car(cell)
+		d, err = Eval(sexpr, env)
+		if err != nil {
+			return
+		}
+		pieces = append(pieces, PrintString(d))
+	}
+	return strings.Join(pieces, ""), nil
+}
+
 func WriteLineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	data, err := Eval(Car(args), env)
+	str, err := concatStringForms(args, env)
 	if err != nil {
 		return
 	}
-	println(PrintString(data))
+	println(str)
 	return
 }
 
 func MakeStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	pieces := make([]string, 2)
-	for cell := args; NotNilP(cell); cell = Cdr(cell) {
-		sexpr := Car(cell)
-		s, err := Eval(sexpr, env)
-		if err != nil {
-			break
-		}
-		pieces = append(pieces, PrintString(s))
+	str, err := concatStringForms(args, env)
+	if err != nil {
+		return
 	}
-	return StringWithValue(strings.Join(pieces, "")), nil
+	return StringWithValue(str), nil
 }
 
 func TimeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
