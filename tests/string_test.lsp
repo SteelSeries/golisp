@@ -7,7 +7,7 @@
           (== (str 'a) "a")
           (== (str '(1 2)) "(1 2)")
           (== (str '(1 . 2)) "(1 . 2)")
-          (== (str (alist '((a.1)))) "((a . 1))")
+          (== (str (alist '((a . 1)))) "((a . 1))")
           (== (str "abc" 1 "-" 34.2 '(a b c)) "abc1-34.2(a b c)"))
 
 (describe string->number
