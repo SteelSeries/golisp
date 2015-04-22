@@ -332,12 +332,6 @@ func (s *ParsingSuite) TestComment(c *C) {
 	c.Assert(IntegerValue(sexpr), Equals, int64(42))
 }
 
-func (s *ParsingSuite) TestIllegal(c *C) {
-	sexpr, err := Parse("^")
-	c.Assert(err, NotNil)
-	c.Assert(sexpr, IsNil)
-}
-
 func (s *ParsingSuite) TestParseAndEval(c *C) {
 	result, err := ParseAndEval("(* 5 5)")
 	c.Assert(err, IsNil)
