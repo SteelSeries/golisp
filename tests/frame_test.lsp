@@ -89,8 +89,8 @@
             (== (send g foo:) 43)))
 
 (describe calling-super-sugar
-          (let ((f {foo: (lambda () 42)})
-                (g {parent*: f  foo: (lambda () (+ 1 (foo:^)))}))
+          (let* ((f {foo: (lambda () 42)})
+                 (g {parent*: f  foo: (lambda () (+ 1 (foo:^)))}))
             (== (foo:> g) 43)))
 
 (describe locals-override-slots
