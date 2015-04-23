@@ -45,7 +45,7 @@
         ((integer? c) (if (< (abs c) 128) 1 5))
         (else 5)))
 
-;;; ((OPCODE args)...)
+;;; (OPCODE arg...)
 ;;; ->
 ;;; ((OPCODE arg...) address size (word...))
 
@@ -54,7 +54,7 @@
     (map (lambda (instruction)
            (let ((size (case (car instruction)
                          ((CALL) 5)
-                         ((CONST) (constant-size (cadr instruction)))
+                         ((CONSTANT CONSTANT#) (constant-size (cadr instruction)))
                          ((VAR) 5)
                          ((RET) 1)
                          ((BRA BRAF BRAT) '(1 2)))))
@@ -62,12 +62,4 @@
              (list instruction size)))
          code)))
 
-(case (car instruction)
-  ((CALL) 5)
-  ((CONST) (constant-size (cadr instruction)))
-  ((VAR)
-   (emit 0x2000)
-   (emit-address (cadr instruction)))
-  ((RET)
-   (emit 0x3000))
-  ((BRA BRAF BRAT) '(1 2)))
+
