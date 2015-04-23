@@ -149,3 +149,8 @@
 	(== (extract-bytes [1 2 3 4 5] 3 1) [4])
 	(== (extract-bytes [1 2 3 4 5] 3 2) [4 5])
 )
+
+(describe make-list
+          (== (make-list 5) '(() () () () ()))
+          (== (make-list 5 1) '(1 1 1 1 1))
+          (== (make-list 3 'a) '(a a a)))
