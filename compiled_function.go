@@ -73,7 +73,7 @@ func (self *CompiledFunction) makeLocalBindings(args *Data, argEnv *SymbolTableF
 }
 
 func (self *CompiledFunction) internalApply(args *Data, argEnv *SymbolTableFrame, frame *FrameMap, eval bool) (result *Data, err error) {
-	localEnv := NewSymbolTableFrameBelowWithFrame(self.Env, frame)
+	localEnv := NewSymbolTableFrameBelowWithFrame(self.Env, frame, self.Name)
 	localEnv.Previous = argEnv
 	selfSym := SymbolWithName("self")
 	if frame != nil {

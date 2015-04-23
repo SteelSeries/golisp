@@ -19,7 +19,7 @@ type BytecodeSuite struct {
 var _ = Suite(&BytecodeSuite{})
 
 func (s *BytecodeSuite) SetUpSuite(c *C) {
-	Global = NewSymbolTableFrameBelow(nil)
+	Global = NewSymbolTableFrameBelow(nil, "Global")
 	InitBuiltins()
 }
 

@@ -229,8 +229,6 @@ func (self *Tokenizer) readNextToken() (token int, lit string) {
 	} else if currentChar == '.' && nextChar == ' ' {
 		self.Position++
 		return PERIOD, "."
-	} else if self.isSymbolCharacter(currentChar) {
-		return self.readSymbol()
 	} else if currentChar == '#' {
 		self.Position += 2
 		if nextChar == 't' {
@@ -244,6 +242,8 @@ func (self *Tokenizer) readNextToken() (token int, lit string) {
 		} else {
 			return ILLEGAL, fmt.Sprintf("#%c", nextChar)
 		}
+	} else if self.isSymbolCharacter(currentChar) {
+		return self.readSymbol()
 	} else if currentChar == ';' {
 		start := self.Position
 		for {

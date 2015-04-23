@@ -465,7 +465,7 @@ func CeilingImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func AbsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	val = Car(args)
+	val := Car(args)
 	if !NumberP(val) {
 		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(Car(args))), env)
 		return
