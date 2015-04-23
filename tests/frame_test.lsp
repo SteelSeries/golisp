@@ -56,7 +56,8 @@
                            (+ x a))
                     bar: (lambda ()
                            (foo b))}))
-            (== (send f bar:) 7)))
+            (== (send f bar:) 7)
+            (== (bar:> f) 7)))
 
 (describe inherited-function-slot-use
           (let* ((f {a: 5
@@ -86,6 +87,11 @@
           (let* ((f {foo: (lambda () 42)})
                  (g {parent*: f  foo: (lambda () (+ 1 (send-super foo:)))}))
             (== (send g foo:) 43)))
+
+(describe calling-super-sugar
+          (let ((f {foo: (lambda () 42)})
+                (g {parent*: f  foo: (lambda () (+ 1 (foo:^)))}))
+            (== (foo:> g) 43)))
 
 (describe locals-override-slots
           (let* ((f {a: 42})
