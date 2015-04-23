@@ -67,3 +67,8 @@
     (== (sublist 1 3 '(1 2 3)) '(1 2 3))
     (== (sublist 2 4 '(1 2 3 4 5)) '(2 3 4))
     (== (sublist 2 2 '(1 2 3 4 5)) '()))
+
+(describe make-list
+          (== (make-list 5) '(() () () () ()))
+          (== (make-list 5 1) '(1 1 1 1 1))
+          (== (make-list 3 'a) '(a a a)))
