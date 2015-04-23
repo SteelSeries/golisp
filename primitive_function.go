@@ -8,40 +8,87 @@
 package golisp
 
 import (
-    "errors"
-    "fmt"
+	"errors"
+	"fmt"
+	"strings"
 )
 
 type PrimitiveFunction struct {
-    Name         string
-    NumberOfArgs int
-    Body         func(d *Data, env *SymbolTableFrame) (*Data, error)
+	Name         string
+	Special      bool
+	NumberOfArgs string
+	Body         func(d *Data, env *SymbolTableFrame) (*Data, error)
 }
 
-func MakePrimitiveFunction(name string, argCount int, function func(*Data, *SymbolTableFrame) (*Data, error)) {
-    f := &PrimitiveFunction{Name: name, NumberOfArgs: argCount, Body: function}
-    sym := Global.Intern(name)
-    Global.BindTo(sym, PrimitiveWithNameAndFunc(name, f))
+func MakePrimitiveFunction(name string, argCount string, function func(*Data, *SymbolTableFrame) (*Data, error)) {
+	f := &PrimitiveFunction{Name: name, Special: false, NumberOfArgs: argCount, Body: function}
+	sym := Global.Intern(name)
+	Global.BindTo(sym, PrimitiveWithNameAndFunc(name, f))
+}
+
+func MakeSpecialForm(name string, argCount string, function func(*Data, *SymbolTableFrame) (*Data, error)) {
+	f := &PrimitiveFunction{Name: name, Special: true, NumberOfArgs: argCount, Body: function}
+	sym := Global.Intern(name)
+	Global.BindTo(sym, PrimitiveWithNameAndFunc(name, f))
 }
 
 func (self *PrimitiveFunction) String() string {
-    return fmt.Sprintf("<prim: %s, %v>", self.Name, self.Body)
+	return fmt.Sprintf("<prim: %s, %v>", self.Name, self.Body)
+}
+
+func (self *PrimitiveFunction) checkArgumentCount(argCount int) bool {
+	if self.NumberOfArgs == "*" {
+		return true
+	}
+
+	for _, term := range strings.Split(self.NumberOfArgs, "|") {
+		var intTerm int
+		n, _ := fmt.Sscanf(term, "%d", &intTerm)
+		if n == 1 && argCount == intTerm {
+			return true
+		}
+		n, _ = fmt.Sscanf(term, ">=%d", &intTerm)
+		if n == 1 && argCount >= intTerm {
+			return true
+		}
+		var lo int
+		var hi int
+		n, _ = fmt.Sscanf(term, "(%d,%d)", &lo, &hi)
+		if n == 2 && lo <= argCount && argCount <= hi {
+			return true
+		}
+	}
+	return false
 }
 
 func (self *PrimitiveFunction) Apply(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    argCount := Length(args)
-    expectedArgs := self.NumberOfArgs
-    anyNumberArgs := expectedArgs == -1
-    exactNumberOfArgs := self.NumberOfArgs == argCount
-    var stringArgCount string = fmt.Sprintf("%d", self.NumberOfArgs)
-    if !(anyNumberArgs || exactNumberOfArgs) {
-        err = errors.New(fmt.Sprintf("Wrong number of args to %s. Expected %s but got %d.\n", self.Name, stringArgCount, argCount))
-        return
-    }
+	if !self.checkArgumentCount(Length(args)) {
+		err = errors.New(fmt.Sprintf("Wrong number of args to %s. Expected %s but got %d.\n", self.Name, self.NumberOfArgs, Length(args)))
+		return
+	}
 
-    return (self.Body)(args, env)
+	argArray := make([]*Data, 0)
+	var argValue *Data
+	for a := args; NotNilP(a); a = Cdr(a) {
+		if self.Special {
+			argValue = Car(a)
+		} else {
+			argValue, err = Eval(Car(a), env)
+			if err != nil {
+				return
+			}
+		}
+
+		argArray = append(argArray, argValue)
+	}
+
+	return (self.Body)(ArrayToList(argArray), env)
 }
 
 func (self *PrimitiveFunction) ApplyWithoutEval(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-    return self.Apply(QuoteAll(args), env)
+	if self.Special {
+		return self.Apply(args, env)
+	} else {
+		return self.Apply(QuoteAll(args), env)
+	}
 }

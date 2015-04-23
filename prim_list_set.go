@@ -12,8 +12,8 @@ import (
 )
 
 func RegisterListSetPrimitives() {
-	MakePrimitiveFunction("union", -1, UnionImpl)
-	MakePrimitiveFunction("intersection", -1, IntersectionImpl)
+	MakePrimitiveFunction("union", "*", UnionImpl)
+	MakePrimitiveFunction("intersection", "*", IntersectionImpl)
 }
 
 func memp(i *Data, l *Data) bool {
@@ -28,10 +28,7 @@ func memp(i *Data, l *Data) bool {
 func UnionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var col *Data
 	for a := args; NotNilP(a); a = Cdr(a) {
-		col, err = Eval(Car(a), env)
-		if err != nil {
-			return
-		}
+		col = Car(a)
 		if !ListP(col) {
 			err = ProcessError(fmt.Sprintf("union needs lists as its arguments, but got %s.", String(col)), env)
 			return
@@ -47,20 +44,14 @@ func UnionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func IntersectionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var col *Data
-	result, err = Eval(Car(args), env)
-	if err != nil {
-		return
-	}
+	result = Car(args)
 	if !ListP(result) {
 		err = ProcessError(fmt.Sprintf("intersection needs lists as its arguments, but got %s.", String(result)), env)
 		return
 	}
 
 	for a := Cdr(args); NotNilP(a); a = Cdr(a) {
-		col, err = Eval(Car(a), env)
-		if err != nil {
-			return
-		}
+		col = Car(a)
 		if !ListP(col) {
 			err = ProcessError(fmt.Sprintf("intersection needs lists as its arguments, but got %s.", String(col)), env)
 			return

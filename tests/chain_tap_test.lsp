@@ -6,8 +6,8 @@
 
 (describe parallel-chain
           (== (=> 1 (* 2) str) 1)
-          (== (let ((a 1)
-                    (foo (lambda (x) (set! a x))))
+          (== (let* ((a 1)
+                     (foo (lambda (x) (set! a x))))
                 (=> 4 foo)
                 a)
               4))

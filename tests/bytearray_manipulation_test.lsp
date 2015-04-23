@@ -2,7 +2,6 @@
 	;; Bytes
 	(== (list-to-bytearray '(1 2 3 4 5)) [1 2 3 4 5])
 	(== (list-to-bytearray '(255 64 83 2)) [255 64 83 2])
-	(== (list-to-bytearray (list)) [])
 
 	;; Bytearrays
 	(== (list-to-bytearray '([0 1 2] [3 4 5] [64 83 112])) [0 1 2 3 4 5 64 83 112])
@@ -54,7 +53,6 @@
 	)
 
 	;; List of bytes
-	(== (append-bytes [1 2 3 4 5] (list)) [1 2 3 4 5])
 	(== (append-bytes [1 2 3 4 5] '(6)) [1 2 3 4 5 6])
 	(== (append-bytes [1 2 3 4 5] '(6 7 112)) [1 2 3 4 5 6 7 112])
 	;; The original should not be modified
@@ -97,7 +95,6 @@
 	)
 
 	;; List of bytes
-	(== (append-bytes! [1 2 3 4 5] (list)) [1 2 3 4 5])
 	(== (append-bytes! [1 2 3 4 5] '(6)) [1 2 3 4 5 6])
 	(== (append-bytes! [1 2 3 4 5] '(6 7 112)) [1 2 3 4 5 6 7 112])
 	;; The original SHOULD be modified

@@ -44,8 +44,7 @@ type FloatBuiltinsSuite struct {
 var _ = Suite(&FloatBuiltinsSuite{})
 
 func (s *FloatBuiltinsSuite) SetUpSuite(c *C) {
-	Global = NewSymbolTableFrameBelow(nil)
-	InitBuiltins()
+	InitLisp()
 }
 
 func (s *FloatBuiltinsSuite) TestFloatAdd(c *C) {

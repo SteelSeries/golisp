@@ -17,8 +17,8 @@
               '(a 1 2 3 `(list ,@(list a b c)))))
 
 (describe combined-and-eval
-          (let ((x 1)
-                (y '(2 3)))
+          (let* ((x 1)
+                 (y '(2 3)))
             (== (eval `(+ ,x ,@y)) 6)))
 
 (describe defmacro

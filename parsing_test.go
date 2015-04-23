@@ -52,6 +52,22 @@ func (s *ParsingSuite) TestHexInteger(c *C) {
 	c.Assert(IntegerValue(sexpr), Equals, int64(165))
 }
 
+func (s *ParsingSuite) TestProperHexInteger(c *C) {
+	sexpr, err := Parse("#xa5")
+	c.Assert(err, IsNil)
+	c.Assert(sexpr, NotNil)
+	c.Assert(int(TypeOf(sexpr)), Equals, IntegerType)
+	c.Assert(IntegerValue(sexpr), Equals, int64(165))
+}
+
+func (s *ParsingSuite) TestBinaryInteger(c *C) {
+	sexpr, err := Parse("#b1010")
+	c.Assert(err, IsNil)
+	c.Assert(sexpr, NotNil)
+	c.Assert(int(TypeOf(sexpr)), Equals, IntegerType)
+	c.Assert(IntegerValue(sexpr), Equals, int64(10))
+}
+
 func (s *ParsingSuite) TestFloat(c *C) {
 	sexpr, err := Parse("12.345")
 	c.Assert(err, IsNil)
@@ -116,12 +132,9 @@ func (s *ParsingSuite) TestBooleanFalse(c *C) {
 	c.Assert(BooleanValue(sexpr), Equals, false)
 }
 
-func (s *ParsingSuite) TestBooleanAnythingElseIsFalse(c *C) {
-	sexpr, err := Parse("#w")
-	c.Assert(err, IsNil)
-	c.Assert(sexpr, NotNil)
-	c.Assert(int(TypeOf(sexpr)), Equals, BooleanType)
-	c.Assert(BooleanValue(sexpr), Equals, false)
+func (s *ParsingSuite) TestBooleanAnythingElseIsIllegal(c *C) {
+	_, err := Parse("#w")
+	c.Assert(err, NotNil)
 }
 
 func (s *ParsingSuite) TestSymbol(c *C) {
@@ -317,12 +330,6 @@ func (s *ParsingSuite) TestComment(c *C) {
 	c.Assert(sexpr, NotNil)
 	c.Assert(int(TypeOf(sexpr)), Equals, IntegerType)
 	c.Assert(IntegerValue(sexpr), Equals, int64(42))
-}
-
-func (s *ParsingSuite) TestIllegal(c *C) {
-	sexpr, err := Parse("^")
-	c.Assert(err, NotNil)
-	c.Assert(sexpr, IsNil)
 }
 
 func (s *ParsingSuite) TestParseAndEval(c *C) {

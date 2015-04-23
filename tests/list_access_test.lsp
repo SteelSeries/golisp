@@ -99,6 +99,21 @@
           (== (nth l 10) 10)
           (== (nth l 11) nil))
 
+(describe list-ref
+          (== (list-ref nil 1) nil)
+          (== (list-ref '() 1) nil)
+          (== (list-ref l 0) 1)
+          (== (list-ref l 1) 2)
+          (== (list-ref l 2) 3)
+          (== (list-ref l 3) 4)
+          (== (list-ref l 4) 5)
+          (== (list-ref l 5) 6)
+          (== (list-ref l 6) 7)
+          (== (list-ref l 7) 8)
+          (== (list-ref l 8) 9)
+          (== (list-ref l 9) 10)
+          (== (list-ref l 10) nil))
+
 (describe car
           (== (car 'a) nil)
           (== (car nil) nil)
@@ -177,4 +192,8 @@
           (== (cdddr '(1)) nil)
           (== (cdddr '(1 2 3 4)) '(4)))
 
+(describe general-car-cdr
+          (== (general-car-cdr '(1 2 3 4) #b1100) 3)
+          (== (general-car-cdr '(1 2 (3 4)) #b1100) '(3 4))
+          (== (general-car-cdr '(1 2 (3 4)) #b110100) 4))
 

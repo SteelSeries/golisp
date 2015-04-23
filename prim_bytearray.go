@@ -13,23 +13,24 @@ import (
 )
 
 func RegisterBytearrayPrimitives() {
-	MakePrimitiveFunction("list-to-bytearray", 1, ListToBytesImpl)
-	MakePrimitiveFunction("bytearray-to-list", 1, BytesToListImpl)
-	MakePrimitiveFunction("replace-byte", 3, ReplaceByteImpl)
-	MakePrimitiveFunction("replace-byte!", 3, ReplaceByteBangImpl)
-	MakePrimitiveFunction("extract-byte", 2, ExtractByteImpl)
-	MakePrimitiveFunction("append-bytes", -1, AppendBytesImpl)
-	MakePrimitiveFunction("append-bytes!", -1, AppendBytesBangImpl)
-	MakePrimitiveFunction("extract-bytes", 3, ExtractBytesImpl)
+	MakePrimitiveFunction("list-to-bytearray", "1", ListToBytesImpl)
+	MakePrimitiveFunction("bytearray-to-list", "1", BytesToListImpl)
+	MakePrimitiveFunction("replace-byte", "3", ReplaceByteImpl)
+	MakePrimitiveFunction("replace-byte!", "3", ReplaceByteBangImpl)
+	MakePrimitiveFunction("extract-byte", "2", ExtractByteImpl)
+	MakePrimitiveFunction("append-bytes", "*", AppendBytesImpl)
+	MakePrimitiveFunction("append-bytes!", "*", AppendBytesBangImpl)
+	MakePrimitiveFunction("extract-bytes", "3", ExtractBytesImpl)
 }
 
 func ListToBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if NilP(Car(args)) {
-		err = ProcessError("Argument to ListToByutes can not be nil.", env)
+	list := Car(args)
+	if NilP(list) {
+		err = ProcessError("Argument to ListToBytes can not be nil.", env)
 		return
 	}
-	list, err := Eval(Car(args), env)
-	if err != nil {
+	if !ListP(list) {
+		err = ProcessError("Argument to ListToBytes must be a list.", env)
 		return
 	}
 
@@ -45,6 +46,7 @@ func ListToBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 		if IntegerP(n) {
 			b := IntegerValue(n)
 			if b > 255 {
+
 				err = ProcessError(fmt.Sprintf("Byte arrays can only contain bytes, but found %d.", b), env)
 				return
 			}
@@ -58,10 +60,7 @@ func ListToBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 }
 
 func BytesToListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	dataByteObject, err := Eval(Car(args), env)
-	if err != nil {
-		panic(err)
-	}
+	dataByteObject := Car(args)
 	if !ObjectP(dataByteObject) || ObjectType(dataByteObject) != "[]byte" {
 		err = ProcessError(fmt.Sprintf("Bytearray object should return []byte but returned %s.", ObjectType(dataByteObject)), env)
 		return
@@ -79,24 +78,7 @@ func BytesToListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 }
 
 func internalReplaceByte(args *Data, env *SymbolTableFrame, makeCopy bool) (result *Data, err error) {
-
-	if First(args) == nil {
-		err = ProcessError("replace-byte requires a non-nil bytearray argument.", env)
-		return
-	}
-	if Second(args) == nil {
-		err = ProcessError("replace-byte requires a non-nil index argument.", env)
-		return
-	}
-	if Third(args) == nil {
-		err = ProcessError("replace-byte requires a non-nil value argument.", env)
-		return
-	}
-
-	dataByteObject, err := Eval(First(args), env)
-	if err != nil {
-		panic(err)
-	}
+	dataByteObject := First(args)
 	if !ObjectP(dataByteObject) || ObjectType(dataByteObject) != "[]byte" {
 		err = ProcessError(fmt.Sprintf("Bytearray object should return []byte but returned %s.", ObjectType(dataByteObject)), env)
 		return
@@ -112,10 +94,7 @@ func internalReplaceByte(args *Data, env *SymbolTableFrame, makeCopy bool) (resu
 		newBytes = dataBytes
 	}
 
-	indexObject, err := Eval(Second(args), env)
-	if err != nil {
-		panic(err)
-	}
+	indexObject := Second(args)
 	if !IntegerP(indexObject) {
 		err = ProcessError("Bytearray index should be a number.", env)
 		return
@@ -127,15 +106,7 @@ func internalReplaceByte(args *Data, env *SymbolTableFrame, makeCopy bool) (resu
 		return
 	}
 
-	if WalkList(args, "add") == nil {
-		err = ProcessError("replace-byte requires a non-nil value argument.", env)
-		return
-	}
-
-	valueObject, err := Eval(Third(args), env)
-	if err != nil {
-		panic(err)
-	}
+	valueObject := Third(args)
 	if !IntegerP(valueObject) {
 		err = ProcessError("Bytearray value should be a number.", env)
 		return
@@ -167,19 +138,7 @@ func ReplaceByteBangImpl(args *Data, env *SymbolTableFrame) (result *Data, err e
 }
 
 func ExtractByteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if Car(args) == nil {
-		err = ProcessError("extract-byte requires a non-nil bytearray argument.", env)
-		return
-	}
-	if Cadr(args) == nil {
-		err = ProcessError("extract-byte requires a non-nil index argument.", env)
-		return
-	}
-
-	dataByteObject, err := Eval(Car(args), env)
-	if err != nil {
-		panic(err)
-	}
+	dataByteObject := Car(args)
 	if !ObjectP(dataByteObject) || ObjectType(dataByteObject) != "[]byte" {
 		err = ProcessError(fmt.Sprintf("Bytearray object should return []byte but returned %s.", ObjectType(dataByteObject)), env)
 		return
@@ -187,10 +146,7 @@ func ExtractByteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 
 	dataBytes := (*[]byte)(ObjectValue(dataByteObject))
 
-	indexObject, err := Eval(Cadr(args), env)
-	if err != nil {
-		panic(err)
-	}
+	indexObject := Cadr(args)
 	if !IntegerP(indexObject) {
 		err = ProcessError("Bytearray index should be a number.", env)
 		return
@@ -208,19 +164,7 @@ func ExtractByteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 }
 
 func internalAppendBytes(args *Data, env *SymbolTableFrame) (newBytes *[]byte, err error) {
-	if Car(args) == nil {
-		err = ProcessError("append-bytes requires a non-nil bytearray argument.", env)
-		return
-	}
-	if Cadr(args) == nil {
-		err = ProcessError("append-bytes requires a non-nil list of bytes to append.", env)
-		return
-	}
-
-	dataByteObject, err := Eval(Car(args), env)
-	if err != nil {
-		panic(err)
-	}
+	dataByteObject := Car(args)
 	if !ObjectP(dataByteObject) || ObjectType(dataByteObject) != "[]byte" {
 		err = ProcessError(fmt.Sprintf("Bytearray object should return []byte but returned %s.", ObjectType(dataByteObject)), env)
 		return
@@ -229,21 +173,20 @@ func internalAppendBytes(args *Data, env *SymbolTableFrame) (newBytes *[]byte, e
 	dataBytes := (*[]byte)(ObjectValue(dataByteObject))
 
 	var extraByteObj *Data
-	var evaledArg *Data
-	if NilP(Cddr(args)) {
-		evaledArg, err = Eval(Cadr(args), env)
+	if Length(args) == 2 {
+		secondArg := Cadr(args)
 		if err != nil {
 			return
 		}
-		if ObjectP(evaledArg) && ObjectType(evaledArg) == "[]byte" {
-			extraByteObj = evaledArg
-		} else if ListP(evaledArg) {
-			extraByteObj, err = ListToBytesImpl(InternalMakeList(QuoteIt(evaledArg)), env)
+		if ObjectP(secondArg) && ObjectType(secondArg) == "[]byte" {
+			extraByteObj = secondArg
+		} else if ListP(secondArg) {
+			extraByteObj, err = ListToBytesImpl(InternalMakeList(secondArg), env)
 		} else {
-			extraByteObj, err = ListToBytesImpl(InternalMakeList(QuoteIt(Cdr(args))), env)
+			extraByteObj, err = ListToBytesImpl(InternalMakeList(Cdr(args)), env)
 		}
 	} else {
-		extraByteObj, err = ListToBytesImpl(InternalMakeList(QuoteIt(Cdr(args))), env)
+		extraByteObj, err = ListToBytesImpl(InternalMakeList(Cdr(args)), env)
 	}
 
 	if err != nil {
@@ -271,7 +214,7 @@ func AppendBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 
 func AppendBytesBangImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	newBytesPtr, err := internalAppendBytes(args, env)
-	dataByteObject, _ := Eval(Car(args), env)
+	dataByteObject := Car(args)
 	objectData := BoxedObjectValue(dataByteObject)
 	objectData.Obj = unsafe.Pointer(newBytesPtr)
 	result = dataByteObject
@@ -279,23 +222,7 @@ func AppendBytesBangImpl(args *Data, env *SymbolTableFrame) (result *Data, err e
 }
 
 func ExtractBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if Car(args) == nil {
-		err = ProcessError("extract-bytes requires a non-nil bytearray argument.", env)
-		return
-	}
-	if Cadr(args) == nil {
-		err = ProcessError("extract-bytes requires a non-nil index argument.", env)
-		return
-	}
-	if Caddr(args) == nil {
-		err = ProcessError("extract-bytes requires a non-nil number to extract argument.", env)
-		return
-	}
-
-	dataByteObject, err := Eval(Car(args), env)
-	if err != nil {
-		panic(err)
-	}
+	dataByteObject := Car(args)
 	if !ObjectP(dataByteObject) || ObjectType(dataByteObject) != "[]byte" {
 		err = ProcessError(fmt.Sprintf("Bytearray object should return []byte but returned %s.", ObjectType(dataByteObject)), env)
 		return
@@ -303,20 +230,14 @@ func ExtractBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 
 	dataBytes := (*[]byte)(ObjectValue(dataByteObject))
 
-	indexObject, err := Eval(Cadr(args), env)
-	if err != nil {
-		panic(err)
-	}
+	indexObject := Cadr(args)
 	if !IntegerP(indexObject) {
 		err = ProcessError("Bytearray index should be a number.", env)
 		return
 	}
 	index := int(IntegerValue(indexObject))
 
-	numToExtractObject, err := Eval(Caddr(args), env)
-	if err != nil {
-		panic(err)
-	}
+	numToExtractObject := Caddr(args)
 	if !IntegerP(numToExtractObject) {
 		err = ProcessError("Number to extract should be a number.", env)
 		return

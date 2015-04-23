@@ -24,9 +24,19 @@ func makeInteger(str string) (n *Data, err error) {
 	return
 }
 
+func makeBinaryInteger(str string) (n *Data, err error) {
+	var i int64
+	_, err = fmt.Sscanf(str, "%b", &i)
+	if err != nil {
+		return
+	}
+	n = IntegerWithValue(i)
+	return
+}
+
 func makeHexInteger(str string) (n *Data, err error) {
 	var i int64
-	_, err = fmt.Sscanf(str, "%v", &i)
+	_, err = fmt.Sscanf(str, "%x", &i)
 	if err != nil {
 		return
 	}
@@ -50,7 +60,7 @@ func makeString(str string) (s *Data, err error) {
 }
 
 func makeSymbol(str string) (s *Data, err error) {
-	s = SymbolWithName(str)
+	s = Intern(str)
 	return
 }
 
@@ -153,7 +163,7 @@ func parseBytearray(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 	if allIntegers(cells) {
 		sexpr = listToBytearray(cells)
 	} else {
-		sexpr = InternalMakeList(SymbolWithName("list-to-bytearray"), QuoteIt(ArrayToList(cells)))
+		sexpr = InternalMakeList(Intern("list-to-bytearray"), QuoteIt(ArrayToList(cells)))
 	}
 	return
 }
@@ -183,7 +193,7 @@ func parseFrame(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 	}
 
 	s.ConsumeToken()
-	sexpr = Cons(SymbolWithName("make-frame"), ArrayToList(cells))
+	sexpr = Cons(Intern("make-frame"), ArrayToList(cells))
 	return
 }
 
@@ -205,6 +215,10 @@ func parseExpression(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 		case HEXNUMBER:
 			s.ConsumeToken()
 			sexpr, err = makeHexInteger(lit)
+			return
+		case BINARYNUMBER:
+			s.ConsumeToken()
+			sexpr, err = makeBinaryInteger(lit)
 			return
 		case FLOAT:
 			s.ConsumeToken()
@@ -242,28 +256,28 @@ func parseExpression(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 			s.ConsumeToken()
 			sexpr, eof, err = parseExpression(s)
 			if sexpr != nil {
-				sexpr = Cons(SymbolWithName("quote"), Cons(sexpr, nil))
+				sexpr = Cons(Intern("quote"), Cons(sexpr, nil))
 			}
 			return
 		case BACKQUOTE:
 			s.ConsumeToken()
 			sexpr, eof, err = parseExpression(s)
 			if sexpr != nil {
-				sexpr = Cons(SymbolWithName("quasiquote"), Cons(sexpr, nil))
+				sexpr = Cons(Intern("quasiquote"), Cons(sexpr, nil))
 			}
 			return
 		case COMMA:
 			s.ConsumeToken()
 			sexpr, eof, err = parseExpression(s)
 			if sexpr != nil {
-				sexpr = Cons(SymbolWithName("unquote"), Cons(sexpr, nil))
+				sexpr = Cons(Intern("unquote"), Cons(sexpr, nil))
 			}
 			return
 		case COMMAAT:
 			s.ConsumeToken()
 			sexpr, eof, err = parseExpression(s)
 			if sexpr != nil {
-				sexpr = Cons(SymbolWithName("unquote-splicing"), Cons(sexpr, nil))
+				sexpr = Cons(Intern("unquote-splicing"), Cons(sexpr, nil))
 			}
 			return
 		case ILLEGAL:
@@ -350,6 +364,55 @@ func ParseAndEval(src string) (result *Data, err error) {
 		return
 	}
 	result, err = Eval(sexpr, Global)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func ProcessFileInEnvironment(filename string, env *SymbolTableFrame) (result *Data, err error) {
+	src, err := ReadFile(filename)
+	if err != nil {
+		return
+	}
+	result, err = ParseAndEvalAllInEnvironment(src, env)
+	return
+}
+
+func ParseAndEvalAllInEnvironment(src string, env *SymbolTableFrame) (result *Data, err error) {
+	s := NewTokenizer(src)
+	var sexpr *Data
+	var eof bool
+	for {
+		sexpr, eof, err = parseExpression(s)
+		if err != nil {
+			return
+		}
+		if eof {
+			return
+		}
+		if NilP(sexpr) {
+			return
+		}
+		result, err = Eval(sexpr, env)
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+
+func ParseAndEvalInEnvironment(src string, env *SymbolTableFrame) (result *Data, err error) {
+	s := NewTokenizer(src)
+	var sexpr *Data
+	sexpr, _, err = parseExpression(s)
+	if err != nil {
+		return
+	}
+	if NilP(sexpr) {
+		return
+	}
+	result, err = Eval(sexpr, env)
 	if err != nil {
 		return
 	}

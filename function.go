@@ -88,9 +88,9 @@ func (self *Function) makeLocalBindings(args *Data, argEnv *SymbolTableFrame, lo
 }
 
 func (self *Function) internalApply(args *Data, argEnv *SymbolTableFrame, frame *FrameMap, eval bool) (result *Data, err error) {
-	localEnv := NewSymbolTableFrameBelowWithFrame(self.Env, frame)
+	localEnv := NewSymbolTableFrameBelowWithFrame(self.Env, frame, self.Name)
 	localEnv.Previous = argEnv
-	selfSym := SymbolWithName("self")
+	selfSym := Intern("self")
 	if frame != nil {
 		localEnv.BindLocallyTo(selfSym, FrameWithValue(frame))
 	} else {
@@ -124,8 +124,12 @@ func (self *Function) ApplyWithoutEval(args *Data, argEnv *SymbolTableFrame) (re
 	return self.internalApply(args, argEnv, nil, false)
 }
 
+func (self *Function) ApplyWithoutEvalWithFrame(args *Data, argEnv *SymbolTableFrame, frame *FrameMap) (result *Data, err error) {
+	return self.internalApply(args, argEnv, frame, false)
+}
+
 func (self *Function) ApplyOveriddingEnvironment(args *Data, argEnv *SymbolTableFrame) (result *Data, err error) {
-	localEnv := NewSymbolTableFrameBelow(argEnv)
+	localEnv := NewSymbolTableFrameBelow(argEnv, self.Name)
 	err = self.makeLocalBindings(args, argEnv, localEnv, true)
 	if err != nil {
 		return

@@ -18,15 +18,14 @@ type BytearrayBuiltinsSuite struct {
 var _ = Suite(&BytearrayBuiltinsSuite{})
 
 func (s *BytearrayBuiltinsSuite) SetUpSuite(c *C) {
-	Global = NewSymbolTableFrameBelow(nil)
-	InitBuiltins()
+	InitLisp()
 }
 
 //--------------------------------------------------------------------------------
 // ListToBytes
 
 func (s *BytearrayBuiltinsSuite) TestListToBytes(c *C) {
-	source := "'(1 2 3 4 5 6)"
+	source := "(1 2 3 4 5 6)"
 	list, err := Parse(source)
 	c.Assert(err, IsNil)
 	c.Assert(list, NotNil)
@@ -284,7 +283,7 @@ func (s *BytearrayBuiltinsSuite) TestAppendMultipleBytesInAQuotedList(c *C) {
 		dataBytes[i] = byte(i + 1)
 	}
 	o := ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&dataBytes))
-	r, err := AppendBytesImpl(InternalMakeList(o, InternalMakeList(SymbolWithName("quote"), InternalMakeList(IntegerWithValue(6), IntegerWithValue(7), IntegerWithValue(8)))), Global)
+	r, err := AppendBytesImpl(InternalMakeList(o, InternalMakeList(IntegerWithValue(6), IntegerWithValue(7), IntegerWithValue(8))), Global)
 	c.Assert(err, IsNil)
 	c.Assert(r, NotNil)
 
@@ -303,7 +302,7 @@ func (s *BytearrayBuiltinsSuite) TestAppendMultipleBytesResultingFromAnSexpr(c *
 		dataBytes[i] = byte(i + 1)
 	}
 	o := ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&dataBytes))
-	r, err := AppendBytesImpl(InternalMakeList(o, InternalMakeList(SymbolWithName("list"), IntegerWithValue(6), IntegerWithValue(7), IntegerWithValue(8))), Global)
+	r, err := AppendBytesImpl(InternalMakeList(o, InternalMakeList(IntegerWithValue(6), IntegerWithValue(7), IntegerWithValue(8))), Global)
 	c.Assert(err, IsNil)
 	c.Assert(r, NotNil)
 
@@ -348,7 +347,7 @@ func (s *BytearrayBuiltinsSuite) TestAppendInPlaceMultipleBytesResultingFromAnSe
 		dataBytes[i] = byte(i + 1)
 	}
 	o := ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&dataBytes))
-	r, err := AppendBytesBangImpl(InternalMakeList(o, InternalMakeList(SymbolWithName("list"), IntegerWithValue(6), IntegerWithValue(7), IntegerWithValue(8))), Global)
+	r, err := AppendBytesBangImpl(InternalMakeList(o, InternalMakeList(IntegerWithValue(6), IntegerWithValue(7), IntegerWithValue(8))), Global)
 	c.Assert(err, IsNil)
 	c.Assert(r, NotNil)
 	c.Assert(r, Equals, o)

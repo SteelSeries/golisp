@@ -30,6 +30,7 @@ const (
 	PrimitiveType
 	BoxedObjectType
 	FrameType
+	EnvironmentType
 )
 
 type ConsCell struct {
@@ -105,6 +106,8 @@ func TypeName(t uint8) string {
 		return "Frame"
 	case BoxedObjectType:
 		return "Go Object"
+	case EnvironmentType:
+		return "Environment"
 	default:
 		return "Unknown"
 	}
@@ -194,6 +197,10 @@ func MacroP(d *Data) bool {
 
 func FrameP(d *Data) bool {
 	return d != nil && TypeOf(d) == FrameType
+}
+
+func EnvironmentP(d *Data) bool {
+	return d != nil && TypeOf(d) == EnvironmentType
 }
 
 func EmptyCons() *Data {
@@ -342,8 +349,7 @@ func SymbolWithName(s string) *Data {
 }
 
 func NakedSymbolWithName(s string) *Data {
-	str := fmt.Sprintf("%s:", s)
-	return &Data{Type: SymbolType, Value: unsafe.Pointer(&str)}
+	return Intern(fmt.Sprintf("%s:", s))
 }
 
 func NakedSymbolFrom(d *Data) *Data {
@@ -369,6 +375,10 @@ func PrimitiveWithNameAndFunc(name string, f *PrimitiveFunction) *Data {
 func ObjectWithTypeAndValue(typeName string, o unsafe.Pointer) *Data {
 	bo := BoxedObject{ObjType: typeName, Obj: o}
 	return &Data{Type: BoxedObjectType, Value: unsafe.Pointer(&bo)}
+}
+
+func EnvironmentWithValue(e *SymbolTableFrame) *Data {
+	return &Data{Type: EnvironmentType, Value: unsafe.Pointer(e)}
 }
 
 func ConsValue(d *Data) *ConsCell {
@@ -565,6 +575,18 @@ func BoxedObjectValue(d *Data) *BoxedObject {
 	return nil
 }
 
+func EnvironmentValue(d *Data) *SymbolTableFrame {
+	if d == nil {
+		return nil
+	}
+
+	if EnvironmentP(d) {
+		return (*SymbolTableFrame)(d.Value)
+	}
+
+	return nil
+}
+
 func Length(d *Data) int {
 	if d == nil {
 		return 0
@@ -650,13 +672,21 @@ func RecursiveFlatten(d *Data) (result *Data, err error) {
 }
 
 func QuoteIt(value *Data) (result *Data) {
-	return InternalMakeList(SymbolWithName("quote"), value)
+	if value == nil {
+		return InternalMakeList(Intern("quote"), Cons(nil, nil))
+	} else {
+		return InternalMakeList(Intern("quote"), value)
+	}
 }
 
 func QuoteAll(d *Data) (result *Data) {
 	var l []*Data = make([]*Data, 0, 10)
-	for c := d; NotNilP(c); c = Cdr(c) {
-		l = append(l, QuoteIt(Car(c)))
+	if d == nil {
+		l = append(l, QuoteIt(nil))
+	} else {
+		for c := d; c != nil; c = Cdr(c) {
+			l = append(l, QuoteIt(Car(c)))
+		}
 	}
 	return ArrayToList(l)
 }
@@ -814,8 +844,6 @@ func IsEqual(d *Data, o *Data) bool {
 		return BooleanValue(d) == BooleanValue(o)
 	case StringType:
 		return StringValue(d) == StringValue(o)
-	case SymbolType:
-		return StringValue(d) == StringValue(o)
 	case FunctionType:
 		return FunctionValue(d) == FunctionValue(o)
 	case MacroType:
@@ -910,7 +938,7 @@ func String(d *Data) string {
 	case MacroType:
 		return fmt.Sprintf("<macro: %s>", MacroValue(d).Name)
 	case PrimitiveType:
-		return PrimitiveValue(d).String()
+		return fmt.Sprintf("<prim: %s>", PrimitiveValue(d).Name)
 	case BoxedObjectType:
 		if ObjectType(d) == "[]byte" {
 			bytes := (*[]byte)(ObjectValue(d))
@@ -934,6 +962,8 @@ func String(d *Data) string {
 			pairs = append(pairs, fmt.Sprintf("%s %s", key, valString))
 		}
 		return fmt.Sprintf("{%s}", strings.Join(pairs, " "))
+	case EnvironmentType:
+		return fmt.Sprintf("<environment: %s>", EnvironmentValue(d).Name)
 	}
 
 	return ""
@@ -959,11 +989,11 @@ func postProcessFrameShortcuts(d *Data) *Data {
 	s := StringValue(key)
 	switch {
 	case strings.HasSuffix(s, ":"):
-		return InternalMakeList(SymbolWithName("get-slot"), frame, key)
+		return InternalMakeList(Intern("get-slot"), frame, key)
 	case strings.HasSuffix(s, ":!"):
-		return InternalMakeList(SymbolWithName("set-slot!"), frame, SymbolWithName(strings.TrimSuffix(s, "!")), value)
+		return InternalMakeList(Intern("set-slot!"), frame, Intern(strings.TrimSuffix(s, "!")), value)
 	case strings.HasSuffix(s, ":?"):
-		return InternalMakeList(SymbolWithName("has-slot?"), frame, SymbolWithName(strings.TrimSuffix(s, "?")))
+		return InternalMakeList(Intern("has-slot?"), frame, Intern(strings.TrimSuffix(s, "?")))
 	default:
 		return d
 	}

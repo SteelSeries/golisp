@@ -14,25 +14,25 @@ import (
 )
 
 type Process struct {
-	Env   *SymbolTableFrame
-	Code  *Data
-	Wake  chan bool
-	Abort chan bool
+	Env           *SymbolTableFrame
+	Code          *Data
+	Wake          chan bool
+	Abort         chan bool
+	Restart       chan bool
+	ScheduleTimer *time.Timer
 }
 
 func RegisterConcurrencyPrimitives() {
-	MakePrimitiveFunction("fork", 1, ForkImpl)
-	MakePrimitiveFunction("proc-sleep", 2, ProcSleepImpl)
-	MakePrimitiveFunction("wake", 1, WakeImpl)
-	MakePrimitiveFunction("schedule", 2, ScheduleImpl)
-	MakePrimitiveFunction("abandon", 1, AbandonImpl)
+	MakePrimitiveFunction("fork", "1", ForkImpl)
+	MakePrimitiveFunction("proc-sleep", "2", ProcSleepImpl)
+	MakePrimitiveFunction("wake", "1", WakeImpl)
+	MakePrimitiveFunction("schedule", "2", ScheduleImpl)
+	MakePrimitiveFunction("reset-timeout", "1", ResetTimeoutImpl)
+	MakePrimitiveFunction("abandon", "1", AbandonImpl)
 }
 
 func ForkImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	f, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
+	f := Car(args)
 
 	if !FunctionP(f) {
 		err = ProcessError(fmt.Sprintf("fork expected a function, but received %v.", f), env)
@@ -44,7 +44,7 @@ func ForkImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	proc := &Process{Env: env, Code: f, Wake: make(chan bool, 1), Abort: make(chan bool, 1)}
+	proc := &Process{Env: env, Code: f, Wake: make(chan bool, 1), Abort: make(chan bool, 1), Restart: make(chan bool, 1)}
 	procObj := ObjectWithTypeAndValue("Process", unsafe.Pointer(proc))
 
 	go func() {
@@ -55,10 +55,7 @@ func ForkImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func ProcSleepImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	procObj, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
+	procObj := Car(args)
 
 	if !ObjectP(procObj) || ObjectType(procObj) != "Process" {
 		err = ProcessError(fmt.Sprintf("proc-sleep expects a Process object expected but received %s.", ObjectType(procObj)), env)
@@ -67,10 +64,7 @@ func ProcSleepImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 
 	proc := (*Process)(ObjectValue(procObj))
 
-	millis, err := Eval(Cadr(args), env)
-	if err != nil {
-		return
-	}
+	millis := Cadr(args)
 	if !IntegerP(millis) {
 		err = ProcessError(fmt.Sprintf("proc-sleep expected an integer as a delay, but received %v.", millis), env)
 		return
@@ -87,10 +81,7 @@ func ProcSleepImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 }
 
 func WakeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	procObj, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
+	procObj := Car(args)
 
 	if !ObjectP(procObj) || ObjectType(procObj) != "Process" {
 		err = ProcessError(fmt.Sprintf("wake expects a Process object expected but received %s.", ObjectType(procObj)), env)
@@ -103,18 +94,12 @@ func WakeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func ScheduleImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	millis, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
+	millis := Car(args)
 	if !IntegerP(millis) {
 		err = ProcessError(fmt.Sprintf("schedule expected an integer as a delay, but received %v.", millis), env)
 		return
 	}
-	f, err := Eval(Cadr(args), env)
-	if err != nil {
-		return
-	}
+	f := Cadr(args)
 
 	if !FunctionP(f) {
 		err = ProcessError(fmt.Sprintf("schedule expected a function, but received %v.", f), env)
@@ -126,16 +111,29 @@ func ScheduleImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	proc := &Process{Env: env, Code: f, Wake: make(chan bool, 1), Abort: make(chan bool, 1)}
+	proc := &Process{
+		Env:           env,
+		Code:          f,
+		Wake:          make(chan bool, 1),
+		Abort:         make(chan bool, 1),
+		Restart:       make(chan bool, 1),
+		ScheduleTimer: time.NewTimer(time.Duration(IntegerValue(millis)) * time.Millisecond)}
 	procObj := ObjectWithTypeAndValue("Process", unsafe.Pointer(proc))
 
 	aborted := false
 	go func() {
-		select {
-		case <-proc.Abort:
-			aborted = true
-		case <-time.After(time.Duration(IntegerValue(millis)) * time.Millisecond):
-			_, err = FunctionValue(f).ApplyWithoutEval(InternalMakeList(procObj), env)
+	Loop:
+		for {
+			select {
+			case <-proc.Abort:
+				aborted = true
+				break Loop
+			case <-proc.Restart:
+				proc.ScheduleTimer.Reset(time.Duration(IntegerValue(millis)) * time.Millisecond)
+			case <-proc.ScheduleTimer.C:
+				_, err = FunctionValue(f).ApplyWithoutEval(InternalMakeList(procObj), env)
+				break Loop
+			}
 		}
 	}()
 
@@ -144,10 +142,7 @@ func ScheduleImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func AbandonImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	procObj, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
+	procObj := Car(args)
 
 	if !ObjectP(procObj) || ObjectType(procObj) != "Process" {
 		err = ProcessError(fmt.Sprintf("adandon expects a Process object expected but received %s.", ObjectType(procObj)), env)
@@ -157,4 +152,23 @@ func AbandonImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	proc := (*Process)(ObjectValue(procObj))
 	proc.Abort <- true
 	return StringWithValue("OK"), nil
+}
+
+func ResetTimeoutImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	procObj := Car(args)
+
+	if !ObjectP(procObj) || ObjectType(procObj) != "Process" {
+		err = ProcessError(fmt.Sprintf("restart expects a Process object expected but received %s.", ObjectType(procObj)), env)
+		return
+	}
+
+	proc := (*Process)(ObjectValue(procObj))
+	var str string
+	select {
+	case proc.Restart <- true:
+		str = "OK"
+	default:
+		str = "task was already completed or abandoned"
+	}
+	return StringWithValue(str), nil
 }

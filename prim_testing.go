@@ -8,5 +8,5 @@
 package golisp
 
 func RegisterTestingPrimitives() {
-    MakePrimitiveFunction("describe", -1, DescribeImpl)
+	MakeSpecialForm("describe", "*", DescribeImpl)
 }

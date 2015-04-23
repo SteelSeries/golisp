@@ -68,7 +68,7 @@ func (s *PrintingSuite) TestDottedPair(c *C) {
 }
 
 func (s *PrintingSuite) TestQuotedEmptyList(c *C) {
-	sexpr := Cons(SymbolWithName("quote"), nil)
+	sexpr := Cons(Intern("quote"), nil)
 	c.Assert(String(sexpr), Equals, "'()")
 }
 
@@ -88,9 +88,9 @@ func (s *PrintingSuite) TestMacro(c *C) {
 }
 
 func (s *PrintingSuite) TestPrimitive(c *C) {
-	f := &PrimitiveFunction{Name: "prim", NumberOfArgs: 1, Body: ListToBytesImpl}
+	f := &PrimitiveFunction{Name: "prim", NumberOfArgs: "1", Body: ListToBytesImpl}
 	sexpr := PrimitiveWithNameAndFunc("prim", f)
-	c.Assert(String(sexpr), Equals, fmt.Sprintf("<prim: prim, %v>", ListToBytesImpl))
+	c.Assert(String(sexpr), Equals, "<prim: prim>")
 }
 
 func (s *PrintingSuite) TestObject(c *C) {

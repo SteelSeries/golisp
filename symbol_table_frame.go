@@ -14,6 +14,7 @@ import (
 )
 
 type SymbolTableFrame struct {
+	Name        string
 	Parent      *SymbolTableFrame
 	Previous    *SymbolTableFrame
 	Frame       *FrameMap
@@ -22,6 +23,18 @@ type SymbolTableFrame struct {
 }
 
 var Global *SymbolTableFrame
+var TopLevelEnvironments map[string]*SymbolTableFrame
+
+var internedSymbols map[string]*Data = make(map[string]*Data, 256)
+
+func Intern(name string) (sym *Data) {
+	sym = internedSymbols[name]
+	if sym == nil {
+		sym = SymbolWithName(name)
+		internedSymbols[name] = sym
+	}
+	return
+}
 
 func (self *SymbolTableFrame) Depth() int {
 	if self.Previous == nil {
@@ -89,19 +102,27 @@ func (self *SymbolTableFrame) DumpHeader() {
 	fmt.Printf("%s\n", self.CurrentCodeString())
 }
 
-func NewSymbolTableFrameBelow(p *SymbolTableFrame) *SymbolTableFrame {
+func NewSymbolTableFrameBelow(p *SymbolTableFrame, name string) *SymbolTableFrame {
 	var f *FrameMap = nil
 	if p != nil {
 		f = p.Frame
 	}
-	return &SymbolTableFrame{Parent: p, Bindings: make(map[string]*Binding), Frame: f, CurrentCode: list.New()}
+	env := &SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding), Frame: f, CurrentCode: list.New()}
+	if p == nil || p == Global {
+		TopLevelEnvironments[name] = env
+	}
+	return env
 }
 
-func NewSymbolTableFrameBelowWithFrame(p *SymbolTableFrame, f *FrameMap) *SymbolTableFrame {
+func NewSymbolTableFrameBelowWithFrame(p *SymbolTableFrame, f *FrameMap, name string) *SymbolTableFrame {
 	if f == nil {
 		f = p.Frame
 	}
-	return &SymbolTableFrame{Parent: p, Bindings: make(map[string]*Binding, 10), Frame: f, CurrentCode: list.New()}
+	env := &SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding, 10), Frame: f, CurrentCode: list.New()}
+	if p == nil || p == Global {
+		TopLevelEnvironments[name] = env
+	}
+	return env
 }
 
 func (self *SymbolTableFrame) HasFrame() bool {
@@ -128,31 +149,26 @@ func (self *SymbolTableFrame) findSymbol(name string) (symbol *Data, found bool)
 	}
 }
 
-func (self *SymbolTableFrame) findBindingFor(symbol *Data) (binding *Binding, found bool) {
+func (self *SymbolTableFrame) FindBindingFor(symbol *Data) (binding *Binding, found bool) {
 	name := StringValue(symbol)
 	binding, found = self.BindingNamed(name)
 	if found {
 		return
 	} else if self.Parent != nil {
-		return self.Parent.findBindingFor(symbol)
+		return self.Parent.FindBindingFor(symbol)
 	} else {
 		return nil, false
 	}
 }
 
 func (self *SymbolTableFrame) Intern(name string) (sym *Data) {
-	sym, found := self.findSymbol(name)
-	if !found {
-		sym = SymbolWithName(name)
-		self.BindTo(sym, nil)
-		return
-	} else {
-		return nil
-	}
+	sym = Intern(name)
+	self.BindTo(sym, nil)
+	return
 }
 
 func (self *SymbolTableFrame) BindTo(symbol *Data, value *Data) *Data {
-	binding, found := self.findBindingFor(symbol)
+	binding, found := self.FindBindingFor(symbol)
 	if found {
 		binding.Val = value
 	} else {
@@ -175,7 +191,7 @@ func (self *SymbolTableFrame) SetTo(symbol *Data, value *Data) (result *Data, er
 		return value, nil
 	}
 
-	binding, found := self.findBindingFor(symbol)
+	binding, found := self.FindBindingFor(symbol)
 	if found {
 		binding.Val = value
 		return value, nil
@@ -216,7 +232,7 @@ func (self *SymbolTableFrame) ValueOfWithFunctionSlotCheck(symbol *Data, needFun
 		}
 	}
 
-	binding, found := self.findBindingFor(symbol)
+	binding, found := self.FindBindingFor(symbol)
 	if found {
 		return binding.Val
 	} else {
