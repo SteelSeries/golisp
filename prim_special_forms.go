@@ -184,6 +184,11 @@ func DefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 			err = ProcessError("Function name has to be a symbol", env)
 			return
 		}
+		existingValueOrNil := env.ValueOf(name)
+		if PrimitiveP(existingValueOrNil) {
+			err = ProcessError(fmt.Sprintf("Primitive function %s can not be redefined.", StringValue(name)), env)
+			return
+		}
 		body := Cdr(args)
 		value = FunctionWithNameParamsBodyAndParent(StringValue(name), params, body, env)
 	} else {
