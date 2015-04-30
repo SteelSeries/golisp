@@ -64,9 +64,9 @@ func (s *JsonLispSuite) TestJsonToLispMixed(c *C) {
 }
 
 func (s *JsonLispSuite) TestJsonToLispMixedWithFrames(c *C) {
-	jsonData := `{"map": {"f1": [47, 75], "f2": 185}, "f3": 85}`
+	jsonData := `{"map": {"f1": [47, 75], "f2": 185}, "f3": 85, "f4": 2.2}`
 	sexpr := JsonStringToLispWithFrames(jsonData)
-	expected, _ := ParseAndEval("{map: {f1: '(47 75) f2: 185} f3: 85}")
+	expected, _ := ParseAndEval("{map: {f1: '(47 75) f2: 185} f3: 85 f4: 2.2}")
 	c.Assert(IsEqual(sexpr, expected), Equals, true)
 }
 
@@ -93,9 +93,9 @@ func (s *JsonLispSuite) TestLispToJsonMixed(c *C) {
 }
 
 func (s *JsonLispSuite) TestLispWithFramesToJsonMixed(c *C) {
-	structure, _ := ParseAndEval("{map: {f1: '(47 75) f2: 185} f3: 85}")
+	structure, _ := ParseAndEval("{map: {f1: '(47 75) f2: 185} f3: 85 f4: 2.2}")
 	data := LispWithFramesToJsonString(structure)
-	c.Assert(data, Equals, `{"f3":85,"map":{"f1":[47,75],"f2":185}}`)
+	c.Assert(data, Equals, `{"f3":85,"f4":2.2,"map":{"f1":[47,75],"f2":185}}`)
 }
 
 func (s *JsonLispSuite) TestLispToJsonNil(c *C) {

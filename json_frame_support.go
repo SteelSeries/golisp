@@ -44,6 +44,15 @@ func JsonToLispWithFrames(json interface{}) (result *Data) {
 		}
 	}
 
+	floatValue, ok := json.(float64)
+	if ok {
+		if math.Mod(floatValue, 1) == 0 {
+			return IntegerWithValue(int64(floatValue))
+		} else {
+			return FloatWithValue(float32(floatValue))
+		}
+	}
+
 	strValue, ok := json.(string)
 	if ok {
 		return StringWithValue(strValue)
