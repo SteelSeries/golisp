@@ -8,7 +8,7 @@
 package golisp
 
 import (
-    . "launchpad.net/gocheck"
+    . "gopkg.in/check.v1"
     "path/filepath"
 )
 
