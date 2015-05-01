@@ -980,7 +980,6 @@ func PrintString(d *Data) string {
 func postProcessFrameShortcuts(d *Data) *Data {
 	key := Car(d)
 	frame := Cadr(d)
-	value := Caddr(d)
 
 	if !SymbolP(key) {
 		return d
@@ -991,9 +990,13 @@ func postProcessFrameShortcuts(d *Data) *Data {
 	case strings.HasSuffix(s, ":"):
 		return InternalMakeList(Intern("get-slot"), frame, key)
 	case strings.HasSuffix(s, ":!"):
-		return InternalMakeList(Intern("set-slot!"), frame, Intern(strings.TrimSuffix(s, "!")), value)
+		return InternalMakeList(Intern("set-slot!"), frame, Intern(strings.TrimSuffix(s, "!")), Caddr(d))
 	case strings.HasSuffix(s, ":?"):
 		return InternalMakeList(Intern("has-slot?"), frame, Intern(strings.TrimSuffix(s, "?")))
+	case strings.HasSuffix(s, ":>"):
+		return AppendBangList(InternalMakeList(Intern("send"), frame, Intern(strings.TrimSuffix(s, ">"))), Cddr(d))
+	case strings.HasSuffix(s, ":^"):
+		return AppendBangList(InternalMakeList(Intern("send-super"), Intern(strings.TrimSuffix(s, "^"))), Cdr(d))
 	default:
 		return d
 	}

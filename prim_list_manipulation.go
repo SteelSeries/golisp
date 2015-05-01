@@ -10,7 +10,8 @@ package golisp
 import ()
 
 func RegisterListManipulationPrimitives() {
-	MakePrimitiveFunction("list", "*", MakeListImpl)
+	MakePrimitiveFunction("list", "*", ListImpl)
+	MakePrimitiveFunction("make-list", "1|2", MakeListImpl)
 	MakePrimitiveFunction("length", "1", ListLengthImpl)
 	MakePrimitiveFunction("cons", "2", ConsImpl)
 	MakePrimitiveFunction("reverse", "1", ReverseImpl)
@@ -24,6 +25,29 @@ func RegisterListManipulationPrimitives() {
 }
 
 func MakeListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	kVal := Car(args)
+	if !IntegerP(kVal) {
+		err = ProcessError("make-list requires a number as it's first argument.", env)
+	}
+
+	k := IntegerValue(kVal)
+	var element *Data
+
+	if Length(args) == 1 {
+		element = nil
+	} else {
+		element = Cadr(args)
+	}
+
+	var items []*Data
+	items = make([]*Data, 0, k)
+	for ; k > 0; k = k - 1 {
+		items = append(items, element)
+	}
+	return ArrayToList(items), nil
+}
+
+func ListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	// var items []*Data = make([]*Data, 0, Length(args))
 	// for cell := args; NotNilP(cell); cell = Cdr(cell) {
 	// 	items = append(items, Car(cell))
