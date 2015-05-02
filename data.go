@@ -271,6 +271,7 @@ func RemoveFromListBang(l *Data, item *Data) (result *Data) {
 			((*ConsCell)(prev.Value)).Cdr = Cdr(cell)
 			return
 		}
+		prev = cell
 	}
 	return
 }
