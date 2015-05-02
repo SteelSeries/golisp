@@ -14,12 +14,14 @@ import (
 )
 
 const (
-	OPCODE_MASK     = 0xf000
+	OPCODE_MASK     = 0xF000
 	OPCODE_CALL     = 0x0000
 	OPCODE_CONSTANT = 0x1000
 	OPCODE_VAR_REF  = 0x2000
 	OPCODE_RETURN   = 0x3000
 	OPCODE_BRANCH   = 0x4000
+	OPCODE_ADD_IMM  = 0x5000
+	OPCODE_SUB_IMM  = 0x6000
 )
 
 const (
@@ -171,6 +173,12 @@ func ExecuteBytecode(code []uint16, env *SymbolTableFrame) (result *Data, err er
 					programCounter += delta
 				}
 			}
+		case OPCODE_ADD_IMM:
+			c := IntegerValue(pop())
+			value := currentWord & SHORT_CONSTANT_MASK
+			c += int64(value)
+			push(IntegerWithValue(c))
+			programCounter += 1
 		default:
 		}
 	}
@@ -188,7 +196,7 @@ func Dissassemble(code []uint16) {
 			fmt.Printf("CALL %s, %d\n", String(getDataPointerAt(code, pc+1)), arity)
 			pc += 5
 		case OPCODE_CONSTANT:
-			fmt.Printf("CONSTANT")
+			fmt.Printf("CONST")
 			if (currentWord & CONSTANT_SIZE_MASK) == SHORT_CONSTANT {
 				fmt.Printf("# ")
 				dataType := currentWord & SHORT_CONSTANT_TYPE_MASK
@@ -232,12 +240,16 @@ func Dissassemble(code []uint16) {
 			condition := currentWord & BRANCH_CONDITION_MASK
 			switch condition {
 			case BRANCH_UNCONDITIONALLY:
+				fmt.Printf(" ")
 			case BRANCH_ON_FALSE:
 				fmt.Printf("F ")
 			case BRANCH_ON_TRUE:
 				fmt.Printf("T ")
 			}
 			fmt.Printf("%d\n", delta)
+		case OPCODE_ADD_IMM:
+			pc += 1
+			fmt.Printf("ADD# %d\n", currentWord&SHORT_CONSTANT_MASK)
 		default:
 		}
 	}

@@ -176,7 +176,7 @@ func ObjectP(d *Data) bool {
 }
 
 func FunctionP(d *Data) bool {
-	return d != nil && (TypeOf(d) == FunctionType || TypeOf(d) == PrimitiveType)
+	return d != nil && (TypeOf(d) == FunctionType || TypeOf(d) == PrimitiveType || TypeOf(d) == CompiledFunctionType)
 }
 
 func LispFunctionP(d *Data) bool {
@@ -189,6 +189,10 @@ func CompiledFunctionP(d *Data) bool {
 
 func PrimitiveP(d *Data) bool {
 	return d != nil && TypeOf(d) == PrimitiveType
+}
+
+func SpecialFormP(d *Data) bool {
+	return d != nil && TypeOf(d) == PrimitiveType && PrimitiveValue(d).Special
 }
 
 func MacroP(d *Data) bool {
@@ -1131,6 +1135,12 @@ func Apply(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err
 			result, err = FunctionValue(function).ApplyWithFrame(args, env, env.Frame)
 		} else {
 			result, err = FunctionValue(function).Apply(args, env)
+		}
+	case CompiledFunctionType:
+		if env.HasFrame() {
+			result, err = CompiledFunctionValue(function).ApplyWithFrame(args, env, env.Frame)
+		} else {
+			result, err = CompiledFunctionValue(function).Apply(args, env)
 		}
 	case MacroType:
 		result, err = MacroValue(function).Apply(args, env)
