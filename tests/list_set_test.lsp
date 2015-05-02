@@ -1,7 +1,20 @@
 (describe union
           (== (union '(1 2 3) '(3 4 5)) '(1 2 3 4 5))
           (== (union '() '(1)) '(1))
-          (== (union '() '()) '()))
+          (== (union '() '()) '())
+          ;; union should not affect the base list parameters
+          (begin
+          	(define a '(1 2 3))
+          	(define b '(4 5))
+          	(union a b)
+          	(and (== a '(1 2 3)) (== b '(4 5)))
+          )
+          (begin
+          	(define a '(1 2 3))
+          	(define b '(4 5))
+          	(union '() a b)
+          	(and (== a '(1 2 3)) (== b '(4 5)))
+          ))
 
 (describe intersection
           (== (intersection '(1 2 3) '(2 3 4 5)) '(2 3))
@@ -15,6 +28,4 @@
           	(define b '(4 3 2))
           	(intersection a b)
           	(and (== a '(1 2 3 4 5)) (== b '(4 3 2)))
-          )
-
-          )
+          ))
