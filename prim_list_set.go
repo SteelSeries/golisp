@@ -47,14 +47,16 @@ func UnionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func IntersectionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var col *Data
-	result, err = Eval(Car(args), env)
+	var firstList *Data
+	firstList, err = Eval(Car(args), env)
 	if err != nil {
 		return
 	}
-	if !ListP(result) {
-		err = ProcessError(fmt.Sprintf("intersection needs lists as its arguments, but got %s.", String(result)), env)
+	if !ListP(firstList) {
+		err = ProcessError(fmt.Sprintf("intersection needs lists as its arguments, but got %s.", String(firstList)), env)
 		return
 	}
+	result = Copy(firstList)
 
 	for a := Cdr(args); NotNilP(a); a = Cdr(a) {
 		col, err = Eval(Car(a), env)
