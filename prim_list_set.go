@@ -14,6 +14,7 @@ import (
 func RegisterListSetPrimitives() {
 	MakePrimitiveFunction("union", -1, UnionImpl)
 	MakePrimitiveFunction("intersection", -1, IntersectionImpl)
+	MakePrimitiveFunction("complement", -1, ComplementImpl)
 }
 
 func memp(i *Data, l *Data) bool {
@@ -69,6 +70,33 @@ func IntersectionImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 		}
 		for cell := result; NotNilP(cell); cell = Cdr(cell) {
 			if !memp(Car(cell), col) {
+				result = RemoveFromListBang(result, Car(cell))
+			}
+		}
+	}
+	return
+}
+
+func ComplementImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	var col *Data
+	var firstList *Data
+	firstList, err = Eval(Car(args), env)
+	if err != nil {
+		return
+	}
+	result = Copy(firstList)
+
+	for a := Cdr(args); NotNilP(a); a = Cdr(a) {
+		col, err = Eval(Car(a), env)
+		if err != nil {
+			return
+		}
+		if !ListP(col) {
+			err = ProcessError(fmt.Sprintf("complement needs lists as its arguments, but got %s.", String(col)), env)
+			return
+		}
+		for cell := result; NotNilP(cell); cell = Cdr(cell) {
+			if memp(Car(cell), col) {
 				result = RemoveFromListBang(result, Car(cell))
 			}
 		}
