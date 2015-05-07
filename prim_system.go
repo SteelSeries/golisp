@@ -9,10 +9,10 @@ package golisp
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"strings"
 	"time"
-	"math/rand"
 )
 
 var symbolCounts map[string]int = make(map[string]int)
@@ -29,6 +29,15 @@ func RegisterSystemPrimitives() {
 	MakePrimitiveFunction("gensym", -1, GensymImpl)
 	MakePrimitiveFunction("eval", -1, EvalImpl)
 	MakePrimitiveFunction("global-eval", 1, GlobalEvalImpl)
+	MakePrimitiveFunction("panic!", 1, PanicImpl)
+}
+
+func PanicImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	errStr, err := Eval(Car(args), env)
+	if err != nil {
+		return
+	}
+	panic(String(errStr))
 }
 
 func LoadFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
