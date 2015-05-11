@@ -316,7 +316,7 @@ func ParseAndEvalAll(src string) (result *Data, err error) {
 }
 
 func ParseAndEval(src string) (result *Data, err error) {
-	return parseAndEval(src, Global)
+	return ParseAndEvalInEnvironment(src, Global)
 }
 
 func ProcessFileInEnvironment(filename string, env *SymbolTableFrame) (result *Data, err error) {
