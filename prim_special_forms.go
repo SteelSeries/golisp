@@ -256,7 +256,11 @@ func LetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	localEnv := NewSymbolTableFrameBelow(env, "let")
 	localEnv.Previous = env
-	bindLetLocals(Car(args), localEnv)
+
+	err = bindLetLocals(Car(args), localEnv)
+	if err != nil {
+		return
+	}
 
 	for cell := Cdr(args); NotNilP(cell); cell = Cdr(cell) {
 		sexpr := Car(cell)
@@ -318,7 +322,11 @@ func DoImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	localEnv := NewSymbolTableFrameBelow(env, "do")
 	localEnv.Previous = env
-	bindLetLocals(bindings, localEnv)
+	
+	err = bindLetLocals(bindings, localEnv)
+	if err != nil {
+		return
+	}
 
 	body := Cddr(args)
 
