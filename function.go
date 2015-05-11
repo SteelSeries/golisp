@@ -103,8 +103,20 @@ func (self *Function) internalApply(args *Data, argEnv *SymbolTableFrame, frame 
 	if err != nil {
 		return
 	}
+TAIL_RECURSE:
 	for s := self.Body; NotNilP(s); s = Cdr(s) {
-		result, err = Eval(Car(s), localEnv)
+		sexpr := Car(s)
+		if ListP(sexpr) && SymbolP(Car(sexpr)) && String(Car(sexpr)) == self.Name {
+			fmt.Printf("REBINDING in %s\n", self.Name)
+			err = self.makeLocalBindings(Cdr(sexpr), localEnv, localEnv, eval)
+			if err != nil {
+				return
+			}
+			fmt.Printf("TAIL RECURSING in %s\n", self.Name)
+			goto TAIL_RECURSE
+		} else {
+			result, err = Eval(Car(s), localEnv)
+		}
 		if err != nil {
 			return nil, errors.New(fmt.Sprintf("In '%s': %s", self.Name, err))
 		}
