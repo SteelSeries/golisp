@@ -177,4 +177,6 @@
           (== (cdddr '(1)) nil)
           (== (cdddr '(1 2 3 4)) '(4)))
 
-
+(describe last-pair
+          (== (last-pair '(1 2 3)) '(3))
+          (== (last-pair '(1 2 . 3)) '(2 . 3)))

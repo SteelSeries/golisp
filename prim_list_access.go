@@ -63,6 +63,8 @@ func RegisterListAccessPrimitives() {
 	MakePrimitiveFunction("nth", 2, NthImpl)
 	MakePrimitiveFunction("take", 2, TakeImpl)
 	MakePrimitiveFunction("drop", 2, DropImpl)
+
+	MakePrimitiveFunction("last-pair", 1, LastPairImpl)
 }
 
 func CarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -482,4 +484,27 @@ func DropImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		err = ProcessError("drop requires a list or bytearray as its second argument.", env)
 	}
 	return
+}
+
+func LastPairImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	l, err := Eval(Car(args), env)
+	if err != nil {
+		return
+	}
+
+	if NilP(l) {
+		err = ProcessError("last-pair requires a non-empty list as its argument.", env)
+		return
+	}
+
+	if !ListP(l) {
+		err = ProcessError("last-pair requires a list as its argument.", env)
+		return
+	}
+
+	var cell *Data
+	for cell = l; NotNilP(Cdr(cell)) && PairP(Cdr(cell)); cell = Cdr(cell) {
+	}
+
+	return cell, nil
 }
