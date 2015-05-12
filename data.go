@@ -978,16 +978,16 @@ func postProcessFrameShortcuts(d *Data) *Data {
 
 func printDashes(indent int) {
 	for i := indent; i > 0; i -= 1 {
-		fmt.Print("-")
+		LogPrint("-")
 	}
 }
 
 func logEval(d *Data, env *SymbolTableFrame) {
 	if LispTrace && !DebugEvalInDebugRepl {
 		depth := env.Depth()
-		fmt.Printf("%3d: ", depth)
+		LogPrintf("%3d: ", depth)
 		printDashes(depth)
-		fmt.Printf("> %s\n", String(d))
+		LogPrintf("> %s\n", String(d))
 		EvalDepth += 1
 	}
 }
@@ -995,9 +995,9 @@ func logEval(d *Data, env *SymbolTableFrame) {
 func logResult(result *Data, env *SymbolTableFrame) {
 	if LispTrace && !DebugEvalInDebugRepl {
 		depth := env.Depth()
-		fmt.Printf("%3d: <", depth)
+		LogPrintf("%3d: <", depth)
 		printDashes(depth)
-		fmt.Printf(" %s\n", String(result))
+		LogPrintf(" %s\n", String(result))
 	}
 }
 
@@ -1048,7 +1048,7 @@ func evalHelper(d *Data, env *SymbolTableFrame, needFunction bool) (result *Data
 
 				result, err = Apply(function, args, env)
 				if err != nil {
-					err = errors.New(fmt.Sprintf("\nEvaling %s. %s", String(d), err))
+					err = errors.New(fmt.Sprintf("\r\nEvaling %s. %s", String(d), err))
 					return
 				} else if DebugReturnValue != nil {
 					result = DebugReturnValue

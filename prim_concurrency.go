@@ -56,7 +56,7 @@ func ForkImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		callWithPanicProtection(func() {
 			_, forkedErr := FunctionValue(f).ApplyWithoutEval(InternalMakeList(procObj), env)
 			if forkedErr != nil {
-				fmt.Println(forkedErr)
+				LogPrintf("error in forked process: %#v\n",forkedErr)
 			}
 		}, "fork")
 	}()
@@ -160,7 +160,7 @@ func ScheduleImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 				case <-proc.ScheduleTimer.C:
 					_, forkedErr := FunctionValue(f).ApplyWithoutEval(InternalMakeList(procObj), env)
 					if forkedErr != nil {
-						fmt.Println(forkedErr)
+						LogPrintf("error in forked process: %#v\n",forkedErr)
 					}
 					break Loop
 				}
@@ -217,7 +217,7 @@ func callWithPanicProtection(f func(), prefix string) {
 			stackBuf = stackBuf[:runtime.Stack(stackBuf, false)]
 			stack := strings.Split(string(stackBuf), "\n")
 			for i := 0; i < 7; i++ {
-				fmt.Println(stack[i])
+				LogPrintf("%s\n",stack[i])
 			}
 		}
 	}()

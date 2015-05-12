@@ -71,7 +71,7 @@ var goodbyes []string = []string{
 func QuitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	WriteHistoryToFile(".golisp_history")
 	rand.Seed(time.Now().Unix())
-	fmt.Printf("\n\n%s\n\n", goodbyes[rand.Intn(len(goodbyes))])
+	LogPrintf("\n\n%s\n\n", goodbyes[rand.Intn(len(goodbyes))])
 	os.Exit(0)
 	return
 }
@@ -127,7 +127,7 @@ func MakeStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 }
 
 func TimeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	fmt.Printf("Starting timer.\n")
+	LogPrintf("Starting timer.\n")
 	startTime := time.Now()
 
 	for cell := args; NotNilP(cell); cell = Cdr(cell) {
@@ -139,7 +139,7 @@ func TimeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	d := time.Since(startTime)
-	fmt.Printf("Stopped timer.\nTook %v to run.\n", d)
+	LogPrintf("Stopped timer.\nTook %v to run.\n", d)
 	result = IntegerWithValue(int64(d.Nanoseconds() / 1000000))
 	return
 }

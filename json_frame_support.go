@@ -62,7 +62,7 @@ func JsonStringToLispWithFrames(jsonData string) (result *Data) {
 	var data interface{}
 	err := json.Unmarshal(b, &data)
 	if err != nil {
-		fmt.Printf("Returning empty frame because of badly formed json: '%s'\n --> %v\n", jsonData, err)
+		LogPrintf("Returning empty frame because of badly formed json: '%s'\n --> %v\n", jsonData, err)
 		m := make(FrameMap, 0)
 		return FrameWithValue(&m)
 	}

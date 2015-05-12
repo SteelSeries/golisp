@@ -53,13 +53,13 @@ func (self *SymbolTableFrame) CurrentCodeString() string {
 }
 
 func (self *SymbolTableFrame) InternalDump(frameNumber int) {
-	fmt.Printf("Frame %d: %s\n", frameNumber, self.CurrentCodeString())
+	LogPrintf("Frame %d: %s\n", frameNumber, self.CurrentCodeString())
 	for _, b := range self.Bindings {
 		if b.Val == nil || TypeOf(b.Val) != PrimitiveType {
 			b.Dump()
 		}
 	}
-	fmt.Printf("\n")
+	LogPrintf("\n")
 	if self.Previous != nil {
 		self.Previous.InternalDump(frameNumber + 1)
 	}
@@ -72,22 +72,22 @@ func (self *SymbolTableFrame) Dump() {
 
 func (self *SymbolTableFrame) DumpSingleFrame(frameNumber int) {
 	if frameNumber == 0 {
-		fmt.Printf("%s\n", self.CurrentCodeString())
+		LogPrintf("%s\n", self.CurrentCodeString())
 		for _, b := range self.Bindings {
 			if b.Val == nil || TypeOf(b.Val) != PrimitiveType {
 				b.Dump()
 			}
 		}
-		fmt.Printf("\n")
+		LogPrintf("\n")
 	} else if self.Previous != nil {
 		self.Previous.DumpSingleFrame(frameNumber - 1)
 	} else {
-		fmt.Printf("Invalid frame selected.\n")
+		LogPrintf("Invalid frame selected.\n")
 	}
 }
 
 func (self *SymbolTableFrame) InternalDumpHeaders(frameNumber int) {
-	fmt.Printf("Frame %d: %s\n", frameNumber, self.CurrentCodeString())
+	LogPrintf("Frame %d: %s\n", frameNumber, self.CurrentCodeString())
 	if self.Previous != nil {
 		self.Previous.InternalDumpHeaders(frameNumber + 1)
 	}
@@ -99,7 +99,7 @@ func (self *SymbolTableFrame) DumpHeaders() {
 }
 
 func (self *SymbolTableFrame) DumpHeader() {
-	fmt.Printf("%s\n", self.CurrentCodeString())
+	LogPrintf("%s\n", self.CurrentCodeString())
 }
 
 func NewSymbolTableFrameBelow(p *SymbolTableFrame, name string) *SymbolTableFrame {

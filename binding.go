@@ -7,17 +7,13 @@
 
 package golisp
 
-import (
-    "fmt"
-)
-
 type Binding struct {
     Sym *Data
     Val *Data
 }
 
 func (self *Binding) Dump() {
-    fmt.Printf("   %s => %s\n", StringValue(self.Sym), String(self.Val))
+    LogPrintf("   %s => %s\n", StringValue(self.Sym), String(self.Val))
 }
 
 func BindingWithSymbolAndValue(sym *Data, val *Data) *Binding {
