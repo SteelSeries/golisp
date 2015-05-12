@@ -9,6 +9,8 @@ package golisp
 
 import (
 	"fmt"
+	"runtime"
+	"strings"
 	"time"
 	"unsafe"
 )
