@@ -48,7 +48,12 @@ func ForkImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	procObj := ObjectWithTypeAndValue("Process", unsafe.Pointer(proc))
 
 	go func() {
-		_, err = FunctionValue(f).ApplyWithoutEval(InternalMakeList(procObj), env)
+		callWithPanicProtection(func() {
+			_, forkedErr := FunctionValue(f).ApplyWithoutEval(InternalMakeList(procObj), env)
+			if forkedErr != nil {
+				fmt.Println(forkedErr)
+			}
+		}, "fork")
 	}()
 
 	return procObj, nil
@@ -122,19 +127,21 @@ func ScheduleImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	aborted := false
 	go func() {
-	Loop:
-		for {
-			select {
-			case <-proc.Abort:
-				aborted = true
-				break Loop
-			case <-proc.Restart:
-				proc.ScheduleTimer.Reset(time.Duration(IntegerValue(millis)) * time.Millisecond)
-			case <-proc.ScheduleTimer.C:
-				_, err = FunctionValue(f).ApplyWithoutEval(InternalMakeList(procObj), env)
-				break Loop
+		callWithPanicProtection(func() {
+		Loop:
+			for {
+				select {
+				case <-proc.Abort:
+					aborted = true
+					break Loop
+				case <-proc.Restart:
+					proc.ScheduleTimer.Reset(time.Duration(IntegerValue(millis)) * time.Millisecond)
+				case <-proc.ScheduleTimer.C:
+					_, err = FunctionValue(f).ApplyWithoutEval(InternalMakeList(procObj), env)
+					break Loop
+				}
 			}
-		}
+		}, "schedule")
 	}()
 
 	return procObj, nil
@@ -171,4 +178,19 @@ func ResetTimeoutImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 		str = "task was already completed or abandoned"
 	}
 	return StringWithValue(str), nil
+}
+
+func callWithPanicProtection(f func(), prefix string) {
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			stackBuf := make([]byte, 10000)
+			stackBuf = stackBuf[:runtime.Stack(stackBuf, false)]
+			stack := strings.Split(string(stackBuf), "\n")
+			for i := 0; i < 7; i++ {
+				fmt.Println(stack[i])
+			}
+		}
+	}()
+
+	f()
 }
