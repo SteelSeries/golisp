@@ -40,19 +40,6 @@ func PanicImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	panic(String(errStr))
 }
 
-func LoadFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	filename, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	if !StringP(filename) {
-		err = ProcessError("Filename must be a string", env)
-		return
-	}
-
-	return ProcessFile(StringValue(filename))
-}
-
 var goodbyes []string = []string{
 	"goodbye",
 	"zai jian",
@@ -107,15 +94,6 @@ func concatStringForms(args *Data, env *SymbolTableFrame) (str string, err error
 		pieces = append(pieces, PrintString(d))
 	}
 	return strings.Join(pieces, ""), nil
-}
-
-func WriteLineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	str, err := concatStringForms(args, env)
-	if err != nil {
-		return
-	}
-	println(str)
-	return
 }
 
 func MakeStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

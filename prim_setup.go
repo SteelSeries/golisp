@@ -39,4 +39,5 @@ func InitBuiltins() {
 	RegisterFramePrimitives()
 	RegisterConcurrencyPrimitives()
 	RegisterEnvironmentPrimitives()
+	RegisterIOPrimitives()
 }
