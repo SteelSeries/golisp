@@ -22,6 +22,7 @@ func RegisterSystemPrimitives() {
 	MakePrimitiveFunction("sleep", 1, SleepImpl)
 	MakePrimitiveFunction("millis", 0, MillisImpl)
 	MakePrimitiveFunction("write-line", -1, WriteLineImpl)
+	MakePrimitiveFunction("write-log", -1, WriteLogImpl)
 	MakePrimitiveFunction("str", -1, MakeStringImpl)
 	MakePrimitiveFunction("intern", 1, InternImpl)
 	MakePrimitiveFunction("time", 1, TimeImpl)
@@ -115,6 +116,16 @@ func WriteLineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 		return
 	}
 	println(str)
+	return
+}
+
+
+func WriteLogImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	str, err := concatStringForms(args, env)
+	if err != nil {
+		return
+	}
+	LogPrintln(str)
 	return
 }
 
