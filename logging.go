@@ -9,7 +9,7 @@ package golisp
 
 import (
 	"log"
-	"os"
+	"fmt"
 )
 
 var (
@@ -18,23 +18,25 @@ var (
 
 func init() {
 	// Initialize a standard logger to stdout
-	loggers = make([]*log.Logger, 1)
-	loggers[0] = log.New(os.Stdout, "GoLisp: ", log.Lshortfile)
+	loggers = make([]*log.Logger, 0)
 }
 
 func LogPrintf(format string, a ...interface{}) {
+	fmt.Printf(format, a...)
 	for _, logger := range loggers {
 		logger.Printf(format, a...)
 	}
 }
 
 func LogPrint(a ...interface{}) {
+	fmt.Print(a...)
 	for _, logger := range loggers {
 		logger.Print(a...)
 	}
 }
 
 func LogPrintln(a ...interface{}) {
+	fmt.Println(a...)
 	for _, logger := range loggers {
 		logger.Println(a...)
 	}
