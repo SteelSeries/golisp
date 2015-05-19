@@ -606,7 +606,7 @@ func Flatten(d *Data) (result *Data, err error) {
 	var l []*Data = make([]*Data, 0, 10)
 	for c := d; NotNilP(c); c = Cdr(c) {
 		if ListP(Car(c)) {
-			for i := Car(c); NotNilP(i); i = Cdr(i) {
+			for i := Car(c); i != nil; i = Cdr(i) {
 				l = append(l, Car(i))
 			}
 		} else {
