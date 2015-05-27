@@ -128,7 +128,7 @@ func WriteLogImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if err != nil {
 		return
 	}
-	LogPrintln(str)
+	LogPrintf("%s\r\n",str)
 	return
 }
 
