@@ -927,12 +927,7 @@ func String(d *Data) string {
 	case FrameType:
 		pairs := make([]string, 0, len(*FrameValue(d)))
 		for key, val := range *FrameValue(d) {
-			var valString string
-			if FrameP(val) {
-				valString = "{...}"
-			} else {
-				valString = String(val)
-			}
+			var valString string = String(val)
 			pairs = append(pairs, fmt.Sprintf("%s %s", key, valString))
 		}
 		return fmt.Sprintf("{%s}", strings.Join(pairs, " "))
