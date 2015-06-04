@@ -17,6 +17,7 @@ func RegisterIOPrimitives() {
 	MakePrimitiveFunction("open-output-file", 1, OpenOutputFileImpl)
 	MakePrimitiveFunction("close-output-port", 1, CloseOutputPortImpl)
 	MakePrimitiveFunction("write-string", 2, WriteStringImpl)
+	MakePrimitiveFunction("write-bytes", 2, WriteImpl)
 	MakePrimitiveFunction("newline", 1, NewlineImpl)
 }
 
@@ -98,6 +99,36 @@ func WriteStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 	}
 
 	_, err = (*os.File)(PortValue(p)).WriteString(StringValue(str))
+
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func WriteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	bytes, err := Eval(Car(args), env)
+	if err != nil {
+		return
+	}
+
+	if !ObjectP(bytes) || ObjectType(bytes) != "[]byte" {
+		err = ProcessError("write expects its first argument to be a bytearray", env)
+		return
+	}
+
+	p, err := Eval(Cadr(args), env)
+	if err != nil {
+		return
+	}
+
+	if !PortP(p) {
+		err = ProcessError("write expects its second argument be a port", env)
+		return
+	}
+
+	_, err = (*os.File)(PortValue(p)).Write(*(*[]byte)(ObjectValue(bytes)))
 
 	if err != nil {
 		return
