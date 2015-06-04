@@ -15,6 +15,8 @@ import (
 func RegisterBytearrayPrimitives() {
 	MakePrimitiveFunction("list-to-bytearray", 1, ListToBytesImpl)
 	MakePrimitiveFunction("bytearray-to-list", 1, BytesToListImpl)
+	MakePrimitiveFunction("list->bytearray", 1, ListToBytesImpl)
+	MakePrimitiveFunction("bytearray->list", 1, BytesToListImpl)
 	MakePrimitiveFunction("replace-byte", 3, ReplaceByteImpl)
 	MakePrimitiveFunction("replace-byte!", 3, ReplaceByteBangImpl)
 	MakePrimitiveFunction("extract-byte", 2, ExtractByteImpl)
