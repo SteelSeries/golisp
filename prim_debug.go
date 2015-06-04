@@ -19,6 +19,7 @@ var DebugCommandPrefix string = ":"
 func RegisterDebugPrimitives() {
 	MakePrimitiveFunction("debug-trace", -1, DebugTraceImpl)
 	MakePrimitiveFunction("lisp-trace", -1, LispTraceImpl)
+	MakePrimitiveFunction("trace", -1, TraceImpl)
 	MakePrimitiveFunction("debug-on-error", -1, DebugOnErrorImpl)
 	MakePrimitiveFunction("debug-on-entry", 0, DebugOnEntryImpl)
 	MakePrimitiveFunction("add-debug-on-entry", 1, AddDebugOnEntryImpl)
@@ -44,6 +45,13 @@ func LispTraceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 		LispTrace = BooleanValue(Car(args))
 	}
 	return BooleanWithValue(LispTrace), nil
+}
+
+func TraceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	LispTrace = true
+	result, err = BeginImpl(args, env)
+	LispTrace = false
+	return
 }
 
 func DebugOnEntryImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
