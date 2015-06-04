@@ -1002,16 +1002,16 @@ func postProcessFrameShortcuts(d *Data) *Data {
 
 func printDashes(indent int) {
 	for i := indent; i > 0; i -= 1 {
-		LogPrint("-")
+		print("-")
 	}
 }
 
 func logEval(d *Data, env *SymbolTableFrame) {
 	if LispTrace && !DebugEvalInDebugRepl {
 		depth := env.Depth()
-		LogPrintf("%3d: ", depth)
+		fmt.Printf("%3d: ", depth)
 		printDashes(depth)
-		LogPrintf("> %s\n", String(d))
+		fmt.Printf("> %s\n", String(d))
 		EvalDepth += 1
 	}
 }
@@ -1019,9 +1019,9 @@ func logEval(d *Data, env *SymbolTableFrame) {
 func logResult(result *Data, env *SymbolTableFrame) {
 	if LispTrace && !DebugEvalInDebugRepl {
 		depth := env.Depth()
-		LogPrintf("%3d: <", depth)
+		fmt.Printf("%3d: <", depth)
 		printDashes(depth)
-		LogPrintf(" %s\n", String(result))
+		fmt.Printf(" %s\n", String(result))
 	}
 }
 
