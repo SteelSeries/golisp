@@ -9,6 +9,7 @@ package golisp
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"strings"
 	"time"
@@ -42,9 +43,26 @@ func LoadFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return ProcessFile(StringValue(filename))
 }
 
+var goodbyes []string = []string{
+	"goodbye",
+	"zai jian",
+	"tot ziens",
+	"adieu",
+	"auf Wiedersehen",
+	"shalom",
+	"arrivederci",
+	"ja mata ne",
+	"anyeonghi gasyeo",
+	"adues",
+	"do svidan'ya",
+	"farvel",
+	"namárië",
+}
+
 func QuitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	WriteHistoryToFile(".golisp_history")
-	fmt.Printf("\n\nGoodbye.\n\n")
+	rand.Seed(time.Now().Unix())
+	fmt.Printf("\n\n%s\n\n", goodbyes[rand.Intn(len(goodbyes))])
 	os.Exit(0)
 	return
 }
