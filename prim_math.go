@@ -14,6 +14,8 @@ import (
 )
 
 func RegisterMathPrimitives() {
+	MakePrimitiveFunction("even?", 1, IsEvenImpl)
+	MakePrimitiveFunction("odd?", 1, IsOddImpl)
 	MakePrimitiveFunction("+", -1, AddImpl)
 	MakePrimitiveFunction("-", -1, SubtractImpl)
 	MakePrimitiveFunction("*", -1, MultiplyImpl)
