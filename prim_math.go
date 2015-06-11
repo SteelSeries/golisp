@@ -283,8 +283,12 @@ func RandomByteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 }
 
 func IntervalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if Length(args) < 2 || Length(args) > 3 {
-		err = ProcessError(fmt.Sprintf("interval expects 2 or 3 arguments, received %d", Length(args)), env)
+	var direction int64 = 1
+	var step int64
+	var end int64
+
+	if Length(args) < 1 || Length(args) > 3 {
+		err = ProcessError(fmt.Sprintf("interval expects 1, 2, or 3 arguments, received %d", Length(args)), env)
 		return
 	}
 
@@ -294,33 +298,47 @@ func IntervalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 	start := IntegerValue(startObj)
 
-	endObj, err := Eval(Cadr(args), env)
-	if err != nil {
-		return
-	}
-	end := IntegerValue(endObj)
-
-	if start > end {
-		err = ProcessError(fmt.Sprintf("interval expects argument 2 to be lower than argument 3, received %d and %d", start, end), env)
-		return
-	}
-
-	var step int64 = 1
-	if Length(args) == 3 {
-		stepObj, e := Eval(Caddr(args), env)
-		if e != nil {
-			return nil, e
+	if Length(args) == 1 {
+		direction = 1
+		step = 1
+		end = start
+		start = 1
+	} else {
+		var endObj *Data
+		endObj, err = Eval(Cadr(args), env)
+		if err != nil {
+			return
 		}
-		step = IntegerValue(stepObj)
-		if step < 1 {
-			return nil, ProcessError(fmt.Sprintf("interval expects a positive step value, received %d", step), env)
+		end = IntegerValue(endObj)
+
+		if start > end {
+			direction = -1
+		}
+
+		if Length(args) == 3 {
+			stepObj, e := Eval(Caddr(args), env)
+			if e != nil {
+				return nil, e
+			}
+			step = IntegerValue(stepObj)
+			if intSgn(step) != direction {
+				return nil, ProcessError("The sign of step has to match the direction of the interval", env)
+			}
+		} else {
+			step = direction
 		}
 	}
 
-	var items []*Data = make([]*Data, 0, end-start+1)
+	var items []*Data = make([]*Data, 0, int(math.Abs(float64(end-start)))+1)
 
-	for i := start; i <= end; i = i + step {
-		items = append(items, IntegerWithValue(i))
+	if direction == 1 {
+		for i := start; i <= end; i = i + step {
+			items = append(items, IntegerWithValue(i))
+		}
+	} else {
+		for i := start; i >= end; i = i + step {
+			items = append(items, IntegerWithValue(i))
+		}
 	}
 	result = ArrayToList(items)
 	return
