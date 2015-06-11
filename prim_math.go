@@ -33,7 +33,22 @@ func RegisterMathPrimitives() {
 	MakePrimitiveFunction("max", 1, MaxImpl)
 	MakePrimitiveFunction("floor", 1, FloorImpl)
 	MakePrimitiveFunction("ceiling", 1, CeilingImpl)
+	MakePrimitiveFunction("sign", 1, SignImpl)
 
+}
+
+func sgn(a float32) int64 {
+	switch {
+	case a < 0:
+		return -1
+	case a > 0:
+		return +1
+	}
+	return 0
+}
+
+func intSgn(a int64) int64 {
+	return sgn(float32(a))
 }
 
 func IsEvenImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -582,4 +597,19 @@ func CeilingImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	return FloatWithValue(float32(math.Ceil(float64(FloatValue(val))))), nil
+}
+
+func SignImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	val, err := Eval(Car(args), env)
+
+	if !NumberP(val) {
+		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(Car(args))), env)
+		return
+	}
+
+	if FloatP(val) {
+		return IntegerWithValue(sgn(float32(FloatValue(val)))), nil
+	} else {
+		return IntegerWithValue(intSgn(IntegerValue(val))), nil
+	}
 }

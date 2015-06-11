@@ -68,3 +68,11 @@
           (== (ceiling 3.4) 4.0)
           (== (ceiling -3.4) -3.0)
           (== (ceiling 3) 3.0))
+
+(describe sign
+          (== (sign 0) 0)
+          (== (sign 0.0) 0)
+          (== (sign 5) 1)
+          (== (sign 5.5) 1)
+          (== (sign -5) -1)
+          (== (sign -5.5) -1))
