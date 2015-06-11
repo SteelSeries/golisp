@@ -283,6 +283,11 @@ func IntervalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 	end := IntegerValue(endObj)
 
+	if start > end {
+		err = ProcessError(fmt.Sprintf("interval expects argument 2 to be lower than argument 3, received %d and %d", start, end), env)
+		return
+	}
+
 	var step int64 = 1
 	if Length(args) == 3 {
 		stepObj, e := Eval(Caddr(args), env)
