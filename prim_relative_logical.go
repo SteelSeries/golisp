@@ -24,8 +24,6 @@ func RegisterRelativePrimitives() {
 	MakePrimitiveFunction("not", 1, BooleanNotImpl)
 	MakePrimitiveFunction("and", -1, BooleanAndImpl)
 	MakePrimitiveFunction("or", -1, BooleanOrImpl)
-	MakePrimitiveFunction("even?", 1, IsEvenImpl)
-	MakePrimitiveFunction("odd?", 1, IsOddImpl)
 }
 
 func LessThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -208,7 +206,7 @@ func BooleanNotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 func BooleanAndImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	for c := args; NotNilP(c); c = Cdr(c) {
 		result, err = Eval(Car(c), env)
-		if !BooleanValue(result) {
+		if !BooleanValue(result) || err != nil {
 			return
 		}
 	}
@@ -219,7 +217,7 @@ func BooleanAndImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 func BooleanOrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	for c := args; NotNilP(c); c = Cdr(c) {
 		result, err = Eval(Car(c), env)
-		if BooleanValue(result) {
+		if BooleanValue(result) || err != nil {
 			return
 		}
 	}

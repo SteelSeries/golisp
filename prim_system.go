@@ -1,4 +1,4 @@
-// Copyright 2014 SteelSeries ApS.  All rights reserved.
+﻿// Copyright 2014 SteelSeries ApS.  All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -18,18 +18,19 @@ import (
 var symbolCounts map[string]int = make(map[string]int)
 
 func RegisterSystemPrimitives() {
-	MakePrimitiveFunction("load", 1, LoadFileImpl)
 	MakePrimitiveFunction("sleep", 1, SleepImpl)
 	MakePrimitiveFunction("millis", 0, MillisImpl)
 	MakePrimitiveFunction("write-line", -1, WriteLineImpl)
+	MakePrimitiveFunction("write-log", -1, WriteLogImpl)
 	MakePrimitiveFunction("str", -1, MakeStringImpl)
 	MakePrimitiveFunction("intern", 1, InternImpl)
 	MakePrimitiveFunction("time", 1, TimeImpl)
 	MakePrimitiveFunction("quit", 0, QuitImpl)
 	MakePrimitiveFunction("gensym", -1, GensymImpl)
 	MakePrimitiveFunction("eval", -1, EvalImpl)
-	MakePrimitiveFunction("global-eval", 1, GlobalEvalImpl)
-	MakePrimitiveFunction("panic!", 1, PanicImpl)
+	MakeRestrictedPrimitiveFunction("load", 1, LoadFileImpl)
+	MakeRestrictedPrimitiveFunction("global-eval", 1, GlobalEvalImpl)
+	MakeRestrictedPrimitiveFunction("panic!", 1, PanicImpl)
 }
 
 func PanicImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -53,13 +54,16 @@ var goodbyes []string = []string{
 	"adues",
 	"do svidan'ya",
 	"farvel",
+	"namárië",
 }
 
 func QuitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	WriteHistoryToFile(".golisp_history")
-	rand.Seed(time.Now().Unix())
-	LogPrintf("\n\n%s\n\n", goodbyes[rand.Intn(len(goodbyes))])
-	os.Exit(0)
+	if IsInteractive || DebugEvalInDebugRepl {
+		WriteHistoryToFile(".golisp_history")
+		rand.Seed(time.Now().Unix())
+		LogPrintf("\n\n%s\n\n", goodbyes[rand.Intn(len(goodbyes))])
+		os.Exit(0)
+	}
 	return
 }
 
@@ -94,6 +98,24 @@ func concatStringForms(args *Data, env *SymbolTableFrame) (str string, err error
 		pieces = append(pieces, PrintString(d))
 	}
 	return strings.Join(pieces, ""), nil
+}
+
+func WriteLineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	str, err := concatStringForms(args, env)
+	if err != nil {
+		return
+	}
+	println(str)
+	return
+}
+
+func WriteLogImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	str, err := concatStringForms(args, env)
+	if err != nil {
+		return
+	}
+	LogPrintf("%s\r\n", str)
+	return
 }
 
 func MakeStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

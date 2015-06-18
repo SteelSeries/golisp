@@ -14,6 +14,8 @@ import (
 )
 
 func RegisterMathPrimitives() {
+	MakePrimitiveFunction("even?", 1, IsEvenImpl)
+	MakePrimitiveFunction("odd?", 1, IsOddImpl)
 	MakePrimitiveFunction("+", -1, AddImpl)
 	MakePrimitiveFunction("-", -1, SubtractImpl)
 	MakePrimitiveFunction("*", -1, MultiplyImpl)
@@ -31,7 +33,22 @@ func RegisterMathPrimitives() {
 	MakePrimitiveFunction("max", 1, MaxImpl)
 	MakePrimitiveFunction("floor", 1, FloorImpl)
 	MakePrimitiveFunction("ceiling", 1, CeilingImpl)
+	MakePrimitiveFunction("sign", 1, SignImpl)
 
+}
+
+func sgn(a float32) int64 {
+	switch {
+	case a < 0:
+		return -1
+	case a > 0:
+		return +1
+	}
+	return 0
+}
+
+func intSgn(a int64) int64 {
+	return sgn(float32(a))
 }
 
 func IsEvenImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -266,8 +283,12 @@ func RandomByteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 }
 
 func IntervalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if Length(args) < 2 || Length(args) > 3 {
-		err = ProcessError(fmt.Sprintf("interval expects 2 or 3 arguments, received %d", Length(args)), env)
+	var direction int64 = 1
+	var step int64
+	var end int64
+
+	if Length(args) < 1 || Length(args) > 3 {
+		err = ProcessError(fmt.Sprintf("interval expects 1, 2, or 3 arguments, received %d", Length(args)), env)
 		return
 	}
 
@@ -277,28 +298,47 @@ func IntervalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 	start := IntegerValue(startObj)
 
-	endObj, err := Eval(Cadr(args), env)
-	if err != nil {
-		return
-	}
-	end := IntegerValue(endObj)
-
-	var step int64 = 1
-	if Length(args) == 3 {
-		stepObj, e := Eval(Caddr(args), env)
-		if e != nil {
-			return nil, e
+	if Length(args) == 1 {
+		direction = 1
+		step = 1
+		end = start
+		start = 1
+	} else {
+		var endObj *Data
+		endObj, err = Eval(Cadr(args), env)
+		if err != nil {
+			return
 		}
-		step = IntegerValue(stepObj)
-		if step < 1 {
-			return nil, ProcessError(fmt.Sprintf("interval expects a positive step value, received %d", step), env)
+		end = IntegerValue(endObj)
+
+		if start > end {
+			direction = -1
+		}
+
+		if Length(args) == 3 {
+			stepObj, e := Eval(Caddr(args), env)
+			if e != nil {
+				return nil, e
+			}
+			step = IntegerValue(stepObj)
+			if intSgn(step) != direction {
+				return nil, ProcessError("The sign of step has to match the direction of the interval", env)
+			}
+		} else {
+			step = direction
 		}
 	}
 
-	var items []*Data = make([]*Data, 0, end-start+1)
+	var items []*Data = make([]*Data, 0, int(math.Abs(float64(end-start)))+1)
 
-	for i := start; i <= end; i = i + step {
-		items = append(items, IntegerWithValue(i))
+	if direction == 1 {
+		for i := start; i <= end; i = i + step {
+			items = append(items, IntegerWithValue(i))
+		}
+	} else {
+		for i := start; i >= end; i = i + step {
+			items = append(items, IntegerWithValue(i))
+		}
 	}
 	result = ArrayToList(items)
 	return
@@ -575,4 +615,19 @@ func CeilingImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	return FloatWithValue(float32(math.Ceil(float64(FloatValue(val))))), nil
+}
+
+func SignImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	val, err := Eval(Car(args), env)
+
+	if !NumberP(val) {
+		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(Car(args))), env)
+		return
+	}
+
+	if FloatP(val) {
+		return IntegerWithValue(sgn(float32(FloatValue(val)))), nil
+	} else {
+		return IntegerWithValue(intSgn(IntegerValue(val))), nil
+	}
 }
