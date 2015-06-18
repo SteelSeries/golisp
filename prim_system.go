@@ -18,18 +18,22 @@ import (
 var symbolCounts map[string]int = make(map[string]int)
 
 func RegisterSystemPrimitives() {
-	MakePrimitiveFunction("load", "1", LoadFileImpl)
 	MakePrimitiveFunction("sleep", "1", SleepImpl)
 	MakePrimitiveFunction("millis", "0", MillisImpl)
 	MakePrimitiveFunction("newline", "0", NewlineImpl)
 	MakePrimitiveFunction("write", "*", WriteImpl)
 	MakePrimitiveFunction("write-line", "*", WriteLineImpl)
+	MakePrimitiveFunction("write-log", "*", WriteLogImpl)
 	MakePrimitiveFunction("str", "*", MakeStringImpl)
 	MakePrimitiveFunction("intern", "1", InternImpl)
 	MakePrimitiveFunction("quit", "0", QuitImpl)
 	MakePrimitiveFunction("gensym", "0|1", GensymImpl)
 	MakePrimitiveFunction("eval", "1|2", EvalImpl)
-	MakePrimitiveFunction("global-eval", "1", GlobalEvalImpl)
+
+	MakeRestrictedPrimitiveFunction("load", "1", LoadFileImpl)
+	MakeRestrictedPrimitiveFunction("global-eval", "1", GlobalEvalImpl)
+	MakeRestrictedPrimitiveFunction("panic!", "1", PanicImpl)
+
 	MakeSpecialForm("time", "1", TimeImpl)
 }
 
@@ -59,11 +63,17 @@ var goodbyes []string = []string{
 	"namárië",
 }
 
+func PanicImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	panic(String(Car(args)))
+}
+
 func QuitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	WriteHistoryToFile(".golisp_history")
-	rand.Seed(time.Now().Unix())
-	fmt.Printf("\n\n%s\n\n", goodbyes[rand.Intn(len(goodbyes))])
-	os.Exit(0)
+	if IsInteractive || DebugEvalInDebugRepl {
+		WriteHistoryToFile(".golisp_history")
+		rand.Seed(time.Now().Unix())
+		LogPrintf("\n\n%s\n\n", goodbyes[rand.Intn(len(goodbyes))])
+		os.Exit(0)
+	}
 	return
 }
 
@@ -106,6 +116,11 @@ func WriteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func WriteLineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	println(concatStringForms(args))
+	return
+}
+
+func WriteLogImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	LogPrintf("%s\r\n", concatStringForms(args))
 	return
 }
 

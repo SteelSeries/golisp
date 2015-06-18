@@ -8,7 +8,6 @@
 package golisp
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 )
@@ -18,16 +17,23 @@ type PrimitiveFunction struct {
 	Special      bool
 	NumberOfArgs string
 	Body         func(d *Data, env *SymbolTableFrame) (*Data, error)
+	IsRestricted bool
 }
 
 func MakePrimitiveFunction(name string, argCount string, function func(*Data, *SymbolTableFrame) (*Data, error)) {
-	f := &PrimitiveFunction{Name: name, Special: false, NumberOfArgs: argCount, Body: function}
+	f := &PrimitiveFunction{Name: name, Special: false, NumberOfArgs: argCount, Body: function, IsRestricted: false}
+	sym := Global.Intern(name)
+	Global.BindTo(sym, PrimitiveWithNameAndFunc(name, f))
+}
+
+func MakeRestrictedPrimitiveFunction(name string, argCount string, function func(*Data, *SymbolTableFrame) (*Data, error)) {
+	f := &PrimitiveFunction{Name: name, NumberOfArgs: argCount, Body: function, IsRestricted: true}
 	sym := Global.Intern(name)
 	Global.BindTo(sym, PrimitiveWithNameAndFunc(name, f))
 }
 
 func MakeSpecialForm(name string, argCount string, function func(*Data, *SymbolTableFrame) (*Data, error)) {
-	f := &PrimitiveFunction{Name: name, Special: true, NumberOfArgs: argCount, Body: function}
+	f := &PrimitiveFunction{Name: name, Special: true, NumberOfArgs: argCount, Body: function, IsRestricted: false}
 	sym := Global.Intern(name)
 	Global.BindTo(sym, PrimitiveWithNameAndFunc(name, f))
 }
@@ -63,7 +69,7 @@ func (self *PrimitiveFunction) checkArgumentCount(argCount int) bool {
 
 func (self *PrimitiveFunction) Apply(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if !self.checkArgumentCount(Length(args)) {
-		err = errors.New(fmt.Sprintf("Wrong number of args to %s. Expected %s but got %d.\n", self.Name, self.NumberOfArgs, Length(args)))
+		err = fmt.Errorf("Wrong number of args to %s. Expected %s but got %d.\n", self.Name, self.NumberOfArgs, Length(args))
 		return
 	}
 
@@ -80,6 +86,11 @@ func (self *PrimitiveFunction) Apply(args *Data, env *SymbolTableFrame) (result 
 		}
 
 		argArray = append(argArray, argValue)
+	}
+
+	if self.IsRestricted && env.IsRestricted {
+		err = fmt.Errorf("The %s primitive is restricted from execution in this environment\n", self.Name)
+		return
 	}
 
 	return (self.Body)(ArrayToList(argArray), env)

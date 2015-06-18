@@ -351,7 +351,9 @@ func DoImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 			}
 		}
 
-		rebindDoLocals(bindings, localEnv)
+		if rebindDoLocals(bindings, localEnv) != nil {
+			return
+		}
 	}
 	return
 }

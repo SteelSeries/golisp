@@ -14,12 +14,13 @@ import (
 )
 
 type SymbolTableFrame struct {
-	Name        string
-	Parent      *SymbolTableFrame
-	Previous    *SymbolTableFrame
-	Frame       *FrameMap
-	Bindings    map[string]*Binding
-	CurrentCode *list.List
+	Name         string
+	Parent       *SymbolTableFrame
+	Previous     *SymbolTableFrame
+	Frame        *FrameMap
+	Bindings     map[string]*Binding
+	CurrentCode  *list.List
+	IsRestricted bool
 }
 
 var Global *SymbolTableFrame
@@ -107,7 +108,8 @@ func NewSymbolTableFrameBelow(p *SymbolTableFrame, name string) *SymbolTableFram
 	if p != nil {
 		f = p.Frame
 	}
-	env := &SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding), Frame: f, CurrentCode: list.New()}
+	restricted := p != nil && p.IsRestricted
+	env := &SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding), Frame: f, CurrentCode: list.New(), IsRestricted: restricted}
 	if p == nil || p == Global {
 		TopLevelEnvironments[name] = env
 	}
@@ -118,7 +120,8 @@ func NewSymbolTableFrameBelowWithFrame(p *SymbolTableFrame, f *FrameMap, name st
 	if f == nil {
 		f = p.Frame
 	}
-	env := &SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding, 10), Frame: f, CurrentCode: list.New()}
+	restricted := p != nil && p.IsRestricted
+	env := &SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding, 10), Frame: f, CurrentCode: list.New(), IsRestricted: restricted}
 	if p == nil || p == Global {
 		TopLevelEnvironments[name] = env
 	}
