@@ -113,7 +113,7 @@ func BooleanNotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 func BooleanAndImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	for c := args; NotNilP(c); c = Cdr(c) {
 		result = Car(c)
-		if !BooleanValue(result) {
+		if !BooleanValue(result) || err != nil {
 			return
 		}
 	}
@@ -123,7 +123,7 @@ func BooleanAndImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 func BooleanOrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	for c := args; NotNilP(c); c = Cdr(c) {
 		result = Car(c)
-		if BooleanValue(result) {
+		if BooleanValue(result) || err != nil {
 			return
 		}
 	}

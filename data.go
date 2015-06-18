@@ -634,7 +634,7 @@ func RecursiveFlatten(d *Data) (result *Data, err error) {
 			if err != nil {
 				return
 			}
-			for i := elem; NotNilP(i); i = Cdr(i) {
+			for i := elem; i != nil; i = Cdr(i) {
 				l = append(l, Car(i))
 			}
 		} else {
