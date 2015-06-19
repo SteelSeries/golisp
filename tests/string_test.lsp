@@ -44,3 +44,34 @@
           (== (string-downcase "hello") "hello")
           (== (string-downcase "HeLlo") "hello")
           (== (string-downcase "HELLO") "hello"))
+
+(describe capitalize
+          (== (string-capitalize "hello") "Hello")
+          (== (string-capitalize "HeLlo") "Hello")
+          (== (string-capitalize "HELLO") "Hello"))
+
+(describe upcase!
+          (let ((s "hello"))
+            (== (string-upcase! s) "HELLO")
+            (== s "HELLO")))
+
+(describe downcase!
+          (let ((s "HELLO"))
+            (== (string-downcase! s) "hello")
+            (== s "hello")))
+
+(describe capitalize!
+          (let ((s "hello"))
+            (== (string-capitalize! s) "Hello")
+            (== s "Hello")))
+
+
+(describe string-length
+          (== (string-length "") 0)
+          (== (string-length "1") 1)
+          (== (string-length "12345") 5))
+
+
+(describe string-null?
+          (== (string-null? "") #t)
+          (== (string-null? "hello") #f))
