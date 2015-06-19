@@ -322,52 +322,15 @@ func ReadFile(filename string) (s string, err error) {
 }
 
 func ProcessFile(filename string) (result *Data, err error) {
-	src, err := ReadFile(filename)
-	if err != nil {
-		return
-	}
-	result, err = ParseAndEvalAll(src)
-	return
+	return ProcessFileInEnvironment(filename, Global)
 }
 
 func ParseAndEvalAll(src string) (result *Data, err error) {
-	s := NewTokenizer(src)
-	var sexpr *Data
-	var eof bool
-	for {
-		sexpr, eof, err = parseExpression(s)
-		if err != nil {
-			return
-		}
-		if eof {
-			return
-		}
-		if NilP(sexpr) {
-			return
-		}
-		result, err = Eval(sexpr, Global)
-		if err != nil {
-			return
-		}
-	}
-	return
+	return ParseAndEvalAllInEnvironment(src, Global)
 }
 
 func ParseAndEval(src string) (result *Data, err error) {
-	s := NewTokenizer(src)
-	var sexpr *Data
-	sexpr, _, err = parseExpression(s)
-	if err != nil {
-		return
-	}
-	if NilP(sexpr) {
-		return
-	}
-	result, err = Eval(sexpr, Global)
-	if err != nil {
-		return
-	}
-	return
+	return ParseAndEvalInEnvironment(src, Global)
 }
 
 func ProcessFileInEnvironment(filename string, env *SymbolTableFrame) (result *Data, err error) {

@@ -197,3 +197,6 @@
           (== (general-car-cdr '(1 2 (3 4)) #b1100) '(3 4))
           (== (general-car-cdr '(1 2 (3 4)) #b110100) 4))
 
+(describe last-pair
+          (== (last-pair '(1 2 3)) '(3))
+          (== (last-pair '(1 2 . 3)) '(2 . 3)))

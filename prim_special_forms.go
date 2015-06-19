@@ -245,7 +245,10 @@ func LetCommon(args *Data, env *SymbolTableFrame, star bool, rec bool) (result *
 	} else {
 		evalEnv = env
 	}
-	bindLetLocals(Car(args), rec, localEnv, evalEnv)
+	err = bindLetLocals(Car(args), rec, localEnv, evalEnv)
+	if err != nil {
+		return
+	}
 
 	for cell := Cdr(args); NotNilP(cell); cell = Cdr(cell) {
 		sexpr := Car(cell)
@@ -314,7 +317,10 @@ func DoImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	localEnv := NewSymbolTableFrameBelow(env, "do")
 	localEnv.Previous = env
-	bindLetLocals(bindings, false, localEnv, env)
+	err = bindLetLocals(bindings, false, localEnv, env)
+	if err != nil {
+		return
+	}
 
 	body := Cddr(args)
 
@@ -345,7 +351,9 @@ func DoImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 			}
 		}
 
-		rebindDoLocals(bindings, localEnv)
+		if rebindDoLocals(bindings, localEnv) != nil {
+			return
+		}
 	}
 	return
 }

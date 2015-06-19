@@ -286,6 +286,7 @@ func RemoveFromListBang(l *Data, item *Data) (result *Data) {
 			((*ConsCell)(prev.Value)).Cdr = Cdr(cell)
 			return
 		}
+		prev = cell
 	}
 	return
 }
@@ -636,7 +637,7 @@ func Flatten(d *Data) (result *Data, err error) {
 	var l []*Data = make([]*Data, 0, 10)
 	for c := d; NotNilP(c); c = Cdr(c) {
 		if ListP(Car(c)) {
-			for i := Car(c); NotNilP(i); i = Cdr(i) {
+			for i := Car(c); i != nil; i = Cdr(i) {
 				l = append(l, Car(i))
 			}
 		} else {
@@ -664,7 +665,7 @@ func RecursiveFlatten(d *Data) (result *Data, err error) {
 			if err != nil {
 				return
 			}
-			for i := elem; NotNilP(i); i = Cdr(i) {
+			for i := elem; i != nil; i = Cdr(i) {
 				l = append(l, Car(i))
 			}
 		} else {
@@ -957,12 +958,7 @@ func String(d *Data) string {
 	case FrameType:
 		pairs := make([]string, 0, len(*FrameValue(d)))
 		for key, val := range *FrameValue(d) {
-			var valString string
-			if FrameP(val) {
-				valString = "{...}"
-			} else {
-				valString = String(val)
-			}
+			var valString string = String(val)
 			pairs = append(pairs, fmt.Sprintf("%s %s", key, valString))
 		}
 		return fmt.Sprintf("{%s}", strings.Join(pairs, " "))
