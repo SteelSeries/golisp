@@ -334,6 +334,15 @@ func StringWithValue(s string) *Data {
 	return &Data{Type: StringType, Value: unsafe.Pointer(&s)}
 }
 
+func SetStringValue(d *Data, s string) *Data {
+	if StringP(d) {
+		d.Value = unsafe.Pointer(&s)
+		return d
+	} else {
+		return nil
+	}
+}
+
 func SymbolWithName(s string) *Data {
 	return &Data{Type: SymbolType, Value: unsafe.Pointer(&s)}
 }
