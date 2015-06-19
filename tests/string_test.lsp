@@ -30,27 +30,37 @@
           (== (split "1-2" "-") '( "1" "2"))
           (== (split "one,two" ",") '("one" "two")))
 
-(describe trim
-          (== (trim "  hello ") "hello")
-          (== (trim "++ yo --" "+-") " yo ")
-          (== (trim "++ yo --" "+- ") "yo"))
+(describe string-trim
+          (== (string-trim "  hello ") "hello")
+          (== (string-trim "++ yo --" "+-") " yo ")
+          (== (string-trim "++ yo --" "+- ") "yo"))
 
-(describe upcase
+(describe string-trim-left
+          (== (string-trim-left "  hello ") "hello ")
+          (== (string-trim-left "++ yo --" "+-") " yo --")
+          (== (string-trim-left "++ yo --" "+- ") "yo --"))
+
+(describe string-trim-right
+          (== (string-trim-right "  hello ") "  hello")
+          (== (string-trim-right "++ yo --" "+-") "++ yo ")
+          (== (string-trim-right "++ yo --" "+- ") "++ yo"))
+
+(describe string-upcase
           (== (string-upcase "hello") "HELLO")
           (== (string-upcase "HeLlo") "HELLO")
           (== (string-upcase "HELLO") "HELLO"))
 
-(describe downcase
+(describe string-downcase
           (== (string-downcase "hello") "hello")
           (== (string-downcase "HeLlo") "hello")
           (== (string-downcase "HELLO") "hello"))
 
-(describe capitalize
+(describe string-capitalize
           (== (string-capitalize "hello") "Hello")
           (== (string-capitalize "HeLlo") "Hello")
           (== (string-capitalize "HELLO") "Hello"))
 
-(describe upcase!
+(describe string-upcase!
           (let ((s "hello"))
             (== (string-upcase! s) "HELLO")
             (== s "HELLO")))
@@ -60,7 +70,7 @@
             (== (string-downcase! s) "hello")
             (== s "hello")))
 
-(describe capitalize!
+(describe string-capitalize!
           (let ((s "hello"))
             (== (string-capitalize! s) "Hello")
             (== s "Hello")))
@@ -75,3 +85,23 @@
 (describe string-null?
           (== (string-null? "") #t)
           (== (string-null? "hello") #f))
+
+(describe substring
+          (== (substring "hello" 0 0) "")
+          (== (substring "arduous" 2 5) "duo"))
+
+
+(describe substring?
+          (== (substring? "rat" "pirate") #t)
+          (== (substring? "rat" "outrage") #f)
+          (== (substring? "" "hjdfgds") #t))
+
+(describe string-prefix?
+          (== (string-prefix? "abc" "abcdef") #t)
+          (== (string-prefix? "abz" "abcdef") #f)
+          (== (string-prefix? "" "akjsdfh") #t))
+
+(describe string-suffix?
+          (== (string-suffix? "def" "abcdef") #t)
+          (== (string-suffix? "dez" "abcdef") #f)
+          (== (string-suffix? "" "akjsdfh") #t))
