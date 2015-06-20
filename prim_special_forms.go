@@ -18,6 +18,7 @@ func RegisterSpecialFormPrimitives() {
 	MakeSpecialForm("when", ">=2", WhenImpl)
 	MakeSpecialForm("unless", ">=2", UnlessImpl)
 	MakeSpecialForm("lambda", ">=1", LambdaImpl)
+	MakeSpecialForm("named-lambda", ">=1", NamedLambdaImpl)
 	MakeSpecialForm("define", ">=1", DefineImpl)
 	MakeSpecialForm("defmacro", ">=1", DefmacroImpl)
 	MakeSpecialForm("let", ">=1", LetImpl)
@@ -142,9 +143,28 @@ func UnlessImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func LambdaImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if !PairP(Car(args)) {
+		err = ProcessError("A lambda requires a parameter list", env)
+		return
+	}
 	params := Car(args)
 	body := Cdr(args)
-	return FunctionWithNameParamsBodyAndParent("anonymous", params, body, env), nil
+	return FunctionWithNameParamsBodyAndParent("unnamed", params, body, env), nil
+}
+
+func NamedLambdaImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if !PairP(Car(args)) {
+		err = ProcessError("A lambda requires a name/parameter list", env)
+		return
+	}
+	name := Caar(args)
+	if !SymbolP(name) {
+		err = ProcessError("A named lambda requires a name that is a symbol", env)
+		return
+	}
+	params := Cdar(args)
+	body := Cdr(args)
+	return FunctionWithNameParamsBodyAndParent(StringValue(name), params, body, env), nil
 }
 
 func DefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
