@@ -281,8 +281,37 @@ func LetCommon(args *Data, env *SymbolTableFrame, star bool, rec bool) (result *
 	return
 }
 
+func namedLetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	name := Car(args)
+	bindings := Cadr(args)
+	if !PairP(bindings) {
+		err = ProcessError("A named let requires a list of bindings as it's second argument", env)
+		return
+	}
+	body := Cddr(args)
+	vars := make([]*Data, 0, Length(bindings))
+	initials := make([]*Data, 0, Length(bindings))
+	for remainingBindings := bindings; NotNilP(remainingBindings); remainingBindings = Cdr(remainingBindings) {
+		binding := Car(remainingBindings)
+		vars = append(vars, Car(binding))
+		initials = append(initials, Cadr(binding))
+	}
+	varsList := ArrayToList(vars)
+	initialsList := ArrayToList(initials)
+	localEnv := NewSymbolTableFrameBelow(env, StringValue(name))
+	localEnv.Previous = env
+	localEnv.BindLocallyTo(name, nil)
+	namedLetProc := FunctionWithNameParamsBodyAndParent(StringValue(name), varsList, body, localEnv)
+	localEnv.BindLocallyTo(name, namedLetProc)
+	return FunctionValue(namedLetProc).Apply(initialsList, env)
+}
+
 func LetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return LetCommon(args, env, false, false)
+	if SymbolP(Car(args)) {
+		return namedLetImpl(args, env)
+	} else {
+		return LetCommon(args, env, false, false)
+	}
 }
 
 func LetStarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
