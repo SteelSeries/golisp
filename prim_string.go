@@ -18,7 +18,7 @@ const (
 	TrimRight = iota
 )
 
-func RegsterStringPrimitives() {
+func RegisterStringPrimitives() {
 	MakePrimitiveFunction("split", "2", SplitImpl)
 	MakePrimitiveFunction("string-trim", "1|2", TrimImpl)
 	MakePrimitiveFunction("string-trim-left", "1|2", TrimLeftImpl)

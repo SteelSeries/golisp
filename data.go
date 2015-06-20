@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"gopkg.in/fatih/set.v0"
+	"os"
 	"strings"
 	"unsafe"
 )
@@ -30,6 +31,7 @@ const (
 	BoxedObjectType
 	FrameType
 	EnvironmentType
+	PortType
 )
 
 type ConsCell struct {
@@ -105,6 +107,8 @@ func TypeName(t uint8) string {
 		return "Go Object"
 	case EnvironmentType:
 		return "Environment"
+	case PortType:
+		return "Port"
 	default:
 		return "Unknown"
 	}
@@ -190,6 +194,10 @@ func FrameP(d *Data) bool {
 
 func EnvironmentP(d *Data) bool {
 	return d != nil && TypeOf(d) == EnvironmentType
+}
+
+func PortP(d *Data) bool {
+	return d != nil && TypeOf(d) == PortType
 }
 
 func EmptyCons() *Data {
@@ -374,6 +382,10 @@ func ObjectWithTypeAndValue(typeName string, o unsafe.Pointer) *Data {
 
 func EnvironmentWithValue(e *SymbolTableFrame) *Data {
 	return &Data{Type: EnvironmentType, Value: unsafe.Pointer(e)}
+}
+
+func PortWithValue(e *os.File) *Data {
+	return &Data{Type: PortType, Value: unsafe.Pointer(e)}
 }
 
 func ConsValue(d *Data) *ConsCell {
@@ -565,6 +577,18 @@ func EnvironmentValue(d *Data) *SymbolTableFrame {
 
 	if EnvironmentP(d) {
 		return (*SymbolTableFrame)(d.Value)
+	}
+
+	return nil
+}
+
+func PortValue(d *Data) *os.File {
+	if d == nil {
+		return nil
+	}
+
+	if PortP(d) {
+		return (*os.File)(d.Value)
 	}
 
 	return nil
@@ -942,6 +966,8 @@ func String(d *Data) string {
 		return fmt.Sprintf("{%s}", strings.Join(pairs, " "))
 	case EnvironmentType:
 		return fmt.Sprintf("<environment: %s>", EnvironmentValue(d).Name)
+	case PortType:
+		return fmt.Sprintf("<port: %s>", PortValue(d).Name())
 	}
 
 	return ""

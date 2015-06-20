@@ -42,10 +42,11 @@ func InitBuiltins() {
 	RegisterAListPrimitives()
 	RegisterSystemPrimitives()
 	RegisterBytearrayPrimitives()
-	RegsterStringPrimitives()
+	RegisterStringPrimitives()
 	RegisterDebugPrimitives()
 	RegisterTestingPrimitives()
 	RegisterFramePrimitives()
 	RegisterConcurrencyPrimitives()
 	RegisterEnvironmentPrimitives()
+	RegisterIOPrimitives()
 }
