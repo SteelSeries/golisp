@@ -24,9 +24,13 @@
           (== (flatten* (list)) '())
           (== (flatten* 42) 42))
 
-(describe partition
+(describe partition-by-size
           (== (partition 2 '(1 2 3 4 5 6 7 8)) '((1 2) (3 4) (5 6) (7 8)))
           (== (partition 4 '(1 2 3 4 5 6 7 8)) '((1 2 3 4) (5 6 7 8))))
+
+(describe partition-by-predicate
+          (== (partition odd? '(1 2 3 4 5 6 7 8 9)) '((1 3 5 7 9) (2 4 6 8)))
+          (== (partition even? '(1 2 3 4 5 6 7 8 9)) '((2 4 6 8) (1 3 5 7 9))))
 
 (define list1 '(1 2))
 (describe append
