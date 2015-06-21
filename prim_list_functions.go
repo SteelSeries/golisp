@@ -13,6 +13,7 @@ import (
 
 func RegisterListFunctionsPrimitives() {
 	MakePrimitiveFunction("map", ">=2", MapImpl)
+	MakePrimitiveFunction("for-each", ">=2", ForEachImpl)
 	MakePrimitiveFunction("reduce", "3", ReduceImpl)
 	MakePrimitiveFunction("filter", "2", FilterImpl)
 	MakePrimitiveFunction("remove", "2", RemoveImpl)
@@ -67,6 +68,42 @@ func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	return ArrayToList(d), nil
+}
+
+func ForEachImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	f := First(args)
+	if !FunctionP(f) {
+		err = ProcessError(fmt.Sprintf("foreach needs a function as its first argument, but got %s.", String(f)), env)
+		return
+	}
+
+	var collections []*Data = make([]*Data, 0, Length(args)-1)
+	var loopCount = 30000
+	var col *Data
+	for a := Cdr(args); NotNilP(a); a = Cdr(a) {
+		col = Car(a)
+		if !ListP(col) {
+			err = ProcessError(fmt.Sprintf("foreach needs lists as its other arguments, but got %s.", String(col)), env)
+			return
+		}
+		collections = append(collections, col)
+		loopCount = intMin(loopCount, Length(col))
+	}
+
+	var a *Data
+	for index := 1; index <= loopCount; index++ {
+		mapArgs := make([]*Data, 0, len(collections))
+		for _, mapArgCollection := range collections {
+			a = Nth(mapArgCollection, index)
+			mapArgs = append(mapArgs, a)
+		}
+		_, err = ApplyWithoutEval(f, ArrayToList(mapArgs), env)
+		if err != nil {
+			return
+		}
+	}
+
+	return nil, nil
 }
 
 func ReduceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
