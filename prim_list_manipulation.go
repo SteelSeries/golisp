@@ -28,6 +28,7 @@ func MakeListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	kVal := Car(args)
 	if !IntegerP(kVal) {
 		err = ProcessError("make-list requires a number as it's first argument.", env)
+		return
 	}
 
 	k := IntegerValue(kVal)
@@ -124,18 +125,8 @@ func CopyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return Copy(Car(args)), nil
 }
 
-func PartitionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	n := Car(args)
-	if !IntegerP(n) {
-		err = ProcessError("partition requires a number as it's first argument.", env)
-	}
-	size := int(IntegerValue(n))
-
-	l := Cadr(args)
-	if !ListP(l) {
-		err = ProcessError("partition requires a list as it's second argument.", env)
-	}
-
+func partitionBySize(determiner *Data, l *Data) (result *Data, err error) {
+	size := int(IntegerValue(determiner))
 	var pieces []*Data = make([]*Data, 0, 5)
 	var chunk []*Data = make([]*Data, 0, 5)
 	for c := l; NotNilP(c); c = Cdr(c) {
@@ -150,20 +141,64 @@ func PartitionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 	if len(chunk) > 0 {
 		pieces = append(pieces, ArrayToList(chunk))
 	}
+	return ArrayToList(pieces), nil
+}
+
+func partitionByPredicate(determiner *Data, l *Data, env *SymbolTableFrame) (result *Data, err error) {
+	pieces := make([]*Data, 0, 5)
+	falseSection := make([]*Data, 0, 5)
+	trueSection := make([]*Data, 0, 5)
+	var predicateResult *Data
+	for c := l; NotNilP(c); c = Cdr(c) {
+		predicateResult, err = Apply(determiner, InternalMakeList(Car(c)), env)
+		if err != nil {
+			return
+		}
+		if BooleanValue(predicateResult) {
+			trueSection = append(trueSection, Car(c))
+		} else {
+			falseSection = append(falseSection, Car(c))
+		}
+	}
+
+	pieces = append(pieces, ArrayToList(trueSection))
+	pieces = append(pieces, ArrayToList(falseSection))
 
 	return ArrayToList(pieces), nil
+}
+
+func PartitionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	determiner := Car(args)
+	if !IntegerP(determiner) && !FunctionP(determiner) {
+		err = ProcessError("partition requires a number or function as it's first argument.", env)
+		return
+	}
+
+	l := Cadr(args)
+	if !ListP(l) {
+		err = ProcessError("partition requires a list as it's second argument.", env)
+		return
+	}
+
+	if IntegerP(determiner) {
+		return partitionBySize(determiner, l)
+	} else {
+		return partitionByPredicate(determiner, l, env)
+	}
 }
 
 func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	n := First(args)
 	if !IntegerP(n) {
 		err = ProcessError("sublist requires a number as it's first argument.", env)
+		return
 	}
 	first := int(IntegerValue(n))
 
 	n = Second(args)
 	if !IntegerP(n) {
 		err = ProcessError("sublist requires a number as it's second argument.", env)
+		return
 	}
 	last := int(IntegerValue(n))
 
@@ -175,6 +210,7 @@ func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	l := Third(args)
 	if !ListP(l) {
 		err = ProcessError("sublist requires a list as it's third argument.", env)
+		return
 	}
 
 	var cell *Data
