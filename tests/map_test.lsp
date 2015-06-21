@@ -12,3 +12,8 @@
 
 (describe map-with-muliple-lists
           (== (map + '(1 2 3) '(4 5 6)) '(5 7 9)))
+
+(describe for-each
+          (let ((count 0))
+            (== (for-each (lambda (x) (set! count (+ count x))) '(1 2 3 4)) '())
+            (== count 10)))
