@@ -15,6 +15,7 @@ func RegisterListFunctionsPrimitives() {
 	MakePrimitiveFunction("map", ">=2", MapImpl)
 	MakePrimitiveFunction("reduce", "3", ReduceImpl)
 	MakePrimitiveFunction("filter", "2", FilterImpl)
+	MakePrimitiveFunction("remove", "2", RemoveImpl)
 	MakePrimitiveFunction("memq", "2", MemqImpl)
 	MakePrimitiveFunction("memp", "2", MempImpl)
 }
@@ -126,6 +127,39 @@ func FilterImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		}
 
 		if BooleanValue(v) {
+			d = append(d, Car(c))
+		}
+	}
+
+	return ArrayToList(d), nil
+}
+
+func RemoveImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	f := First(args)
+	if !FunctionP(f) {
+		err = ProcessError(fmt.Sprintf("remove needs a function as its first argument, but got %s.", String(f)), env)
+		return
+	}
+
+	col := Second(args)
+	if !ListP(col) {
+		err = ProcessError(fmt.Sprintf("remove needs a list as its second argument, but got %s.", String(col)), env)
+		return
+	}
+
+	var d []*Data = make([]*Data, 0, Length(col))
+	var v *Data
+	for c := col; NotNilP(c); c = Cdr(c) {
+		v, err = ApplyWithoutEval(f, Cons(Car(c), nil), env)
+		if err != nil {
+			return
+		}
+		if !BooleanP(v) {
+			err = ProcessError("remove needs a predicate function as its first argument.", env)
+			return
+		}
+
+		if !BooleanValue(v) {
 			d = append(d, Car(c))
 		}
 	}
