@@ -48,11 +48,6 @@ func MakeListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func ListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	// var items []*Data = make([]*Data, 0, Length(args))
-	// for cell := args; NotNilP(cell); cell = Cdr(cell) {
-	// 	items = append(items, Car(cell))
-	// }
-	// result = ArrayToList(items)
 	return args, nil
 }
 
