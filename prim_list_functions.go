@@ -17,7 +17,9 @@ func RegisterListFunctionsPrimitives() {
 	MakePrimitiveFunction("filter", "2", FilterImpl)
 	MakePrimitiveFunction("remove", "2", RemoveImpl)
 	MakePrimitiveFunction("memq", "2", MemqImpl)
-	MakePrimitiveFunction("memp", "2", MempImpl)
+	MakePrimitiveFunction("memp", "2", FindTailImpl)
+	MakePrimitiveFunction("find-tail", "2", FindTailImpl)
+	MakePrimitiveFunction("find", "2", FindImpl)
 }
 
 func intMin(x, y int) int {
@@ -181,10 +183,10 @@ func MemqImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return LispFalse, nil
 }
 
-func MempImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func FindTailImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
 	if !FunctionP(f) {
-		err = ProcessError("memp needs a function as its first argument", env)
+		err = ProcessError("find-tasil/memp needs a function as its first argument", env)
 		return
 	}
 
@@ -195,6 +197,26 @@ func MempImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		found, err = ApplyWithoutEval(f, InternalMakeList(Car(c)), env)
 		if BooleanValue(found) {
 			return c, nil
+		}
+	}
+
+	return LispFalse, nil
+}
+
+func FindImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	f := First(args)
+	if !FunctionP(f) {
+		err = ProcessError("find needs a function as its first argument", env)
+		return
+	}
+
+	l := Second(args)
+
+	var found *Data
+	for c := l; NotNilP(c); c = Cdr(c) {
+		found, err = ApplyWithoutEval(f, InternalMakeList(Car(c)), env)
+		if BooleanValue(found) {
+			return Car(c), nil
 		}
 	}
 
