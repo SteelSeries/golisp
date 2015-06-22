@@ -20,8 +20,6 @@ var symbolCounts map[string]int = make(map[string]int)
 func RegisterSystemPrimitives() {
 	MakePrimitiveFunction("sleep", "1", SleepImpl)
 	MakePrimitiveFunction("millis", "0", MillisImpl)
-	MakePrimitiveFunction("newline", "0", NewlineImpl)
-	MakePrimitiveFunction("write", "*", WriteImpl)
 	MakePrimitiveFunction("write-line", "*", WriteLineImpl)
 	MakePrimitiveFunction("write-log", "*", WriteLogImpl)
 	MakePrimitiveFunction("str", "*", MakeStringImpl)
@@ -94,11 +92,6 @@ func MillisImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return
 }
 
-func NewlineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	println("")
-	return
-}
-
 func concatStringForms(args *Data) (str string) {
 	if NilP(args) || Length(args) == 0 {
 		return "()"
@@ -108,11 +101,6 @@ func concatStringForms(args *Data) (str string) {
 		pieces = append(pieces, PrintString(Car(cell)))
 	}
 	return strings.Join(pieces, "")
-}
-
-func WriteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	print(concatStringForms(args))
-	return
 }
 
 func WriteLineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
