@@ -30,9 +30,9 @@
 
 (describe named-let
           (== (let loop
-                ((numbers ’(3 -2 1 6 -5))
-                 (nonneg ’())
-                 (neg ’()))
+                ((numbers '(3 -2 1 6 -5))
+                 (nonneg '())
+                 (neg '()))
                 (cond ((null? numbers)
                        (list nonneg neg))
                       ((>= (car numbers) 0)
