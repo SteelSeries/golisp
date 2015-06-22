@@ -10,6 +10,7 @@ package golisp
 import (
 	"errors"
 	"fmt"
+	"time"
 )
 
 type Function struct {
@@ -103,12 +104,23 @@ func (self *Function) internalApply(args *Data, argEnv *SymbolTableFrame, frame 
 	if err != nil {
 		return
 	}
+
+	if ProfileEnabled {
+		fmt.Printf("(%d enter func %s)\n", time.Now().UnixNano(), self.Name)
+	}
+
 	for s := self.Body; NotNilP(s); s = Cdr(s) {
 		result, err = Eval(Car(s), localEnv)
 		if err != nil {
-			return nil, errors.New(fmt.Sprintf("In '%s': %s", self.Name, err))
+			result, err = nil, errors.New(fmt.Sprintf("In '%s': %s", self.Name, err))
+			break
 		}
 	}
+
+	if ProfileEnabled {
+		fmt.Printf("(%d exit  func %s)\n", time.Now().UnixNano(), self.Name)
+	}
+
 	return
 }
 
@@ -134,11 +146,22 @@ func (self *Function) ApplyOveriddingEnvironment(args *Data, argEnv *SymbolTable
 	if err != nil {
 		return
 	}
+
+	if ProfileEnabled {
+		fmt.Printf("(%d enter func %s)\n", time.Now().UnixNano(), self.Name)
+	}
+
 	for s := self.Body; NotNilP(s); s = Cdr(s) {
 		result, err = Eval(Car(s), localEnv)
 		if err != nil {
-			return nil, errors.New(fmt.Sprintf("In '%s': %s", self.Name, err))
+			result, err = nil, errors.New(fmt.Sprintf("In '%s': %s", self.Name, err))
+			break
 		}
 	}
+
+	if ProfileEnabled {
+		fmt.Printf("(%d exit  func %s)\n", time.Now().UnixNano(), self.Name)
+	}
+
 	return
 }
