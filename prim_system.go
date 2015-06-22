@@ -35,6 +35,7 @@ func RegisterSystemPrimitives() {
 	MakeRestrictedPrimitiveFunction("panic!", "1", PanicImpl)
 
 	MakeSpecialForm("time", "1", TimeImpl)
+	MakeSpecialForm("profile", "1", ProfileImpl)
 }
 
 func LoadFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -143,6 +144,22 @@ func TimeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	d := time.Since(startTime)
 	fmt.Printf("Stopped timer.\nTook %v to run.\n", d)
 	result = IntegerWithValue(int64(d.Nanoseconds() / 1000000))
+	return
+}
+
+func ProfileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	ProfileEnabled = true
+
+	for cell := args; NotNilP(cell); cell = Cdr(cell) {
+		sexpr := Car(cell)
+		result, err = Eval(sexpr, env)
+		if err != nil {
+			break
+		}
+	}
+
+	ProfileEnabled = false
+
 	return
 }
 

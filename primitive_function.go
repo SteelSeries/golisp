@@ -10,6 +10,7 @@ package golisp
 import (
 	"fmt"
 	"strings"
+	"time"
 )
 
 type PrimitiveFunction struct {
@@ -93,7 +94,17 @@ func (self *PrimitiveFunction) Apply(args *Data, env *SymbolTableFrame) (result 
 		return
 	}
 
-	return (self.Body)(ArrayToList(argArray), env)
+	if ProfileEnabled {
+		fmt.Printf("(%d enter prim %s)\n", time.Now().UnixNano(), self.Name)
+	}
+
+	result, err = (self.Body)(ArrayToList(argArray), env)
+
+	if ProfileEnabled {
+		fmt.Printf("(%d exit  prim %s)\n", time.Now().UnixNano(), self.Name)
+	}
+
+	return
 }
 
 func (self *PrimitiveFunction) ApplyWithoutEval(args *Data, env *SymbolTableFrame) (result *Data, err error) {
