@@ -11,8 +11,11 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"unsafe"
 )
+
+var EofObject *Data = Intern("__EOF__")
 
 func makeInteger(str string) (n *Data, err error) {
 	var i int64
@@ -292,13 +295,13 @@ func parseExpression(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 }
 
 func Parse(src string) (sexpr *Data, err error) {
-	s := NewTokenizer(src)
+	s := NewTokenizerFromString(src)
 	sexpr, _, err = parseExpression(s)
 	return
 }
 
 func ParseAll(src string) (result []*Data, err error) {
-	s := NewTokenizer(src)
+	s := NewTokenizerFromString(src)
 	var sexpr *Data
 	var eof bool
 	for {
@@ -343,7 +346,7 @@ func ProcessFileInEnvironment(filename string, env *SymbolTableFrame) (result *D
 }
 
 func ParseAndEvalAllInEnvironment(src string, env *SymbolTableFrame) (result *Data, err error) {
-	s := NewTokenizer(src)
+	s := NewTokenizerFromString(src)
 	var sexpr *Data
 	var eof bool
 	for {
@@ -366,9 +369,8 @@ func ParseAndEvalAllInEnvironment(src string, env *SymbolTableFrame) (result *Da
 }
 
 func ParseAndEvalInEnvironment(src string, env *SymbolTableFrame) (result *Data, err error) {
-	s := NewTokenizer(src)
 	var sexpr *Data
-	sexpr, _, err = parseExpression(s)
+	sexpr, _, err = parseExpression(NewTokenizerFromString(src))
 	if err != nil {
 		return
 	}
@@ -379,5 +381,18 @@ func ParseAndEvalInEnvironment(src string, env *SymbolTableFrame) (result *Data,
 	if err != nil {
 		return
 	}
+	return
+}
+
+func ParseObjectFromFileInEnv(port *os.File, env *SymbolTableFrame) (result *Data, err error) {
+	result, eof, err := parseExpression(NewTokenizerFromFile(port))
+	if err != nil {
+		return
+	}
+
+	if eof {
+		result = EofObject
+	}
+
 	return
 }
