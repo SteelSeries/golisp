@@ -9,6 +9,7 @@ package golisp
 
 import (
 	"fmt"
+	"io"
 	"strings"
 	"unicode"
 )
@@ -41,14 +42,34 @@ const (
 type Tokenizer struct {
 	LookaheadToken int
 	LookaheadLit   string
-	Source         string
-	Position       int
+	Source         *strings.Reader
+	CurrentCh      rune
+	NextCh         rune
+	Eof            bool
+	AlmostEof      bool
 }
 
 func NewTokenizer(src string) *Tokenizer {
-	t := &Tokenizer{Source: src}
+	t := &Tokenizer{Source: strings.NewReader(src)}
+	t.Advance()
 	t.ConsumeToken()
 	return t
+}
+
+func (self *Tokenizer) Advance() {
+	var err error
+	self.CurrentCh, _, err = self.Source.ReadRune()
+	if err == io.EOF {
+		self.Eof = true
+		self.NextCh = 0
+	} else {
+		self.NextCh, _, err = self.Source.ReadRune()
+		if err == io.EOF {
+			self.AlmostEof = true
+		} else {
+			self.Source.UnreadRune()
+		}
+	}
 }
 
 func (self *Tokenizer) NextToken() (token int, lit string) {
@@ -60,11 +81,12 @@ func (self *Tokenizer) isSymbolCharacter(ch rune) bool {
 }
 
 func (self *Tokenizer) readSymbol() (token int, lit string) {
-	start := self.Position
-	for !self.isEof() && self.isSymbolCharacter(rune(self.Source[self.Position])) {
-		self.Position++
+	buffer := make([]rune, 0, 1)
+	for !self.isEof() && self.isSymbolCharacter(self.CurrentCh) {
+		buffer = append(buffer, self.CurrentCh)
+		self.Advance()
 	}
-	return SYMBOL, self.Source[start:self.Position]
+	return SYMBOL, string(buffer)
 }
 
 func isHexChar(ch rune) bool {
@@ -88,57 +110,60 @@ func isBinaryChar(ch rune) bool {
 }
 
 func (self *Tokenizer) readHexNumber() (token int, lit string) {
-	start := self.Position
+	buffer := make([]rune, 0, 1)
 	for !self.isEof() {
-		ch := rune(self.Source[self.Position])
+		ch := rune(self.CurrentCh)
 		if isHexChar(ch) {
-			self.Position++
+			buffer = append(buffer, self.CurrentCh)
+			self.Advance()
 		} else {
 			break
 		}
 	}
 
-	lit = self.Source[start:self.Position]
-	token = HEXNUMBER
-	return
+	return HEXNUMBER, string(buffer)
 }
 
 func (self *Tokenizer) readBinaryNumber() (token int, lit string) {
-	start := self.Position
+	buffer := make([]rune, 0, 1)
 	for !self.isEof() {
-		ch := rune(self.Source[self.Position])
+		ch := rune(self.CurrentCh)
 		if isBinaryChar(ch) {
-			self.Position++
+			buffer = append(buffer, self.CurrentCh)
+			self.Advance()
 		} else {
 			break
 		}
 	}
 
-	lit = self.Source[start:self.Position]
-	token = BINARYNUMBER
-	return
+	return BINARYNUMBER, string(buffer)
 }
 
 func (self *Tokenizer) readNumber() (token int, lit string) {
-	start := self.Position
+	buffer := make([]rune, 0, 1)
 	isFloat := false
 	sawDecimal := false
+	firstChar := true
 	for !self.isEof() {
-		ch := rune(self.Source[self.Position])
+		ch := rune(self.CurrentCh)
 		if ch == '.' && !sawDecimal {
 			isFloat = true
 			sawDecimal = true
-			self.Position++
-		} else if (start == self.Position) && ch == '-' {
-			self.Position++
+			buffer = append(buffer, self.CurrentCh)
+			self.Advance()
+		} else if firstChar && ch == '-' {
+			buffer = append(buffer, self.CurrentCh)
+			self.Advance()
 		} else if unicode.IsNumber(ch) {
-			self.Position++
+			buffer = append(buffer, self.CurrentCh)
+			self.Advance()
 		} else {
 			break
 		}
+		firstChar = false
 	}
 
-	lit = self.Source[start:self.Position]
+	lit = string(buffer)
 	if isFloat {
 		token = FLOAT
 	} else {
@@ -149,113 +174,117 @@ func (self *Tokenizer) readNumber() (token int, lit string) {
 
 func (self *Tokenizer) readString() (token int, lit string) {
 	buffer := make([]rune, 0, 10)
-	self.Position++
-	for !self.isEof() && rune(self.Source[self.Position]) != '"' {
-		if rune(self.Source[self.Position]) == '\\' {
-			self.Position++
+	self.Advance()
+	for !self.isEof() && rune(self.CurrentCh) != '"' {
+		if rune(self.CurrentCh) == '\\' {
+			self.Advance()
 		}
-		buffer = append(buffer, rune(self.Source[self.Position]))
-		self.Position++
+		buffer = append(buffer, rune(self.CurrentCh))
+		self.Advance()
 	}
 	if self.isEof() {
 		return EOF, ""
 	}
-	self.Position++
+	self.Advance()
 	return STRING, string(buffer)
 }
 
 func (self *Tokenizer) isEof() bool {
-	return self.Position >= len(self.Source)
+	return self.Eof
 }
 
 func (self *Tokenizer) isAlmostEof() bool {
-	return self.Position == len(self.Source)-1
+	return self.AlmostEof
 }
 
 func (self *Tokenizer) readNextToken() (token int, lit string) {
 	if self.isEof() {
 		return EOF, ""
 	}
-	for unicode.IsSpace(rune(self.Source[self.Position])) {
-		self.Position++
+	for unicode.IsSpace(self.CurrentCh) {
+		self.Advance()
 		if self.isEof() {
 			return EOF, ""
 		}
 	}
-	currentChar := rune(self.Source[self.Position])
-	var nextChar rune
-	if !self.isAlmostEof() {
-		nextChar = rune(self.Source[self.Position+1])
-	}
-	if currentChar == '0' && nextChar == 'x' {
-		self.Position += 2
+
+	if self.CurrentCh == '0' && self.NextCh == 'x' {
+		self.Advance()
+		self.Advance()
 		return self.readHexNumber()
-	} else if unicode.IsNumber(currentChar) {
+	} else if unicode.IsNumber(self.CurrentCh) {
 		return self.readNumber()
-	} else if currentChar == '-' && unicode.IsNumber(nextChar) {
+	} else if self.CurrentCh == '-' && unicode.IsNumber(self.NextCh) {
 		return self.readNumber()
-	} else if currentChar == '"' {
+	} else if self.CurrentCh == '"' {
 		return self.readString()
-	} else if currentChar == '\'' {
-		self.Position++
+	} else if self.CurrentCh == '\'' {
+		println("QUOTE")
+		self.Advance()
 		return QUOTE, "'"
-	} else if currentChar == '`' {
-		self.Position++
+	} else if self.CurrentCh == '`' {
+		self.Advance()
 		return BACKQUOTE, "`"
-	} else if currentChar == ',' && nextChar == '@' {
-		self.Position += 2
+	} else if self.CurrentCh == ',' && self.NextCh == '@' {
+		self.Advance()
+		self.Advance()
 		return COMMAAT, ",@"
-	} else if currentChar == ',' {
-		self.Position++
+	} else if self.CurrentCh == ',' {
+		self.Advance()
 		return COMMA, ","
-	} else if currentChar == '(' {
-		self.Position++
+	} else if self.CurrentCh == '(' {
+		self.Advance()
 		return LPAREN, "("
-	} else if currentChar == ')' {
-		self.Position++
+	} else if self.CurrentCh == ')' {
+		self.Advance()
 		return RPAREN, ")"
-	} else if currentChar == '[' {
-		self.Position++
+	} else if self.CurrentCh == '[' {
+		self.Advance()
 		return LBRACKET, "["
-	} else if currentChar == ']' {
-		self.Position++
+	} else if self.CurrentCh == ']' {
+		self.Advance()
 		return RBRACKET, "]"
-	} else if currentChar == '{' {
-		self.Position++
+	} else if self.CurrentCh == '{' {
+		self.Advance()
 		return LBRACE, "{"
-	} else if currentChar == '}' {
-		self.Position++
+	} else if self.CurrentCh == '}' {
+		self.Advance()
 		return RBRACE, "}"
-	} else if currentChar == '.' && nextChar == ' ' {
-		self.Position++
+	} else if self.CurrentCh == '.' && self.NextCh == ' ' {
+		self.Advance()
 		return PERIOD, "."
-	} else if self.isSymbolCharacter(currentChar) {
+	} else if self.isSymbolCharacter(self.CurrentCh) {
 		return self.readSymbol()
-	} else if currentChar == '#' {
-		self.Position += 2
-		if nextChar == 't' {
+	} else if self.CurrentCh == '#' {
+		self.Advance()
+		if self.CurrentCh == 't' {
+			self.Advance()
 			return TRUE, "#t"
-		} else if nextChar == 'f' {
+		} else if self.CurrentCh == 'f' {
+			self.Advance()
 			return FALSE, "#f"
-		} else if nextChar == 'x' {
+		} else if self.CurrentCh == 'x' {
+			self.Advance()
 			return self.readHexNumber()
-		} else if nextChar == 'b' {
+		} else if self.CurrentCh == 'b' {
+			self.Advance()
 			return self.readBinaryNumber()
 		} else {
-			return ILLEGAL, fmt.Sprintf("#%c", nextChar)
+			return ILLEGAL, fmt.Sprintf("#%c", self.NextCh)
 		}
-	} else if currentChar == ';' {
-		start := self.Position
+	} else if self.CurrentCh == ';' {
+		buffer := make([]rune, 0, 1)
 		for {
 			if self.isEof() {
-				return COMMENT, self.Source[start:]
-			} else if self.Source[self.Position] == '\n' {
-				return COMMENT, self.Source[start:self.Position]
+				return COMMENT, string(buffer)
+			} else if self.CurrentCh == '\n' {
+				return COMMENT, string(buffer)
 			}
-			self.Position++
+			buffer = append(buffer, self.CurrentCh)
+			self.Advance()
 		}
 	} else {
-		return ILLEGAL, fmt.Sprintf("%c", currentChar)
+		return ILLEGAL, fmt.Sprintf("%c", self.CurrentCh)
 	}
 }
 
