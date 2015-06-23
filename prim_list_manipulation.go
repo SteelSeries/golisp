@@ -188,16 +188,22 @@ func PartitionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 }
 
 func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	n := First(args)
+	l := Car(args)
+	if !ListP(l) {
+		err = ProcessError("sublist requires a list as it's first argument.", env)
+		return
+	}
+
+	n := Cadr(args)
 	if !IntegerP(n) {
-		err = ProcessError("sublist requires a number as it's first argument.", env)
+		err = ProcessError("sublist requires a number as it's second argument (start).", env)
 		return
 	}
 	first := int(IntegerValue(n))
 
-	n = Second(args)
+	n = Caddr(args)
 	if !IntegerP(n) {
-		err = ProcessError("sublist requires a number as it's second argument.", env)
+		err = ProcessError("sublist requires a number as it's third argument (end).", env)
 		return
 	}
 	last := int(IntegerValue(n))
@@ -207,19 +213,13 @@ func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	l := Third(args)
-	if !ListP(l) {
-		err = ProcessError("sublist requires a list as it's third argument.", env)
-		return
-	}
-
 	var cell *Data
 	var i int
 	for i, cell = 1, l; i < first && NotNilP(cell); i, cell = i+1, Cdr(cell) {
 	}
 
 	var items []*Data = make([]*Data, 0, Length(args))
-	for ; i <= last && NotNilP(cell); i, cell = i+1, Cdr(cell) {
+	for ; i < last && NotNilP(cell); i, cell = i+1, Cdr(cell) {
 		items = append(items, Car(cell))
 	}
 	result = ArrayToList(items)
