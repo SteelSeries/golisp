@@ -9,7 +9,9 @@ package golisp
 
 import (
 	"fmt"
+	"github.com/jimsmart/bufrr"
 	"io"
+	"os"
 	"strings"
 	"unicode"
 )
@@ -42,29 +44,47 @@ const (
 type Tokenizer struct {
 	LookaheadToken int
 	LookaheadLit   string
-	Source         *strings.Reader
+	Source         *bufrr.Reader
 	CurrentCh      rune
 	NextCh         rune
 	Eof            bool
 	AlmostEof      bool
 }
 
-func NewTokenizer(src string) *Tokenizer {
-	t := &Tokenizer{Source: strings.NewReader(src)}
+var mostRecentFileTokenizer *Tokenizer
+var mostRecentlyUsedFile *os.File
+
+func NewTokenizer(scanner *bufrr.Reader) *Tokenizer {
+	t := &Tokenizer{Source: scanner}
 	t.Advance()
 	t.ConsumeToken()
 	return t
 }
 
+func NewTokenizerFromString(src string) *Tokenizer {
+	return NewTokenizer(bufrr.NewReader(strings.NewReader(src)))
+}
+
+func NewTokenizerFromFile(src *os.File) *Tokenizer {
+	if mostRecentlyUsedFile == src {
+		return mostRecentFileTokenizer
+	} else {
+		t := NewTokenizer(bufrr.NewReader(src))
+		mostRecentFileTokenizer = t
+		mostRecentlyUsedFile = src
+		return t
+	}
+}
+
 func (self *Tokenizer) Advance() {
 	var err error
 	self.CurrentCh, _, err = self.Source.ReadRune()
-	if err == io.EOF {
+	if err == io.EOF || self.CurrentCh == -1 {
 		self.Eof = true
 		self.NextCh = 0
 	} else {
 		self.NextCh, _, err = self.Source.ReadRune()
-		if err == io.EOF {
+		if err == io.EOF || self.NextCh == -1 {
 			self.AlmostEof = true
 		} else {
 			self.Source.UnreadRune()
@@ -219,7 +239,6 @@ func (self *Tokenizer) readNextToken() (token int, lit string) {
 	} else if self.CurrentCh == '"' {
 		return self.readString()
 	} else if self.CurrentCh == '\'' {
-		println("QUOTE")
 		self.Advance()
 		return QUOTE, "'"
 	} else if self.CurrentCh == '`' {
@@ -284,7 +303,8 @@ func (self *Tokenizer) readNextToken() (token int, lit string) {
 			self.Advance()
 		}
 	} else {
-		return ILLEGAL, fmt.Sprintf("%c", self.CurrentCh)
+		self.Advance()
+		return ILLEGAL, fmt.Sprintf("%d", self.CurrentCh)
 	}
 }
 
