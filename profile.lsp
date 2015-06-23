@@ -25,8 +25,9 @@
                            (cond ((and (eq? (mode d) 'exit)
                                        (eq? (name d) f-name))
                                   (list (time d) ch))
-                             ((eq? (mode d) 'enter)
-                              (loop (read f) (cons (read-function-call d f) ch))))))
+                                 ((eq? (mode d) 'enter)
+                                  (let ((children (cons (read-function-call d f) ch))) 
+                                    (loop (read f) children))))))
            (children (cadr children-end))
            (end-time (car children-end)))
       (list (- end-time start-time) f-type f-name children)))
@@ -41,8 +42,8 @@
 (define (add-to-function fname time data)
   (let ((existing (assoc fname data)))
     (if (null? existing)
-        (acons fname time data)
-        (acons fname (+ time (cadr existing)) (dissoc fname data)))))
+        (acons fname (list 1 time) data)
+        (acons fname (list (+ (cadr existing) 1) (+ time (caddr existing))) (dissoc fname data)))))
 
 
 ;;; type can be prim, func, or all
@@ -52,7 +53,7 @@
                       (add-to-function (node-name call-tree) (node-time call-tree) data)
                       data)))
     (let loop
-        ((d (new-data))
+        ((d new-data)
          (nodes (node-children call-tree)))
       (if (null? nodes)
           d
