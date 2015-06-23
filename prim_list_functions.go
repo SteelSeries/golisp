@@ -223,7 +223,7 @@ func MemqImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 func FindTailImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
 	if !FunctionP(f) {
-		err = ProcessError("find-tasil/memp needs a function as its first argument", env)
+		err = ProcessError("find-tail/memp needs a function as its first argument", env)
 		return
 	}
 
