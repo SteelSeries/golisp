@@ -79,9 +79,9 @@
           (== (list-tail '(1 2 3 4 5) 3) '(4 5)))
 
 (describe sublist
-          (== (sublist 1 3 '(1 2 3)) '(1 2 3))
-          (== (sublist 2 4 '(1 2 3 4 5)) '(2 3 4))
-          (== (sublist 2 2 '(1 2 3 4 5)) '()))
+          (== (sublist '(1 2 3) 1 3) '(1 2))
+          (== (sublist '(1 2 3 4 5) 2 4) '(2 3))
+          (== (sublist '(1 2 3 4 5) 2 2) '()))
 
 (describe make-list
           (== (make-list 5) '(() () () () ()))
