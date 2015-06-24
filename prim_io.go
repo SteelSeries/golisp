@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"unicode"
 )
 
 func RegisterIOPrimitives() {
@@ -178,11 +179,6 @@ func FormatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	if BooleanP(destination) && BooleanValue(destination) {
-		err = ProcessError("format does not support \"current output port\" as a destination", env)
-		return
-	}
-
 	controlStringObj := Cadr(args)
 	if !StringP(controlStringObj) {
 		err = ProcessError("format expects its second argument be a string", env)
@@ -202,12 +198,12 @@ func FormatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 			parts = append(parts, controlString[start:i])
 			i++
 			switch controlString[i] {
-			case 'A':
+			case 'A', 'a':
 				parts = append(parts, PrintString(Car(arguments)))
 				arguments = Cdr(arguments)
 				start = i + 1
 
-			case 'S':
+			case 'S', 's':
 				parts = append(parts, String(Car(arguments)))
 				arguments = Cdr(arguments)
 				start = i + 1
@@ -221,7 +217,11 @@ func FormatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 				start = i + 1
 
 			case '\n':
-				start = i + 1
+				for i < len(controlString) && unicode.IsSpace(rune(controlString[i])) {
+					i++
+				}
+				start = i
+				i--
 
 			default:
 				err = ProcessError(fmt.Sprintf("format encountered an unsupported substitution at index %d", i), env)
@@ -245,6 +245,8 @@ func FormatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if PortP(destination) {
 		port := PortValue(destination)
 		_, err = port.WriteString(combinedString)
+	} else if BooleanValue(destination) {
+		_, err = os.Stdout.WriteString(combinedString)
 	} else {
 		result = StringWithValue(combinedString)
 	}
