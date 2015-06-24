@@ -27,12 +27,17 @@ func RegisterListManipulationPrimitives() {
 func MakeListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	kVal := Car(args)
 	if !IntegerP(kVal) {
-		err = ProcessError("make-list requires a number as it's first argument.", env)
+		err = ProcessError("make-list requires a integer as it's first argument.", env)
 		return
 	}
 
 	k := IntegerValue(kVal)
 	var element *Data
+
+	if k < 0 {
+		err = ProcessError("make-list requires a non-negative integer as it's first argument.", env)
+		return
+	}
 
 	if Length(args) == 1 {
 		element = nil
@@ -127,6 +132,11 @@ func CopyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func partitionBySize(determiner *Data, l *Data) (result *Data, err error) {
 	size := int(IntegerValue(determiner))
+	if size < 1 {
+		err = ProcessError("partition requires a non negative clump size.", env)
+		return
+	}
+
 	var pieces []*Data = make([]*Data, 0, 5)
 	var chunk []*Data = make([]*Data, 0, 5)
 	for c := l; NotNilP(c); c = Cdr(c) {
@@ -170,7 +180,7 @@ func partitionByPredicate(determiner *Data, l *Data, env *SymbolTableFrame) (res
 func PartitionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	determiner := Car(args)
 	if !IntegerP(determiner) && !FunctionP(determiner) {
-		err = ProcessError("partition requires a number or function as it's first argument.", env)
+		err = ProcessError("partition requires an integer or function as it's first argument.", env)
 		return
 	}
 
@@ -201,6 +211,11 @@ func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 	first := int(IntegerValue(n))
 
+	if first <= 0 {
+		err = ProcessError("sublist requires positive indecies.", env)
+		return
+	}
+
 	n = Caddr(args)
 	if !IntegerP(n) {
 		err = ProcessError("sublist requires a number as it's third argument (end).", env)
@@ -208,8 +223,12 @@ func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 	last := int(IntegerValue(n))
 
+	if last <= 0 {
+		err = ProcessError("sublist requires positive indecies.", env)
+		return
+	}
+
 	if first >= last {
-		result = nil
 		return
 	}
 
