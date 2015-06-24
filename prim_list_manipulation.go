@@ -130,7 +130,7 @@ func CopyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return Copy(Car(args)), nil
 }
 
-func partitionBySize(determiner *Data, l *Data) (result *Data, err error) {
+func partitionBySize(determiner *Data, l *Data, env *SymbolTableFrame) (result *Data, err error) {
 	size := int(IntegerValue(determiner))
 	if size < 1 {
 		err = ProcessError("partition requires a non negative clump size.", env)
@@ -191,7 +191,7 @@ func PartitionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 	}
 
 	if IntegerP(determiner) {
-		return partitionBySize(determiner, l)
+		return partitionBySize(determiner, l, env)
 	} else {
 		return partitionByPredicate(determiner, l, env)
 	}
