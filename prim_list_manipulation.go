@@ -29,6 +29,7 @@ func MakeListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	if l < 1 || l > 2 {
 		err = ProcessError("make-list requires a number as it's first argument.", env)
+		return
 	}
 
 	kVal, err := Eval(Car(args), env)
@@ -37,9 +38,16 @@ func MakeListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 	if !IntegerP(kVal) {
 		err = ProcessError("make-list requires a number as it's first argument.", env)
+		return
 	}
 
 	k := IntegerValue(kVal)
+
+	if k < 0 {
+		err = ProcessError("make-list requires a positive number as its first argument.", env)
+		return
+	}
+
 	var element *Data
 
 	if Length(args) == 1 {
@@ -193,6 +201,7 @@ func PartitionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 	}
 	if !IntegerP(n) {
 		err = ProcessError("partition requires a number as it's first argument.", env)
+		return
 	}
 	size := int(IntegerValue(n))
 
@@ -202,6 +211,7 @@ func PartitionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 	}
 	if !ListP(l) {
 		err = ProcessError("partition requires a list as it's second argument.", env)
+		return
 	}
 
 	var pieces []*Data = make([]*Data, 0, 5)
@@ -229,6 +239,7 @@ func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 	if !IntegerP(n) {
 		err = ProcessError("sublist requires a number as it's first argument.", env)
+		return
 	}
 	first := int(IntegerValue(n))
 
@@ -238,6 +249,7 @@ func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 	if !IntegerP(n) {
 		err = ProcessError("sublist requires a number as it's second argument.", env)
+		return
 	}
 	last := int(IntegerValue(n))
 
@@ -252,6 +264,7 @@ func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 	if !ListP(l) {
 		err = ProcessError("sublist requires a list as it's third argument.", env)
+		return
 	}
 
 	var cell *Data
