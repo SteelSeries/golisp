@@ -19,7 +19,7 @@ const (
 )
 
 func RegisterStringPrimitives() {
-	MakePrimitiveFunction("split", "2", SplitImpl)
+	MakePrimitiveFunction("string-split", "2", SplitImpl)
 	MakePrimitiveFunction("string-trim", "1|2", TrimImpl)
 	MakePrimitiveFunction("string-trim-left", "1|2", TrimLeftImpl)
 	MakePrimitiveFunction("string-trim-right", "1|2", TrimRightImpl)
@@ -228,14 +228,14 @@ func SubstringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 func SubstringpImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	substringObj := Car(args)
 	if !StringP(substringObj) {
-		err = ProcessError(fmt.Sprintf("substring? requires a string but was given %s.", String(substringObj)), env)
+		err = ProcessError(fmt.Sprintf("substring? requires strings but was given %s.", String(substringObj)), env)
 		return
 	}
 	substringValue := StringValue(substringObj)
 
 	theString := Cadr(args)
 	if !StringP(theString) {
-		err = ProcessError(fmt.Sprintf("substring? requires a string but was given %s.", String(theString)), env)
+		err = ProcessError(fmt.Sprintf("substring? requires strings but was given %s.", String(theString)), env)
 		return
 	}
 	stringValue := StringValue(theString)
