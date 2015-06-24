@@ -26,9 +26,9 @@
           (== (number->string 16 16) "10")
           (== (number->string 20 20) "Unsupported base: 20"))
 
-(describe split
-          (== (split "1-2" "-") '( "1" "2"))
-          (== (split "one,two" ",") '("one" "two")))
+(describe string-split
+          (== (string-split "1-2" "-") '( "1" "2"))
+          (== (string-split "one,two" ",") '("one" "two")))
 
 (describe string-trim
           (== (string-trim "  hello ") "hello")
