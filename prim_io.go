@@ -8,7 +8,9 @@
 package golisp
 
 import (
+	"fmt"
 	"os"
+	"strings"
 )
 
 func RegisterIOPrimitives() {
@@ -22,6 +24,8 @@ func RegisterIOPrimitives() {
 	MakePrimitiveFunction("write", "1|2", WriteImpl)
 	MakePrimitiveFunction("read", "1", ReadImpl)
 	MakePrimitiveFunction("eof-object?", "1", EofObjectImpl)
+
+	MakePrimitiveFunction("format", ">=3", FormatImpl)
 }
 
 func OpenOutputFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -165,4 +169,85 @@ func ReadImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func EofObjectImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return BooleanWithValue(IsEqual(Car(args), EofObject)), nil
+}
+
+func FormatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	destination := Car(args)
+	if !BooleanP(destination) && !PortP(destination) {
+		err = ProcessError(fmt.Sprintf("format expects its second argument be a boolean or port, but was %s", String(destination)), env)
+		return
+	}
+
+	if BooleanP(destination) && BooleanValue(destination) {
+		err = ProcessError("format does not support \"current output port\" as a destination", env)
+		return
+	}
+
+	controlStringObj := Cadr(args)
+	if !StringP(controlStringObj) {
+		err = ProcessError("format expects its second argument be a string", env)
+		return
+	}
+	controlString := StringValue(controlStringObj)
+
+	arguments := Cddr(args)
+
+	numberOfSubstitutions := strings.Count(controlString, "~")
+	parts := make([]string, 0, numberOfSubstitutions*2+1)
+	start := 0
+	var i int
+
+	for i < len(controlString) {
+		if controlString[i] == '~' { // start of a substitution
+			parts = append(parts, controlString[start:i])
+			i++
+			switch controlString[i] {
+			case 'A':
+				parts = append(parts, PrintString(Car(arguments)))
+				arguments = Cdr(arguments)
+				start = i + 1
+
+			case 'S':
+				parts = append(parts, String(Car(arguments)))
+				arguments = Cdr(arguments)
+				start = i + 1
+
+			case '%':
+				parts = append(parts, "\n")
+				start = i + 1
+
+			case '~':
+				parts = append(parts, "~")
+				start = i + 1
+
+			case '\n':
+				start = i + 1
+
+			default:
+				err = ProcessError(fmt.Sprintf("format encountered an unsupported substitution at index %d", i), env)
+				return
+			}
+		}
+		i++
+	}
+
+	if start < len(controlString) {
+		parts = append(parts, controlString[start:i])
+	}
+
+	if i < len(controlString) || !NilP(arguments) {
+		err = ProcessError("number of replacements in the control string and number of arguments must be equal", env)
+		return
+	}
+
+	combinedString := strings.Join(parts, "")
+
+	if PortP(destination) {
+		port := PortValue(destination)
+		_, err = port.WriteString(combinedString)
+	} else {
+		result = StringWithValue(combinedString)
+	}
+
+	return
 }
