@@ -94,15 +94,11 @@ func (self *PrimitiveFunction) Apply(args *Data, env *SymbolTableFrame) (result 
 		return
 	}
 
-	if ProfileEnabled {
-		fmt.Printf("(%d enter prim %s)\n", time.Now().UnixNano(), self.Name)
-	}
+	ProfileEnter("prim", self.Name)
 
 	result, err = (self.Body)(ArrayToList(argArray), env)
 
-	if ProfileEnabled {
-		fmt.Printf("(%d exit  prim %s)\n", time.Now().UnixNano(), self.Name)
-	}
+	ProfileExit("prim", self.Name)
 
 	return
 }
