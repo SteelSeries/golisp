@@ -1,16 +1,21 @@
+;;; -*- mode: Scheme -*-
+
 (describe global-env
-          (== (nil? (system-global-environment)) #f))
+          (assert-not-nil (system-global-environment)))
 
 (describe new-environment
           (define new-env (make-top-level-environment "new"))
-          (== (nil? new-env) #f)
-          (== (environment-has-parent? new-env) #t)
-          (== (environment-parent new-env) (system-global-environment)))
+          (assert-not-nil new-env)
+          (assert-true (environment-has-parent? new-env))
+          (assert-eq (environment-parent new-env)
+                     (system-global-environment)))
 
 (describe binding
           (environment-define (system-global-environment) 'test-name 42)
-          (== (environment-bound? (system-global-environment) 'test-name) #t)
-          (== (environment-assigned? (system-global-environment) 'test-name) #t)
-          (== test-name 42)
-          (== (environment-lookup (system-global-environment) 'test-name) 42))
+          (assert-true (environment-bound? (system-global-environment) 'test-name))
+          (assert-true (environment-assigned? (system-global-environment) 'test-name))
+          (assert-eq test-name
+                     42)
+          (assert-eq (environment-lookup (system-global-environment) 'test-name)
+                     42))
 
