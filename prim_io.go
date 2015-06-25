@@ -208,7 +208,10 @@ func FormatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 				i++
 			}
 			if i == start {
-				if controlString[i] == 'V' || controlString[i] == 'v' {
+				if controlString[i] == '#' {
+					numericArg = Length(arguments)
+					i++
+				} else if controlString[i] == 'V' || controlString[i] == 'v' {
 					if IntegerP(Car(arguments)) {
 						numericArg = int(IntegerValue(Car(arguments)))
 						arguments = Cdr(arguments)
