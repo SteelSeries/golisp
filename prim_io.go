@@ -10,6 +10,7 @@ package golisp
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"unicode"
 )
@@ -192,33 +193,101 @@ func FormatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	parts := make([]string, 0, numberOfSubstitutions*2+1)
 	start := 0
 	var i int
+	var numericArg int
+	var atModifier bool
+	var substitution string
+	var padding string
+	var n int64
 
 	for i < len(controlString) {
 		if controlString[i] == '~' { // start of a substitution
 			parts = append(parts, controlString[start:i])
 			i++
+			start = i
+			for unicode.IsDigit(rune(controlString[i])) {
+				i++
+			}
+			if i == start {
+				if controlString[i] == 'V' || controlString[i] == 'v' {
+					if IntegerP(Car(arguments)) {
+						numericArg = int(IntegerValue(Car(arguments)))
+						arguments = Cdr(arguments)
+					} else {
+						err = ProcessError(fmt.Sprintf("format encountered a size argument mismatch at index %d", i), env)
+						return
+					}
+					i++
+				} else {
+					numericArg = 0
+				}
+			} else {
+				n, err = strconv.ParseInt(string(controlString[start:i]), 10, 64)
+				if err != nil {
+					return
+				}
+				numericArg = int(n)
+			}
+			if controlString[i] == '@' {
+				atModifier = true
+				i++
+			}
 			switch controlString[i] {
 			case 'A', 'a':
-				parts = append(parts, PrintString(Car(arguments)))
+				substitution = PrintString(Car(arguments))
+				if len(substitution) < numericArg {
+					padding = strings.Repeat(" ", numericArg-len(substitution))
+				} else {
+					padding = ""
+				}
+				if atModifier {
+					parts = append(parts, padding)
+				}
+				parts = append(parts, substitution)
+				if !atModifier {
+					parts = append(parts, padding)
+				}
 				arguments = Cdr(arguments)
 				start = i + 1
 
 			case 'S', 's':
-				parts = append(parts, String(Car(arguments)))
+				substitution = String(Car(arguments))
+				if len(substitution) < numericArg {
+					padding = strings.Repeat(" ", numericArg-len(substitution))
+				} else {
+					padding = ""
+				}
+				if atModifier {
+					parts = append(parts, padding)
+				}
+				parts = append(parts, substitution)
+				if !atModifier {
+					parts = append(parts, padding)
+				}
 				arguments = Cdr(arguments)
 				start = i + 1
 
 			case '%':
-				parts = append(parts, "\n")
+				if numericArg > 0 {
+					parts = append(parts, strings.Repeat("\n", numericArg))
+				} else {
+					parts = append(parts, "\n")
+				}
 				start = i + 1
 
 			case '~':
-				parts = append(parts, "~")
+				if numericArg > 0 {
+					parts = append(parts, strings.Repeat("~", numericArg))
+				} else {
+					parts = append(parts, "~")
+				}
 				start = i + 1
 
 			case '\n':
 				for i < len(controlString) && unicode.IsSpace(rune(controlString[i])) {
 					i++
+				}
+				if atModifier {
+					parts = append(parts, "\n")
 				}
 				start = i
 				i--
