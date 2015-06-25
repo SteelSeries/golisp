@@ -8,8 +8,8 @@
 package golisp
 
 import (
-    . "gopkg.in/check.v1"
-    "path/filepath"
+	. "gopkg.in/check.v1"
+	"path/filepath"
 )
 
 type LispSuite struct {
@@ -18,16 +18,17 @@ type LispSuite struct {
 var _ = Suite(&LispSuite{})
 
 func (s *LispSuite) TestLisp(c *C) {
-    files, err := filepath.Glob("tests/*.lsp")
-    if err != nil {
-        c.Fail()
-    }
-    for _, f := range files {
-        c.Logf("Loading %s\n", f)
-        _, err := ProcessFile(f)
-        if err != nil {
-            c.Logf("Error: %s\n", err)
-        }
-    }
-    PrintTestResults()
+	files, err := filepath.Glob("tests/*.lsp")
+	if err != nil {
+		c.Fail()
+	}
+	VerboseTests = false
+	for _, f := range files {
+		c.Logf("Loading %s\n", f)
+		_, err := ProcessFile(f)
+		if err != nil {
+			c.Logf("Error: %s\n", err)
+		}
+	}
+	PrintTestResults()
 }
