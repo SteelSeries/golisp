@@ -1,9 +1,15 @@
+;;; -*- mode: Scheme -*-
+
 (describe reduce-with-lambda
-    (== (reduce (lambda (acc item) 0 (+ acc item)) 0 '(1 2 3)) 6))
-    
+          (assert-eq (reduce (lambda (acc item) 0 (+ acc item)) 0 '(1 2 3))
+                     6))
+
 (describe reduce-with-primitive
-    (== (reduce + 0 '(1 2 3)) 6))
-    
+          (assert-eq (reduce + 0 '(1 2 3))
+                     6))
+
 (describe reduce-building-a-list
-          (== (reduce (lambda (l i) (cons i l)) '() '(1 2 3 4)) '(4 3 2 . 1))
-          (== (reduce list '() '(1 2 3 4)) '(((1 2) 3) 4)))
+          (assert-eq (reduce (lambda (l i) (cons i l)) '() '(1 2 3 4))
+                     '(4 3 2 . 1))
+          (assert-eq (reduce list '() '(1 2 3 4))
+                     '(((1 2) 3) 4)))
