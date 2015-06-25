@@ -105,9 +105,7 @@ func (self *Function) internalApply(args *Data, argEnv *SymbolTableFrame, frame 
 		return
 	}
 
-	if ProfileEnabled {
-		fmt.Printf("(%d enter func %s)\n", time.Now().UnixNano(), self.Name)
-	}
+	ProfileEnter("func", self.Name)
 
 	for s := self.Body; NotNilP(s); s = Cdr(s) {
 		result, err = Eval(Car(s), localEnv)
@@ -117,9 +115,7 @@ func (self *Function) internalApply(args *Data, argEnv *SymbolTableFrame, frame 
 		}
 	}
 
-	if ProfileEnabled {
-		fmt.Printf("(%d exit  func %s)\n", time.Now().UnixNano(), self.Name)
-	}
+	ProfileExit("func", self.Name)
 
 	return
 }
@@ -147,9 +143,7 @@ func (self *Function) ApplyOveriddingEnvironment(args *Data, argEnv *SymbolTable
 		return
 	}
 
-	if ProfileEnabled {
-		fmt.Printf("(%d enter func %s)\n", time.Now().UnixNano(), self.Name)
-	}
+	ProfileEnter("func", self.Name)
 
 	for s := self.Body; NotNilP(s); s = Cdr(s) {
 		result, err = Eval(Car(s), localEnv)
@@ -159,9 +153,7 @@ func (self *Function) ApplyOveriddingEnvironment(args *Data, argEnv *SymbolTable
 		}
 	}
 
-	if ProfileEnabled {
-		fmt.Printf("(%d exit  func %s)\n", time.Now().UnixNano(), self.Name)
-	}
+	ProfileExit("func", self.Name)
 
 	return
 }

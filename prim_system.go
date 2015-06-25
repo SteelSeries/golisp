@@ -33,7 +33,7 @@ func RegisterSystemPrimitives() {
 	MakeRestrictedPrimitiveFunction("panic!", "1", PanicImpl)
 
 	MakeSpecialForm("time", "1", TimeImpl)
-	MakeSpecialForm("profile", "1", ProfileImpl)
+	MakeSpecialForm("profile", "1|2", ProfileImpl)
 }
 
 func LoadFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -135,22 +135,6 @@ func TimeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return
 }
 
-func ProfileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	ProfileEnabled = true
-
-	for cell := args; NotNilP(cell); cell = Cdr(cell) {
-		sexpr := Car(cell)
-		result, err = Eval(sexpr, env)
-		if err != nil {
-			break
-		}
-	}
-
-	ProfileEnabled = false
-
-	return
-}
-
 func InternImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	sym := Car(args)
 	if !StringP(sym) {
@@ -207,4 +191,26 @@ func EvalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func GlobalEvalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return Eval(Car(args), Global)
+}
+
+func ProfileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if Length(args) == 2 {
+		if !StringP(Cadr(args)) {
+			err = ProcessError(fmt.Sprintf("profile requires a string filename, but received %s.", String(Cadr(args))), env)
+		}
+		StartProfiling(StringValue(Cadr(args)))
+	} else {
+		Startprofiling("")
+	}
+
+	ProfileEnabled = true
+
+	result, err = Eval(Car(args), env)
+	if err != nil {
+		break
+	}
+
+	EndProfiling()
+
+	return
 }
