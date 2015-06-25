@@ -27,7 +27,7 @@ func RegisterIOPrimitives() {
 	MakePrimitiveFunction("read", "1", ReadImpl)
 	MakePrimitiveFunction("eof-object?", "1", EofObjectImpl)
 
-	MakePrimitiveFunction("format", ">=3", FormatImpl)
+	MakePrimitiveFunction("format", ">=2", FormatImpl)
 }
 
 func OpenOutputFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
