@@ -10,7 +10,6 @@ package golisp
 import (
 	"fmt"
 	"strings"
-	"time"
 )
 
 type PrimitiveFunction struct {

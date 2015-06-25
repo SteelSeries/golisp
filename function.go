@@ -10,7 +10,6 @@ package golisp
 import (
 	"errors"
 	"fmt"
-	"time"
 )
 
 type Function struct {

@@ -8,19 +8,19 @@
 package golisp
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"time"
 )
 
-var profileOutput *os.File
+var profileOutput *os.File = nil
 
 func StartProfiling(fname string) {
 	if fname == "" {
 		profileOutput = nil
 	} else {
-		profileOutput, err := os.Create(fname)
+		var err error
+		profileOutput, err = os.Create(fname)
 		if err != nil {
 			panic(fmt.Sprintf("Profiler: %s could not be opened.", fname))
 		}
