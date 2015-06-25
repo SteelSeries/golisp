@@ -9,6 +9,7 @@ package golisp
 
 import (
 	"fmt"
+	"math"
 )
 
 func RegisterListFunctionsPrimitives() {
@@ -39,7 +40,7 @@ func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	var collections []*Data = make([]*Data, 0, Length(args)-1)
-	var loopCount = 30000
+	var loopCount int64 = math.MaxInt64
 	var col *Data
 	for a := Cdr(args); NotNilP(a); a = Cdr(a) {
 		col = Car(a)
@@ -47,14 +48,21 @@ func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 			err = ProcessError(fmt.Sprintf("map needs lists as its other arguments, but got %s.", String(col)), env)
 			return
 		}
+		if NilP(col) || col == nil {
+			return
+		}
 		collections = append(collections, col)
-		loopCount = intMin(loopCount, Length(col))
+		loopCount = int64(intMin(int(loopCount), Length(col)))
+	}
+
+	if loopCount == math.MaxInt64 {
+		return
 	}
 
 	var d []*Data = make([]*Data, 0, loopCount)
 	var v *Data
 	var a *Data
-	for index := 1; index <= loopCount; index++ {
+	for index := 1; index <= int(loopCount); index++ {
 		mapArgs := make([]*Data, 0, len(collections))
 		for _, mapArgCollection := range collections {
 			a = Nth(mapArgCollection, index)
@@ -78,7 +86,7 @@ func ForEachImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	var collections []*Data = make([]*Data, 0, Length(args)-1)
-	var loopCount = 30000
+	var loopCount int64 = math.MaxInt64
 	var col *Data
 	for a := Cdr(args); NotNilP(a); a = Cdr(a) {
 		col = Car(a)
@@ -87,11 +95,15 @@ func ForEachImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 			return
 		}
 		collections = append(collections, col)
-		loopCount = intMin(loopCount, Length(col))
+		loopCount = int64(intMin(int(loopCount), Length(col)))
+	}
+
+	if loopCount == math.MaxInt64 {
+		return
 	}
 
 	var a *Data
-	for index := 1; index <= loopCount; index++ {
+	for index := 1; index <= int(loopCount); index++ {
 		mapArgs := make([]*Data, 0, len(collections))
 		for _, mapArgCollection := range collections {
 			a = Nth(mapArgCollection, index)
