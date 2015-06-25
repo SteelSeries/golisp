@@ -200,15 +200,10 @@ func ProfileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		}
 		StartProfiling(StringValue(Cadr(args)))
 	} else {
-		Startprofiling("")
+		StartProfiling("")
 	}
-
-	ProfileEnabled = true
 
 	result, err = Eval(Car(args), env)
-	if err != nil {
-		break
-	}
 
 	EndProfiling()
 
