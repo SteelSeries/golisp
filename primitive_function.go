@@ -93,11 +93,13 @@ func (self *PrimitiveFunction) Apply(args *Data, env *SymbolTableFrame) (result 
 		return
 	}
 
-	ProfileEnter("prim", self.Name)
+	localGuid := ProfileGUID
+	ProfileGUID++
+	ProfileEnter("prim", self.Name, localGuid)
 
 	result, err = (self.Body)(ArrayToList(argArray), env)
 
-	ProfileExit("prim", self.Name)
+	ProfileExit("prim", self.Name, localGuid)
 
 	return
 }
