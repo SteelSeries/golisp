@@ -7,7 +7,6 @@
 
 package golisp
 
-var ProfileEnabled = false
 var DebugTrace = false
 var LispTrace = false
 var quasiquoteLevel = 1

@@ -104,7 +104,10 @@ func (self *Function) internalApply(args *Data, argEnv *SymbolTableFrame, frame 
 		return
 	}
 
-	ProfileEnter("func", self.Name)
+	localGuid := ProfileGUID
+	ProfileGUID++
+
+	ProfileEnter("func", self.Name, localGuid)
 
 	for s := self.Body; NotNilP(s); s = Cdr(s) {
 		result, err = Eval(Car(s), localEnv)
@@ -114,7 +117,7 @@ func (self *Function) internalApply(args *Data, argEnv *SymbolTableFrame, frame 
 		}
 	}
 
-	ProfileExit("func", self.Name)
+	ProfileExit("func", self.Name, localGuid)
 
 	return
 }
@@ -142,7 +145,9 @@ func (self *Function) ApplyOveriddingEnvironment(args *Data, argEnv *SymbolTable
 		return
 	}
 
-	ProfileEnter("func", self.Name)
+	localGuid := ProfileGUID
+	ProfileGUID++
+	ProfileEnter("func", self.Name, localGuid)
 
 	for s := self.Body; NotNilP(s); s = Cdr(s) {
 		result, err = Eval(Car(s), localEnv)
@@ -152,7 +157,7 @@ func (self *Function) ApplyOveriddingEnvironment(args *Data, argEnv *SymbolTable
 		}
 	}
 
-	ProfileExit("func", self.Name)
+	ProfileExit("func", self.Name, localGuid)
 
 	return
 }

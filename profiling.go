@@ -14,8 +14,11 @@ import (
 )
 
 var profileOutput *os.File = nil
+var ProfileEnabled = false
+var ProfileGUID int64 = 0
 
 func StartProfiling(fname string) {
+	ProfileGUID = 0
 	if fname == "" {
 		profileOutput = nil
 	} else {
@@ -35,22 +38,24 @@ func EndProfiling() {
 	}
 }
 
-func ProfileEnter(funcType string, name string) {
+func ProfileEnter(funcType string, name string, guid int64) {
 	if ProfileEnabled {
+		msg := fmt.Sprintf("(%d %d enter %s %s)\n", time.Now().UnixNano(), guid, funcType, name)
 		if profileOutput == nil {
-			fmt.Printf("(%d enter %s %s)\n", time.Now().UnixNano(), funcType, name)
+			fmt.Printf(msg)
 		} else {
-			fmt.Fprintf(profileOutput, "(%d enter %s %s)\n", time.Now().UnixNano(), funcType, name)
+			fmt.Fprintf(profileOutput, msg)
 		}
 	}
 }
 
-func ProfileExit(funcType string, name string) {
+func ProfileExit(funcType string, name string, guid int64) {
 	if ProfileEnabled {
+		msg := fmt.Sprintf("(%d %d exit  %s %s)\n", time.Now().UnixNano(), guid, funcType, name)
 		if profileOutput == nil {
-			fmt.Printf("(%d exit  %s %s)\n", time.Now().UnixNano(), funcType, name)
+			fmt.Printf(msg)
 		} else {
-			fmt.Fprintf(profileOutput, "(%d exit  %s %s)\n", time.Now().UnixNano(), funcType, name)
+			fmt.Fprintf(profileOutput, msg)
 		}
 	}
 }
