@@ -76,7 +76,7 @@ func CaseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	for clauseCell := Cdr(args); NotNilP(clauseCell); clauseCell = Cdr(clauseCell) {
 		clause := Car(clauseCell)
 		if !PairP(clause) {
-			err = ProcessError("Case requires non-atomic clauses", env)
+			err = ProcessError("Case expectes a sequence of clauses that are lists", env)
 			return
 		}
 		if IsEqual(Car(clause), Intern("else")) {
@@ -87,6 +87,9 @@ func CaseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 					return evaluateBody(Cdr(clause), env)
 				}
 			}
+		} else {
+			err = ProcessError("Case the condition part of clauses to be lists of 'else", env)
+			return
 		}
 	}
 
@@ -232,6 +235,7 @@ func bindLetLocals(bindingForms *Data, rec bool, localEnv *SymbolTableFrame, eva
 		name = Car(bindingPair)
 		if !SymbolP(name) {
 			err = ProcessError("First part of a let binding pair must be a symbol", evalEnv)
+			return
 		}
 
 		if rec {
@@ -283,6 +287,11 @@ func LetCommon(args *Data, env *SymbolTableFrame, star bool, rec bool) (result *
 
 func namedLetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	name := Car(args)
+	if !SymbolP(name) {
+		err = ProcessError("A named let requires a symbol name as its first argument", env)
+		return
+	}
+
 	bindings := Cadr(args)
 	if !PairP(bindings) {
 		err = ProcessError("A named let requires a list of bindings as it's second argument", env)
@@ -293,6 +302,10 @@ func namedLetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	initials := make([]*Data, 0, Length(bindings))
 	for remainingBindings := bindings; NotNilP(remainingBindings); remainingBindings = Cdr(remainingBindings) {
 		binding := Car(remainingBindings)
+		if !SymbolP(Car(binding)) {
+			err = ProcessError("The first element of a binding must be a symbol", env)
+			return
+		}
 		vars = append(vars, Car(binding))
 		initials = append(initials, Cadr(binding))
 	}
@@ -415,6 +428,7 @@ func ApplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	if !FunctionP(f) {
 		err = ProcessError(fmt.Sprintf("apply requires a function as it's first argument, but got %s.", String(f)), env)
+		return
 	}
 
 	ary := make([]*Data, 0, Length(args)-1)
@@ -511,7 +525,7 @@ func DefinitionOfImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 	}
 
 	function := FunctionValue(f)
-	if function.Name == "anonymous" {
+	if function.Name == "unnamed" {
 		return Cons(Intern("define"), Cons(name, Cons(Cons(Intern("lambda"), Cons(function.Params, function.Body)), nil))), nil
 	} else {
 		return Cons(Intern("define"), Cons(Cons(Intern(function.Name), function.Params), function.Body)), nil

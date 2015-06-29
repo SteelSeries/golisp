@@ -71,7 +71,7 @@ func PairlisImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	for keyCell, valueCell := keys, values; NotNilP(keyCell); keyCell, valueCell = Cdr(keyCell), Cdr(valueCell) {
 		key := Car(keyCell)
-		if NilP(keyCell) {
+		if NilP(key) {
 			err = ProcessError("Assoc list keys can not be nil", env)
 		}
 		value := Car(valueCell)

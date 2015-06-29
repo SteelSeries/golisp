@@ -18,7 +18,12 @@
           (assert-eq (test-func 3)
                      "three")
           (assert-eq (test-func 5)
-                     "unknown"))
+                     "unknown")
+
+          (assert-error (case 5
+                          4 4))
+          (assert-error (case 5 (4 4)))
+          (assert-error (case 5 (foo 4))))
 
 (define (complex-func x)
   (let ((y 1))

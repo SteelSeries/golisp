@@ -27,10 +27,7 @@ func BinaryAndImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 	}
 	b1 := uint64(IntegerValue(arg1))
 
-	arg2, err := Eval(Second(args), env)
-	if err != nil {
-		return
-	}
+	arg2 := Second(args)
 	if !IntegerP(arg2) {
 		err = ProcessError(fmt.Sprintf("Integer expected, received %s %s", TypeName(TypeOf(arg2)), String(arg2)), env)
 		return

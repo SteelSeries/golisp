@@ -6,7 +6,9 @@
           (assert-eq ((lambda (x) (+ x 3)) 6)
                      9)
           (assert-eq ((lambda (x) (* x x)) 6)
-                     36))
+                     36)
+
+          (assert-error (lambda x (+ 1 2))))
 
 (define foo (lambda (x)
               (if (assert-eq x 0)
@@ -27,7 +29,10 @@
           (assert-eq (named-foo 3)
                      6)
           (assert-eq (named-foo 4)
-                     10))
+                     10)
+
+          (assert-error (named-lambda x (+ 1 2)))
+          (assert-error (named-lambda ("h" x) (+ 1 2))))
 
 (define (bar x)
   (if (eq? x 0)

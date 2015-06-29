@@ -192,11 +192,6 @@ func QuotientImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func RemainderImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if Length(args) != 2 {
-		err = ProcessError(fmt.Sprintf("%/modulo expected 2 args, %d received", Length(args)), env)
-		return
-	}
-
 	dividend := Car(args)
 	if !IntegerP(dividend) {
 		err = ProcessError(fmt.Sprintf("%/modulo expected an integer first arg, received %s", String(dividend)), env)
@@ -273,7 +268,7 @@ func IntervalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func ToIntImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	n := Car(args)
-	if !IntegerP(n) && !FloatP(n) {
+	if !NumberP(n) {
 		err = ProcessError(fmt.Sprintf("integer expected an number, received %s", String(n)), env)
 		return
 	}
@@ -283,7 +278,7 @@ func ToIntImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func ToFloatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	n := Car(args)
-	if !IntegerP(n) && !FloatP(n) {
+	if !NumberP(n) {
 		err = ProcessError(fmt.Sprintf("float expected a number, received %s", String(n)), env)
 		return
 	}
@@ -565,10 +560,9 @@ func OddImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func SignImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	val, err := Eval(Car(args), env)
-
+	val := Car(args)
 	if !NumberP(val) {
-		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(Car(args))), env)
+		err = ProcessError(fmt.Sprintf("sign expected a nunber, received %s", String(Car(args))), env)
 		return
 	}
 
