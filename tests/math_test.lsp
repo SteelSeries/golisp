@@ -27,10 +27,22 @@
 (describe condition-test
           (assert-true (< xx y))
           (assert-false (< y z))
+          (assert-error (< "a" 5))
+          (assert-error (< 5 "a"))
+          
           (assert-false (> xx y))
           (assert-true (> z xx))
+          (assert-error (> "a" 5))
+          (assert-error (> 5 "a"))
+
           (assert-true (<= xx 2))
+          (assert-error (<= "a" 5))
+          (assert-error (<= 5 "a"))
+
           (assert-true (>= z 7))
+          (assert-error (>= "a" 5))
+          (assert-error (>= 5 "a"))
+
           (assert-false (!= xx xx))
           (assert-false (!= 2 xx))
           (assert-true (!= 2 3))
@@ -91,3 +103,19 @@
                      -3.0)
           (assert-eq (ceiling 3)
                      3.0))
+
+(describe general-math-errors
+          (assert-error (/ 3 0))
+          (assert-error (% 3.5 6))
+          (assert-error (& 6 4.7))
+          (assert-error (min '(1 d)))
+          (assert-error (max 5.4 i))
+          (assert-error (floor 'd))
+          (assert-error (celing 'd))
+          (assert-error (abs "hi"))
+          (assert-error (zero? 'zero))
+          (assert-error (positive? +))
+          (assert-error (negative '-))
+          (assert-error (even? "j"))
+          (assert-error (odd 'r))
+          (assert-error (sign 's)))

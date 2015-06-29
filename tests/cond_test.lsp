@@ -10,7 +10,10 @@
           (assert-eq (cond (#f 1)
                            (#f 2)
                            (else 3))
-                     3))
+                     3)
+
+          (assert-error (cond #t 1
+                              (#t 2))))
 
 (describe multi-expr-cond
           (assert-eq (cond (#f 1)

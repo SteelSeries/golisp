@@ -17,7 +17,8 @@ import (
 )
 
 const (
-	ConsCellType = iota
+	NilType = iota
+	ConsCellType
 	AlistType
 	AlistCellType
 	IntegerType
@@ -74,11 +75,17 @@ var DebugReturnValue *Data = nil
 var DebugOnEntry *set.Set = set.New()
 
 func TypeOf(d *Data) uint8 {
-	return d.Type
+	if d == nil {
+		return NilType
+	} else {
+		return d.Type
+	}
 }
 
 func TypeName(t uint8) string {
 	switch t {
+	case NilType:
+		return "Nil"
 	case ConsCellType:
 		return "List"
 	case AlistType:

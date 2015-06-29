@@ -27,6 +27,8 @@
 (describe conversions
           (assert-eq (float 5)
                      5.0)
+          (assert-error (float "5"))
           (assert-eq (integer 5.6)
-                     5))
+                     5)
+          (assert-error (integer "5.3")))
 

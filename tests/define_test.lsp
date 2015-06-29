@@ -18,3 +18,8 @@
                         (apply a b))
                       + 1 2 3)
                      6))
+
+(describe define-errors
+          (assert-error (define "x" 4))
+          (assert-error (define ("x") 4))
+          (assert-error (define (+ x y) 42)))
