@@ -161,7 +161,7 @@ func DebugRepl(env *SymbolTableFrame) {
 					fmt.Printf(":?        - show this command summary\n")
 					fmt.Printf(":b        - show the environment stack\n")
 					fmt.Printf(":c        - continue, exiting the debugger\n")
-					fmt.Printf(":d        - do a full of the environment stack\n")
+					fmt.Printf(":d        - do a full dump of the environment stack\n")
 					fmt.Printf(":e on/off - Enable/disable debug on error\n")
 					fmt.Printf(":f frame# - do a full dump of a single environment frame\n")
 					//fmt.Printf(":n        - step to next (run to the next evaluation in this frame)\n")
