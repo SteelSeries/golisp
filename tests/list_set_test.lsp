@@ -23,7 +23,8 @@
             (assert-eq a
                        '(1 2 3))
             (assert-eq b
-                       '(4 5))))
+                       '(4 5)))
+          (assert-error (union 1 2)))
 
 (describe intersection
           (assert-eq (intersection '(1 2 3) '(2 3 4 5))
@@ -44,4 +45,6 @@
             (assert-eq a
                        '(1 2 3 4 5))
             (assert-eq b
-                       '(4 3 2))))
+                       '(4 3 2)))
+          (assert-error (intersection 1 '()))
+          (assert-error (intersection'() 2)))
