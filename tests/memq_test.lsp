@@ -19,12 +19,18 @@
 (describe find
           (assert-eq (find even? '(3 1 4 1 5 9))
                      4)
-          (assert-false (find even? '(1 3 5 7 9))))
+          (assert-false (find even? '(1 3 5 7 9)))
+          (assert-error (find 5 '()))   ;1st arg must be a function
+          (assert-error (find + '(1 2))) ;1st arg muct be a predicate
+          (assert-error (find even? 5))) ;3rd arg must be a list 
 
 (describe find-tail
           (assert-eq (find-tail even? '(3 1 4 1 5 9))
                      '(4 1 5 9))
-          (assert-false (find-tail even? '(1 3 5 7 9))))
+          (assert-false (find-tail even? '(1 3 5 7 9)))
+          (assert-error (find-tail 5 '()))   ;1st arg must be a function
+          (assert-error (find-tail + '(1 2))) ;1st arg muct be a predicate
+          (assert-error (find-tail even? 5))) ;3rd arg must be a list
 
 (describe memp
           (assert-eq (memp even? '(3 1 4 1 5 9))
