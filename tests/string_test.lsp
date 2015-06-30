@@ -54,7 +54,9 @@
           (assert-eq (string-split "1-2" "-")
                      '("1" "2"))
           (assert-eq (string-split "one,two" ",")
-                     '("one" "two")))
+                     '("one" "two"))
+          (assert-error (string-split 3 ""))
+          (assert-error (string-split "" 3)))
 
 (describe string-trim
           (assert-eq (string-trim "  hello ")
@@ -62,7 +64,9 @@
           (assert-eq (string-trim "++ yo --" "+-")
                      " yo ")
           (assert-eq (string-trim "++ yo --" "+- ")
-                     "yo"))
+                     "yo")
+          (assert-error (string-trim 3 ""))
+          (assert-error (string-trim "" 3)))
 
 (describe string-trim-left
           (assert-eq (string-trim-left "  hello ")
@@ -70,7 +74,9 @@
           (assert-eq (string-trim-left "++ yo --" "+-")
                      " yo --")
           (assert-eq (string-trim-left "++ yo --" "+- ")
-                     "yo --"))
+                     "yo --")
+          (assert-error (string-trim-left 3 ""))
+          (assert-error (string-trim-left "" 3)))
 
 (describe string-trim-right
           (assert-eq (string-trim-right "  hello ")
@@ -78,7 +84,9 @@
           (assert-eq (string-trim-right "++ yo --" "+-")
                      "++ yo ")
           (assert-eq (string-trim-right "++ yo --" "+- ")
-                     "++ yo"))
+                     "++ yo")
+          (assert-error (string-trim-right 3 ""))
+          (assert-error (string-trim-right "" 3)))
 
 (describe string-upcase
           (assert-eq (string-upcase "hello")
@@ -86,7 +94,8 @@
           (assert-eq (string-upcase "HeLlo")
                      "HELLO")
           (assert-eq (string-upcase "HELLO")
-                     "HELLO"))
+                     "HELLO")
+          (assert-error (string-upcase 4)))
 
 (describe string-downcase
           (assert-eq (string-downcase "hello")
@@ -94,7 +103,8 @@
           (assert-eq (string-downcase "HeLlo")
                      "hello")
           (assert-eq (string-downcase "HELLO")
-                     "hello"))
+                     "hello")
+          (assert-error (string-downcase 5)))
 
 (describe string-capitalize
           (assert-eq (string-capitalize "hello")
@@ -102,28 +112,32 @@
           (assert-eq (string-capitalize "HeLlo")
                      "Hello")
           (assert-eq (string-capitalize "HELLO")
-                     "Hello"))
+                     "Hello")
+          (assert-error (string-capitalize 5)))
 
 (describe string-upcase!
           (let ((s "hello"))
             (assert-eq (string-upcase! s)
                        "HELLO")
             (assert-eq s
-                       "HELLO")))
+                       "HELLO"))
+          (assert-error (string-upcase! 5)))
 
 (describe downcase!
           (let ((s "HELLO"))
             (assert-eq (string-downcase! s)
                        "hello")
             (assert-eq s
-                       "hello")))
+                       "hello"))
+          (assert-error (string-downcase! 5)))
 
 (describe string-capitalize!
           (let ((s "hello"))
             (assert-eq (string-capitalize! s)
                        "Hello")
             (assert-eq s
-                       "Hello")))
+                       "Hello"))
+          (assert-error (string-capitalize! 6)))
 
 
 (describe string-length
@@ -132,31 +146,47 @@
           (assert-eq (string-length "1")
                      1)
           (assert-eq (string-length "12345")
-                     5))
+                     5)
+          (assert-error (string-length 5)))
 
 
 (describe string-null?
           (assert-true (string-null? ""))
-          (assert-false (string-null? "hello")))
+          (assert-false (string-null? "hello"))
+          (assert-error (string-null? 5)))
 
 (describe substring
           (assert-eq (substring "hello" 0 0)
                      "")
           (assert-eq (substring "arduous" 2 5)
-                     "duo"))
+                     "duo")
+          (assert-error (substring 5 1 2))
+          (assert-error (substring "hello" "a" 5))
+          (assert-error (substring "hello" 1 "5"))
+          (assert-error (substring "hello" 10 2))
+          (assert-error (substring "hello" 1 10)))
 
 
 (describe substring?
           (assert-true (substring? "rat" "pirate"))
           (assert-false (substring? "rat" "outrage"))
-          (assert-true (substring? "" "hjdfgds")))
+          (assert-true (substring? "" "hjdfgds"))
+          (assert-error (substring? 5 5))
+          (assert-error (substring? "" 3))
+          (assert-error (substring? 3 "")))
 
 (describe string-prefix?
           (assert-true (string-prefix? "abc" "abcdef"))
           (assert-false (string-prefix? "abz" "abcdef"))
-          (assert-true (string-prefix? "" "akjsdfh")))
+          (assert-true (string-prefix? "" "akjsdfh"))
+          (assert-error (string-prefix? 5 5))
+          (assert-error (string-prefix? "" 3))
+          (assert-error (string-prefix? 3 "")))
 
 (describe string-suffix?
           (assert-true (string-suffix? "def" "abcdef"))
           (assert-false (string-suffix? "dez" "abcdef"))
-          (assert-true (string-suffix? "" "akjsdfh")))
+          (assert-true (string-suffix? "" "akjsdfh"))
+          (assert-error (string-suffix? 5 5))
+          (assert-error (string-suffix? "" 3))
+          (assert-error (string-suffix? 3 "")))

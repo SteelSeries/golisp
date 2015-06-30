@@ -74,8 +74,8 @@ func GetSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	k := Cadr(args)
-	if !SymbolP(k) {
-		err = ProcessError(fmt.Sprintf("get-slot requires a symbol as it's second argument, but was given %s.", String(k)), env)
+	if !NakedP(k) {
+		err = ProcessError(fmt.Sprintf("get-slot requires a naked symbol as it's second argument, but was given %s.", String(k)), env)
 		return
 	}
 
@@ -95,8 +95,8 @@ func GetSlotOrNilImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 	}
 
 	k := Cadr(args)
-	if !SymbolP(k) {
-		err = ProcessError(fmt.Sprintf("get-slot-or-nil requires a symbol as it's second argument, but was given %s.", String(k)), env)
+	if !NakedP(k) {
+		err = ProcessError(fmt.Sprintf("get-slot-or-nil requires a naked symbol as it's second argument, but was given %s.", String(k)), env)
 		return
 	}
 
@@ -116,8 +116,8 @@ func RemoveSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 	}
 
 	k := Cadr(args)
-	if !SymbolP(k) {
-		err = ProcessError(fmt.Sprintf("remove-slot! requires a symbol as it's second argument, but was given %s.", String(k)), env)
+	if !NakedP(k) {
+		err = ProcessError(fmt.Sprintf("remove-slot! requires a naked symbol as it's second argument, but was given %s.", String(k)), env)
 		return
 	}
 
@@ -150,8 +150,8 @@ func SendImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	k := Cadr(args)
-	if !SymbolP(k) {
-		err = ProcessError(fmt.Sprintf("send requires a symbol as it's second argument, but was given %s.", String(k)), env)
+	if !NakedP(k) {
+		err = ProcessError(fmt.Sprintf("send requires a naked symbol as it's second argument, but was given %s.", String(k)), env)
 		return
 	}
 
@@ -193,8 +193,8 @@ func SendSuperImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 	}
 
 	selector := Car(args)
-	if !SymbolP(selector) {
-		err = ProcessError(fmt.Sprintf("Selector must be a symbol but was %s.", TypeName(TypeOf(selector))), env)
+	if !NakedP(selector) {
+		err = ProcessError(fmt.Sprintf("Selector must be a naked symbol but was %s.", TypeName(TypeOf(selector))), env)
 		return
 	}
 
@@ -239,7 +239,7 @@ func LispToJsonImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 func FrameKeysImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := Car(args)
 	if !FrameP(f) {
-		err = ProcessError(fmt.Sprintf("keys requires a frame as it's argument, but was given %s.", String(f)), env)
+		err = ProcessError(fmt.Sprintf("frame-keys requires a frame as it's argument, but was given %s.", String(f)), env)
 		return
 	}
 
@@ -249,7 +249,7 @@ func FrameKeysImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 func FrameValuesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := Car(args)
 	if !FrameP(f) {
-		err = ProcessError(fmt.Sprintf("vals requires a frame as it's argument, but was given %s.", String(f)), env)
+		err = ProcessError(fmt.Sprintf("frame-values requires a frame as it's argument, but was given %s.", String(f)), env)
 		return
 	}
 
