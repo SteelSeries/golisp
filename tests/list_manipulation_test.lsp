@@ -56,6 +56,12 @@
           (assert-eq (partition even? '(1 2 3 4 5 6 7 8 9))
                      '((2 4 6 8) (1 3 5 7 9))))
 
+(describe partition-errors
+          (assert-error (partition -1 '(1 2))) ;1st arg has to be non -ive if it's an int
+          (assert-error (partition "hi" '(1 2)))  ;1st arg has to be int or function
+          (assert-error (partition 1 "1 2")) ;2nd arg must be a list
+          (assert-error (partition odd? "1 2"))) ;2nd arg must be a list
+
 (define list1 '(1 2))
 (describe append
           (assert-eq (append list1 '(3 4))
@@ -100,7 +106,9 @@
           (assert-eq (take 3 '(1 2 3))
                      '(1 2 3))
           (assert-eq (take 3 '(1 2 3 4 5))
-                     '(1 2 3)))
+                     '(1 2 3))
+          (assert-error (take "1" '(1 2 3))) ;1st arg must be a number
+          (assert-error (take 1 4))) ;2nd arg must be a list
 
 (describe drop
           (assert-eq (drop 0 '(1 2 3))
@@ -110,7 +118,9 @@
           (assert-eq (drop 3 '(1 2 3))
                      '())
           (assert-eq (drop 3 '(1 2 3 4 5))
-                     '(4 5)))
+                     '(4 5))
+          (assert-error (drop "1" '(1 2 3))) ;1st arg must be a number
+          (assert-error (drop 1 4))) ;2nd arg must be a list
 
 (describe list-head
           (assert-eq (list-head '(1 2 3) 0)
@@ -120,7 +130,9 @@
           (assert-eq (list-head '(1 2 3) 3)
                      '(1 2 3))
           (assert-eq (list-head '(1 2 3 4 5) 3)
-                     '(1 2 3)))
+                     '(1 2 3))
+          (assert-error (list-head 4 5)) ;1st arg must be a list
+          (assert-error (list-head '(1 2 3) "6"))) ;2nd arg must be a number
 
 (describe list-tail
           (assert-eq (list-tail '(1 2 3) 0)
@@ -130,7 +142,9 @@
           (assert-eq (list-tail '(1 2 3) 3)
                      '())
           (assert-eq (list-tail '(1 2 3 4 5) 3)
-                     '(4 5)))
+                     '(4 5))
+          (assert-error (list-tail 4 5)) ;1st arg must be a list
+          (assert-error (list-tail '(1 2 3) "6"))) ;2nd arg must be a number
 
 (describe sublist
           (assert-eq (sublist '(1 2 3) 1 3)
@@ -138,7 +152,14 @@
           (assert-eq (sublist '(1 2 3 4 5) 2 4)
                      '(2 3))
           (assert-eq (sublist '(1 2 3 4 5) 2 2)
-                     '()))
+                     '())
+          (assert-error (sublist 1 2 3)) ;1st arg must be a list
+          (assert-error (sublist '(1) "1" 2)) ;2nd arg must be an int
+          (assert-error (sublist '(1) -1 2)) ;2nd arg must be an +ive int
+          (assert-error (sublist '(1) 1 "2")) ;3rd arg must be an int
+          (assert-error (sublist '(1) 1 -2)) ;3rd arg must be an +ive int
+
+          )
 
 (describe make-list
           (assert-eq (make-list 5)
@@ -146,4 +167,7 @@
           (assert-eq (make-list 5 1)
                      '(1 1 1 1 1))
           (assert-eq (make-list 3 'a)
-                     '(a a a)))
+                     '(a a a))
+          (assert-error (make-list "3" 1)) ;1st arg must be an integer
+          (assert-error (make-list 3.4 1)) ;1st arg must be an integer
+          (assert-error (make-list -3 1))) ;1st arg must be a non-negative integer

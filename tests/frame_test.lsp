@@ -3,7 +3,11 @@
 
 (describe frame-rendering
           (assert-eq (str (make-frame a: 1))
-                     "{a: 1}"))
+                     "{a: 1}")
+          (assert-error (make-frame a: 1 b:)) ;must have an even number of args
+          (assert-error (make-frame a: 1 'a 2)) ;keys must be naked symbols
+          (assert-error (make-frame a: 1 "b" 2)) ;keys must be naked symbols
+          (assert-error (make-frame a: 1 3 2))) ;keys must be naked symbols
 
 (describe naked-symbols
           (assert-eq a:
@@ -140,7 +144,9 @@
           (let ((f {a: 1 b: 2}))
             (assert-true (has-slot? f a:))
             (assert-true (has-slot? f b:))
-            (assert-false (has-slot? f c:))))
+            (assert-false (has-slot? f c:))
+            (assert-error (has-slot? '() a:)) ;1st arg must be a frame
+            (assert-error (has-slot f "a")))) ;2nd arg must be a naked symbol
 
 (describe remove-slots
           (let* ((e {a: 5})

@@ -13,3 +13,7 @@
                      '(4 3 2 . 1))
           (assert-eq (reduce list '() '(1 2 3 4))
                      '(((1 2) 3) 4)))
+
+(describe reduce-errors
+          (assert-error (reduce r r '(1 2))) ;initial arg must be a function
+          (assert-error (reduce + 0 1))) ;last/3rd arg must be a list

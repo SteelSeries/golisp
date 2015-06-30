@@ -240,10 +240,19 @@ func FindTailImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	l := Second(args)
+	if !ListP(l) {
+		err = ProcessError(fmt.Sprintf("find-tail needs a list as its second argument, but got %s.", String(l)), env)
+		return
+	}
 
 	var found *Data
 	for c := l; NotNilP(c); c = Cdr(c) {
 		found, err = ApplyWithoutEval(f, InternalMakeList(Car(c)), env)
+
+		if !BooleanP(found) {
+			err = ProcessError("find-tail needs a predicate function as its first argument.", env)
+			return
+		}
 		if BooleanValue(found) {
 			return c, nil
 		}
@@ -260,10 +269,18 @@ func FindImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	l := Second(args)
+	if !ListP(l) {
+		err = ProcessError(fmt.Sprintf("find needs a list as its second argument, but got %s.", String(l)), env)
+		return
+	}
 
 	var found *Data
 	for c := l; NotNilP(c); c = Cdr(c) {
 		found, err = ApplyWithoutEval(f, InternalMakeList(Car(c)), env)
+		if !BooleanP(found) {
+			err = ProcessError("find needs a predicate function as its first argument.", env)
+			return
+		}
 		if BooleanValue(found) {
 			return Car(c), nil
 		}

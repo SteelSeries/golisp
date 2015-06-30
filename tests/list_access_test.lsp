@@ -99,7 +99,9 @@
           (assert-eq (nth l 8) 8)
           (assert-eq (nth l 9) 9)
           (assert-eq (nth l 10) 10)
-          (assert-eq (nth l 11) nil))
+          (assert-eq (nth l 11) nil)
+          (assert-error (nth 5 1))      ;1st arg must be a list
+          (assert-error (nth '() 'a)))  ;2nd arg must be a number
 
 (describe list-ref
           (assert-eq (list-ref nil 1) nil)
@@ -114,7 +116,9 @@
           (assert-eq (list-ref l 7) 8)
           (assert-eq (list-ref l 8) 9)
           (assert-eq (list-ref l 9) 10)
-          (assert-eq (list-ref l 10) nil))
+          (assert-eq (list-ref l 10) nil)
+          (assert-error (list-ref 5 1))      ;1st arg must be a list
+          (assert-error (list-ref '() 'a))) ;2nd arg must be a number
 
 (describe car
           (assert-eq (car 'a) nil)
@@ -202,10 +206,13 @@
           (assert-eq (general-car-cdr '(1 2 (3 4)) #b1100)
                      '(3 4))
           (assert-eq (general-car-cdr '(1 2 (3 4)) #b110100)
-                     4))
+                     4)
+          (assert-error (general-car-cdr '(1 2 3) 0))) ;needs a non-zero path specifier
 
 (describe last-pair
           (assert-eq (last-pair '(1 2 3))
                      '(3))
           (assert-eq (last-pair '(1 2 . 3))
-                     '(2 . 3)))
+                     '(2 . 3))
+          (assert-error (last-pair '())) ;needs non-empty list
+          (assert-error (last-pair 5))) ;needs a list
