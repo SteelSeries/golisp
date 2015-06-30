@@ -30,6 +30,7 @@ func RegisterFramePrimitives() {
 func MakeFrameImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if Length(args)%2 != 0 {
 		err = ProcessError("Frames must be initialized with an even number of arguments.", env)
+		return
 	}
 	m := make(FrameMap)
 	for c := args; NotNilP(c); c = Cddr(c) {
@@ -52,8 +53,8 @@ func HasSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	k := Cadr(args)
-	if !SymbolP(k) {
-		err = ProcessError(fmt.Sprintf("has-slot? requires a symbol as it's second argument, but was given %s.", String(k)), env)
+	if !NakedP(k) {
+		err = ProcessError(fmt.Sprintf("has-slot? requires a naked symbol as it's second argument, but was given %s.", String(k)), env)
 		return
 	}
 
