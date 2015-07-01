@@ -13,7 +13,7 @@
 (describe filter-errors
           (assert-error (filter 5 '())) ;1st arg must be a function
           (assert-error (filter even? 5)) ;2nd arg must be a list
-          (assert-error (filter + '(1 2))) ;1st arg must be a predicate)
+          (assert-error (filter + '(1 2)))) ;1st arg must be a predicate
 
 (describe remove
           (assert-eq (remove even? '())
@@ -29,4 +29,4 @@
 (describe remove-errors
           (assert-error (remove 5 '())) ;1st arg must be a function
           (assert-error (remove even? 5)) ;2nd arg must be a list
-          (assert-error (remove + '(1 2))) ;1st arg must be a predicate)
+          (assert-error (remove + '(1 2)))) ;1st arg must be a predicate

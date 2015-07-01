@@ -10,6 +10,7 @@ package golisp
 import (
 	"errors"
 	"fmt"
+	"time"
 )
 
 var (
@@ -22,6 +23,8 @@ var (
 )
 
 var VerboseTests = true
+
+var describeBlock string = ""
 
 func RegisterTestingPrimitives() {
 	MakeSpecialForm("describe", "*", DescribeImpl)
@@ -48,7 +51,7 @@ func logFailure(clause *Data, msg string) {
 	if VerboseTests {
 		fmt.Printf("failed: %s\n", msg)
 	}
-	failureMessages = append(failureMessages, fmt.Sprintf("%s - %s", String(clause), msg))
+	failureMessages = append(failureMessages, fmt.Sprintf("%s: %s - %s", describeBlock, String(clause), msg))
 }
 
 func logError(clause *Data, err error) {
@@ -58,7 +61,7 @@ func logError(clause *Data, err error) {
 	if VerboseTests {
 		fmt.Printf("%s\n", msg)
 	}
-	errorMessages = append(errorMessages, fmt.Sprintf("%s - %s", String(clause), msg))
+	errorMessages = append(errorMessages, fmt.Sprintf("%s: %s - %s", describeBlock, String(clause), msg))
 }
 
 func DescribeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -66,8 +69,10 @@ func DescribeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		err = errors.New("The describe tag must be a string or symbol")
 		return
 	}
+
+	describeBlock = StringValue(Car(args))
 	if VerboseTests {
-		fmt.Printf("%s\n", StringValue(Car(args)))
+		fmt.Printf("%s\n", describeBlock)
 	}
 
 	for clauses := Cdr(args); NotNilP(clauses); clauses = Cdr(clauses) {
@@ -77,7 +82,7 @@ func DescribeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		}
 		_, err = Eval(clause, env)
 		if err != nil {
-			logError(Cadr(clause), err)
+			logError(clause, err)
 			break
 		}
 	}
@@ -196,8 +201,11 @@ func dumpMessages(header string, messages []string) {
 	}
 }
 
-func PrintTestResults() {
-	fmt.Printf("\nDone.\n")
+func PrintTestResults(duration time.Duration) {
+	m := int(duration.Minutes())
+	s := (duration.Minutes() - float64(m)) * 60.0
+
+	fmt.Printf("\nDone in %d:%f\n", m, s)
 
 	dumpMessages("Errors", errorMessages)
 	dumpMessages("Failures", failureMessages)
