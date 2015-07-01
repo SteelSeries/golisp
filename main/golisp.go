@@ -10,6 +10,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/steelseries/golisp"
+	"time"
 )
 
 var (
@@ -17,16 +18,17 @@ var (
 )
 
 func test() {
+	startTime := time.Now()
 	for i := 0; i < flag.NArg(); i = i + 1 {
 		if golisp.VerboseTests {
 			fmt.Printf("Loading %s\n", flag.Arg(i))
 		}
 		_, err := golisp.ProcessFile(flag.Arg(i))
 		if err != nil {
-			fmt.Printf("Error: %s\n", err)
+			//fmt.Printf("Error: %s\n", err)
 		}
 	}
-	golisp.PrintTestResults()
+	golisp.PrintTestResults(time.Since(startTime))
 }
 
 func main() {
