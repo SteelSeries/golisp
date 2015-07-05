@@ -10,6 +10,7 @@ package golisp
 import (
 	. "gopkg.in/check.v1"
 	"path/filepath"
+	"time"
 )
 
 type LispSuite struct {
@@ -23,6 +24,7 @@ func (s *LispSuite) TestLisp(c *C) {
 		c.Fail()
 	}
 	VerboseTests = false
+	startTime := time.Now()
 	for _, f := range files {
 		c.Logf("Loading %s\n", f)
 		_, err := ProcessFile(f)
@@ -30,5 +32,5 @@ func (s *LispSuite) TestLisp(c *C) {
 			c.Logf("Error: %s\n", err)
 		}
 	}
-	PrintTestResults()
+	PrintTestResults(time.Since(startTime))
 }
