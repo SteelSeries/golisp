@@ -14,7 +14,7 @@ import (
 
 func Repl() {
 	IsInteractive = true
-	fmt.Printf("Welcome to GoLisp\n")
+	fmt.Printf("Welcome to GoLisp 1.0\n")
 	fmt.Printf("Copyright 2015 SteelSeries\n")
 	fmt.Printf("Evaluate '(quit)' to exit.\n\n")
 	prompt := "> "
