@@ -27,13 +27,19 @@ func MakePrimitiveFunction(name string, argCount string, function func(*Data, *S
 }
 
 func MakeRestrictedPrimitiveFunction(name string, argCount string, function func(*Data, *SymbolTableFrame) (*Data, error)) {
-	f := &PrimitiveFunction{Name: name, NumberOfArgs: argCount, Body: function, IsRestricted: true}
+	f := &PrimitiveFunction{Name: name, Special: false, NumberOfArgs: argCount, Body: function, IsRestricted: true}
 	sym := Global.Intern(name)
 	Global.BindTo(sym, PrimitiveWithNameAndFunc(name, f))
 }
 
 func MakeSpecialForm(name string, argCount string, function func(*Data, *SymbolTableFrame) (*Data, error)) {
 	f := &PrimitiveFunction{Name: name, Special: true, NumberOfArgs: argCount, Body: function, IsRestricted: false}
+	sym := Global.Intern(name)
+	Global.BindTo(sym, PrimitiveWithNameAndFunc(name, f))
+}
+
+func MakeRestrictedSpecialForm(name string, argCount string, function func(*Data, *SymbolTableFrame) (*Data, error)) {
+	f := &PrimitiveFunction{Name: name, Special: true, NumberOfArgs: argCount, Body: function, IsRestricted: true}
 	sym := Global.Intern(name)
 	Global.BindTo(sym, PrimitiveWithNameAndFunc(name, f))
 }
