@@ -101,11 +101,16 @@ func (self *PrimitiveFunction) Apply(args *Data, env *SymbolTableFrame) (result 
 
 	localGuid := ProfileGUID
 	ProfileGUID++
-	ProfileEnter("prim", self.Name, localGuid)
+	fType := "prim"
+	if self.Special {
+		fType = "form"
+	}
+
+	ProfileEnter(fType, self.Name, localGuid)
 
 	result, err = (self.Body)(ArrayToList(argArray), env)
 
-	ProfileExit("prim", self.Name, localGuid)
+	ProfileExit(fType, self.Name, localGuid)
 
 	return
 }
