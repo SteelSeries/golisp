@@ -5,21 +5,6 @@
 ;;; license that can be found in the LICENSE file.
 
 
-;;; --------------------------------------------------------------------------------
-;;; Data Abstraction
-
-(define record-time first)
-(define record-guid second)
-(define record-mode third)
-(define record-type fourth)
-(define record-name fifth)
-
-(define make-node list)
-(define node-time first)
-(define node-type second)
-(define node-name third)
-(define node-children fourth)
-
 
 ;;; --------------------------------------------------------------------------------
 ;;; Global data
@@ -31,31 +16,41 @@
 ;;; Load profile data from a file and construct the call tree(s)
 
 (define (load-profile filename)
-  (define (read-function-call start-data f)
-    (let* ((start-time (record-time start-data))
-           (f-guid (record-guid start-data))
-           (f-type (record-type start-data))
-           (f-name (record-name start-data))
-           (children-end (let loop
-                             ((d (read f))
-                              (ch '()))
-                           (cond ((eof-object? d)
-                                  d)
-                                 ((and (eq? (record-mode d) 'exit)
-                                       (eq? (record-guid d) f-guid))
-                                  (list (record-time d) ch))
-                                 ((eq? (record-mode d) 'enter)
-                                  (let ((children (cons (read-function-call d f) ch))) 
-                                    (loop (read f) children))))))
-           (end-time (car children-end))
-           (children (cadr children-end)))
-      (if (eof-object? children-end)
-          children-end
-          (make-node (- end-time start-time) f-type f-name children))))
 
+  (define (get-record f)
+    (let ((d (read f)))
+      (if (eof-object? d)
+          d
+          (eval d))))
+  
+  (define (read-function-call start-data f)
+    (if (eof-object? start-data)
+        start-data
+        (let* ((start-time (time: start-data))
+               (f-guid (guid: start-data))
+               (f-type (type: start-data))
+               (f-name (name: start-data))
+               (children-end (let loop
+                                 ((d (get-record f))
+                                  (ch '()))
+                               (cond ((eof-object? d)
+                                      d)
+                                     ((and (eq? (mode: d) 'exit)
+                                           (eq? (guid: d) f-guid))
+                                      (list (time: d) ch))
+                                     ((eq? (mode: d) 'enter)
+                                      (let* ((child (read-function-call d f))
+                                             (children (cons child ch))) 
+                                        (loop (get-record f) children))))))
+               (end-time (if (eof-object? children-end) {time: 0} (car children-end)))
+               (children (if (eof-object? children-end) {time: 0} (cadr children-end))))
+          (if (eof-object? children-end)
+              children-end
+              {time: (- end-time start-time) type: f-type name: f-name children: children}))))
+  
   (define (read-profile-data f)
     (let loop ((result '()))
-      (let ((tree (read-function-call (read f) f)))
+      (let ((tree (read-function-call (get-record f) f)))
         (if (eof-object? tree)
             result
             (loop (cons tree result))))))
@@ -79,12 +74,12 @@
   
   (define (compute-by-function tree f-type data) 
     (let ((new-data (if (or (eq? f-type 'all)
-                            (eq? f-type (node-type tree)))
-                        (add-to-function (node-name tree) (node-time tree) data)
+                            (eq? f-type (type: tree)))
+                        (add-to-function (name: tree) (time: tree) data)
                        data)))
       (let loop
           ((d new-data)
-           (nodes (node-children tree)))
+           (nodes (children: tree)))
         (if (null? nodes)
             d
             (loop (compute-by-function (car nodes) f-type d) (cdr nodes))))))
@@ -112,12 +107,17 @@
 ;;; --------------------------------------------------------------------------------
 ;;; Print out the call tree
 
+
 (define (print-tree)
   (define (inner-print-tree node level)
-    (format #t "~VA~A (~A)~%" (* 2 level) "" (node-name node) (node-time node))
-    (for-each (lambda (n)
-                (inner-print-tree n (+ level 1)))
-              (node-children node)))
+    (let ((has-children (not (null? (children: node))))
+          (children-time (reduce + 0 (map (lambda (n) (time: n)) (children: node)))))
+      (if has-children
+          (format #t "~VA~A (total: ~A, overhead: ~A)~%" (* 2 level) "" (name: node) (time: node) (- (time: node) children-time))
+          (format #t "~VA~A (total: ~A)~%" (* 2 level) "" (name: node) (time: node)))
+      (for-each (lambda (n)
+                  (inner-print-tree n (+ level 1)))
+                (children: node))))
 
   (for-each (lambda (tree)
               (inner-print-tree tree 0)

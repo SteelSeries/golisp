@@ -40,7 +40,7 @@ func EndProfiling() {
 
 func ProfileEnter(funcType string, name string, guid int64) {
 	if ProfileEnabled {
-		msg := fmt.Sprintf("(%d %d enter %s %s)\n", time.Now().UnixNano(), guid, funcType, name)
+		msg := fmt.Sprintf("{time: %d guid: %d mode: 'enter type: '%s name: '%s}\n", time.Now().UnixNano(), guid, funcType, name)
 		if profileOutput == nil {
 			fmt.Printf(msg)
 		} else {
@@ -51,7 +51,7 @@ func ProfileEnter(funcType string, name string, guid int64) {
 
 func ProfileExit(funcType string, name string, guid int64) {
 	if ProfileEnabled {
-		msg := fmt.Sprintf("(%d %d exit  %s %s)\n", time.Now().UnixNano(), guid, funcType, name)
+		msg := fmt.Sprintf("{time: %d guid: %d mode: 'exit type: '%s name: '%s}\n", time.Now().UnixNano(), guid, funcType, name)
 		if profileOutput == nil {
 			fmt.Printf(msg)
 		} else {
