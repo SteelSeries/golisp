@@ -111,7 +111,7 @@
     (let ((has-children (not (null? (children: node))))
           (children-time (reduce + 0 (map (lambda (n) (time: n)) (children: node)))))
       (if has-children
-          (format #t "~VA~A (total: ~A, overhead: ~A)~%" (* 2 level) "" (name: node) (time: node) (- (time: node) children-time))
+          (format #t "~VA~A (total: ~A, in nested calls: ~A, overhead: ~A)~%" (* 2 level) "" (name: node) (time: node) children-time (- (time: node) children-time))
           (format #t "~VA~A (total: ~A)~%" (* 2 level) "" (name: node) (time: node)))
       (for-each (lambda (n)
                   (inner-print-tree n (+ level 1)))
