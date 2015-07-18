@@ -20,11 +20,11 @@
   (define (get-record f)
     (let ((d (read f)))
       (if (eof-object? d)
-          d
+          {eof: #t time: 0 children: (list)}
           (eval d))))
   
   (define (read-function-call start-data f)
-    (if (eof-object? start-data)
+    (if (eof:? start-data)
         start-data
         (let* ((start-time (time: start-data))
                (f-guid (guid: start-data))
@@ -33,25 +33,23 @@
                (children-end (let loop
                                  ((d (get-record f))
                                   (ch '()))
-                               (cond ((eof-object? d)
+                               (cond ((eof:? d)
                                       d)
                                      ((and (eq? (mode: d) 'exit)
                                            (eq? (guid: d) f-guid))
-                                      (list (time: d) ch))
+                                      {time: (time: d) children: ch})
                                      ((eq? (mode: d) 'enter)
                                       (let* ((child (read-function-call d f))
                                              (children (cons child ch))) 
-                                        (loop (get-record f) children))))))
-               (end-time (if (eof-object? children-end) {time: 0} (car children-end)))
-               (children (if (eof-object? children-end) {time: 0} (cadr children-end))))
-          (if (eof-object? children-end)
+                                        (loop (get-record f) children)))))))
+          (if (eof:? children-end)
               children-end
-              {time: (- end-time start-time) type: f-type name: f-name children: children}))))
+              {time: (- (time: children-end) start-time) type: f-type name: f-name children: (children: children-end)}))))
   
   (define (read-profile-data f)
     (let loop ((result '()))
       (let ((tree (read-function-call (get-record f) f)))
-        (if (eof-object? tree)
+        (if (eof:? tree)
             result
             (loop (cons tree result))))))
 
