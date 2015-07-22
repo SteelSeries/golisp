@@ -31,6 +31,8 @@ func RegisterSystemPrimitives() {
 	MakeRestrictedPrimitiveFunction("load", "1", LoadFileImpl)
 	MakeRestrictedPrimitiveFunction("global-eval", "1", GlobalEvalImpl)
 	MakeRestrictedPrimitiveFunction("panic!", "1", PanicImpl)
+	MakePrimitiveFunction("error", "1", ErrorImpl)
+	MakeSpecialForm("on-error", "2|3", OnErrorImpl)
 
 	MakeSpecialForm("time", "1", TimeImpl)
 	MakeSpecialForm("profile", "1|2", ProfileImpl)
@@ -64,6 +66,43 @@ var goodbyes []string = []string{
 
 func PanicImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	panic(String(Car(args)))
+}
+
+func ErrorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return nil, ProcessError(String(Car(args)), env)
+}
+
+func OnErrorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	result, errThrown := Eval(Car(args), env)
+	if errThrown == nil {
+		if Length(args) == 3 {
+			f, err := Eval(Caddr(args), env)
+			if err != nil {
+				return nil, err
+			}
+			if !FunctionP(f) {
+				return nil, ProcessError("on-error requires a function as it's third argument", env)
+			}
+			noErrHandler := FunctionValue(f)
+			return noErrHandler.Apply(nil, env)
+
+		} else {
+			return
+		}
+	}
+
+	f, err := Eval(Cadr(args), env)
+	if err != nil {
+		return
+	}
+
+	if !FunctionP(f) {
+		err = ProcessError("on-error requires a function as it's second argument", env)
+		return
+	}
+	handler := FunctionValue(f)
+	errString := StringWithValue(errThrown.Error())
+	return handler.Apply(InternalMakeList(errString), env)
 }
 
 func QuitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -118,7 +157,6 @@ func MakeStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 }
 
 func TimeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	fmt.Printf("Starting timer.\n")
 	startTime := time.Now()
 
 	for cell := args; NotNilP(cell); cell = Cdr(cell) {
@@ -130,7 +168,6 @@ func TimeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	d := time.Since(startTime)
-	fmt.Printf("Stopped timer.\nTook %v to run.\n", d)
 	result = IntegerWithValue(int64(d.Nanoseconds() / 1000000))
 	return
 }
