@@ -119,8 +119,13 @@
                  (log-failure msg "expected an error, but there wasn't")))))
 
 (define (dump-summary duration)
-  (format #t "Ran ~A tests in ~A seconds~%" (+ number-of-passes number-of-failures number-of-errors) (/ duration 1000.0))
-  (format #t "~A passes, ~A failures, ~A errors~%" number-of-passes number-of-failures number-of-errors)
+  (format #t "Ran ~A tests in ~A seconds~%"
+          (+ number-of-passes number-of-failures number-of-errors)
+          (/ duration 1000.0))
+  (format #t "~A passes, ~A failures, ~A errors~%"
+          number-of-passes
+          number-of-failures
+          number-of-errors)
   (unless (zero? number-of-failures)
     (format #t "~%Failures:~%")
     (for-each (lambda (m) (format #t "  ~A~%" m))
