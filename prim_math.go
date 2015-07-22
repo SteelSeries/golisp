@@ -18,6 +18,8 @@ func RegisterMathPrimitives() {
 	MakePrimitiveFunction("-", "*", SubtractImpl)
 	MakePrimitiveFunction("*", "*", MultiplyImpl)
 	MakePrimitiveFunction("/", "*", QuotientImpl)
+	MakePrimitiveFunction("succ", "1", IncrementImpl)
+	MakePrimitiveFunction("pred", "1", DecrementImpl)
 	MakePrimitiveFunction("quotient", "*", QuotientImpl)
 	MakePrimitiveFunction("%", "2", RemainderImpl)
 	MakePrimitiveFunction("modulo", "2", RemainderImpl)
@@ -52,6 +54,26 @@ func sgn(a float32) int64 {
 
 func intSgn(a int64) int64 {
 	return sgn(float32(a))
+}
+
+func IncrementImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if !IntegerP(Car(args)) {
+		err = ProcessError("1+ requires an integer argument", env)
+		return
+	}
+
+	val := IntegerValue(Car(args))
+	return IntegerWithValue(val + 1), nil
+}
+
+func DecrementImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if !IntegerP(Car(args)) {
+		err = ProcessError("1- requires an integer argument", env)
+		return
+	}
+
+	val := IntegerValue(Car(args))
+	return IntegerWithValue(val - 1), nil
 }
 
 func addFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
