@@ -6,14 +6,18 @@
   (lambda (x)
     (+ a x)))
 
-(describe global-env
-          (assert-eq a
-                     5))
+(context "scope"
 
-(describe lambda-env
-          (assert-eq ((foo 1) 5)
-                     6)
-          (assert-eq ((foo 2) 5)
-                     7)
-          (assert-eq ((foo 10) 7)
-                     17))
+         ()
+         
+         (it global-env
+             (assert-eq a
+                        5))
+
+         (it lambda-env
+             (assert-eq ((foo 1) 5)
+                        6)
+             (assert-eq ((foo 2) 5)
+                        7)
+             (assert-eq ((foo 10) 7)
+                        17)))

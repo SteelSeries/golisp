@@ -1,23 +1,28 @@
 ;;; -*- mode: Scheme -*-
 
-(describe gensym-with-default
-          (assert-eq (gensym)
-                     'GENSYM-1)
-          (assert-eq (gensym)
-                     'GENSYM-2)
-          (assert-eq (gensym)
-                     'GENSYM-3)
-          (assert-eq (gensym)
-                     'GENSYM-4))
+(context "gensym"
 
-(describe gensym-with-prefix
-          (assert-eq (gensym 'hi)
-                     'hi-1)
-          (assert-eq (gensym "hi")
-                     'hi-2)
-          (assert-eq (gensym 'ho)
-                     'ho-1)
-          (assert-eq (gensym 'ho)
-                     'ho-2)
-          (assert-eq (gensym 'hi)
-                     'hi-3))
+         ()
+         
+         (it gensym-with-default
+             (let ((first-sym gensym))
+               (assert-neq (gensym)
+                          first-sym)
+               (assert-neq (gensym)
+                          first-sym)
+               (assert-neq (gensym)
+                          first-sym)))
+
+         (it gensym-with-prefix
+             (let ((hi-sym (gensym 'hi))
+                   (ho-sym (gensym 'ho)))
+               (assert-neq (gensym 'hi)
+                          hi-sym)
+               (assert-neq (gensym "hi")
+                          hi-sym)
+               (assert-neq (gensym 'ho)
+                          ho-sym)
+               (assert-neq (gensym 'ho)
+                          ho-sym)
+               (assert-neq (gensym 'hi)
+                          hi-sym))))
