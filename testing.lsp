@@ -19,7 +19,9 @@
 (define (reset-testing )
   (set! number-of-passes 0)
   (set! number-of-failures 0)
+  (set! number-of-errors 0)
   (set! failure-messages '())
+  (set! error-messages '())
   (set! verbose-tests nil))
 
 (define (log-pass msg)
@@ -50,7 +52,7 @@
               (for-each (lambda (it-clause)
                           ,@setup
                           (eval it-clause))
-                   ',body))))
+                        ',body))))
 
 (defmacro (it label . body)
   (if (not (or (symbol? label) (string? label)))
@@ -119,7 +121,7 @@
                  (log-failure msg "expected an error, but there wasn't")))))
 
 (define (dump-summary duration)
-  (format #t "Ran ~A tests in ~A seconds~%"
+  (format #t "~%Ran ~A tests in ~A seconds~%"
           (+ number-of-passes number-of-failures number-of-errors)
           (/ duration 1000.0))
   (format #t "~A passes, ~A failures, ~A errors~%"
@@ -130,7 +132,7 @@
     (format #t "~%Failures:~%")
     (for-each (lambda (m) (format #t "  ~A~%" m))
               failure-messages))
-    (unless (zero? number-of-errors)
+  (unless (zero? number-of-errors)
     (format #t "~%Errors:~%")
     (for-each (lambda (m) (format #t "  ~A~%" m))
               error-messages)))
