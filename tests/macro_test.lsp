@@ -1,52 +1,56 @@
 ;;; -*- mode: Scheme -*-
 
-(describe quasiquoted-literal
-          (assert-eq `a
-                     'a)
-          (assert-eq `1
-                     1))
+(defmacro (add x y)
+  `(+ ,x ,@y))
 
-(describe quasiquoted-list
-          (assert-eq `(a b c)
-                     '(a b c))
-          (assert-eq `(1 (2) 3)
-                     '(1 (2) 3)))
 
-(describe unquote
-          (assert-eq `(a ,(+ 1 2) b)
-                     '(a 3 b)))
+(context "macro"
 
-(describe unquote-splicing
-          (assert-eq `(a ,@(list 1 2 3) b)
-                     '(a 1 2 3 b)))
+         ()
+         
+         (it quasiquoted-literal
+             (assert-eq `a
+                        'a)
+             (assert-eq `1
+                        1))
 
-(describe nested-unquote-splicing
-          (assert-eq `(a ,@(list 1 2 3) `(list ,@(list a b c)))
-                     '(a 1 2 3 `(list ,@(list a b c)))))
+         (it quasiquoted-list
+             (assert-eq `(a b c)
+                        '(a b c))
+             (assert-eq `(1 (2) 3)
+                        '(1 (2) 3)))
 
-(describe combined-and-eval
-          (let* ((x 1)
-                 (y '(2 3)))
-            (assert-eq (eval `(+ ,x ,@y))
-                       6)))
+         (it unquote
+             (assert-eq `(a ,(+ 1 2) b)
+                        '(a 3 b)))
 
-(describe defmacro
-          (defmacro (add x y)
-            `(+ ,x ,@y))
+         (it unquote-splicing
+             (assert-eq `(a ,@(list 1 2 3) b)
+                        '(a 1 2 3 b)))
 
-          (assert-eq (add 1 '(2 3))
-                     6))
+         (it nested-unquote-splicing
+             (assert-eq `(a ,@(list 1 2 3) `(list ,@(list a b c)))
+                        '(a 1 2 3 `(list ,@(list a b c)))))
 
-(describe expand
-          (defmacro (add x y)
-            `(+ ,x ,@y))
-          (assert-eq (expand add 1 '(2 3))
-                     '(+ 1 2 3)))
+         (it combined-and-eval
+             (let* ((x 1)
+                    (y '(2 3)))
+               (assert-eq (eval `(+ ,x ,@y))
+                          6)))
 
-(describe nested
-          (assert-eq  `(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f) 
-                      '(a `(b ,(+ 1 2) ,(foo 4 d) e) f)))
+         (it defmacro
+             (assert-eq (add 1 (2 3))
+                        6))
 
-(describe defmacro-errors
-          (assert-error (defmacro "x" 1))
-          (assert-error (defmacro ("x") 1)))
+         (it expand
+             (assert-eq (expand add 1 (2 3))
+                        '(+ 1 2 3)))
+
+         (it nested
+             (assert-eq  `(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f) 
+                         '(a `(b ,(+ 1 2) ,(foo 4 d) e) f)))
+
+         (it defmacro-errors
+             (assert-error (defmacro "x" 1))
+             (assert-error (defmacro ("x") 1)))
+)
