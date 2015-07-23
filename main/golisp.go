@@ -10,23 +10,36 @@ import (
 	"flag"
 	"fmt"
 	"github.com/steelseries/golisp"
+	"strings"
 )
 
 var (
-	runTests bool = false
+	runTests     bool = false
+	verboseTests bool = false
 )
 
 func test() {
-	for i := 0; i < flag.NArg(); i = i + 1 {
-		_, err := golisp.ProcessFile(flag.Arg(i))
-		if err != nil {
-			//fmt.Printf("Error: %s\n", err)
-		}
+	verboseFlag := ""
+	testFunction := ""
+	if verboseTests {
+		verboseFlag = " #t"
 	}
+	testName := flag.Arg(0)
+
+	if strings.HasSuffix(testName, ".lsp") {
+		testFunction = "run-test"
+	} else {
+		testFunction = "run-all-tests"
+	}
+
+	testCommand := fmt.Sprintf("(%s \"%s\"%s)", testFunction, testName, verboseFlag)
+	golisp.ProcessFile("testing.lsp")
+	golisp.ParseAndEval(testCommand)
 }
 
 func main() {
 	flag.BoolVar(&runTests, "t", false, "Whether to run tests and exit.  Defaults to false.")
+	flag.BoolVar(&verboseTests, "v", false, "Whether tests should be verbose.  Defaults to false.")
 	flag.Parse()
 	if runTests {
 		test()
