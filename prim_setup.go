@@ -44,7 +44,6 @@ func InitBuiltins() {
 	RegisterBytearrayPrimitives()
 	RegisterStringPrimitives()
 	RegisterDebugPrimitives()
-	RegisterTestingPrimitives()
 	RegisterFramePrimitives()
 	RegisterConcurrencyPrimitives()
 	RegisterEnvironmentPrimitives()
