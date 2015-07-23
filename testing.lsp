@@ -139,8 +139,7 @@
   (reset-testing)
   (set! verbose-tests (not (nil? optionals)))
   (let ((t (time (for-each load (list-directory test-dir "*_test.lsp")))))
-    (dump-summary t))
-)
+    (dump-summary t)))
 
 (define (run-test test-file . optionals)
   (reset-testing)
