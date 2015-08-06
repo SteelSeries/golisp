@@ -7,7 +7,7 @@
 (context "math"
 
          ()
-         
+
          (it arithmetic-test
              (assert-eq (+ 5 5)
                         10)
@@ -33,7 +33,7 @@
              (assert-false (< y z))
              (assert-error (< "a" 5))
              (assert-error (< 5 "a"))
-             
+
              (assert-false (> xx y))
              (assert-true (> z xx))
              (assert-error (> "a" 5))
@@ -116,16 +116,15 @@
          (it general-math-errors
              (assert-error (/ 3 0))
              (assert-error (% 3.5 6))
-             (assert-error (& 6 4.7))
              (assert-error (min '(1 d)))
              (assert-error (max 5.4 i))
              (assert-error (floor 'd))
-             (assert-error (celing 'd))
+             (assert-error (ceiling 'd))
              (assert-error (abs "hi"))
              (assert-error (zero? 'zero))
              (assert-error (positive? +))
-             (assert-error (negative '-))
+             (assert-error (negative? '-))
              (assert-error (even? "j"))
-             (assert-error (odd 'r))
+             (assert-error (odd? 'r))
              (assert-error (sign 's)))
 )
