@@ -61,10 +61,15 @@ func processQuasiquoted(sexpr *Data, level int, env *SymbolTableFrame) (result *
 				return nil, err
 			}
 			r, err := Eval(Car(processed), env)
+			fmt.Printf("%s\n", String(r))
 			if err != nil {
 				return nil, err
 			}
-			return r, nil
+			if NilP(r) {
+				return nil, nil
+			} else {
+				return r, nil
+			}
 		} else {
 			processed, err := processQuasiquoted(Cadr(sexpr), level-1, env)
 			if err != nil {
@@ -79,7 +84,9 @@ func processQuasiquoted(sexpr *Data, level int, env *SymbolTableFrame) (result *
 			if err != nil {
 				return nil, err
 			}
-			parts = append(parts, processed)
+			if processed != nil {
+				parts = append(parts, processed)
+			}
 		}
 		flat, err := Flatten(ArrayToList(parts))
 		if err != nil {

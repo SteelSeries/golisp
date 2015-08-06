@@ -64,7 +64,7 @@
                         (lambda (err) (log-error err))))))
 
 (defmacro (assert-true sexpr)
-  `(let ((actual (eval ,sexpr))
+  `(let ((actual ,sexpr)
          (msg (format #f "(assert-true ~A)" ',sexpr)))
      (if actual
          (log-pass msg)
@@ -72,7 +72,7 @@
 
 
 (defmacro (assert-false sexpr)
-  `(let ((actual (eval ,sexpr))
+  `(let ((actual ,sexpr)
          (msg (format #f "(assert-false ~A)" ',sexpr)))
      (if (not actual)
          (log-pass msg)
@@ -80,7 +80,7 @@
 
 
 (defmacro (assert-nil sexpr)
-  `(let ((actual (eval ,sexpr))
+  `(let ((actual ,sexpr)
          (msg (format #f "(assert-null ~A)" ',sexpr)))
      (if (nil? actual)
          (log-pass msg)
@@ -88,7 +88,7 @@
 
 
 (defmacro (assert-not-nil sexpr)
-  `(let ((actual (eval ,sexpr))
+  `(let ((actual ,sexpr)
          (msg (format #f "(assert-not-null ~A)" ',sexpr)))
      (if (not (nil? actual))
          (log-pass msg)
@@ -148,4 +148,3 @@
   (set! verbose-tests (not (nil? optionals)))
   (let ((t (time (load test-file))))
     (dump-summary t)))
-
