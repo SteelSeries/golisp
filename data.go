@@ -891,7 +891,7 @@ func String(d *Data) string {
 	switch d.Type {
 	case ConsCellType:
 		{
-			if NilP(Car(d)) && NilP(Cdr(d)) {
+			if NilP(d) {
 				return "()"
 			}
 			var c *Data = d
@@ -917,7 +917,7 @@ func String(d *Data) string {
 		}
 	case AlistType:
 		{
-			if NilP(Car(d)) && NilP(Cdr(d)) {
+			if NilP(d) {
 				return "()"
 			}
 			contents := make([]string, 0, Length(d))
@@ -1068,11 +1068,6 @@ func evalHelper(d *Data, env *SymbolTableFrame, needFunction bool) (result *Data
 		case ConsCellType:
 			{
 				d = postProcessFrameShortcuts(d)
-
-				// catch empty cons cell
-				if Car(d) == nil && Cdr(d) == nil {
-					return nil, nil
-				}
 
 				var function *Data
 				function, err = evalHelper(Car(d), env, true)

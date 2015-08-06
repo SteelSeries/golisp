@@ -23,7 +23,7 @@ func InitLisp() {
 func InitEnvironments() {
 	TopLevelEnvironments = make(map[string]*SymbolTableFrame, 5)
 	Global = NewSymbolTableFrameBelow(nil, "SystemGlobal")
-	Global.Intern("nil")
+	Global.BindTo(Intern("nil"), EmptyCons())
 	Global.BindTo(Intern("system-global-environment"), EnvironmentWithValue(Global))
 }
 

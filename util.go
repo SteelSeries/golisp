@@ -8,9 +8,12 @@
 package golisp
 
 func ArrayToList(sexprs []*Data) *Data {
-	head := EmptyCons()
+	head := Cons(nil, EmptyCons())
 	lastCell := head
 	for _, element := range sexprs {
+		if element == nil {
+			element = EmptyCons()
+		}
 		newCell := Cons(element, nil)
 		ConsValue(lastCell).Cdr = newCell
 		lastCell = newCell
@@ -19,9 +22,12 @@ func ArrayToList(sexprs []*Data) *Data {
 }
 
 func ArrayToListWithTail(sexprs []*Data, tail *Data) *Data {
-	head := EmptyCons()
+	head := Cons(nil, EmptyCons())
 	lastCell := head
 	for _, element := range sexprs {
+		if element == nil {
+			element = EmptyCons()
+		}
 		newCell := Cons(element, nil)
 		ConsValue(lastCell).Cdr = newCell
 		lastCell = newCell
