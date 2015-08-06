@@ -69,11 +69,6 @@ func makeSymbol(str string) (s *Data, err error) {
 
 func parseConsCell(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 	tok, _ := s.NextToken()
-	if tok == RPAREN {
-		s.ConsumeToken()
-		sexpr = nil
-		return
-	}
 
 	var car *Data
 	var cdr *Data
@@ -365,7 +360,6 @@ func ParseAndEvalAllInEnvironment(src string, env *SymbolTableFrame) (result *Da
 			return
 		}
 	}
-	return
 }
 
 func ParseAndEvalInEnvironment(src string, env *SymbolTableFrame) (result *Data, err error) {
