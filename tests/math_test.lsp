@@ -65,8 +65,13 @@
              (assert-true (even? 2))
              (assert-false (even? 3))
              (assert-true (odd? 3))
-             (assert-false (odd? 2))
-             )
+             (assert-false (odd? 2)))
+
+         (it "and/or work for control flow with short circuiting"
+             (assert-eq 5 (and (> 4 2) (+ 4 1)))
+             (assert-eq #f (and (< 4 2) (+ 4 1)))
+             (assert-eq #t (or (> 4 2) (+ 4 1)))
+             (assert-eq 5 (or (< 4 2) (+ 4 1))))
 
          (it int-min
              (assert-eq (min '(1 2))
