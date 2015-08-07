@@ -23,6 +23,9 @@ _testmain.go
 bin/golisp
 
 src/launchpad.net/
+src/github.com/jimsmart/bufrr/
+src/gopkg.in/check.v1/
+src/gopkg.in/fatih/set.v0/
 
 *.aux
 
