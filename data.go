@@ -1069,6 +1069,11 @@ func evalHelper(d *Data, env *SymbolTableFrame, needFunction bool) (result *Data
 			{
 				d = postProcessFrameShortcuts(d)
 
+				// catch empty cons cell
+				if NilP(d) {
+					return EmptyCons(), nil
+				}
+
 				var function *Data
 				function, err = evalHelper(Car(d), env, true)
 
