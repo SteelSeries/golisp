@@ -239,7 +239,7 @@ func (self *SymbolTableFrame) ValueOfWithFunctionSlotCheck(symbol *Data, needFun
 	if found {
 		return binding.Val
 	} else {
-		return nil
+		return EmptyCons()
 	}
 }
 
