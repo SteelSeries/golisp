@@ -3,7 +3,7 @@
 (context "environment support"
 
          ()
-         
+
          (it "lets you get the global environment"
              (assert-not-nil (system-global-environment)))
 
@@ -30,8 +30,8 @@
              (assert-error (environment-bound-names 5))
              (assert-error (environment-macro-names 5))
              (assert-error (environment-bindings 5))
-             (assert-error (environment-reference-type? 5 'a))
-             (assert-error (environment-reference-type? (system-global-environment) 5))
+             (assert-error (environment-reference-type 5 'a))
+             (assert-error (environment-reference-type (system-global-environment) 5))
              (assert-error (environment-bound? 5 'a))
              (assert-error (environment-bound? (system-global-environment) 5))
              (assert-error (environment-assigned? 5 'a))
@@ -40,7 +40,7 @@
 
              (defmacro (test-macro) )
              (assert-error (environment-assigned? (system-global-environment) 'test-macro))
-             
+
              (assert-error (environment-lookup 5 'a))
              (assert-error (environment-lookup (system-global-environment) 5))
              (assert-error (environment-lookup (system-global-environment) '____foobar))

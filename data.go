@@ -483,7 +483,7 @@ func StringValue(d *Data) string {
 }
 
 func BooleanValue(d *Data) bool {
-	if d == nil {
+	if NilP(d) {
 		return false
 	}
 
@@ -603,7 +603,7 @@ func PortValue(d *Data) *os.File {
 }
 
 func Length(d *Data) int {
-	if d == nil {
+	if NilP(d) {
 		return 0
 	}
 
@@ -891,7 +891,7 @@ func String(d *Data) string {
 	switch d.Type {
 	case ConsCellType:
 		{
-			if NilP(Car(d)) && NilP(Cdr(d)) {
+			if NilP(d) {
 				return "()"
 			}
 			var c *Data = d
@@ -917,7 +917,7 @@ func String(d *Data) string {
 		}
 	case AlistType:
 		{
-			if NilP(Car(d)) && NilP(Cdr(d)) {
+			if NilP(d) {
 				return "()"
 			}
 			contents := make([]string, 0, Length(d))
@@ -1070,8 +1070,8 @@ func evalHelper(d *Data, env *SymbolTableFrame, needFunction bool) (result *Data
 				d = postProcessFrameShortcuts(d)
 
 				// catch empty cons cell
-				if Car(d) == nil && Cdr(d) == nil {
-					return nil, nil
+				if NilP(d) {
+					return EmptyCons(), nil
 				}
 
 				var function *Data
@@ -1080,7 +1080,7 @@ func evalHelper(d *Data, env *SymbolTableFrame, needFunction bool) (result *Data
 				if err != nil {
 					return
 				}
-				if function == nil {
+				if NilP(function) {
 					err = errors.New(fmt.Sprintf("Nil when function or macro expected for %s.", String(Car(d))))
 					return
 				}
