@@ -61,7 +61,6 @@ func processQuasiquoted(sexpr *Data, level int, env *SymbolTableFrame) (result *
 				return nil, err
 			}
 			r, err := Eval(Car(processed), env)
-			fmt.Printf("%s\n", String(r))
 			if err != nil {
 				return nil, err
 			}

@@ -8,4 +8,4 @@
                    (assert-nil '())
                    (assert-not-nil '(()))
                    (assert-not-nil '(()()))
-                   (assert-error ())))
+                   (assert-nil ())))
