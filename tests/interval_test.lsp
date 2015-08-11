@@ -23,7 +23,7 @@
              (assert-eq (interval 10 1 -2) '(10 8 6 4 2))
              (assert-error (interval 10 1 2)))
 
-         (it "supports a simpole version for 1...n sequences"
+         (it "supports a simple version for 1...n sequences"
              (assert-eq (interval 1) '(1))
              (assert-eq (interval 10) '(1 2 3 4 5 6 7 8 9 10))))
 
