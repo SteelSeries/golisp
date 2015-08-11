@@ -139,7 +139,8 @@
   (unless (zero? number-of-errors)
     (format #t "~%Errors:~%")
     (for-each (lambda (m) (format #t "  ~A~%" m))
-              error-messages)))
+              error-messages))
+  (and (zero? number-of-failures) (zero? number-of-errors)))
 
 (define (run-all-tests test-dir . optionals)
   (reset-testing)
