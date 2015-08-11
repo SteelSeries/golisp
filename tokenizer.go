@@ -198,6 +198,13 @@ func (self *Tokenizer) readString() (token int, lit string) {
 	for !self.isEof() && rune(self.CurrentCh) != '"' {
 		if rune(self.CurrentCh) == '\\' {
 			self.Advance()
+			if rune(self.CurrentCh) == 'n' {
+				buffer = append(buffer, '\n')
+			} else {
+				buffer = append(buffer, rune(self.CurrentCh))
+			}
+			self.Advance()
+			continue
 		}
 		buffer = append(buffer, rune(self.CurrentCh))
 		self.Advance()
