@@ -166,7 +166,7 @@ func (s *ParsingSuite) TestSymbolWithUnderscores(c *C) {
 func (s *ParsingSuite) TestNil(c *C) {
 	sexpr, err := Parse("()")
 	c.Assert(err, IsNil)
-	c.Assert(sexpr, IsNil)
+	c.Assert(NilP(sexpr), Equals, true)
 }
 
 func (s *ParsingSuite) TestIntegerCar(c *C) {
