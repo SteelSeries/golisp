@@ -24,7 +24,7 @@ func RegisterListFunctionsPrimitives() {
 	MakePrimitiveFunction("find", "2", FindImpl)
 }
 
-func intMin(x, y int) int {
+func intMin(x, y int64) int64 {
 	if x < y {
 		return x
 	} else {
@@ -52,7 +52,7 @@ func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 			return
 		}
 		collections = append(collections, col)
-		loopCount = int64(intMin(int(loopCount), Length(col)))
+		loopCount = intMin(loopCount, int64(Length(col)))
 	}
 
 	if loopCount == math.MaxInt64 {
@@ -95,7 +95,7 @@ func ForEachImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 			return
 		}
 		collections = append(collections, col)
-		loopCount = int64(intMin(int(loopCount), Length(col)))
+		loopCount = intMin(loopCount, int64(Length(col)))
 	}
 
 	if loopCount == math.MaxInt64 {
