@@ -27,21 +27,22 @@
 (define (log-pass msg)
   (set! number-of-passes (succ number-of-passes))
   (when verbose-tests
-    (format #t "    ~A - ok~%" msg)))
+    (format #t "    ~A~%" msg)))
 
 
 (define (log-failure prefix msg)
   (set! number-of-failures (succ number-of-failures))
-  (let ((failure-message (format #f "~A ~A: ~A - ~A" context-name it-name prefix msg)))
+  (let ((failure-message (format #f "~A ~A:~%    ~A~%      - ~A" context-name it-name prefix msg)))
     (set! failure-messages (cons failure-message failure-messages))
     (when verbose-tests
-          (format #t "    ~A - failed: ~A~%" prefix msg))))
+          (format #t "    ~A~%      - ~A~%" prefix msg))))
 
 (define (log-error err)
   (set! number-of-errors (succ number-of-errors))
-  (set! error-messages (cons err error-messages))
-  (when verbose-tests
-        (format #t "   error: ~A~%" err)))
+  (let ((error-message (format #f "~A ~A:~%    ERROR: ~A" context-name it-name err)))
+    (set! error-messages (cons error-message error-messages))
+    (when verbose-tests
+          (format #t "    ERROR: ~A~%" err))))
 
 (defmacro (context label setup . body)
   (if (not (or (symbol? label) (string? label)))
@@ -61,7 +62,10 @@
                 (format #t "~%  ~A~%" ,label))
               (set! it-name ,label)
               (on-error (begin ,@body)
-                        (lambda (err) (log-error err))))))
+                        (lambda (err)
+                          (let* ((err-parts (string-split err "\n"))
+                                 (last-line (car (last-pair err-parts))))
+                            (log-error (cadr (string-split last-line ". ")))))))))
 
 (defmacro (assert-true sexpr)
   `(let ((actual ,sexpr)
