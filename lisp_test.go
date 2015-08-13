@@ -18,7 +18,7 @@ var _ = Suite(&LispSuite{})
 
 func (s *LispSuite) TestLisp(c *C) {
 	testCommand := "(run-all-tests \"tests\")"
-	_, err := ProcessFile("testing.lsp")
+	_, err := ProcessFile("lisp/testing.lsp")
 	c.Assert(err, IsNil)
 	data, err := ParseAndEval(testCommand)
 	c.Assert(err, IsNil)
