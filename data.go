@@ -901,7 +901,7 @@ func String(d *Data) string {
 				contents = append(contents, String(Car(c)))
 				c = Cdr(c)
 			}
-			if c == nil {
+			if NilP(c) {
 				if SymbolP(Car(d)) && StringValue(Car(d)) == "quote" {
 					if len(contents) == 1 {
 						return fmt.Sprintf("'()")
