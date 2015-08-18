@@ -21,6 +21,8 @@ type Process struct {
 	Wake          chan bool
 	Abort         chan bool
 	Restart       chan bool
+	ReturnValue   chan *Data
+	Joined        bool
 	ScheduleTimer *time.Timer
 }
 
@@ -31,6 +33,7 @@ func RegisterConcurrencyPrimitives() {
 	MakePrimitiveFunction("schedule", "2", ScheduleImpl)
 	MakePrimitiveFunction("reset-timeout", "1", ResetTimeoutImpl)
 	MakePrimitiveFunction("abandon", "1", AbandonImpl)
+	MakePrimitiveFunction("join", "1", JoinImpl)
 }
 
 func ForkImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -46,12 +49,18 @@ func ForkImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	proc := &Process{Env: env, Code: f, Wake: make(chan bool, 1), Abort: make(chan bool, 1), Restart: make(chan bool, 1)}
+	proc := &Process{Env: env, Code: f, Wake: make(chan bool, 1), Abort: make(chan bool, 1), Restart: make(chan bool, 1), ReturnValue: make(chan *Data, 1)}
 	procObj := ObjectWithTypeAndValue("Process", unsafe.Pointer(proc))
 
 	go func() {
+		var returnValue *Data = nil
+		defer func() {
+			proc.ReturnValue <- returnValue
+		}()
+
 		callWithPanicProtection(func() {
-			_, forkedErr := FunctionValue(f).ApplyWithoutEval(InternalMakeList(procObj), env)
+			var forkedErr error
+			returnValue, forkedErr = FunctionValue(f).ApplyWithoutEval(InternalMakeList(procObj), env)
 			if forkedErr != nil {
 				fmt.Println(forkedErr)
 			}
@@ -180,6 +189,23 @@ func ResetTimeoutImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 		str = "task was already completed or abandoned"
 	}
 	return StringWithValue(str), nil
+}
+
+func JoinImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	procObj := Car(args)
+
+	if !ObjectP(procObj) || ObjectType(procObj) != "Process" {
+		err = ProcessError(fmt.Sprintf("join expects a Process object expected but received %s.", ObjectType(procObj)), env)
+		return
+	}
+	proc := (*Process)(ObjectValue(procObj))
+
+	if !proc.Joined {
+		proc.Joined = true
+		return <-proc.ReturnValue, nil
+	} else {
+		return nil, ProcessError("tried to run join on a task twice", env)
+	}
 }
 
 func callWithPanicProtection(f func(), prefix string) {
