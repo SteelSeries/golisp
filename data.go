@@ -1124,7 +1124,7 @@ func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
 func formatApply(function *Data, args *Data) string {
 	var fname string
 
-	if function == nil {
+	if NilP(function) {
 		return "Trying to apply nil!"
 	}
 
@@ -1135,12 +1135,14 @@ func formatApply(function *Data, args *Data) string {
 		fname = MacroValue(function).Name
 	case PrimitiveType:
 		fname = PrimitiveValue(function).Name
+	default:
+		return fmt.Sprintf("%s when function or macro expected for %s.", TypeName(TypeOf(function)), String(function))
 	}
 	return fmt.Sprintf("Apply %s to %s", fname, String(args))
 }
 
 func Apply(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if function == nil {
+	if NilP(function) {
 		err = errors.New("Nil when function expected.")
 		return
 	}
@@ -1155,6 +1157,9 @@ func Apply(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err
 		result, err = MacroValue(function).Apply(args, env)
 	case PrimitiveType:
 		result, err = PrimitiveValue(function).Apply(args, env)
+	default:
+		err = errors.New(fmt.Sprintf("%s when function or macro expected for %s.", TypeName(TypeOf(function)), String(function)))
+		return
 	}
 
 	return
