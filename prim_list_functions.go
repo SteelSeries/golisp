@@ -34,7 +34,7 @@ func intMin(x, y int64) int64 {
 
 func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
-	if !FunctionP(f) {
+	if !FunctionOrPrimitiveP(f) {
 		err = ProcessError(fmt.Sprintf("map needs a function as its first argument, but got %s.", String(f)), env)
 		return
 	}
@@ -80,7 +80,7 @@ func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func ForEachImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
-	if !FunctionP(f) {
+	if !FunctionOrPrimitiveP(f) {
 		err = ProcessError(fmt.Sprintf("foreach needs a function as its first argument, but got %s.", String(f)), env)
 		return
 	}
@@ -120,7 +120,7 @@ func ForEachImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func ReduceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
-	if !FunctionP(f) {
+	if !FunctionOrPrimitiveP(f) {
 		err = ProcessError("reduce needs a function as its first argument", env)
 		return
 	}
@@ -154,7 +154,7 @@ func ReduceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func FilterImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
-	if !FunctionP(f) {
+	if !FunctionOrPrimitiveP(f) {
 		err = ProcessError(fmt.Sprintf("filter needs a function as its first argument, but got %s.", String(f)), env)
 		return
 	}
@@ -187,7 +187,7 @@ func FilterImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func RemoveImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
-	if !FunctionP(f) {
+	if !FunctionOrPrimitiveP(f) {
 		err = ProcessError(fmt.Sprintf("remove needs a function as its first argument, but got %s.", String(f)), env)
 		return
 	}
@@ -234,7 +234,7 @@ func MemqImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func FindTailImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
-	if !FunctionP(f) {
+	if !FunctionOrPrimitiveP(f) {
 		err = ProcessError("find-tail/memp needs a function as its first argument", env)
 		return
 	}
@@ -263,7 +263,7 @@ func FindTailImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func FindImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
-	if !FunctionP(f) {
+	if !FunctionOrPrimitiveP(f) {
 		err = ProcessError("find needs a function as its first argument", env)
 		return
 	}

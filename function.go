@@ -20,6 +20,7 @@ type Function struct {
 	Body             *Data
 	Env              *SymbolTableFrame
 	DebugOnEntry     bool
+	SlotFunction     bool
 }
 
 func computeRequiredArgumentCount(args *Data) (requiredArgumentCount int, varArgs bool) {
@@ -38,7 +39,7 @@ func computeRequiredArgumentCount(args *Data) (requiredArgumentCount int, varArg
 
 func MakeFunction(name string, params *Data, body *Data, parentEnv *SymbolTableFrame) *Function {
 	requiredArgs, varArgs := computeRequiredArgumentCount(params)
-	return &Function{Name: name, Params: params, VarArgs: varArgs, RequiredArgCount: requiredArgs, Body: body, Env: parentEnv}
+	return &Function{Name: name, Params: params, VarArgs: varArgs, RequiredArgCount: requiredArgs, Body: body, Env: parentEnv, SlotFunction: false}
 }
 
 func (self *Function) String() string {
@@ -93,7 +94,7 @@ func (self *Function) internalApply(args *Data, argEnv *SymbolTableFrame, frame 
 	selfSym := Intern("self")
 	if frame != nil {
 		localEnv.BindLocallyTo(selfSym, FrameWithValue(frame))
-	} else {
+	} else if self.SlotFunction {
 		selfBinding, found := argEnv.findBindingInLocalFrameFor(selfSym)
 		if found {
 			localEnv.BindLocallyTo(selfSym, selfBinding.Val)

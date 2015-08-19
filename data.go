@@ -184,8 +184,12 @@ func ObjectP(d *Data) bool {
 	return d != nil && TypeOf(d) == BoxedObjectType
 }
 
-func FunctionP(d *Data) bool {
+func FunctionOrPrimitiveP(d *Data) bool {
 	return d != nil && (TypeOf(d) == FunctionType || TypeOf(d) == PrimitiveType)
+}
+
+func FunctionP(d *Data) bool {
+	return d != nil && TypeOf(d) == FunctionType
 }
 
 func PrimitiveP(d *Data) bool {
@@ -1148,7 +1152,7 @@ func Apply(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err
 	}
 	switch function.Type {
 	case FunctionType:
-		if env.HasFrame() {
+		if FunctionValue(function).SlotFunction && env.HasFrame() {
 			result, err = FunctionValue(function).ApplyWithFrame(args, env, env.Frame)
 		} else {
 			result, err = FunctionValue(function).Apply(args, env)

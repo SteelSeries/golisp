@@ -426,7 +426,7 @@ func ApplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	if !FunctionP(f) {
+	if !FunctionOrPrimitiveP(f) {
 		err = ProcessError(fmt.Sprintf("apply requires a function as it's first argument, but got %s.", String(f)), env)
 		return
 	}
