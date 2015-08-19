@@ -50,11 +50,17 @@ func ForkImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	proc := &Process{Env: env, Code: f, Wake: make(chan bool, 1), Abort: make(chan bool, 1), Restart: make(chan bool, 1), ReturnValue: make(chan *Data, 1)}
+	proc := &Process{
+		Env:         env,
+		Code:        f,
+		Wake:        make(chan bool, 1),
+		Abort:       make(chan bool, 1),
+		Restart:     make(chan bool, 1),
+		ReturnValue: make(chan *Data, 1)}
 	procObj := ObjectWithTypeAndValue("Process", unsafe.Pointer(proc))
 
 	go func() {
-		var returnValue *Data = nil
+		var returnValue *Data
 		defer func() {
 			proc.ReturnValue <- returnValue
 		}()
@@ -134,11 +140,16 @@ func ScheduleImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		Wake:          make(chan bool, 1),
 		Abort:         make(chan bool, 1),
 		Restart:       make(chan bool, 1),
+		ReturnValue:   make(chan *Data, 1),
 		ScheduleTimer: time.NewTimer(time.Duration(IntegerValue(millis)) * time.Millisecond)}
 	procObj := ObjectWithTypeAndValue("Process", unsafe.Pointer(proc))
 
 	aborted := false
 	go func() {
+		var returnValue *Data
+		defer func() {
+			proc.ReturnValue <- returnValue
+		}()
 		callWithPanicProtection(func() {
 		Loop:
 			for {
@@ -149,7 +160,11 @@ func ScheduleImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 				case <-proc.Restart:
 					proc.ScheduleTimer.Reset(time.Duration(IntegerValue(millis)) * time.Millisecond)
 				case <-proc.ScheduleTimer.C:
-					_, err = FunctionValue(f).ApplyWithoutEval(InternalMakeList(procObj), env)
+					var forkedErr error
+					returnValue, forkedErr = FunctionValue(f).ApplyWithoutEval(InternalMakeList(procObj), env)
+					if forkedErr != nil {
+						fmt.Println(forkedErr)
+					}
 					break Loop
 				}
 			}
