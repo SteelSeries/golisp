@@ -124,6 +124,14 @@
                (lambda ()
                  (log-failure msg "expected an error, but there wasn't")))))
 
+(defmacro (assert-nerror **sexpr**)
+  `(let ((msg (format #f "(assert-nerror ~A)" ',**sexpr**)))
+     (on-error ,**sexpr**
+               (lambda (err)
+                 (log-failure msg (format #f "expected no error, but error was ~A" err)))
+               (lambda ()
+                 (log-pass msg)))))
+
 (define (dump-summary duration)
   (format #t "~%Ran ~A tests in ~A seconds~%"
           (+ number-of-passes number-of-failures number-of-errors)
