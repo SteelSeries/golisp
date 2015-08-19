@@ -87,7 +87,8 @@ func (s *TypeSuite) TestMacro(c *C) {
 
 func (s *TypeSuite) TestPrimitive(c *C) {
 	sexpr := PrimitiveWithNameAndFunc("prim", nil)
-	c.Assert(FunctionP(sexpr), Equals, true)
+	c.Assert(FunctionP(sexpr), Equals, false)
+	c.Assert(PrimitiveP(sexpr), Equals, true)
 	c.Assert(int(TypeOf(sexpr)), Equals, PrimitiveType)
 	c.Assert(TypeName(PrimitiveType), Equals, "Primitive")
 }

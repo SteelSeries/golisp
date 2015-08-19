@@ -70,7 +70,7 @@ func IsFloatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func IsFunctionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return BooleanWithValue(FunctionP(Car(args))), nil
+	return BooleanWithValue(FunctionOrPrimitiveP(Car(args))), nil
 }
 
 func IsMacroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

@@ -249,3 +249,22 @@
              (assert-error (frame-values '()))
              (assert-error (frame-values ""))
              (assert-error (frame-values 4))))
+
+(context "Frame functions"
+
+         ((define a 10)
+          (define (bar) a)
+          (define f {a: 42
+                     foo: (lambda () (bar))
+                     baz: (lambda () a)
+                     bip: (lambda () (baz))})
+          )
+
+         (it "look for frame slots first"
+             (assert-eq (baz:> f) 42))
+         
+         (it "don't export the frame when calling out"
+             (assert-eq (foo:> f) 10))
+
+         (it "uses the frame enviroment for calling in the same frame"
+             (assert-eq (bip:> f) 42)))
