@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
+	"sync/atomic"
 	"time"
 	"unsafe"
 )
@@ -21,6 +22,8 @@ type Process struct {
 	Wake          chan bool
 	Abort         chan bool
 	Restart       chan bool
+	ReturnValue   chan *Data
+	Joined        int32
 	ScheduleTimer *time.Timer
 }
 
@@ -31,6 +34,7 @@ func RegisterConcurrencyPrimitives() {
 	MakePrimitiveFunction("schedule", "2", ScheduleImpl)
 	MakePrimitiveFunction("reset-timeout", "1", ResetTimeoutImpl)
 	MakePrimitiveFunction("abandon", "1", AbandonImpl)
+	MakePrimitiveFunction("join", "1", JoinImpl)
 }
 
 func ForkImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -46,12 +50,24 @@ func ForkImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	proc := &Process{Env: env, Code: f, Wake: make(chan bool, 1), Abort: make(chan bool, 1), Restart: make(chan bool, 1)}
+	proc := &Process{
+		Env:         env,
+		Code:        f,
+		Wake:        make(chan bool, 1),
+		Abort:       make(chan bool, 1),
+		Restart:     make(chan bool, 1),
+		ReturnValue: make(chan *Data, 1)}
 	procObj := ObjectWithTypeAndValue("Process", unsafe.Pointer(proc))
 
 	go func() {
+		var returnValue *Data
+		defer func() {
+			proc.ReturnValue <- returnValue
+		}()
+
 		callWithPanicProtection(func() {
-			_, forkedErr := FunctionValue(f).ApplyWithoutEval(InternalMakeList(procObj), env)
+			var forkedErr error
+			returnValue, forkedErr = FunctionValue(f).ApplyWithoutEval(InternalMakeList(procObj), env)
 			if forkedErr != nil {
 				fmt.Println(forkedErr)
 			}
@@ -124,11 +140,16 @@ func ScheduleImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		Wake:          make(chan bool, 1),
 		Abort:         make(chan bool, 1),
 		Restart:       make(chan bool, 1),
+		ReturnValue:   make(chan *Data, 1),
 		ScheduleTimer: time.NewTimer(time.Duration(IntegerValue(millis)) * time.Millisecond)}
 	procObj := ObjectWithTypeAndValue("Process", unsafe.Pointer(proc))
 
 	aborted := false
 	go func() {
+		var returnValue *Data
+		defer func() {
+			proc.ReturnValue <- returnValue
+		}()
 		callWithPanicProtection(func() {
 		Loop:
 			for {
@@ -139,7 +160,11 @@ func ScheduleImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 				case <-proc.Restart:
 					proc.ScheduleTimer.Reset(time.Duration(IntegerValue(millis)) * time.Millisecond)
 				case <-proc.ScheduleTimer.C:
-					_, err = FunctionValue(f).ApplyWithoutEval(InternalMakeList(procObj), env)
+					var forkedErr error
+					returnValue, forkedErr = FunctionValue(f).ApplyWithoutEval(InternalMakeList(procObj), env)
+					if forkedErr != nil {
+						fmt.Println(forkedErr)
+					}
 					break Loop
 				}
 			}
@@ -159,6 +184,11 @@ func AbandonImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	proc := (*Process)(ObjectValue(procObj))
+
+	if proc.ScheduleTimer == nil {
+		return nil, ProcessError("tried to adandon a Process that isn't scheduled", env)
+	}
+
 	proc.Abort <- true
 	return StringWithValue("OK"), nil
 }
@@ -172,6 +202,11 @@ func ResetTimeoutImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 	}
 
 	proc := (*Process)(ObjectValue(procObj))
+
+	if proc.ScheduleTimer == nil {
+		return nil, ProcessError("tried to reset a Process that isn't scheduled", env)
+	}
+
 	var str string
 	select {
 	case proc.Restart <- true:
@@ -180,6 +215,22 @@ func ResetTimeoutImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 		str = "task was already completed or abandoned"
 	}
 	return StringWithValue(str), nil
+}
+
+func JoinImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	procObj := Car(args)
+
+	if !ObjectP(procObj) || ObjectType(procObj) != "Process" {
+		err = ProcessError(fmt.Sprintf("join expects a Process object expected but received %s.", ObjectType(procObj)), env)
+		return
+	}
+	proc := (*Process)(ObjectValue(procObj))
+
+	if atomic.CompareAndSwapInt32(&proc.Joined, 0, 1) {
+		return <-proc.ReturnValue, nil
+	} else {
+		return nil, ProcessError("tried to join on a task twice", env)
+	}
 }
 
 func callWithPanicProtection(f func(), prefix string) {
