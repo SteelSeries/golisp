@@ -169,6 +169,11 @@ func AbandonImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	proc := (*Process)(ObjectValue(procObj))
+
+	if proc.ScheduleTimer == nil {
+		return nil, ProcessError("tried to adandon a Process that isn't scheduled", env)
+	}
+
 	proc.Abort <- true
 	return StringWithValue("OK"), nil
 }
@@ -182,6 +187,11 @@ func ResetTimeoutImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 	}
 
 	proc := (*Process)(ObjectValue(procObj))
+
+	if proc.ScheduleTimer == nil {
+		return nil, ProcessError("tried to reset a Process that isn't scheduled", env)
+	}
+
 	var str string
 	select {
 	case proc.Restart <- true:
