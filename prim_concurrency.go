@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
+	"sync/atomic"
 	"time"
 	"unsafe"
 )
@@ -22,7 +23,7 @@ type Process struct {
 	Abort         chan bool
 	Restart       chan bool
 	ReturnValue   chan *Data
-	Joined        bool
+	Joined        int32
 	ScheduleTimer *time.Timer
 }
 
@@ -200,11 +201,10 @@ func JoinImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 	proc := (*Process)(ObjectValue(procObj))
 
-	if !proc.Joined {
-		proc.Joined = true
+	if atomic.CompareAndSwapInt32(&proc.Joined, 0, 1) {
 		return <-proc.ReturnValue, nil
 	} else {
-		return nil, ProcessError("tried to run join on a task twice", env)
+		return nil, ProcessError("tried to join on a task twice", env)
 	}
 }
 
