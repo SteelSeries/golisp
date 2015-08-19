@@ -33,7 +33,7 @@ func test() {
 	}
 
 	testCommand := fmt.Sprintf("(%s \"%s\"%s)", testFunction, testName, verboseFlag)
-	golisp.ProcessFile("testing.lsp")
+	golisp.ProcessFile("lisp/testing.lsp")
 	golisp.ParseAndEval(testCommand)
 }
 
