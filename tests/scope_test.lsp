@@ -1,14 +1,14 @@
 ;;; -*- mode: Scheme -*-
 
-(define a 5)
-
-(define (foo a)
-  (lambda (x)
-    (+ a x)))
 
 (context "scope"
 
-         ()
+         (
+          (define a 5)
+          (define (foo a)
+            (lambda (x)
+              (+ a x)))
+          )
          
          (it global-env
              (assert-eq a
