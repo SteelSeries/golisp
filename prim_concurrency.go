@@ -28,10 +28,10 @@ type Process struct {
 }
 
 func RegisterConcurrencyPrimitives() {
-	MakePrimitiveFunction("fork", "1", ForkImpl)
+	MakePrimitiveFunction("fork", ">=1", ForkImpl)
 	MakePrimitiveFunction("proc-sleep", "2", ProcSleepImpl)
 	MakePrimitiveFunction("wake", "1", WakeImpl)
-	MakePrimitiveFunction("schedule", "2", ScheduleImpl)
+	MakePrimitiveFunction("schedule", ">=2", ScheduleImpl)
 	MakePrimitiveFunction("reset-timeout", "1", ResetTimeoutImpl)
 	MakePrimitiveFunction("abandon", "1", AbandonImpl)
 	MakePrimitiveFunction("join", "1", JoinImpl)
@@ -45,9 +45,17 @@ func ForkImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	if FunctionValue(f).RequiredArgCount != 1 {
-		err = ProcessError(fmt.Sprintf("fork expected a function with arity of 1, but it was %d.", FunctionValue(f).RequiredArgCount), env)
-		return
+	argsCount := Length(Cdr(args)) + 1
+	function := FunctionValue(f)
+
+	if function.VarArgs {
+		if argsCount < function.RequiredArgCount {
+			return nil, ProcessError(fmt.Sprintf("fork expected a function with arity of at most %d, but it was %d.", argsCount, function.RequiredArgCount), env)
+		}
+	} else {
+		if argsCount != function.RequiredArgCount {
+			return nil, ProcessError(fmt.Sprintf("fork expected a function with arity of %d, but it was %d.", argsCount, function.RequiredArgCount), env)
+		}
 	}
 
 	proc := &Process{
@@ -67,7 +75,7 @@ func ForkImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 		callWithPanicProtection(func() {
 			var forkedErr error
-			returnValue, forkedErr = FunctionValue(f).ApplyWithoutEval(InternalMakeList(procObj), env)
+			returnValue, forkedErr = function.ApplyWithoutEval(Cons(procObj, Cdr(args)), env)
 			if forkedErr != nil {
 				fmt.Println(forkedErr)
 			}
@@ -129,9 +137,17 @@ func ScheduleImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	if FunctionValue(f).RequiredArgCount != 1 {
-		err = ProcessError(fmt.Sprintf("schedule expected a function with arity of 1, but it was %d.", FunctionValue(f).RequiredArgCount), env)
-		return
+	argsCount := Length(Cddr(args)) + 1
+	function := FunctionValue(f)
+
+	if function.VarArgs {
+		if argsCount < function.RequiredArgCount {
+			return nil, ProcessError(fmt.Sprintf("schedule expected a function with arity of at most %d, but it was %d.", argsCount, function.RequiredArgCount), env)
+		}
+	} else {
+		if argsCount != function.RequiredArgCount {
+			return nil, ProcessError(fmt.Sprintf("schedule expected a function with arity of %d, but it was %d.", argsCount, function.RequiredArgCount), env)
+		}
 	}
 
 	proc := &Process{
@@ -161,7 +177,7 @@ func ScheduleImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 					proc.ScheduleTimer.Reset(time.Duration(IntegerValue(millis)) * time.Millisecond)
 				case <-proc.ScheduleTimer.C:
 					var forkedErr error
-					returnValue, forkedErr = FunctionValue(f).ApplyWithoutEval(InternalMakeList(procObj), env)
+					returnValue, forkedErr = function.ApplyWithoutEval(Cons(procObj, Cddr(args)), env)
 					if forkedErr != nil {
 						fmt.Println(forkedErr)
 					}
