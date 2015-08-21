@@ -6,19 +6,20 @@
 
 ;;; Linter
 
-(define (expression-crawler expression car-test analyzer extractor report)
+(define (expression-crawler expression car-test analyzer extract-for-recursion extract-for-analysis report)
   (cond ((nil? expression) report)
         ((atom? expression) report)
         ((list? expression)
-         (if (car-test (car expression)) (eq? (car expression) 'if)
-             (expression-crawler (cddr expression)
+         (if (car-test expression)
+             (expression-crawler (extract-for-recursion expression)
                                  car-test
                                  analyzer
-                                 extractor
-                                 (analyzer (extractor expression) report))
+                                 extract-for-recursion
+                                 extract-for-analysis
+                                 (analyzer (extract-for-analysis expression) report))
              (list report
-                   (expression-crawler (car expression) car-test analyzer extractor '())
-                   (expression-crawler (cdr expression) car-test analyzer extractor '()))))
+                   (expression-crawler (car expression) car-test analyzer extract-for-recursion extract-for-analysis '())
+                   (expression-crawler (cdr expression) car-test analyzer extract-for-recursion extract-for-analysis '()))))
         (else report)))
 
 ;;; Analysis functions
@@ -49,7 +50,6 @@
 (define (lint:analyze-for-bugged-let expressions)
 
   (define (back-reference-found? expr previous-bindings)
-    (format #t "e: ~A b: ~A~%" expr previous-bindings)
     (cond ((nil? expr)
            #f)
           ((atom? expr)
@@ -67,24 +67,12 @@
       (if (back-reference-found? (cadar bindings) previous-bindings)
           (set! errors (cons (format #f "Back reference in a LET: ~A" (caar bindings)) errors)))))
   
-  (define (crawl-looking-for-let expression report)
-    (cond ((nil? expression) report)
-          ((atom? expression) report)
-          ((list? expression)
-           (if (eq? (car expression) 'let)
-               (crawl-looking-for-let (cddr expression)
-                                      (analyze-let-bindings ((if (symbol? (cadr expression)) caddr cadr) expression)
-                                                            report))
-               (list report
-                     (crawl-looking-for-let (car expression) '())
-                     (crawl-looking-for-let (cdr expression) '()))))
-          (else report)))
-  
   (remove nil? (flatten* (map (lambda (ex)
                                 (expression-crawler ex
-                                                    (lambda (c) (eq? c 'let))
+                                                    (lambda (e) (eq? (car e) 'let))
                                                     analyze-let-bindings
-                                                    cddr
+                                                    (lambda (e) ((if (symbol? (cadr e)) cdddr cddr) e))
+                                                    (lambda (e) ((if (symbol? (cadr e)) caddr cadr) e))
                                                     '()))
                               expressions))))
 
@@ -94,7 +82,6 @@
 (define (lint:analyze-for-bugged-do expressions)
 
   (define (back-reference-found? expr previous-bindings)
-    (format #t "e: ~A b: ~A~%" expr previous-bindings)
     (cond ((nil? expr)
            #f)
           ((atom? expr)
@@ -109,46 +96,36 @@
          (bindings bs (cdr bindings))
          (errors report errors))
         ((nil? bindings) errors)
-      (format #t "bindings: ~A seen: ~A errors: ~A~%" bindings previous-bindings errors)
       (when (back-reference-found? (cadar bindings) previous-bindings)
-            (format #t "back reference found: ~A~%" (cadar bindings))
             (set! errors (cons (format #f "Back reference in a DO: ~A" (caar bindings)) errors)))))
   
-  (define (crawl-looking-for-do expression report)
-    (cond ((nil? expression) report)
-          ((atom? expression) report)
-          ((list? expression)
-           (if (eq? (car expression) 'do)
-               (crawl-looking-for-do (cddr expression)
-                                      (analyze-do-bindings (cadr expression) report))
-               (list report
-                     (crawl-looking-for-do (car expression) '())
-                     (crawl-looking-for-do (cdr expression) '()))))
-          (else report)))
-  
-  (remove nil? (flatten* (map (lambda (ex)
-                                (crawl-looking-for-do ex '()))
+    (remove nil? (flatten* (map (lambda (ex)
+                                (expression-crawler ex
+                                                    (lambda (e) (eq? (car e) 'do))
+                                                    analyze-do-bindings
+                                                    (lambda (e) (cddr e))
+                                                    (lambda (e) (cadr e))
+                                                    '()))
                               expressions))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Look for single clause ifs
 
-(define (lint:analyze-for-single-clause-ifs expressions)
+(define (lint:analyze-ifs expressions)
 
-  (define (crawl-looking-for-if expression report)
-    (cond ((nil? expression) report)
-          ((atom? expression) report)
-          ((list? expression)
-           (if (eq? (car expression) 'if)
-               (crawl-looking-for-do (cddr expression)
-                                      (analyze-do-bindings (cadr expression) report))
-               (list report
-                     (crawl-looking-for-do (car expression) '())
-                     (crawl-looking-for-do (cdr expression) '()))))
+  (define (analyze-if-clauses if-expr report)
+    (cond ((eq? (length if-expr) 3) (format #f "Single clause IF: ~A" if-expr))
+          ((nil? (caddr if-expr)) (format #f "Nil true clause IF: ~A" if-expr))
+          ((nil? (cadddr if-expr)) (format #f "Nil false clause IF: ~A" if-expr))
           (else report)))
-  
+
   (remove nil? (flatten* (map (lambda (ex)
-                                (crawl-looking-for-if ex '()))
+                                (expression-crawler ex
+                                                    (lambda (e) (eq? (car e) 'if))
+                                                    analyze-if-clauses
+                                                    (lambda (e) (cddr e))
+                                                    (lambda (e) e)
+                                                    '()))
                               expressions))))
 
 ;;; File processing
@@ -168,8 +145,8 @@
       expressions))
   
   (let ((expressions (load-file filename)))
-    (=> expressions
-        lint:analyze-for-set
-        lint:analyze-for-bugged-let
-        lint:analyze-for-bugged-do
-        lint:analyze-for-single-clause-ifs)))
+    (flatten* (map (lambda (f) (f expressions))
+                   (list lint:analyze-for-set
+                         lint:analyze-for-bugged-let
+                         lint:analyze-for-bugged-do
+                         lint:analyze-for-single-clause-ifs)))))
