@@ -132,6 +132,14 @@
                (lambda ()
                  (log-pass msg)))))
 
+(defmacro (assert-memq sexpr object)
+  `(let* ((searched-for ,object)
+          (result (memq ,object ,sexpr))
+          (msg (format #f "(assert-memq ~A ~S)" ',sexpr ',object)))
+     (if result
+         (log-pass msg)
+         (log-failure msg (format #f "expected ~A to contain ~S, but it didn't" ',sexpr searched-for)))))
+
 (define (dump-summary duration)
   (format #t "~%Ran ~A tests in ~A seconds~%"
           (+ number-of-passes number-of-failures number-of-errors)
