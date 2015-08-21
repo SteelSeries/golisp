@@ -16,12 +16,14 @@ import (
 	"unsafe"
 )
 
+type empty struct{}
+
 type Process struct {
 	Env           *SymbolTableFrame
 	Code          *Data
-	Wake          chan bool
-	Abort         chan bool
-	Restart       chan bool
+	Wake          chan empty
+	Abort         chan empty
+	Restart       chan empty
 	ReturnValue   chan *Data
 	Joined        int32
 	ScheduleTimer *time.Timer
@@ -61,9 +63,9 @@ func ForkImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	proc := &Process{
 		Env:         env,
 		Code:        f,
-		Wake:        make(chan bool, 1),
-		Abort:       make(chan bool, 1),
-		Restart:     make(chan bool, 1),
+		Wake:        make(chan empty, 1),
+		Abort:       make(chan empty, 1),
+		Restart:     make(chan empty, 1),
 		ReturnValue: make(chan *Data, 1)}
 	procObj := ObjectWithTypeAndValue("Process", unsafe.Pointer(proc))
 
@@ -120,7 +122,10 @@ func WakeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	proc := (*Process)(ObjectValue(procObj))
-	proc.Wake <- true
+	select {
+	case proc.Wake <- empty{}:
+	default:
+	}
 	return StringWithValue("OK"), nil
 }
 
@@ -153,9 +158,9 @@ func ScheduleImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	proc := &Process{
 		Env:           env,
 		Code:          f,
-		Wake:          make(chan bool, 1),
-		Abort:         make(chan bool, 1),
-		Restart:       make(chan bool, 1),
+		Wake:          make(chan empty, 1),
+		Abort:         make(chan empty, 1),
+		Restart:       make(chan empty, 1),
 		ReturnValue:   make(chan *Data, 1),
 		ScheduleTimer: time.NewTimer(time.Duration(IntegerValue(millis)) * time.Millisecond)}
 	procObj := ObjectWithTypeAndValue("Process", unsafe.Pointer(proc))
@@ -205,7 +210,10 @@ func AbandonImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return nil, ProcessError("tried to adandon a Process that isn't scheduled", env)
 	}
 
-	proc.Abort <- true
+	select {
+	case proc.Abort <- empty{}:
+	default:
+	}
 	return StringWithValue("OK"), nil
 }
 
@@ -225,7 +233,7 @@ func ResetTimeoutImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 
 	var str string
 	select {
-	case proc.Restart <- true:
+	case proc.Restart <- empty{}:
 		str = "OK"
 	default:
 		str = "task was already completed or abandoned"
