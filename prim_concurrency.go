@@ -40,9 +40,9 @@ func RegisterConcurrencyPrimitives() {
 
 	MakePrimitiveFunction("atomic", "0|1", AtomicImpl)
 	MakePrimitiveFunction("atomic-load", "1", AtomicLoadImpl)
-	//MakePrimitiveFunction("atomic-store!", "2", AtomicStoreImpl)
-	//MakePrimitiveFunction("atomic-add!", "2", AtomicAddImpl)
-	//MakePrimitiveFunction("atomic-swap!", "2", AtomicSwapImpl)
+	MakePrimitiveFunction("atomic-store!", "2", AtomicStoreImpl)
+	MakePrimitiveFunction("atomic-add!", "2", AtomicAddImpl)
+	MakePrimitiveFunction("atomic-swap!", "2", AtomicSwapImpl)
 	MakePrimitiveFunction("atomic-compare-and-swap!", "3", AtomicCompareAndSwapImpl)
 }
 
@@ -270,7 +270,7 @@ func AtomicImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if Length(args) == 1 {
 		initObj := Car(args)
 		if !IntegerP(initObj) {
-			err = ProcessError(fmt.Sprintf("atomic requires an Integer as it's argument, got %s.", TypeName(TypeOf(initObj))), env)
+			err = ProcessError(fmt.Sprintf("atomic expects an Integer as it's argument but received %s.", TypeName(TypeOf(initObj))), env)
 			return
 		}
 		atomicVal = IntegerValue(initObj)
@@ -282,7 +282,7 @@ func AtomicImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 func AtomicLoadImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	atomicObj := Car(args)
 	if !ObjectP(atomicObj) || ObjectType(atomicObj) != "Atomic" {
-		err = ProcessError(fmt.Sprintf("atomic-load expects an Atomic object object but received %s.", ObjectType(atomicObj)), env)
+		err = ProcessError(fmt.Sprintf("atomic-load expects an Atomic object but received %s.", ObjectType(atomicObj)), env)
 		return
 	}
 
@@ -293,10 +293,79 @@ func AtomicLoadImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 	return IntegerWithValue(value), nil
 }
 
+func AtomicStoreImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	atomicObj := Car(args)
+	if !ObjectP(atomicObj) || ObjectType(atomicObj) != "Atomic" {
+		err = ProcessError(fmt.Sprintf("atomic-store! expects an Atomic object but received %s.", ObjectType(atomicObj)), env)
+		return
+	}
+
+	pointer := (*int64)(ObjectValue(atomicObj))
+
+	newObj := Cadr(args)
+
+	if !IntegerP(newObj) {
+		err = ProcessError(fmt.Sprintf("atomic-store! expects an Integer as it's second argument but received %s.", TypeName(TypeOf(newObj))), env)
+		return
+	}
+
+	new := IntegerValue(newObj)
+
+	atomic.StoreInt64(pointer, new)
+
+	return
+}
+
+func AtomicAddImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	atomicObj := Car(args)
+	if !ObjectP(atomicObj) || ObjectType(atomicObj) != "Atomic" {
+		err = ProcessError(fmt.Sprintf("atomic-add! expects an Atomic object but received %s.", ObjectType(atomicObj)), env)
+		return
+	}
+
+	pointer := (*int64)(ObjectValue(atomicObj))
+
+	deltaObj := Cadr(args)
+
+	if !IntegerP(deltaObj) {
+		err = ProcessError(fmt.Sprintf("atomic-add! expects an Integer as it's second argument but received %s.", TypeName(TypeOf(deltaObj))), env)
+		return
+	}
+
+	delta := IntegerValue(deltaObj)
+
+	new := atomic.AddInt64(pointer, delta)
+
+	return IntegerWithValue(new), nil
+}
+
+func AtomicSwapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	atomicObj := Car(args)
+	if !ObjectP(atomicObj) || ObjectType(atomicObj) != "Atomic" {
+		err = ProcessError(fmt.Sprintf("atomic-swap! expects an Atomic object but received %s.", ObjectType(atomicObj)), env)
+		return
+	}
+
+	pointer := (*int64)(ObjectValue(atomicObj))
+
+	newObj := Cadr(args)
+
+	if !IntegerP(newObj) {
+		err = ProcessError(fmt.Sprintf("atomic-swap! expects an Integer as it's second argument but received %s.", TypeName(TypeOf(newObj))), env)
+		return
+	}
+
+	new := IntegerValue(newObj)
+
+	old := atomic.SwapInt64(pointer, new)
+
+	return IntegerWithValue(old), nil
+}
+
 func AtomicCompareAndSwapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	atomicObj := Car(args)
 	if !ObjectP(atomicObj) || ObjectType(atomicObj) != "Atomic" {
-		err = ProcessError(fmt.Sprintf("atomic-compare-and-swap! expects an Atomic object object but received %s.", ObjectType(atomicObj)), env)
+		err = ProcessError(fmt.Sprintf("atomic-compare-and-swap! expects an Atomic object but received %s.", ObjectType(atomicObj)), env)
 		return
 	}
 
@@ -312,7 +381,7 @@ func AtomicCompareAndSwapImpl(args *Data, env *SymbolTableFrame) (result *Data, 
 	newObj := Caddr(args)
 
 	if !IntegerP(newObj) {
-		err = ProcessError(fmt.Sprintf("atomic-compare-and-swap! requires an Integer as it's third argument, got %s.", TypeName(TypeOf(newObj))), env)
+		err = ProcessError(fmt.Sprintf("atomic-compare-and-swap! expects an Integer as it's third argument but received %s.", TypeName(TypeOf(newObj))), env)
 		return
 	}
 
