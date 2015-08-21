@@ -10,6 +10,7 @@ package golisp
 import (
 	"errors"
 	"fmt"
+	"unsafe"
 )
 
 type Function struct {
@@ -21,6 +22,7 @@ type Function struct {
 	Env              *SymbolTableFrame
 	DebugOnEntry     bool
 	SlotFunction     bool
+	ParentProcess    *Process
 }
 
 func computeRequiredArgumentCount(args *Data) (requiredArgumentCount int, varArgs bool) {
@@ -100,6 +102,13 @@ func (self *Function) internalApply(args *Data, argEnv *SymbolTableFrame, frame 
 			localEnv.BindLocallyTo(selfSym, selfBinding.Val)
 		}
 	}
+
+	parentProcSym := Intern("parentProcess")
+	if self.ParentProcess != nil {
+		procObj := ObjectWithTypeAndValue("Process", unsafe.Pointer(self.ParentProcess))
+		localEnv.BindLocallyTo(parentProcSym, procObj)
+	}
+
 	err = self.makeLocalBindings(args, argEnv, localEnv, eval)
 	if err != nil {
 		return
