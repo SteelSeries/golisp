@@ -76,6 +76,8 @@ func ForkImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		ReturnValue: make(chan *Data, 1)}
 	procObj := ObjectWithTypeAndValue("Process", unsafe.Pointer(proc))
 
+	function.ParentProcess = proc
+
 	go func() {
 		var returnValue *Data
 		defer func() {
@@ -172,6 +174,8 @@ func ScheduleImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		ScheduleTimer: time.NewTimer(time.Duration(IntegerValue(millis)) * time.Millisecond)}
 	procObj := ObjectWithTypeAndValue("Process", unsafe.Pointer(proc))
 
+	function.ParentProcess = proc
+
 	aborted := false
 	go func() {
 		var returnValue *Data
@@ -256,6 +260,18 @@ func JoinImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 	proc := (*Process)(ObjectValue(procObj))
+
+	// Check for early exit if joining on the current proc
+	parentProcData := env.ValueOf(SymbolWithName("parentProcess"))
+	if NotNilP(parentProcData) && ObjectP(parentProcData) && ObjectType(parentProcData) == "Process" {
+		parentProc := (*Process)(ObjectValue(parentProcData))
+
+		if proc == parentProc {
+			// Oh no, we're in our own process!  Bail out!
+			// But we want it to complete, so we're not treating it as an error
+			return nil, nil
+		}
+	}
 
 	if atomic.CompareAndSwapInt32(&proc.Joined, 0, 1) {
 		return <-proc.ReturnValue, nil
