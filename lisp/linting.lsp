@@ -6,6 +6,20 @@
 
 ;;; Linter
 
+(define (expression-crawler expression car-test analyzer extractor report)
+  (cond ((nil? expression) report)
+        ((atom? expression) report)
+        ((list? expression)
+         (if (car-test (car expression)) (eq? (car expression) 'if)
+             (expression-crawler (cddr expression)
+                                 car-test
+                                 analyzer
+                                 extractor
+                                 (analyzer (extractor expression) report))
+             (list report
+                   (expression-crawler (car expression) car-test analyzer extractor '())
+                   (expression-crawler (cdr expression) car-test analyzer extractor '()))))
+        (else report)))
 
 ;;; Analysis functions
 
@@ -13,14 +27,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Look for mutator use
 
-(define (analyze-for-set expressions)
+(define (lint:analyze-for-set expressions)
 
   (define (crawl-looking-for-set expression report)
     (cond ((nil? expression) report)
           ((atom? expression) report)
           ((list? expression)
            (if (memq (car expression) '(set! set-car! set-cdr!))
-               (cons (format #f "Mutator found ~A" expression) report)
+               (cons (format #f "Mutator found: ~A" expression) report)
                (list (crawl-looking-for-set (car expression) report)
                      (crawl-looking-for-set (cdr expression) report))))
           (else report)))
@@ -32,7 +46,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Look for cascading initial bindings in a let or named let
 
-(define (analyze-for-bugged-let expressions)
+(define (lint:analyze-for-bugged-let expressions)
 
   (define (back-reference-found? expr previous-bindings)
     (format #t "e: ~A b: ~A~%" expr previous-bindings)
@@ -67,13 +81,17 @@
           (else report)))
   
   (remove nil? (flatten* (map (lambda (ex)
-                                (crawl-looking-for-let ex '()))
+                                (expression-crawler ex
+                                                    (lambda (c) (eq? c 'let))
+                                                    analyze-let-bindings
+                                                    cddr
+                                                    '()))
                               expressions))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Look for cascading initial bindings in a do
 
-(define (analyze-for-bugged-do expressions)
+(define (lint:analyze-for-bugged-do expressions)
 
   (define (back-reference-found? expr previous-bindings)
     (format #t "e: ~A b: ~A~%" expr previous-bindings)
@@ -115,8 +133,23 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Look for single clause ifs
 
-(define (analyze-for-single-clause-ifs expressions)
-  )
+(define (lint:analyze-for-single-clause-ifs expressions)
+
+  (define (crawl-looking-for-if expression report)
+    (cond ((nil? expression) report)
+          ((atom? expression) report)
+          ((list? expression)
+           (if (eq? (car expression) 'if)
+               (crawl-looking-for-do (cddr expression)
+                                      (analyze-do-bindings (cadr expression) report))
+               (list report
+                     (crawl-looking-for-do (car expression) '())
+                     (crawl-looking-for-do (cdr expression) '()))))
+          (else report)))
+  
+  (remove nil? (flatten* (map (lambda (ex)
+                                (crawl-looking-for-if ex '()))
+                              expressions))))
 
 ;;; File processing
 
@@ -135,8 +168,8 @@
       expressions))
   
   (let ((expressions (load-file filename)))
-    (map (lambda (f) (f expressions))
-         (list analyze-for-set
-               analyze-for-bugged-let
-               analyze-for-bugged-do
-               analyze-for-single-clause-ifs))))
+    (=> expressions
+        lint:analyze-for-set
+        lint:analyze-for-bugged-let
+        lint:analyze-for-bugged-do
+        lint:analyze-for-single-clause-ifs)))
