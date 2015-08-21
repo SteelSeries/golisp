@@ -48,7 +48,7 @@
   (if (not (or (symbol? label) (string? label)))
       (error "The label of a describe must be a symbol or string.")
       `(begin (when verbose-tests
-                (format #t "~A~%" ,label))
+                (format #t "~%~A~%" ,label))
               (set! context-name ,label)
               (for-each (lambda (it-clause)
                           ,@setup
