@@ -16,8 +16,8 @@ type Channel chan *Data
 
 func RegisterChannelPrimitives() {
 	MakePrimitiveFunction("make-channel", "0|1", MakeChannelImpl)
-	MakePrimitiveFunction("->", "2", WriteToChannelImpl)
-	MakePrimitiveFunction("<-", "1", ReadFromChannelImpl)
+	MakePrimitiveFunction("chan<-", "2", WriteToChannelImpl)
+	MakePrimitiveFunction("<-chan", "1", ReadFromChannelImpl)
 }
 
 func MakeChannelImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -46,7 +46,6 @@ func MakeChannelImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 
 		c = make(Channel, int(channelLength))
 	} else {
-		fmt.Printf("TEST\n")
 		c = make(Channel)
 	}
 
