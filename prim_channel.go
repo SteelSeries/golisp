@@ -1,9 +1,9 @@
-// Copyright 2014 SteelSeries ApS.  All rights reserved.
+// Copyright 2015 SteelSeries ApS.  All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
 // This package implements a basic LISP interpretor for embedding in a go program for scripting.
-// This file contains the concurrency primitive functions.
+// This file contains the go channel primitive functions.
 
 package golisp
 
@@ -16,8 +16,8 @@ type Channel chan *Data
 
 func RegisterChannelPrimitives() {
 	MakePrimitiveFunction("make-channel", "0|1", MakeChannelImpl)
-	MakePrimitiveFunction("chan<-", "2", WriteToChannelImpl)
-	MakePrimitiveFunction("<-chan", "1", ReadFromChannelImpl)
+	MakePrimitiveFunction("channel<-", "2", WriteToChannelImpl)
+	MakePrimitiveFunction("<-channel", "1", ReadFromChannelImpl)
 }
 
 func MakeChannelImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -55,15 +55,12 @@ func MakeChannelImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 func WriteToChannelImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	channelObj := Car(args)
 	if !ObjectP(channelObj) || ObjectType(channelObj) != "Channel" {
-		err = ProcessError(fmt.Sprintf("-> expects an Channel object but received %s.", ObjectType(channelObj)), env)
+		err = ProcessError(fmt.Sprintf("channel<- expects an Channel object but received %s.", ObjectType(channelObj)), env)
 		return
 	}
 
 	c := *(*Channel)(ObjectValue(channelObj))
-
-	writeObj := Cadr(args)
-
-	c <- writeObj
+	c <- Cadr(args)
 
 	return
 }
@@ -71,7 +68,7 @@ func WriteToChannelImpl(args *Data, env *SymbolTableFrame) (result *Data, err er
 func ReadFromChannelImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	channelObj := Car(args)
 	if !ObjectP(channelObj) || ObjectType(channelObj) != "Channel" {
-		err = ProcessError(fmt.Sprintf("<- expects an Channel object but received %s.", ObjectType(channelObj)), env)
+		err = ProcessError(fmt.Sprintf("<-channel expects an Channel object but received %s.", ObjectType(channelObj)), env)
 		return
 	}
 
