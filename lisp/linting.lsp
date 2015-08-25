@@ -28,7 +28,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Look for mutator use
 
-(define (lint:analyze-for-set expressions)
+(define (lint:analyze-set expressions)
 
   (define (crawl-looking-for-set expression report)
     (cond ((nil? expression) report)
@@ -47,7 +47,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Look for cascading initial bindings in a let or named let
 
-(define (lint:analyze-for-bugged-let expressions)
+(define (lint:analyze-let expressions)
 
   (define (back-reference-found? expr previous-bindings)
     (cond ((nil? expr)
@@ -79,7 +79,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Look for cascading initial bindings in a do
 
-(define (lint:analyze-for-bugged-do expressions)
+(define (lint:analyze-do expressions)
 
   (define (back-reference-found? expr previous-bindings)
     (cond ((nil? expr)
@@ -111,7 +111,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Look for single clause ifs
 
-(define (lint:analyze-ifs expressions)
+(define (lint:analyze-if expressions)
 
   (define (analyze-if-clauses if-expr report)
     (cond ((eq? (length if-expr) 3) (format #f "Single clause IF: ~A" if-expr))
@@ -146,7 +146,7 @@
   
   (let ((expressions (load-file filename)))
     (flatten* (map (lambda (f) (f expressions))
-                   (list lint:analyze-for-set
-                         lint:analyze-for-bugged-let
-                         lint:analyze-for-bugged-do
-                         lint:analyze-for-single-clause-ifs)))))
+                   (list lint:analyze-set
+                         lint:analyze-let
+                         lint:analyze-do
+                         lint:analyze-if)))))
