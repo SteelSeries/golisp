@@ -104,8 +104,8 @@ func ChannelTryWriteImpl(args *Data, env *SymbolTableFrame) (result *Data, err e
 
 	c := *(*Channel)(ObjectValue(channelObj))
 	obj := Cadr(args)
+	writeSucceeded := true
 
-	writeSucceeded := false
 	func() {
 		defer func() {
 			if e := recover(); e != nil {
@@ -114,8 +114,8 @@ func ChannelTryWriteImpl(args *Data, env *SymbolTableFrame) (result *Data, err e
 		}()
 		select {
 		case c <- obj:
-			writeSucceeded = true
 		default:
+			writeSucceeded = false
 		}
 	}()
 
@@ -136,13 +136,13 @@ func ChannelTryReadImpl(args *Data, env *SymbolTableFrame) (result *Data, err er
 	c := *(*Channel)(ObjectValue(channelObj))
 
 	var obj *Data
-	var more bool
-	readSucceed := false
+	more := true
+	readSucceed := true
 
 	select {
 	case obj, more = <-c:
-		readSucceed = true
 	default:
+		readSucceed = false
 	}
 
 	return ArrayToList([]*Data{BooleanWithValue(readSucceed), obj, BooleanWithValue(more)}), nil
