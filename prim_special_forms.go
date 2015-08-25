@@ -347,19 +347,28 @@ func BeginImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func rebindDoLocals(bindingForms *Data, env *SymbolTableFrame) (err error) {
-	var name *Data
+	var names []*Data
+	var values []*Data
 	var value *Data
+	var name *Data
 
 	for cell := bindingForms; NotNilP(cell); cell = Cdr(cell) {
 		bindingTuple := Car(cell)
 		name = First(bindingTuple)
+		names = append(names, name)
 		if NotNilP(Third(bindingTuple)) {
 			value, err = Eval(Third(bindingTuple), env)
 			if err != nil {
 				return
 			}
-			env.BindLocallyTo(name, value)
+		} else {
+			value = env.ValueOf(name)
 		}
+		values = append(values, value)
+	}
+
+	for i := 0; i < len(names); i++ {
+		env.BindLocallyTo(names[i], values[i])
 	}
 	return
 }
