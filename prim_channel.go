@@ -16,8 +16,8 @@ type Channel chan *Data
 
 func RegisterChannelPrimitives() {
 	MakePrimitiveFunction("make-channel", "0|1", MakeChannelImpl)
-	MakePrimitiveFunction("channel<-", "2", ChannelWriteImpl)
-	MakePrimitiveFunction("<-channel", "1", ChannelReadImpl)
+	MakePrimitiveFunction("channel-write", "2", ChannelWriteImpl)
+	MakePrimitiveFunction("channel-read", "1", ChannelReadImpl)
 	MakePrimitiveFunction("channel-try-write", "2", ChannelTryWriteImpl)
 	MakePrimitiveFunction("channel-try-read", "1", ChannelTryReadImpl)
 	MakePrimitiveFunction("close-channel", "1", CloseChannelImpl)
