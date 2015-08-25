@@ -16,8 +16,10 @@ type Channel chan *Data
 
 func RegisterChannelPrimitives() {
 	MakePrimitiveFunction("make-channel", "0|1", MakeChannelImpl)
-	MakePrimitiveFunction("channel<-", "2", WriteToChannelImpl)
-	MakePrimitiveFunction("<-channel", "1", ReadFromChannelImpl)
+	MakePrimitiveFunction("channel<-", "2", ChannelWriteImpl)
+	MakePrimitiveFunction("<-channel", "1", ChannelReadImpl)
+	MakePrimitiveFunction("channel-try-write", "2", ChannelTryWriteImpl)
+	MakePrimitiveFunction("channel-try-read", "1", ChannelTryReadImpl)
 }
 
 func MakeChannelImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -52,7 +54,7 @@ func MakeChannelImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 	return ObjectWithTypeAndValue("Channel", unsafe.Pointer(&c)), nil
 }
 
-func WriteToChannelImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func ChannelWriteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	channelObj := Car(args)
 	if !ObjectP(channelObj) || ObjectType(channelObj) != "Channel" {
 		err = ProcessError(fmt.Sprintf("channel<- expects an Channel object but received %s.", ObjectType(channelObj)), env)
@@ -65,7 +67,7 @@ func WriteToChannelImpl(args *Data, env *SymbolTableFrame) (result *Data, err er
 	return
 }
 
-func ReadFromChannelImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func ChannelReadImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	channelObj := Car(args)
 	if !ObjectP(channelObj) || ObjectType(channelObj) != "Channel" {
 		err = ProcessError(fmt.Sprintf("<-channel expects an Channel object but received %s.", ObjectType(channelObj)), env)
@@ -75,4 +77,45 @@ func ReadFromChannelImpl(args *Data, env *SymbolTableFrame) (result *Data, err e
 	c := *(*Channel)(ObjectValue(channelObj))
 
 	return <-c, nil
+}
+
+func ChannelTryWriteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	channelObj := Car(args)
+	if !ObjectP(channelObj) || ObjectType(channelObj) != "Channel" {
+		err = ProcessError(fmt.Sprintf("channel<- expects an Channel object but received %s.", ObjectType(channelObj)), env)
+		return
+	}
+
+	c := *(*Channel)(ObjectValue(channelObj))
+
+	writeSucceeded := false
+	select {
+	case c <- Cadr(args):
+		writeSucceeded = true
+	default:
+	}
+
+	return BooleanWithValue(writeSucceeded), nil
+}
+
+func ChannelTryReadImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	channelObj := Car(args)
+	if !ObjectP(channelObj) || ObjectType(channelObj) != "Channel" {
+		err = ProcessError(fmt.Sprintf("<-channel expects an Channel object but received %s.", ObjectType(channelObj)), env)
+		return
+	}
+
+	c := *(*Channel)(ObjectValue(channelObj))
+
+	var ret [2]*Data
+	readSucceed := false
+
+	select {
+	case ret[1] = <-c:
+		readSucceed = true
+	default:
+	}
+
+	ret[0] = BooleanWithValue(readSucceed)
+	return ArrayToList(ret[:]), nil
 }
