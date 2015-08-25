@@ -20,6 +20,7 @@ func RegisterChannelPrimitives() {
 	MakePrimitiveFunction("<-channel", "1", ChannelReadImpl)
 	MakePrimitiveFunction("channel-try-write", "2", ChannelTryWriteImpl)
 	MakePrimitiveFunction("channel-try-read", "1", ChannelTryReadImpl)
+	MakePrimitiveFunction("close-channel", "1", CloseChannelImpl)
 }
 
 func MakeChannelImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -62,7 +63,20 @@ func ChannelWriteImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 	}
 
 	c := *(*Channel)(ObjectValue(channelObj))
-	c <- Cadr(args)
+	obj := Cadr(args)
+
+	func() {
+		defer func() {
+			if e := recover(); e != nil {
+				err = ProcessError("channel<- tried to write to a closed channel.", env)
+			}
+		}()
+		c <- obj
+	}()
+
+	if err != nil {
+		return
+	}
 
 	return
 }
@@ -76,23 +90,37 @@ func ChannelReadImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 
 	c := *(*Channel)(ObjectValue(channelObj))
 
-	return <-c, nil
+	obj, more := <-c
+
+	return ArrayToList([]*Data{obj, BooleanWithValue(more)}), nil
 }
 
 func ChannelTryWriteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	channelObj := Car(args)
 	if !ObjectP(channelObj) || ObjectType(channelObj) != "Channel" {
-		err = ProcessError(fmt.Sprintf("channel<- expects an Channel object but received %s.", ObjectType(channelObj)), env)
+		err = ProcessError(fmt.Sprintf("channel-try-write expects an Channel object but received %s.", ObjectType(channelObj)), env)
 		return
 	}
 
 	c := *(*Channel)(ObjectValue(channelObj))
+	obj := Cadr(args)
 
 	writeSucceeded := false
-	select {
-	case c <- Cadr(args):
-		writeSucceeded = true
-	default:
+	func() {
+		defer func() {
+			if e := recover(); e != nil {
+				err = ProcessError("channel-try-write tried to write to a closed channel.", env)
+			}
+		}()
+		select {
+		case c <- obj:
+			writeSucceeded = true
+		default:
+		}
+	}()
+
+	if err != nil {
+		return
 	}
 
 	return BooleanWithValue(writeSucceeded), nil
@@ -107,15 +135,36 @@ func ChannelTryReadImpl(args *Data, env *SymbolTableFrame) (result *Data, err er
 
 	c := *(*Channel)(ObjectValue(channelObj))
 
-	var ret [2]*Data
+	var obj *Data
+	var more bool
 	readSucceed := false
 
 	select {
-	case ret[1] = <-c:
+	case obj, more = <-c:
 		readSucceed = true
 	default:
 	}
 
-	ret[0] = BooleanWithValue(readSucceed)
-	return ArrayToList(ret[:]), nil
+	return ArrayToList([]*Data{BooleanWithValue(readSucceed), obj, BooleanWithValue(more)}), nil
+}
+
+func CloseChannelImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	channelObj := Car(args)
+	if !ObjectP(channelObj) || ObjectType(channelObj) != "Channel" {
+		err = ProcessError(fmt.Sprintf("<-channel expects an Channel object but received %s.", ObjectType(channelObj)), env)
+		return
+	}
+
+	c := *(*Channel)(ObjectValue(channelObj))
+
+	func() {
+		defer func() {
+			if e := recover(); e != nil {
+				err = ProcessError("channel-close tried to close a channel twice.", env)
+			}
+		}()
+		close(c)
+	}()
+
+	return
 }
