@@ -1000,7 +1000,7 @@ func PrintString(d *Data) string {
 	}
 }
 
-func postProcessFrameShortcuts(d *Data) *Data {
+func postProcessShortcuts(d *Data) *Data {
 	key := Car(d)
 	frame := Cadr(d)
 
@@ -1010,6 +1010,8 @@ func postProcessFrameShortcuts(d *Data) *Data {
 
 	s := StringValue(key)
 	switch {
+	case strings.HasPrefix(s, "<-"):
+		return AppendBangList(InternalMakeList(Intern("channel-read"), Intern(strings.TrimPrefix(s, "<-"))), Cdr(d))
 	case strings.HasSuffix(s, ":"):
 		return InternalMakeList(Intern("get-slot"), frame, key)
 	case strings.HasSuffix(s, ":!"):
@@ -1020,6 +1022,8 @@ func postProcessFrameShortcuts(d *Data) *Data {
 		return AppendBangList(InternalMakeList(Intern("send"), frame, Intern(strings.TrimSuffix(s, ">"))), Cddr(d))
 	case strings.HasSuffix(s, ":^"):
 		return AppendBangList(InternalMakeList(Intern("send-super"), Intern(strings.TrimSuffix(s, "^"))), Cdr(d))
+	case strings.HasSuffix(s, "<-"):
+		return AppendBangList(InternalMakeList(Intern("channel-write"), Intern(strings.TrimSuffix(s, "<-"))), Cdr(d))
 	default:
 		return d
 	}
@@ -1071,7 +1075,7 @@ func evalHelper(d *Data, env *SymbolTableFrame, needFunction bool) (result *Data
 		switch d.Type {
 		case ConsCellType:
 			{
-				d = postProcessFrameShortcuts(d)
+				d = postProcessShortcuts(d)
 
 				// catch empty cons cell
 				if NilP(d) {
