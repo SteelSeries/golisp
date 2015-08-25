@@ -15,21 +15,21 @@
           (define all-code (append set-code setcar-code setcdr-code)))
 
          (it "find nothing with no sets"
-             (assert-nil (lint:analyze-for-set no-set-code)))
+             (assert-nil (lint:analyze-set no-set-code)))
          
          (it "finds set!"
-             (assert-eq (lint:analyze-for-set set-code) '("Mutator found: (set! x 3)")))
+             (assert-eq (lint:analyze-set set-code) '("Mutator found: (set! x 3)")))
 
          (it "finds set!"
-             (assert-eq (lint:analyze-for-set setcar-code) '("Mutator found: (set-car! x 3)")))
+             (assert-eq (lint:analyze-set setcar-code) '("Mutator found: (set-car! x 3)")))
          
          (it "finds set!"
-             (assert-eq (lint:analyze-for-set setcdr-code) '("Mutator found: (set-cdr! x 3)")))
+             (assert-eq (lint:analyze-set setcdr-code) '("Mutator found: (set-cdr! x 3)")))
 
          (it "finds all"
-             (assert-memq (lint:analyze-for-set all-code) "Mutator found: (set! x 3)")
-             (assert-memq (lint:analyze-for-set all-code) "Mutator found: (set-car! x 3)")
-             (assert-memq (lint:analyze-for-set all-code) "Mutator found: (set-cdr! x 3)")))
+             (assert-memq (lint:analyze-set all-code) "Mutator found: (set! x 3)")
+             (assert-memq (lint:analyze-set all-code) "Mutator found: (set-car! x 3)")
+             (assert-memq (lint:analyze-set all-code) "Mutator found: (set-cdr! x 3)")))
 
 (context "Checking for dependant let bindings"
 
@@ -37,10 +37,10 @@
           (define ok-let-code '((let ((a 1) (b (+ c 1))) (+ a b)))))
 
          (it "finds a backward dependancy"
-             (assert-eq (lint:analyze-for-bugged-let bugged-let-code) '("Back reference in a LET: b")))
+             (assert-eq (lint:analyze-let bugged-let-code) '("Back reference in a LET: b")))
          
          (it "finds no a backward dependancy"
-             (assert-nil (lint:analyze-for-bugged-let ok-let-code))))
+             (assert-nil (lint:analyze-let ok-let-code))))
 
 (context "Checking for dependant do bindings"
 
@@ -48,10 +48,10 @@
           (define ok-do-code '((do ((a 1 2) (b 2 3)) (#t) (+ a b)))))
 
          (it "finds a backward dependancy"
-             (assert-eq (lint:analyze-for-bugged-do bugged-do-code) '("Back reference in a DO: b")))
+             (assert-eq (lint:analyze-do bugged-do-code) '("Back reference in a DO: b")))
          
          (it "finds no a backward dependancy"
-             (assert-nil (lint:analyze-for-bugged-do ok-do-code))))
+             (assert-nil (lint:analyze-do ok-do-code))))
 
 
 (context "checking for single clause ifs"
@@ -63,16 +63,16 @@
           (define nested-if-false-code '((if #t 0 (if #t 1)))))
 
          (it "finds one with only a true clause"
-             (assert-eq (lint:analyze-ifs just-true-clause) '("Single clause IF: (if #t 1)")))
+             (assert-eq (lint:analyze-if just-true-clause) '("Single clause IF: (if #t 1)")))
 
          (it "finds one with a nil true clause"
-             (assert-eq (lint:analyze-ifs nil-true-clause) '("Nil true clause IF: (if #t () 1)")))
+             (assert-eq (lint:analyze-if nil-true-clause) '("Nil true clause IF: (if #t () 1)")))
 
          (it "finds one with a nil false clause"
-             (assert-eq (lint:analyze-ifs nil-false-clause) '("Nil false clause IF: (if #t 1 ())")))
+             (assert-eq (lint:analyze-if nil-false-clause) '("Nil false clause IF: (if #t 1 ())")))
 
          (it "finds problems in nested true clause"
-             (assert-eq (lint:analyze-ifs nested-if-true-code) '("Single clause IF: (if #t 1)")))
+             (assert-eq (lint:analyze-if nested-if-true-code) '("Single clause IF: (if #t 1)")))
 
          (it "finds problems in nested false clause"
-             (assert-eq (lint:analyze-ifs nested-if-false-code) '("Single clause IF: (if #t 1)"))))
+             (assert-eq (lint:analyze-if nested-if-false-code) '("Single clause IF: (if #t 1)"))))
