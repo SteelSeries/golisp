@@ -55,6 +55,9 @@
                           (close-channel buffered)
                           (channel-try-read buffered)) '(#t 1 #t)))
 
+         (it "should return more as true when trying to read from a non-closed but empty buffer"
+             (assert-eq (channel-try-read buffered) '(#f () #t)))
+
          (it "should error closing an already closed channel"
              (assert-error (close-channel closed-channel)))
 
