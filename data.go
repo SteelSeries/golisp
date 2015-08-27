@@ -1010,12 +1010,8 @@ func postProcessShortcuts(d *Data) *Data {
 
 	s := StringValue(key)
 	switch {
-	// channels
 	case strings.HasPrefix(s, "<-"):
-		return InternalMakeList(Intern("channel-read"), Intern(strings.TrimPrefix(s, "<-")))
-	case strings.HasSuffix(s, "<-"):
-		return InternalMakeList(Intern("channel-write"), Intern(strings.TrimSuffix(s, "<-")), Cadr(d))
-		// frames
+		return AppendBangList(InternalMakeList(Intern("channel-read"), Intern(strings.TrimPrefix(s, "<-"))), Cdr(d))
 	case strings.HasSuffix(s, ":"):
 		return InternalMakeList(Intern("get-slot"), frame, key)
 	case strings.HasSuffix(s, ":!"):
@@ -1026,6 +1022,8 @@ func postProcessShortcuts(d *Data) *Data {
 		return AppendBangList(InternalMakeList(Intern("send"), frame, Intern(strings.TrimSuffix(s, ">"))), Cddr(d))
 	case strings.HasSuffix(s, ":^"):
 		return AppendBangList(InternalMakeList(Intern("send-super"), Intern(strings.TrimSuffix(s, "^"))), Cdr(d))
+	case strings.HasSuffix(s, "<-"):
+		return AppendBangList(InternalMakeList(Intern("channel-write"), Intern(strings.TrimSuffix(s, "<-"))), Cdr(d))
 	default:
 		return d
 	}
