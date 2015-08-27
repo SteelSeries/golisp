@@ -268,3 +268,25 @@
 
          (it "uses the frame enviroment for calling in the same frame"
              (assert-eq (bip:> f) 42)))
+
+(context "Frame shortcut error cases"
+
+         ((define f {x: 0
+                     foo: (lambda () 0)
+                     baz: (lambda (a) 1)
+                     bip: (lambda (a b) 2)})
+          )
+
+         (it "fails checking with extra arg"
+             (assert-error (x:? f 1)))
+   
+         (it "fails getting with extra arg"
+             (assert-error (x: f 1)))
+                  
+         (it "fails setting with extra arg"
+             (assert-error (x:! f 1 2)))
+         
+         (it "fails sending with extra arg"
+             (assert-error (foo:> f 1))
+             (assert-error (baz:> f 1 2))
+             (assert-error (bip:> f 1 2 3))))
