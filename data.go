@@ -1001,29 +1001,26 @@ func PrintString(d *Data) string {
 }
 
 func postProcessShortcuts(d *Data) *Data {
-	key := Car(d)
-	frame := Cadr(d)
+	pseudoFunction := StringValue(Car(d))
 
-	if !SymbolP(key) {
-		return d
-	}
-
-	s := StringValue(key)
 	switch {
-	case strings.HasPrefix(s, "<-"):
-		return AppendBangList(InternalMakeList(Intern("channel-read"), Intern(strings.TrimPrefix(s, "<-"))), Cdr(d))
-	case strings.HasSuffix(s, ":"):
-		return InternalMakeList(Intern("get-slot"), frame, key)
-	case strings.HasSuffix(s, ":!"):
-		return InternalMakeList(Intern("set-slot!"), frame, Intern(strings.TrimSuffix(s, "!")), Caddr(d))
-	case strings.HasSuffix(s, ":?"):
-		return InternalMakeList(Intern("has-slot?"), frame, Intern(strings.TrimSuffix(s, "?")))
-	case strings.HasSuffix(s, ":>"):
-		return AppendBangList(InternalMakeList(Intern("send"), frame, Intern(strings.TrimSuffix(s, ">"))), Cddr(d))
-	case strings.HasSuffix(s, ":^"):
-		return AppendBangList(InternalMakeList(Intern("send-super"), Intern(strings.TrimSuffix(s, "^"))), Cdr(d))
-	case strings.HasSuffix(s, "<-"):
-		return AppendBangList(InternalMakeList(Intern("channel-write"), Intern(strings.TrimSuffix(s, "<-"))), Cdr(d))
+	// channel shortcuts
+	case strings.HasPrefix(pseudoFunction, "<-"):
+		return AppendBangList(InternalMakeList(Intern("channel-read"), Intern(strings.TrimPrefix(pseudoFunction, "<-"))), Cdr(d))
+	case strings.HasSuffix(pseudoFunction, "<-"):
+		return AppendBangList(InternalMakeList(Intern("channel-write"), Intern(strings.TrimSuffix(pseudoFunction, "<-"))), Cdr(d))
+
+		// frame shortcuts
+	case strings.HasSuffix(pseudoFunction, ":"):
+		return AppendBangList(InternalMakeList(Intern("get-slot"), Cadr(d), Car(d)), Cddr(d))
+	case strings.HasSuffix(pseudoFunction, ":!"):
+		return AppendBangList(InternalMakeList(Intern("set-slot!"), Cadr(d), Intern(strings.TrimSuffix(pseudoFunction, "!")), Caddr(d)), Cdddr(d))
+	case strings.HasSuffix(pseudoFunction, ":?"):
+		return AppendBangList(InternalMakeList(Intern("has-slot?"), Cadr(d), Intern(strings.TrimSuffix(pseudoFunction, "?"))), Cddr(d))
+	case strings.HasSuffix(pseudoFunction, ":>"):
+		return AppendBangList(InternalMakeList(Intern("send"), Cadr(d), Intern(strings.TrimSuffix(pseudoFunction, ">"))), Cddr(d))
+	case strings.HasSuffix(pseudoFunction, ":^"):
+		return AppendBangList(InternalMakeList(Intern("send-super"), Intern(strings.TrimSuffix(pseudoFunction, "^"))), Cdr(d))
 	default:
 		return d
 	}
