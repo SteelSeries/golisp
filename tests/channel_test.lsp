@@ -69,4 +69,8 @@
              (assert-eq (begin
                            (buffered<- 1)
                            (<-buffered))
-                        '(1 #t))))
+                        '(1 #t)))
+
+         (it "should not accept strings for shortcuts"
+             (assert-error ("buffered<-" 1))
+             (assert-error ("<-buffered"))))

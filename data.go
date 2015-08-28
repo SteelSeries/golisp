@@ -1001,7 +1001,13 @@ func PrintString(d *Data) string {
 }
 
 func postProcessShortcuts(d *Data) *Data {
-	pseudoFunction := StringValue(Car(d))
+	symbolObj := Car(d)
+
+	if !SymbolP(symbolObj) {
+		return d
+	}
+
+	pseudoFunction := StringValue(symbolObj)
 
 	switch {
 	// channel shortcuts
