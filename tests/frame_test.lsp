@@ -4,7 +4,7 @@
 (context "frames"
 
          ()
-         
+
          (it frame-rendering
              (assert-eq (str (make-frame a: 1))
                         "{a: 1}")
@@ -12,11 +12,11 @@
              (assert-error (make-frame a: 1 'a 2)) ;keys must be naked symbols
              (assert-error (make-frame a: 1 "b" 2)) ;keys must be naked symbols
              (assert-error (make-frame a: 1 3 2))) ;keys must be naked symbols
-         
+
          (it naked-symbols
              (assert-eq a:
                         'a:))
-         
+
          (it get-slot
              (assert-eq (get-slot {a: 1 b: 2 c: 3} a:)
                         1)
@@ -27,7 +27,7 @@
              (assert-error (get-slot {} "a"))
              (assert-error (get-slot {} 'a))
              (assert-error (get-slot {a: 1} b:)))
-         
+
          (it get-slot-or-nil
              (assert-eq (get-slot-or-nil {a: 1 b: 2 c: 3} a:)
                         1)
@@ -38,7 +38,7 @@
              (assert-error (get-slot-or-nil nil a:))
              (assert-error (get-slot-or-nil {} "a"))
              (assert-error (get-slot-or-nil {} 'a)))
-         
+
          (it set-slot!
              (let ((f {a: 1 b: 2 c: 3}))
                (assert-eq (set-slot! f a: 5)
@@ -262,7 +262,7 @@
 
          (it "look for frame slots first"
              (assert-eq (baz:> f) 42))
-         
+
          (it "don't export the frame when calling out"
              (assert-eq (foo:> f) 10))
 
@@ -279,14 +279,20 @@
 
          (it "fails checking with extra arg"
              (assert-error (x:? f 1)))
-   
+
          (it "fails getting with extra arg"
              (assert-error (x: f 1)))
-                  
+
          (it "fails setting with extra arg"
              (assert-error (x:! f 1 2)))
-         
+
          (it "fails sending with extra arg"
              (assert-error (foo:> f 1))
              (assert-error (baz:> f 1 2))
-             (assert-error (bip:> f 1 2 3))))
+             (assert-error (bip:> f 1 2 3)))
+
+         (it "should not accept strings for shortcuts"
+             (assert-error ("x:?" f))
+             (assert-error ("x:" f))
+             (assert-error ("x:!" f 1))
+             (assert-error ("foo>:" f))))
