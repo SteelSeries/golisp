@@ -10,6 +10,7 @@ package golisp
 import (
 	"fmt"
 	"strings"
+	"sync/atomic"
 )
 
 type PrimitiveFunction struct {
@@ -99,8 +100,8 @@ func (self *PrimitiveFunction) Apply(args *Data, env *SymbolTableFrame) (result 
 		argArray = append(argArray, argValue)
 	}
 
-	localGuid := ProfileGUID
-	ProfileGUID++
+	localGuid := atomic.AddInt64(&ProfileGUID, 1) - 1
+
 	fType := "prim"
 	if self.Special {
 		fType = "form"

@@ -10,6 +10,7 @@ package golisp
 import (
 	"errors"
 	"fmt"
+	"sync/atomic"
 	"unsafe"
 )
 
@@ -114,8 +115,7 @@ func (self *Function) internalApply(args *Data, argEnv *SymbolTableFrame, frame 
 		return
 	}
 
-	localGuid := ProfileGUID
-	ProfileGUID++
+	localGuid := atomic.AddInt64(&ProfileGUID, 1) - 1
 
 	ProfileEnter("func", self.Name, localGuid)
 
@@ -155,8 +155,8 @@ func (self *Function) ApplyOveriddingEnvironment(args *Data, argEnv *SymbolTable
 		return
 	}
 
-	localGuid := ProfileGUID
-	ProfileGUID++
+	localGuid := atomic.AddInt64(&ProfileGUID, 1) - 1
+
 	ProfileEnter("func", self.Name, localGuid)
 
 	for s := self.Body; NotNilP(s); s = Cdr(s) {
