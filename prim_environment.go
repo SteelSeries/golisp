@@ -345,7 +345,9 @@ func FindTopLevelEnvironmentImpl(args *Data, env *SymbolTableFrame) (result *Dat
 		err = ProcessError("find-top-level-environment expects a symbol or string environment name", env)
 		return
 	}
-	e := TopLevelEnvironments[StringValue(Car(args))]
+	TopLevelEnvironments.Mutex.RLock()
+	defer TopLevelEnvironments.Mutex.RUnlock()
+	e := TopLevelEnvironments.Environments[StringValue(Car(args))]
 	if e == nil {
 		return nil, nil
 	} else {

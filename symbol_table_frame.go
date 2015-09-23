@@ -11,6 +11,12 @@ import (
 	"container/list"
 	"errors"
 	"fmt"
+	"sync"
+)
+
+const (
+	READ_LOCK = iota
+	WRITE_LOCK
 )
 
 type SymbolTableFrame struct {
@@ -23,16 +29,39 @@ type SymbolTableFrame struct {
 	IsRestricted bool
 }
 
-var Global *SymbolTableFrame
-var TopLevelEnvironments map[string]*SymbolTableFrame
+type symbolsTable struct {
+	Symbols map[string]*Data
+	Mutex   sync.RWMutex
+}
 
-var internedSymbols map[string]*Data = make(map[string]*Data, 256)
+type environmentsTable struct {
+	Environments map[string]*SymbolTableFrame
+	Mutex        sync.RWMutex
+}
+
+var Global *SymbolTableFrame
+var TopLevelEnvironments environmentsTable = environmentsTable{make(map[string]*SymbolTableFrame, 5), sync.RWMutex{}}
+
+var internedSymbols symbolsTable = symbolsTable{make(map[string]*Data, 256), sync.RWMutex{}}
 
 func Intern(name string) (sym *Data) {
-	sym = internedSymbols[name]
+	internedSymbols.Mutex.RLock()
+	lock := READ_LOCK
+	defer func() {
+		if lock == READ_LOCK {
+			internedSymbols.Mutex.RUnlock()
+		} else {
+			internedSymbols.Mutex.Unlock()
+		}
+	}()
+
+	sym = internedSymbols.Symbols[name]
 	if sym == nil {
+		internedSymbols.Mutex.RUnlock()
+		internedSymbols.Mutex.Lock()
+		lock = WRITE_LOCK
 		sym = SymbolWithName(name)
-		internedSymbols[name] = sym
+		internedSymbols.Symbols[name] = sym
 	}
 	return
 }
@@ -111,7 +140,10 @@ func NewSymbolTableFrameBelow(p *SymbolTableFrame, name string) *SymbolTableFram
 	restricted := p != nil && p.IsRestricted
 	env := &SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding), Frame: f, CurrentCode: list.New(), IsRestricted: restricted}
 	if p == nil || p == Global {
-		TopLevelEnvironments[name] = env
+		TopLevelEnvironments.Mutex.Lock()
+		defer TopLevelEnvironments.Mutex.Unlock()
+
+		TopLevelEnvironments.Environments[name] = env
 	}
 	return env
 }
@@ -123,7 +155,10 @@ func NewSymbolTableFrameBelowWithFrame(p *SymbolTableFrame, f *FrameMap, name st
 	restricted := p != nil && p.IsRestricted
 	env := &SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding, 10), Frame: f, CurrentCode: list.New(), IsRestricted: restricted}
 	if p == nil || p == Global {
-		TopLevelEnvironments[name] = env
+		TopLevelEnvironments.Mutex.Lock()
+		defer TopLevelEnvironments.Mutex.Unlock()
+
+		TopLevelEnvironments.Environments[name] = env
 	}
 	return env
 }
