@@ -35,6 +35,13 @@ func RegisterStringPrimitives() {
 	MakePrimitiveFunction("substring?", "2", SubstringpImpl)
 	MakePrimitiveFunction("string-prefix?", "2", StringPrefixpImpl)
 	MakePrimitiveFunction("string-suffix?", "2", StringSuffixpImpl)
+
+	MakePrimitiveFunction("string=?", "2", StringEqualImpl)
+	MakePrimitiveFunction("string-ci=?", "2", StringEqualCiImpl)
+	MakePrimitiveFunction("string<?", "2", StringLessThanImpl)
+	MakePrimitiveFunction("string-ci<?", "2", StringLessThanCiImpl)
+	MakePrimitiveFunction("string>?", "2", StringGreaterThanImpl)
+	MakePrimitiveFunction("string-ci>?", "2", StringGreaterThanCiImpl)
 }
 
 func SplitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -277,4 +284,57 @@ func StringSuffixpImpl(args *Data, env *SymbolTableFrame) (result *Data, err err
 	stringValue := StringValue(theString)
 
 	return BooleanWithValue(strings.HasSuffix(stringValue, suffixValue)), nil
+}
+
+func stringCompare(name string, compareValue int, caseInsensitive bool, args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	string1Obj := Car(args)
+	if !StringP(string1Obj) {
+		err = ProcessError(fmt.Sprintf("%s requires a string but was given %s.", name, String(string1Obj)), env)
+		return
+	}
+	var string1 string
+	if caseInsensitive {
+		string1 = strings.ToLower(StringValue(string1Obj))
+	} else {
+		string1 = StringValue(string1Obj)
+	}
+
+	string2Obj := Cadr(args)
+	if !StringP(string2Obj) {
+		err = ProcessError(fmt.Sprintf("%s requires a string but was given %s.", name, String(string2Obj)), env)
+		return
+	}
+
+	var string2 string
+	if caseInsensitive {
+		string2 = strings.ToLower(StringValue(string2Obj))
+	} else {
+		string2 = StringValue(string2Obj)
+	}
+
+	return BooleanWithValue(strings.Compare(string1, string2) == compareValue), nil
+}
+
+func StringEqualImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return stringCompare("string=?", 0, false, args, env)
+}
+
+func StringEqualCiImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return stringCompare("string-ci=?", 0, true, args, env)
+}
+
+func StringLessThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return stringCompare("string<?", -1, false, args, env)
+}
+
+func StringLessThanCiImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return stringCompare("string-ci<?", -1, true, args, env)
+}
+
+func StringGreaterThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return stringCompare("string>?", 1, false, args, env)
+}
+
+func StringGreaterThanCiImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return stringCompare("string-ci>?", 1, true, args, env)
 }

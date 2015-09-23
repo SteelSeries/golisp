@@ -194,4 +194,23 @@
              (assert-error (string-suffix? 5 5))
              (assert-error (string-suffix? "" 3))
              (assert-error (string-suffix? 3 "")))
-)
+
+         (it "can test string equality"
+             (assert-true (string=? "a" "a"))
+             (assert-false (string=? "a" "b"))
+             (assert-false (string=? "a" "A"))
+             (assert-true (string-ci=? "a" "A")))
+
+         (it "can test string less than"
+             (assert-true (string<? "a" "b"))
+             (assert-false (string<? "b" "a"))
+             (assert-false (string<? "a" "a"))
+             (assert-true (string<? "A" "a"))
+             (assert-false (string-ci<? "A" "a")))
+
+         (it "can test string greater than"
+             (assert-true (string>? "b" "a"))
+             (assert-false (string>? "a" "b"))
+             (assert-false (string>? "a" "a"))
+             (assert-true (string>? "a" "A"))
+             (assert-false (string-ci>? "a" "A"))))
