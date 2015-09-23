@@ -42,3 +42,4 @@ GoLisp has the following dependencies:
 
 go get gopkg.in/fatih/set.v0
 go get github.com/jimsmart/bufrr
+go get gopkg.in/check.v1
