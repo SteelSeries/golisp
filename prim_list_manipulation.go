@@ -22,6 +22,7 @@ func RegisterListManipulationPrimitives() {
 	MakePrimitiveFunction("copy", "1", CopyImpl)
 	MakePrimitiveFunction("partition", "2", PartitionImpl)
 	MakePrimitiveFunction("sublist", "3", SublistImpl)
+	MakePrimitiveFunction("sort", "2", SortImpl)
 }
 
 func MakeListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -243,4 +244,92 @@ func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 	result = ArrayToList(items)
 	return
+}
+
+func mergeCompare(a *Data, b *Data, proc *Data, env *SymbolTableFrame) (result bool, err error) {
+	if FunctionP(proc) {
+		b, err := FunctionValue(proc).Apply(InternalMakeList(a, b), env)
+		if err == nil {
+			result = BooleanValue(b)
+		}
+	} else {
+		b, err := PrimitiveValue(proc).Apply(InternalMakeList(a, b), env)
+		if err == nil {
+			result = BooleanValue(b)
+		}
+	}
+	return
+}
+
+func merge(a []*Data, b []*Data, proc *Data, env *SymbolTableFrame) (result []*Data, err error) {
+	var r = make([]*Data, len(a)+len(b))
+	var i = 0
+	var j = 0
+	var comparison = false
+
+	for i < len(a) && j < len(b) {
+		comparison, err = mergeCompare(a[i], b[j], proc, env)
+		if err != nil {
+			return
+		}
+		if comparison {
+			r[i+j] = a[i]
+			i++
+		} else {
+			r[i+j] = b[j]
+			j++
+		}
+	}
+
+	for i < len(a) {
+		r[i+j] = a[i]
+		i++
+	}
+	for j < len(b) {
+		r[i+j] = b[j]
+		j++
+	}
+
+	return r, nil
+}
+
+func mergesort(items []*Data, proc *Data, env *SymbolTableFrame) (result []*Data, err error) {
+	if len(items) < 2 {
+		return items, nil
+	}
+
+	var middle = len(items) / 2
+
+	a, err := mergesort(items[:middle], proc, env)
+	if err != nil {
+		return
+	}
+
+	b, err := mergesort(items[middle:], proc, env)
+	if err != nil {
+		return
+	}
+
+	return merge(a, b, proc, env)
+}
+
+func SortImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	coll := Car(args)
+	if !ListP(coll) {
+		err = ProcessError("sort requires a list as it's first argument.", env)
+		return
+	}
+
+	proc := Cadr(args)
+	if !FunctionOrPrimitiveP(proc) {
+		err = ProcessError("sort requires a function or primitive as it's second argument.", env)
+		return
+	}
+
+	sorted, err := mergesort(ToArray(coll), proc, env)
+	if err != nil {
+		return
+	}
+
+	return ArrayToList(sorted), nil
 }
