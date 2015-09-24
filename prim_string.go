@@ -42,6 +42,10 @@ func RegisterStringPrimitives() {
 	MakePrimitiveFunction("string-ci<?", "2", StringLessThanCiImpl)
 	MakePrimitiveFunction("string>?", "2", StringGreaterThanImpl)
 	MakePrimitiveFunction("string-ci>?", "2", StringGreaterThanCiImpl)
+	MakePrimitiveFunction("string<=?", "2", StringLessThanEqualImpl)
+	MakePrimitiveFunction("string-ci<=?", "2", StringLessThanEqualCiImpl)
+	MakePrimitiveFunction("string>=?", "2", StringGreaterThanEqualImpl)
+	MakePrimitiveFunction("string-ci>=?", "2", StringGreaterThanEqualCiImpl)
 }
 
 func SplitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -357,6 +361,38 @@ func StringGreaterThanCiImpl(args *Data, env *SymbolTableFrame) (result *Data, e
 	string1, string2, err := stringProcessArgs("string-ci>?", true, args, env)
 	if err == nil {
 		result = BooleanWithValue(string1 > string2)
+	}
+	return
+}
+
+func StringLessThanEqualImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	string1, string2, err := stringProcessArgs("string<=?", false, args, env)
+	if err == nil {
+		result = BooleanWithValue(string1 <= string2)
+	}
+	return
+}
+
+func StringLessThanEqualCiImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	string1, string2, err := stringProcessArgs("string-ci<=?", true, args, env)
+	if err == nil {
+		result = BooleanWithValue(string1 <= string2)
+	}
+	return
+}
+
+func StringGreaterThanEqualImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	string1, string2, err := stringProcessArgs("string>=?", false, args, env)
+	if err == nil {
+		result = BooleanWithValue(string1 >= string2)
+	}
+	return
+}
+
+func StringGreaterThanEqualCiImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	string1, string2, err := stringProcessArgs("string-ci>=?", true, args, env)
+	if err == nil {
+		result = BooleanWithValue(string1 >= string2)
 	}
 	return
 }

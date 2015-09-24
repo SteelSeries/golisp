@@ -213,4 +213,18 @@
              (assert-false (string>? "a" "b"))
              (assert-false (string>? "a" "a"))
              (assert-true (string>? "a" "A"))
-             (assert-false (string-ci>? "a" "A"))))
+             (assert-false (string-ci>? "a" "A")))
+
+         (it "can test string less than equal"
+             (assert-true (string<=? "a" "b"))
+             (assert-false (string<=? "b" "a"))
+             (assert-true (string<=? "a" "a"))
+             (assert-true (string<=? "A" "a"))
+             (assert-true (string-ci<=? "A" "a")))
+
+         (it "can test string greater than equal"
+             (assert-true (string>=? "b" "a"))
+             (assert-false (string>=? "a" "b"))
+             (assert-true (string>=? "a" "a"))
+             (assert-true (string>=? "a" "A"))
+             (assert-true (string-ci>=? "a" "A"))))
