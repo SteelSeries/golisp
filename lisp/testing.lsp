@@ -143,7 +143,7 @@
 (define (dump-summary duration)
   (format #t "~%Ran ~A tests in ~A seconds~%"
           (+ number-of-passes number-of-failures number-of-errors)
-          duration)
+          (/ duration 1000.0))
   (format #t "~A passes, ~A failures, ~A errors~%"
           number-of-passes
           number-of-failures
