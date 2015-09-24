@@ -286,13 +286,12 @@ func StringSuffixpImpl(args *Data, env *SymbolTableFrame) (result *Data, err err
 	return BooleanWithValue(strings.HasSuffix(stringValue, suffixValue)), nil
 }
 
-func stringCompare(name string, compareValue int, caseInsensitive bool, args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func stringProcessArgs(name string, caseInsensitive bool, args *Data, env *SymbolTableFrame) (string1 string, string2 string, err error) {
 	string1Obj := Car(args)
 	if !StringP(string1Obj) {
 		err = ProcessError(fmt.Sprintf("%s requires a string but was given %s.", name, String(string1Obj)), env)
 		return
 	}
-	var string1 string
 	if caseInsensitive {
 		string1 = strings.ToLower(StringValue(string1Obj))
 	} else {
@@ -305,36 +304,59 @@ func stringCompare(name string, compareValue int, caseInsensitive bool, args *Da
 		return
 	}
 
-	var string2 string
 	if caseInsensitive {
 		string2 = strings.ToLower(StringValue(string2Obj))
 	} else {
 		string2 = StringValue(string2Obj)
 	}
 
-	return BooleanWithValue(strings.Compare(string1, string2) == compareValue), nil
+	return
 }
 
 func StringEqualImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return stringCompare("string=?", 0, false, args, env)
+	string1, string2, err := stringProcessArgs("string=?", false, args, env)
+	if err == nil {
+		result = BooleanWithValue(string1 == string2)
+	}
+	return
 }
 
 func StringEqualCiImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return stringCompare("string-ci=?", 0, true, args, env)
+	string1, string2, err := stringProcessArgs("string-ci=?", true, args, env)
+	if err == nil {
+		result = BooleanWithValue(string1 == string2)
+	}
+	return
 }
 
 func StringLessThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return stringCompare("string<?", -1, false, args, env)
+	string1, string2, err := stringProcessArgs("string<?", false, args, env)
+	if err == nil {
+		result = BooleanWithValue(string1 < string2)
+	}
+	return
 }
 
 func StringLessThanCiImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return stringCompare("string-ci<?", -1, true, args, env)
+	string1, string2, err := stringProcessArgs("string-ci<?", true, args, env)
+	if err == nil {
+		result = BooleanWithValue(string1 < string2)
+	}
+	return
 }
 
 func StringGreaterThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return stringCompare("string>?", 1, false, args, env)
+	string1, string2, err := stringProcessArgs("string>?", false, args, env)
+	if err == nil {
+		result = BooleanWithValue(string1 > string2)
+	}
+	return
 }
 
 func StringGreaterThanCiImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return stringCompare("string-ci>?", 1, true, args, env)
+	string1, string2, err := stringProcessArgs("string-ci>?", true, args, env)
+	if err == nil {
+		result = BooleanWithValue(string1 > string2)
+	}
+	return
 }
