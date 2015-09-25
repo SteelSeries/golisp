@@ -161,7 +161,7 @@ func partitionByPredicate(determiner *Data, l *Data, env *SymbolTableFrame) (res
 	trueSection := make([]*Data, 0, 5)
 	var predicateResult *Data
 	for c := l; NotNilP(c); c = Cdr(c) {
-		predicateResult, err = Apply(determiner, InternalMakeList(Car(c)), env)
+		predicateResult, err = ApplyWithoutEval(determiner, InternalMakeList(Car(c)), env)
 		if err != nil {
 			return
 		}
