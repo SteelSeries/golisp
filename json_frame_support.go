@@ -91,7 +91,7 @@ func LispWithFramesToJson(d *Data) (result interface{}) {
 		return FloatValue(d)
 	}
 
-	if StringP(d) {
+	if StringP(d) || SymbolP(d) {
 		return StringValue(d)
 	}
 
