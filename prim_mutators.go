@@ -69,11 +69,5 @@ func SetNthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	for i := IntegerValue(index); i > 1; l, i = Cdr(l), i-1 {
-	}
-	if !NilP(l) {
-		ConsValue(l).Car = value
-	}
-
-	return value, nil
+	return SetNth(l, int(IntegerValue(index)), value), nil
 }

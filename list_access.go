@@ -134,3 +134,13 @@ func Ninth(d *Data) *Data {
 func Tenth(d *Data) *Data {
 	return Nth(d, 10)
 }
+
+func SetNth(list *Data, index int, value *Data) *Data {
+	for i := index; i > 1; list, i = Cdr(list), i-1 {
+	}
+	if !NilP(list) {
+		ConsValue(list).Car = value
+	}
+
+	return value
+}
