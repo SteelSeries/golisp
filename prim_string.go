@@ -19,10 +19,11 @@ const (
 )
 
 func RegisterStringPrimitives() {
-	MakePrimitiveFunction("string-split", "2", SplitImpl)
-	MakePrimitiveFunction("string-trim", "1|2", TrimImpl)
-	MakePrimitiveFunction("string-trim-left", "1|2", TrimLeftImpl)
-	MakePrimitiveFunction("string-trim-right", "1|2", TrimRightImpl)
+	MakePrimitiveFunction("string-split", "2", StringSplitImpl)
+	MakePrimitiveFunction("string-join", "1|2", StringJoinImpl)
+	MakePrimitiveFunction("string-trim", "1|2", StringTrimImpl)
+	MakePrimitiveFunction("string-trim-left", "1|2", StringTrimLeftImpl)
+	MakePrimitiveFunction("string-trim-right", "1|2", StringTrimRightImpl)
 	MakePrimitiveFunction("string-upcase", "1", StringUpcaseImpl)
 	MakePrimitiveFunction("string-upcase!", "1", StringUpcaseBangImpl)
 	MakePrimitiveFunction("string-downcase", "1", StringDowncaseImpl)
@@ -48,7 +49,7 @@ func RegisterStringPrimitives() {
 	MakePrimitiveFunction("string-ci>=?", "2", StringGreaterThanEqualCiImpl)
 }
 
-func SplitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func StringSplitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	theString := Car(args)
 	if !StringP(theString) {
 		err = ProcessError(fmt.Sprintf("trim requires a string but was given %s.", String(theString)), env)
@@ -57,7 +58,7 @@ func SplitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	theSeparator := Cadr(args)
 	if !StringP(theSeparator) {
-		err = ProcessError(fmt.Sprintf("trim requires a string separater but was given %s.", String(theSeparator)), env)
+		err = ProcessError(fmt.Sprintf("string-split requires a string separater but was given %s.", String(theSeparator)), env)
 		return
 	}
 
@@ -67,6 +68,36 @@ func SplitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		ary = append(ary, StringWithValue(p))
 	}
 	return ArrayToList(ary), nil
+}
+
+func StringJoinImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	theStrings := Car(args)
+	if !ListP(theStrings) {
+		err = ProcessError(fmt.Sprintf("string-join requires a list of strings to be joined but was given %s.", String(theStrings)), env)
+		return
+	}
+
+	theSeparator := Cadr(args)
+	separator := ""
+	if !NilP(theSeparator) {
+		if !StringP(theSeparator) {
+			err = ProcessError(fmt.Sprintf("string-join requires a string separater but was given %s.", String(theSeparator)), env)
+			return
+		}
+		separator = StringValue(theSeparator)
+	}
+
+	resultStrings := make([]string, 0, Length(theStrings))
+	for c := theStrings; NotNilP(c); c = Cdr(c) {
+		val := Car(c)
+		if !StringP(val) {
+			err = ProcessError(fmt.Sprintf("string-join requires a list of strings but %s was in the list.", String(val)), env)
+			return
+		}
+		resultStrings = append(resultStrings, StringValue(val))
+	}
+	joinedString := strings.Join(resultStrings, separator)
+	return StringWithValue(joinedString), nil
 }
 
 func doTrim(lrb int, args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -101,15 +132,15 @@ func doTrim(lrb int, args *Data, env *SymbolTableFrame) (result *Data, err error
 	}
 }
 
-func TrimImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func StringTrimImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return doTrim(TrimBoth, args, env)
 }
 
-func TrimLeftImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func StringTrimLeftImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return doTrim(TrimLeft, args, env)
 }
 
-func TrimRightImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func StringTrimRightImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return doTrim(TrimRight, args, env)
 }
 
