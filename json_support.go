@@ -76,7 +76,7 @@ func LispToJson(d *Data) (result interface{}) {
 		return IntegerValue(d)
 	}
 
-	if StringP(d) {
+	if StringP(d) || SymbolP(d) {
 		return StringValue(d)
 	}
 
