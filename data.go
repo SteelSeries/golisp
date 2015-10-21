@@ -1183,11 +1183,19 @@ func ApplyWithoutEval(function *Data, args *Data, env *SymbolTableFrame) (result
 	}
 	switch function.Type {
 	case FunctionType:
-		result, err = FunctionValue(function).ApplyWithoutEval(args, env)
+		if FunctionValue(function).SlotFunction && env.HasFrame() {
+			result, err = FunctionValue(function).ApplyWithoutEvalWithFrame(args, env, env.Frame)
+		} else {
+			result, err = FunctionValue(function).ApplyWithoutEval(args, env)
+		}
+		//		result, err = FunctionValue(function).ApplyWithoutEval(args, env)
 	case MacroType:
 		result, err = MacroValue(function).ApplyWithoutEval(args, env)
 	case PrimitiveType:
 		result, err = PrimitiveValue(function).ApplyWithoutEval(args, env)
+	default:
+		err = errors.New(fmt.Sprintf("%s when function or macro expected for %s.", TypeName(TypeOf(function)), String(function)))
+		return
 	}
 
 	return

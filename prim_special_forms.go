@@ -463,7 +463,7 @@ func ApplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	return Apply(f, argList, env)
+	return ApplyWithoutEval(f, argList, env)
 }
 
 func ChainImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
