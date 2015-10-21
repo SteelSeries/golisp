@@ -14,6 +14,7 @@ func RegisterListManipulationPrimitives() {
 	MakePrimitiveFunction("make-list", "1|2", MakeListImpl)
 	MakePrimitiveFunction("length", "1", ListLengthImpl)
 	MakePrimitiveFunction("cons", "2", ConsImpl)
+	MakePrimitiveFunction("cons*", ">=1", ConsStarImpl)
 	MakePrimitiveFunction("reverse", "1", ReverseImpl)
 	MakePrimitiveFunction("flatten", "1", FlattenImpl)
 	MakePrimitiveFunction("flatten*", "1", RecursiveFlattenImpl)
@@ -55,7 +56,13 @@ func MakeListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func ListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return args, nil
+	return ArrayToList(ToArray(args)), nil
+}
+
+func ConsStarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	ary := ToArray(args)
+	l := Length(args) - 1
+	return ArrayToListWithTail(ary[0:l], ary[l]), nil
 }
 
 func ListLengthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

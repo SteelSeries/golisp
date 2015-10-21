@@ -15,6 +15,16 @@
                    (assert-eq (cons 'a '(b c))
                               '(a b c)))
 
+         (it "cons*"
+             (assert-eq (cons* 'a 'b 'c)
+                        '(a b . c))
+             (assert-eq (cons* 'a 'b '(c d))
+                        '(a b c d))
+             (assert-eq (cons* 'a)
+                        'a)
+             (assert-eq (cons* '(a b))
+                        '(a b)))
+
          (it reverse
                    (assert-eq (reverse '(a))
                               '(a))
