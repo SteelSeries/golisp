@@ -56,7 +56,7 @@ func MakeListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func ListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return ArrayToList(ToArray(args)), nil
+	return args, nil
 }
 
 func ConsStarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
