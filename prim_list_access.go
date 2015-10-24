@@ -253,18 +253,23 @@ func TenthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func NthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	col := Car(args)
-	if !PairP(col) {
-		err = ProcessError("First arg to nth must be a list", env)
-		return
+	index := First(args)
+	if !IntegerP(index) {
+		err = ProcessError("nth requires an integer as it's first argument.", env)
 	}
-	count := Cadr(args)
-	if !IntegerP(count) {
-		err = ProcessError("Second arg to nth must be a number", env)
+
+	l := Second(args)
+	if !ListP(l) {
+		err = ProcessError("nth requires a list as it's second argument.", env)
 		return
 	}
 
-	return Nth(col, int(IntegerValue(count))), nil
+	i := int(IntegerValue(index))
+	if i < 0 || i >= Length(l) {
+		err = ProcessError("nth was given an out of bound index.", env)
+	}
+
+	return Nth(l, i+1), nil
 }
 
 func TakeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
