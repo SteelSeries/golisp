@@ -28,6 +28,7 @@ const (
 	BACKQUOTE
 	COMMA
 	COMMAAT
+	HASHLPAREN
 	LPAREN
 	RPAREN
 	LBRACKET
@@ -283,7 +284,10 @@ func (self *Tokenizer) readNextToken() (token int, lit string) {
 		return self.readSymbol()
 	} else if self.CurrentCh == '#' {
 		self.Advance()
-		if self.CurrentCh == 't' {
+		if self.CurrentCh == '(' {
+			self.Advance()
+			return HASHLPAREN, "#("
+		} else if self.CurrentCh == 't' {
 			self.Advance()
 			return TRUE, "#t"
 		} else if self.CurrentCh == 'f' {

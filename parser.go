@@ -15,6 +15,8 @@ import (
 	"unsafe"
 )
 
+var UseVectorization bool = true
+
 var EofObject *Data = Intern("__EOF__")
 
 func makeInteger(str string) (n *Data, err error) {
@@ -67,7 +69,7 @@ func makeSymbol(str string) (s *Data, err error) {
 	return
 }
 
-func parseConsCell(s *Tokenizer) (sexpr *Data, eof bool, err error) {
+func parseList(s *Tokenizer, vectorize bool) (sexpr *Data, eof bool, err error) {
 	tok, _ := s.NextToken()
 
 	var car *Data
@@ -76,20 +78,20 @@ func parseConsCell(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 	for tok != RPAREN {
 		if tok == PERIOD {
 			s.ConsumeToken()
-			cdr, eof, err = parseExpression(s)
+			cdr, eof, err = parseExpression(s, vectorize)
 			if eof || err != nil {
 				return
 			}
 			tok, _ = s.NextToken()
 			if tok != RPAREN {
-				err = errors.New("Expected ')'")
+				err = errors.New("Expected ')' to follow the final element in a dotted list")
 				return
 			}
 			s.ConsumeToken()
 			sexpr = ArrayToListWithTail(cells, cdr)
 			return
 		} else {
-			car, eof, err = parseExpression(s)
+			car, eof, err = parseExpression(s, vectorize)
 			if eof {
 				err = errors.New("Unexpected EOF (expected closing parenthesis)")
 				return
@@ -103,7 +105,11 @@ func parseConsCell(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 	}
 
 	s.ConsumeToken()
-	sexpr = ArrayToList(cells)
+	if vectorize {
+		sexpr = VectorizedListWithValue(cells)
+	} else {
+		sexpr = ArrayToList(cells)
+	}
 	return
 }
 
@@ -125,7 +131,7 @@ func listToBytearray(cells []*Data) *Data {
 	return ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&bytes))
 }
 
-func parseBytearray(s *Tokenizer) (sexpr *Data, eof bool, err error) {
+func parseBytearray(s *Tokenizer, vectorize bool) (sexpr *Data, eof bool, err error) {
 	tok, _ := s.NextToken()
 	if tok == RBRACKET {
 		s.ConsumeToken()
@@ -137,7 +143,7 @@ func parseBytearray(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 	var element *Data
 	cells := make([]*Data, 0, 10)
 	for tok != RBRACKET {
-		element, eof, err = parseExpression(s)
+		element, eof, err = parseExpression(s, vectorize)
 		if eof {
 			err = errors.New("Unexpected EOF (expected closing bracket)")
 			return
@@ -161,12 +167,18 @@ func parseBytearray(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 	if allIntegers(cells) {
 		sexpr = listToBytearray(cells)
 	} else {
-		sexpr = InternalMakeList(Intern("list-to-bytearray"), QuoteIt(ArrayToList(cells)))
+		var l *Data
+		if vectorize {
+			l = ArrayToVectorizedList(cells)
+		} else {
+			l = ArrayToList(cells)
+		}
+		sexpr = InternalMakeList(Intern("list-to-bytearray"), QuoteIt(l))
 	}
 	return
 }
 
-func parseFrame(s *Tokenizer) (sexpr *Data, eof bool, err error) {
+func parseFrame(s *Tokenizer, vectorize bool) (sexpr *Data, eof bool, err error) {
 	tok, _ := s.NextToken()
 	if tok == RBRACKET {
 		s.ConsumeToken()
@@ -177,8 +189,9 @@ func parseFrame(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 
 	var element *Data
 	cells := make([]*Data, 0, 10)
+	cells = append(cells, Intern("make-frame"))
 	for tok != RBRACE {
-		element, eof, err = parseExpression(s)
+		element, eof, err = parseExpression(s, vectorize)
 		if eof {
 			err = errors.New("Unexpected EOF (expected closing brace)")
 			return
@@ -191,11 +204,15 @@ func parseFrame(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 	}
 
 	s.ConsumeToken()
-	sexpr = Cons(Intern("make-frame"), ArrayToList(cells))
+	if vectorize {
+		sexpr = ArrayToVectorizedList(cells)
+	} else {
+		sexpr = ArrayToList(cells)
+	}
 	return
 }
 
-func parseExpression(s *Tokenizer) (sexpr *Data, eof bool, err error) {
+func parseExpression(s *Tokenizer, vectorize bool) (sexpr *Data, eof bool, err error) {
 	for {
 		tok, lit := s.NextToken()
 		switch tok {
@@ -226,17 +243,21 @@ func parseExpression(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 			s.ConsumeToken()
 			sexpr, err = makeString(lit)
 			return
+		case HASHLPAREN:
+			s.ConsumeToken()
+			sexpr, eof, err = parseList(s, true)
+			return
 		case LPAREN:
 			s.ConsumeToken()
-			sexpr, eof, err = parseConsCell(s)
+			sexpr, eof, err = parseList(s, vectorize)
 			return
 		case LBRACKET:
 			s.ConsumeToken()
-			sexpr, eof, err = parseBytearray(s)
+			sexpr, eof, err = parseBytearray(s, vectorize)
 			return
 		case LBRACE:
 			s.ConsumeToken()
-			sexpr, eof, err = parseFrame(s)
+			sexpr, eof, err = parseFrame(s, vectorize)
 			return
 		case SYMBOL:
 			s.ConsumeToken()
@@ -252,28 +273,28 @@ func parseExpression(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 			return
 		case QUOTE:
 			s.ConsumeToken()
-			sexpr, eof, err = parseExpression(s)
+			sexpr, eof, err = parseExpression(s, vectorize)
 			if sexpr != nil {
 				sexpr = Cons(Intern("quote"), Cons(sexpr, nil))
 			}
 			return
 		case BACKQUOTE:
 			s.ConsumeToken()
-			sexpr, eof, err = parseExpression(s)
+			sexpr, eof, err = parseExpression(s, vectorize)
 			if sexpr != nil {
 				sexpr = Cons(Intern("quasiquote"), Cons(sexpr, nil))
 			}
 			return
 		case COMMA:
 			s.ConsumeToken()
-			sexpr, eof, err = parseExpression(s)
+			sexpr, eof, err = parseExpression(s, vectorize)
 			if sexpr != nil {
 				sexpr = Cons(Intern("unquote"), Cons(sexpr, nil))
 			}
 			return
 		case COMMAAT:
 			s.ConsumeToken()
-			sexpr, eof, err = parseExpression(s)
+			sexpr, eof, err = parseExpression(s, vectorize)
 			if sexpr != nil {
 				sexpr = Cons(Intern("unquote-splicing"), Cons(sexpr, nil))
 			}
@@ -291,7 +312,7 @@ func parseExpression(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 
 func Parse(src string) (sexpr *Data, err error) {
 	s := NewTokenizerFromString(src)
-	sexpr, _, err = parseExpression(s)
+	sexpr, _, err = parseExpression(s, UseVectorization)
 	return
 }
 
@@ -300,7 +321,7 @@ func ParseAll(src string) (result []*Data, err error) {
 	var sexpr *Data
 	var eof bool
 	for {
-		sexpr, eof, err = parseExpression(s)
+		sexpr, eof, err = parseExpression(s, UseVectorization)
 		if err != nil || eof {
 			break
 		}
@@ -345,7 +366,7 @@ func ParseAndEvalAllInEnvironment(src string, env *SymbolTableFrame) (result *Da
 	var sexpr *Data
 	var eof bool
 	for {
-		sexpr, eof, err = parseExpression(s)
+		sexpr, eof, err = parseExpression(s, UseVectorization)
 		if err != nil {
 			return
 		}
@@ -364,7 +385,7 @@ func ParseAndEvalAllInEnvironment(src string, env *SymbolTableFrame) (result *Da
 
 func ParseAndEvalInEnvironment(src string, env *SymbolTableFrame) (result *Data, err error) {
 	var sexpr *Data
-	sexpr, _, err = parseExpression(NewTokenizerFromString(src))
+	sexpr, _, err = parseExpression(NewTokenizerFromString(src), UseVectorization)
 	if err != nil {
 		return
 	}
@@ -379,7 +400,7 @@ func ParseAndEvalInEnvironment(src string, env *SymbolTableFrame) (result *Data,
 }
 
 func ParseObjectFromFileInEnv(port *os.File, env *SymbolTableFrame) (result *Data, err error) {
-	result, eof, err := parseExpression(NewTokenizerFromFile(port))
+	result, eof, err := parseExpression(NewTokenizerFromFile(port), UseVectorization)
 	if err != nil {
 		return
 	}

@@ -12,9 +12,19 @@ import (
 )
 
 type JsonLispSuite struct {
+	OldVectorizationFlag bool
 }
 
 var _ = Suite(&JsonLispSuite{})
+
+func (s *JsonLispSuite) SetUpSuite(c *C) {
+	s.OldVectorizationFlag = UseVectorization
+	UseVectorization = true
+}
+
+func (s *JsonLispSuite) TearDownSuite(c *C) {
+	UseVectorization = s.OldVectorizationFlag
+}
 
 func (s *JsonLispSuite) TestJsonToLispMap(c *C) {
 	jsonData := `{"map": 1}`

@@ -13,12 +13,19 @@ import (
 )
 
 type BytearrayBuiltinsSuite struct {
+	OldVectorizationFlag bool
 }
 
 var _ = Suite(&BytearrayBuiltinsSuite{})
 
 func (s *BytearrayBuiltinsSuite) SetUpSuite(c *C) {
 	InitLisp()
+	s.OldVectorizationFlag = UseVectorization
+	UseVectorization = true
+}
+
+func (s *BytearrayBuiltinsSuite) TearDownSuite(c *C) {
+	UseVectorization = s.OldVectorizationFlag
 }
 
 //--------------------------------------------------------------------------------

@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"gopkg.in/fatih/set.v0"
 	"os"
+	"runtime/debug"
 	"sort"
 	"strings"
 	"unsafe"
@@ -20,6 +21,7 @@ import (
 const (
 	NilType = iota
 	ConsCellType
+	VectorizedListType
 	AlistType
 	AlistCellType
 	IntegerType
@@ -87,7 +89,7 @@ func TypeName(t uint8) string {
 	switch t {
 	case NilType:
 		return "Nil"
-	case ConsCellType:
+	case ConsCellType, VectorizedListType:
 		return "List"
 	case AlistType:
 		return "Association List"
@@ -129,6 +131,9 @@ func NilP(d *Data) bool {
 	if (PairP(d) || AlistP(d) || DottedPairP(d)) && Car(d) == nil && Cdr(d) == nil {
 		return true
 	}
+	if VectorizedListP(d) {
+		return len(VectorizedListValue(d)) == 0
+	}
 	return false
 }
 
@@ -140,8 +145,12 @@ func PairP(d *Data) bool {
 	return d == nil || TypeOf(d) == ConsCellType
 }
 
+func VectorizedListP(d *Data) bool {
+	return d == nil || TypeOf(d) == VectorizedListType
+}
+
 func ListP(d *Data) bool {
-	return PairP(d) || AlistP(d)
+	return PairP(d) || AlistP(d) || VectorizedListP(d)
 }
 
 func DottedPairP(d *Data) bool {
@@ -227,6 +236,12 @@ func AppendBang(l *Data, value *Data) *Data {
 		return Cons(value, nil)
 	}
 
+	if VectorizedListP(l) {
+		vect := VectorizedListValue(l)
+		vect = append(vect, value)
+		return VectorizedListUpdate(l, vect)
+	}
+
 	var c *Data
 	for c = l; NotNilP(Cdr(c)); c = Cdr(c) {
 	}
@@ -239,6 +254,19 @@ func AppendBang(l *Data, value *Data) *Data {
 func AppendBangList(l *Data, otherList *Data) *Data {
 	if NilP(l) {
 		return otherList
+	}
+
+	if VectorizedListP(l) {
+		lVect := VectorizedListValue(l)
+		oVect := ToArray(otherList)
+		for _, v := range oVect {
+			lVect = append(lVect, v)
+		}
+		return VectorizedListUpdate(l, lVect)
+	}
+
+	if VectorizedListP(otherList) {
+		otherList = ArrayToList(VectorizedListValue(otherList))
 	}
 
 	var c *Data
@@ -255,7 +283,19 @@ func Append(l *Data, value *Data) *Data {
 		return Cons(value, nil)
 	}
 
-	var newList = Copy(l)
+	var newList *Data
+
+	if VectorizedListP(l) {
+		lVect := ToArray(l)
+		vect := make([]*Data, 0, len(lVect)+1)
+		for _, v := range lVect {
+			vect = append(vect, v)
+		}
+		vect = append(vect, value)
+		return VectorizedListWithValue(vect)
+	}
+
+	newList = Copy(l)
 	var c *Data
 	for c = newList; NotNilP(Cdr(c)); c = Cdr(c) {
 	}
@@ -270,6 +310,19 @@ func AppendList(l *Data, otherList *Data) *Data {
 		return otherList
 	}
 
+	if VectorizedListP(l) || VectorizedListP(otherList) {
+		lVect := ToArray(l)
+		oVect := ToArray(otherList)
+		vect := make([]*Data, 0, len(lVect)+len(oVect))
+		for _, v := range lVect {
+			vect = append(vect, v)
+		}
+		for _, v := range oVect {
+			vect = append(vect, v)
+		}
+		return VectorizedListWithValue(vect)
+	}
+
 	var newList = Copy(l)
 	var c *Data
 	for c = newList; NotNilP(Cdr(c)); c = Cdr(c) {
@@ -282,8 +335,13 @@ func AppendList(l *Data, otherList *Data) *Data {
 
 func RemoveFromListBang(l *Data, item *Data) (result *Data) {
 	var prev *Data
-	result = l
-	for cell := l; NotNilP(cell); cell = Cdr(cell) {
+	if VectorizedListP(l) {
+		result = ArrayToList(VectorizedListValue(l))
+	} else {
+		result = l
+	}
+
+	for cell := result; NotNilP(cell); cell = Cdr(cell) {
 		if IsEqual(item, Car(cell)) {
 			if NilP(prev) {
 				return Cdr(cell)
@@ -323,7 +381,11 @@ func Alist(d *Data) *Data {
 }
 
 func InternalMakeList(c ...*Data) *Data {
-	return ArrayToList(c)
+	if UseVectorization {
+		return VectorizedListWithValue(c)
+	} else {
+		return ArrayToList(c)
+	}
 }
 
 func FrameWithValue(m *FrameMap) *Data {
@@ -412,6 +474,27 @@ func ConsValue(d *Data) *ConsCell {
 	return nil
 }
 
+func VectorizedListWithValue(ds []*Data) *Data {
+	return &Data{Type: VectorizedListType, Value: unsafe.Pointer(&ds)}
+}
+
+func VectorizedListValue(d *Data) []*Data {
+	if d == nil {
+		return nil
+	}
+
+	if VectorizedListP(d) {
+		return *((*[]*Data)(d.Value))
+	}
+
+	return nil
+}
+
+func VectorizedListUpdate(l *Data, vect []*Data) *Data {
+	l.Value = unsafe.Pointer(&vect)
+	return l
+}
+
 func Car(d *Data) *Data {
 	if d == nil {
 		return nil
@@ -421,6 +504,11 @@ func Car(d *Data) *Data {
 		cell := ConsValue(d)
 		if cell != nil {
 			return cell.Car
+		}
+	} else if VectorizedListP(d) {
+		vect := VectorizedListValue(d)
+		if len(vect) > 0 {
+			return vect[0]
 		}
 	}
 
@@ -436,6 +524,13 @@ func Cdr(d *Data) *Data {
 		cell := ConsValue(d)
 		if cell != nil {
 			return cell.Cdr
+		}
+	} else if VectorizedListP(d) {
+		vect := VectorizedListValue(d)
+		if len(vect) > 1 {
+			return VectorizedListWithValue(vect[1:])
+		} else {
+			return nil
 		}
 	}
 
@@ -611,8 +706,12 @@ func Length(d *Data) int {
 		return 0
 	}
 
-	if ListP(d) || AlistP(d) {
+	if PairP(d) || AlistP(d) {
 		return 1 + Length(Cdr(d))
+	}
+
+	if VectorizedListP(d) {
+		return len(VectorizedListValue(d))
 	}
 
 	if FrameP(d) {
@@ -659,7 +758,11 @@ func Flatten(d *Data) (result *Data, err error) {
 		}
 	}
 
-	return ArrayToList(l), nil
+	if UseVectorization {
+		return ArrayToVectorizedList(l), nil
+	} else {
+		return ArrayToList(l), nil
+	}
 }
 
 func RecursiveFlatten(d *Data) (result *Data, err error) {
@@ -687,7 +790,11 @@ func RecursiveFlatten(d *Data) (result *Data, err error) {
 		}
 	}
 
-	return ArrayToList(l), nil
+	if UseVectorization {
+		return ArrayToVectorizedList(l), nil
+	} else {
+		return ArrayToList(l), nil
+	}
 }
 
 func QuoteIt(value *Data) (result *Data) {
@@ -762,6 +869,10 @@ func Copy(d *Data) *Data {
 
 			return Cons(Copy(Car(d)), Copy(Cdr(d)))
 		}
+	case VectorizedListType:
+		{
+			return VectorizedListWithValue(VectorizedListValue(d)[:])
+		}
 	case FrameType:
 		{
 			m := make(FrameMap)
@@ -792,6 +903,10 @@ func IsEqual(d *Data, o *Data) bool {
 		if !PairP(o) && !DottedPairP(o) {
 			return false
 		}
+	} else if ListP(d) {
+		if !ListP(o) {
+			return false
+		}
 	} else if TypeOf(o) != TypeOf(d) {
 		return false
 	}
@@ -813,12 +928,36 @@ func IsEqual(d *Data, o *Data) bool {
 		return IsEqual(Car(d), Car(o)) && IsEqual(Cdr(d), Cdr(o))
 	}
 
-	if ListP(d) {
+	if PairP(d) {
+		if VectorizedListP(o) {
+			o = ArrayToList(VectorizedListValue(o))
+		}
 		if Length(d) != Length(o) {
 			return false
 		}
 		for a1, a2 := d, o; NotNilP(a1); a1, a2 = Cdr(a1), Cdr(a2) {
 			if !IsEqual(Car(a1), Car(a2)) {
+				return false
+			}
+		}
+		return true
+	}
+
+	if VectorizedListP(d) {
+		dVect := VectorizedListValue(d)
+		var oVect []*Data
+		if PairP(o) {
+			oVect = ToArray(o)
+		} else {
+			oVect = VectorizedListValue(o)
+		}
+
+		if len(dVect) != len(oVect) {
+			return false
+		}
+
+		for i := 0; i < len(dVect); i++ {
+			if !IsEqual(dVect[i], oVect[i]) {
 				return false
 			}
 		}
@@ -917,6 +1056,38 @@ func String(d *Data) string {
 				}
 			} else {
 				return fmt.Sprintf("(%s . %s)", strings.Join(contents, " "), String(c))
+			}
+		}
+	case VectorizedListType:
+		{
+			if NilP(d) {
+				return "()"
+			}
+			vect := VectorizedListValue(d)
+
+			if len(vect) > 10000000 {
+				fmt.Printf("\n\n====> HUGE VECTORIZEDLIST: %d\n\n", len(vect))
+				fmt.Printf("Stating with: \n")
+				for i := 0; i < 10; i++ {
+					fmt.Printf("  %d: %s\n", i, String(vect[i]))
+				}
+				fmt.Printf("\n\n")
+				debug.PrintStack()
+			}
+
+			contents := make([]string, 0, len(vect))
+			for _, v := range vect {
+				contents = append(contents, String(v))
+			}
+
+			if len(vect) > 0 && SymbolP(vect[0]) && contents[0] == "quote" {
+				if len(contents) == 1 {
+					return fmt.Sprintf("'()")
+				} else {
+					return fmt.Sprintf("'%s", contents[1])
+				}
+			} else {
+				return fmt.Sprintf("(%s)", strings.Join(contents, " "))
 			}
 		}
 	case AlistType:
@@ -1076,7 +1247,7 @@ func evalHelper(d *Data, env *SymbolTableFrame, needFunction bool) (result *Data
 
 	if d != nil {
 		switch d.Type {
-		case ConsCellType:
+		case ConsCellType, VectorizedListType:
 			{
 				d = postProcessShortcuts(d)
 

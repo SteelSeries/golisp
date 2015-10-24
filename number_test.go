@@ -12,10 +12,20 @@ import (
 )
 
 type IntegerAtomSuite struct {
-	n *Data
+	n                    *Data
+	OldVectorizationFlag bool
 }
 
 var _ = Suite(&IntegerAtomSuite{})
+
+func (s *IntegerAtomSuite) SetUpSuite(c *C) {
+	s.OldVectorizationFlag = UseVectorization
+	UseVectorization = true
+}
+
+func (s *IntegerAtomSuite) TearDownSuite(c *C) {
+	UseVectorization = s.OldVectorizationFlag
+}
 
 func (s *IntegerAtomSuite) SetUpTest(c *C) {
 	s.n = IntegerWithValue(5)

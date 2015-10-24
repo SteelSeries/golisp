@@ -12,12 +12,22 @@ import (
 )
 
 type FloatAtomSuite struct {
-	n    *Data
-	neg  *Data
-	zero *Data
+	n                    *Data
+	neg                  *Data
+	zero                 *Data
+	OldVectorizationFlag bool
 }
 
 var _ = Suite(&FloatAtomSuite{})
+
+func (s *FloatAtomSuite) SetUpSuite(c *C) {
+	s.OldVectorizationFlag = UseVectorization
+	UseVectorization = true
+}
+
+func (s *FloatAtomSuite) TearDownSuite(c *C) {
+	UseVectorization = s.OldVectorizationFlag
+}
 
 func (s *FloatAtomSuite) SetUpTest(c *C) {
 	s.n = FloatWithValue(5.3)

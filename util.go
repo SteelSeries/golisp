@@ -21,6 +21,10 @@ func ArrayToList(sexprs []*Data) *Data {
 	return Cdr(head)
 }
 
+func ArrayToVectorizedList(sexprs []*Data) *Data {
+	return VectorizedListWithValue(sexprs)
+}
+
 func ArrayToListWithTail(sexprs []*Data, tail *Data) *Data {
 	head := Cons(nil, EmptyCons())
 	lastCell := head
@@ -37,9 +41,13 @@ func ArrayToListWithTail(sexprs []*Data, tail *Data) *Data {
 }
 
 func ToArray(list *Data) []*Data {
-	result := make([]*Data, 0)
-	for c := list; NotNilP(c); c = Cdr(c) {
-		result = append(result, Car(c))
+	if VectorizedListP(list) {
+		return VectorizedListValue(list)
+	} else {
+		result := make([]*Data, 0)
+		for c := list; NotNilP(c); c = Cdr(c) {
+			result = append(result, Car(c))
+		}
+		return result
 	}
-	return result
 }

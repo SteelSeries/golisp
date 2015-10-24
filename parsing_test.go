@@ -14,9 +14,20 @@ import (
 
 func Test(t *testing.T) { TestingT(t) }
 
-type ParsingSuite struct{}
+type ParsingSuite struct {
+	OldVectorizationFlag bool
+}
 
 var _ = Suite(&ParsingSuite{})
+
+func (s *ParsingSuite) SetUpSuite(c *C) {
+	s.OldVectorizationFlag = UseVectorization
+	UseVectorization = true
+}
+
+func (s *ParsingSuite) TearDownSuite(c *C) {
+	UseVectorization = s.OldVectorizationFlag
+}
 
 // Atoms
 
@@ -169,7 +180,10 @@ func (s *ParsingSuite) TestNil(c *C) {
 	c.Assert(NilP(sexpr), Equals, true)
 }
 
+// non-vectorized
+
 func (s *ParsingSuite) TestIntegerCar(c *C) {
+	UseVectorization = false
 	sexpr, err := Parse("(1)")
 	c.Assert(err, IsNil)
 	c.Assert(sexpr, NotNil)
@@ -179,6 +193,7 @@ func (s *ParsingSuite) TestIntegerCar(c *C) {
 }
 
 func (s *ParsingSuite) TestStringCar(c *C) {
+	UseVectorization = false
 	sexpr, err := Parse(`("hello")`)
 	c.Assert(err, IsNil)
 	c.Assert(sexpr, NotNil)
@@ -188,6 +203,7 @@ func (s *ParsingSuite) TestStringCar(c *C) {
 }
 
 func (s *ParsingSuite) Test2ElementList(c *C) {
+	UseVectorization = false
 	sexpr, err := Parse("(1 2)")
 	c.Assert(err, IsNil)
 	c.Assert(sexpr, NotNil)
@@ -200,6 +216,7 @@ func (s *ParsingSuite) Test2ElementList(c *C) {
 }
 
 func (s *ParsingSuite) TestNestedList(c *C) {
+	UseVectorization = false
 	sexpr, err := Parse("(1 (2 3) 4)")
 	c.Assert(err, IsNil)
 	c.Assert(sexpr, NotNil)
@@ -223,6 +240,7 @@ func (s *ParsingSuite) TestNestedList(c *C) {
 }
 
 func (s *ParsingSuite) TestDottedPair(c *C) {
+	UseVectorization = false
 	sexpr, err := Parse("(1 . 2)")
 	c.Assert(err, IsNil)
 	c.Assert(sexpr, NotNil)
@@ -235,6 +253,7 @@ func (s *ParsingSuite) TestDottedPair(c *C) {
 }
 
 func (s *ParsingSuite) TestPrimitive(c *C) {
+	UseVectorization = false
 	sexpr, err := Parse("(+ 1 2)")
 	c.Assert(err, IsNil)
 	c.Assert(sexpr, NotNil)
@@ -249,6 +268,97 @@ func (s *ParsingSuite) TestPrimitive(c *C) {
 	c.Assert(int(TypeOf(Third(sexpr))), Equals, IntegerType)
 	c.Assert(IntegerValue(Third(sexpr)), Equals, int64(2))
 }
+
+//---  vectorized parsing version
+
+func (s *ParsingSuite) TestVectorizedIntegerCar(c *C) {
+	UseVectorization = true
+	sexpr, err := Parse("(1)")
+	c.Assert(err, IsNil)
+	c.Assert(sexpr, NotNil)
+	c.Assert(int(TypeOf(sexpr)), Equals, VectorizedListType)
+	c.Assert(int(TypeOf(Car(sexpr))), Equals, IntegerType)
+	c.Assert(IntegerValue(Car(sexpr)), Equals, int64(1))
+}
+
+func (s *ParsingSuite) TestVectorizedStringCar(c *C) {
+	UseVectorization = true
+	sexpr, err := Parse(`("hello")`)
+	c.Assert(err, IsNil)
+	c.Assert(sexpr, NotNil)
+	c.Assert(int(TypeOf(sexpr)), Equals, VectorizedListType)
+	c.Assert(int(TypeOf(Car(sexpr))), Equals, StringType)
+	c.Assert(StringValue(Car(sexpr)), Equals, "hello")
+}
+
+func (s *ParsingSuite) TestVectorized2ElementList(c *C) {
+	UseVectorization = true
+	sexpr, err := Parse("(1 2)")
+	c.Assert(err, IsNil)
+	c.Assert(sexpr, NotNil)
+	c.Assert(sexpr, FitsTypeOf, EmptyCons())
+	c.Assert(int(TypeOf(Car(sexpr))), Equals, IntegerType)
+	c.Assert(IntegerValue(Car(sexpr)), Equals, int64(1))
+	c.Assert(int(TypeOf(Car(Cdr(sexpr)))), Equals, IntegerType)
+	c.Assert(IntegerValue(Car(Cdr(sexpr))), Equals, int64(2))
+	c.Assert(Cdr(Cdr(sexpr)), IsNil)
+}
+
+func (s *ParsingSuite) TestVectorizedNestedList(c *C) {
+	UseVectorization = true
+	sexpr, err := Parse("(1 (2 3) 4)")
+	c.Assert(err, IsNil)
+	c.Assert(sexpr, NotNil)
+	c.Assert(int(TypeOf(sexpr)), Equals, VectorizedListType)
+
+	c.Assert(int(TypeOf(First(sexpr))), Equals, IntegerType)
+	c.Assert(IntegerValue(First(sexpr)), Equals, int64(1))
+
+	c.Assert(int(TypeOf(Second(sexpr))), Equals, VectorizedListType)
+
+	c.Assert(int(TypeOf(WalkList(sexpr, "aad"))), Equals, IntegerType)
+	c.Assert(IntegerValue(WalkList(sexpr, "aad")), Equals, int64(2))
+
+	c.Assert(int(TypeOf(WalkList(sexpr, "adad"))), Equals, IntegerType)
+	c.Assert(IntegerValue(WalkList(sexpr, "adad")), Equals, int64(3))
+
+	c.Assert(int(TypeOf(Third(sexpr))), Equals, IntegerType)
+	c.Assert(IntegerValue(Third(sexpr)), Equals, int64(4))
+
+	c.Assert(Cdr(Cddr(sexpr)), IsNil)
+}
+
+func (s *ParsingSuite) TestVectorizedDottedPair(c *C) {
+	UseVectorization = true
+	sexpr, err := Parse("(1 . 2)")
+	c.Assert(err, IsNil)
+	c.Assert(sexpr, NotNil)
+	c.Assert(int(TypeOf(sexpr)), Equals, ConsCellType)
+
+	c.Assert(int(TypeOf(Car(sexpr))), Equals, IntegerType)
+	c.Assert(IntegerValue(Car(sexpr)), Equals, int64(1))
+	c.Assert(int(TypeOf(Cdr(sexpr))), Equals, IntegerType)
+	c.Assert(IntegerValue(Cdr(sexpr)), Equals, int64(2))
+}
+
+func (s *ParsingSuite) TestVectorizedPrimitive(c *C) {
+	UseVectorization = true
+	sexpr, err := Parse("(+ 1 2)")
+	c.Assert(err, IsNil)
+	c.Assert(sexpr, NotNil)
+	c.Assert(int(TypeOf(sexpr)), Equals, VectorizedListType)
+
+	c.Assert(int(TypeOf(First(sexpr))), Equals, SymbolType)
+	c.Assert(StringValue(First(sexpr)), Equals, "+")
+
+	c.Assert(int(TypeOf(Second(sexpr))), Equals, IntegerType)
+	c.Assert(IntegerValue(Second(sexpr)), Equals, int64(1))
+
+	c.Assert(int(TypeOf(Third(sexpr))), Equals, IntegerType)
+	c.Assert(IntegerValue(Third(sexpr)), Equals, int64(2))
+}
+
+//---
 
 func (s *ParsingSuite) TestByteArray(c *C) {
 	sexpr, err := Parse("[1 2]")

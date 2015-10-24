@@ -12,12 +12,19 @@ import (
 )
 
 type BuiltinsSuite struct {
+	OldVectorizationFlag bool
 }
 
 var _ = Suite(&BuiltinsSuite{})
 
 func (s *BuiltinsSuite) SetUpSuite(c *C) {
 	InitLisp()
+	s.OldVectorizationFlag = UseVectorization
+	UseVectorization = false
+}
+
+func (s *BuiltinsSuite) TearDownSuite(c *C) {
+	UseVectorization = s.OldVectorizationFlag
 }
 
 // Add
@@ -566,57 +573,46 @@ func (s *BuiltinsSuite) TestDefineFunction(c *C) {
 	c.Assert(IntegerValue(v), Equals, int64(10))
 }
 
-func (s *BuiltinsSuite) TestMapSingleCollection(c *C) {
-	code, _ := Parse("(map (lambda (x) (* x 2)) (quote (1 2 3)))")
-	result, err := Eval(code, Global)
-	c.Assert(err, IsNil)
-
-	c.Assert(result, NotNil)
-	c.Assert(int(TypeOf(result)), Equals, ConsCellType)
-	c.Assert(int(TypeOf(Car(result))), Equals, IntegerType)
-	c.Assert(IntegerValue(Car(result)), Equals, int64(2))
-
-	c.Assert(int(TypeOf(Cdr(result))), Equals, ConsCellType)
-	c.Assert(int(TypeOf(Cadr(result))), Equals, IntegerType)
-	c.Assert(IntegerValue(Cadr(result)), Equals, int64(4))
-
-	c.Assert(int(TypeOf(Cddr(result))), Equals, ConsCellType)
-	c.Assert(int(TypeOf(Third(result))), Equals, IntegerType)
-	c.Assert(IntegerValue(Third(result)), Equals, int64(6))
-
-	c.Assert(NilP(WalkList(result, "ddd")), Equals, true)
-}
-
 func (s *BuiltinsSuite) TestQuote(c *C) {
-	code, _ := Parse("(quote (1 2))")
+	code, _ := Parse("(quote a)")
 	result, err := Eval(code, Global)
 	c.Assert(err, IsNil)
 
 	c.Assert(result, NotNil)
-	c.Assert(int(TypeOf(result)), Equals, ConsCellType)
-	c.Assert(int(TypeOf(Car(result))), Equals, IntegerType)
-	c.Assert(IntegerValue(Car(result)), Equals, int64(1))
-
-	c.Assert(int(TypeOf(Cdr(result))), Equals, ConsCellType)
-	c.Assert(int(TypeOf(Cadr(result))), Equals, IntegerType)
-	c.Assert(IntegerValue(Cadr(result)), Equals, int64(2))
-
-	c.Assert(NilP(Cddr(result)), Equals, true)
+	c.Assert(int(TypeOf(result)), Equals, SymbolType)
+	c.Assert(StringValue(result), Equals, "a")
 }
 
 func (s *BuiltinsSuite) TestQuoteShortcut(c *C) {
-	code, _ := Parse("'(1 2) ")
+	code, _ := Parse("'a ")
 	result, err := Eval(code, Global)
 	c.Assert(err, IsNil)
 
 	c.Assert(result, NotNil)
-	c.Assert(int(TypeOf(result)), Equals, ConsCellType)
-	c.Assert(int(TypeOf(Car(result))), Equals, IntegerType)
-	c.Assert(IntegerValue(Car(result)), Equals, int64(1))
+	c.Assert(int(TypeOf(result)), Equals, SymbolType)
+	c.Assert(StringValue(result), Equals, "a")
+}
 
-	c.Assert(int(TypeOf(Cdr(result))), Equals, ConsCellType)
-	c.Assert(int(TypeOf(Cadr(result))), Equals, IntegerType)
-	c.Assert(IntegerValue(Cadr(result)), Equals, int64(2))
+// vectorized
 
-	c.Assert(NilP(Cddr(result)), Equals, true)
+func (s *BuiltinsSuite) TestVectorizedQuote(c *C) {
+	UseVectorization = true
+	code, _ := Parse("(quote a)")
+	result, err := Eval(code, Global)
+	c.Assert(err, IsNil)
+
+	c.Assert(result, NotNil)
+	c.Assert(int(TypeOf(result)), Equals, SymbolType)
+	c.Assert(StringValue(result), Equals, "a")
+}
+
+func (s *BuiltinsSuite) TestVectorizedQuoteShortcut(c *C) {
+	UseVectorization = true
+	code, _ := Parse("'a ")
+	result, err := Eval(code, Global)
+	c.Assert(err, IsNil)
+
+	c.Assert(result, NotNil)
+	c.Assert(int(TypeOf(result)), Equals, SymbolType)
+	c.Assert(StringValue(result), Equals, "a")
 }

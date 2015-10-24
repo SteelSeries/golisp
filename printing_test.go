@@ -13,9 +13,20 @@ import (
 	"unsafe"
 )
 
-type PrintingSuite struct{}
+type PrintingSuite struct {
+	OldVectorizationFlag bool
+}
 
 var _ = Suite(&PrintingSuite{})
+
+func (s *PrintingSuite) SetUpSuite(c *C) {
+	s.OldVectorizationFlag = UseVectorization
+	UseVectorization = true
+}
+
+func (s *PrintingSuite) TearDownSuite(c *C) {
+	UseVectorization = s.OldVectorizationFlag
+}
 
 func (s *PrintingSuite) TestInteger(c *C) {
 	sexpr := IntegerWithValue(5)

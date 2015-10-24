@@ -39,12 +39,19 @@ func (checker *closeChecker) Check(params []interface{}, names []string) (result
 }
 
 type FloatBuiltinsSuite struct {
+	OldVectorizationFlag bool
 }
 
 var _ = Suite(&FloatBuiltinsSuite{})
 
 func (s *FloatBuiltinsSuite) SetUpSuite(c *C) {
 	InitLisp()
+	s.OldVectorizationFlag = UseVectorization
+	UseVectorization = true
+}
+
+func (s *FloatBuiltinsSuite) TearDownSuite(c *C) {
+	UseVectorization = s.OldVectorizationFlag
 }
 
 func (s *FloatBuiltinsSuite) TestFloatAdd(c *C) {

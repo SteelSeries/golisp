@@ -12,10 +12,20 @@ import (
 )
 
 type StringAtomSuite struct {
-	atom *Data
+	atom                 *Data
+	OldVectorizationFlag bool
 }
 
 var _ = Suite(&StringAtomSuite{})
+
+func (s *StringAtomSuite) SetUpSuite(c *C) {
+	s.OldVectorizationFlag = UseVectorization
+	UseVectorization = true
+}
+
+func (s *StringAtomSuite) TearDownSuite(c *C) {
+	UseVectorization = s.OldVectorizationFlag
+}
 
 func (s *StringAtomSuite) SetUpTest(c *C) {
 	s.atom = StringWithValue("Hello, world.")

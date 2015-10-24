@@ -45,6 +45,8 @@ func LoadFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
+	fmt.Printf("Loading file: %s\n", StringValue(filename))
+
 	return ProcessFile(StringValue(filename))
 }
 

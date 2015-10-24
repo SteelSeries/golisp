@@ -15,7 +15,7 @@ func WalkList(d *Data, path string) *Data {
 		if c == nil {
 			return nil
 		}
-		if !PairP(c) && !AlistP(c) && !DottedPairP(c) {
+		if !PairP(c) && !AlistP(c) && !DottedPairP(c) && !VectorizedListP(c) {
 			return nil
 		}
 		switch path[index] {
@@ -136,10 +136,17 @@ func Tenth(d *Data) *Data {
 }
 
 func SetNth(list *Data, index int, value *Data) *Data {
-	for i := index; i > 1; list, i = Cdr(list), i-1 {
-	}
-	if !NilP(list) {
-		ConsValue(list).Car = value
+	if VectorizedListP(list) {
+		vect := VectorizedListValue(list)
+		if index <= len(vect) {
+			vect[index-1] = value
+		}
+	} else {
+		for i := index; i > 1; list, i = Cdr(list), i-1 {
+		}
+		if !NilP(list) {
+			ConsValue(list).Car = value
+		}
 	}
 
 	return value

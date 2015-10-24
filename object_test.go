@@ -13,13 +13,23 @@ import (
 )
 
 type ObjectAtomSuite struct {
-	o *Data
+	o                    *Data
+	OldVectorizationFlag bool
 }
 
 var _ = Suite(&ObjectAtomSuite{})
 
 type TestStruct struct {
 	D int
+}
+
+func (s *ObjectAtomSuite) SetUpSuite(c *C) {
+	s.OldVectorizationFlag = UseVectorization
+	UseVectorization = true
+}
+
+func (s *ObjectAtomSuite) TearDownSuite(c *C) {
+	UseVectorization = s.OldVectorizationFlag
 }
 
 func (s *ObjectAtomSuite) TestObject(c *C) {

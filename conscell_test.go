@@ -12,9 +12,10 @@ import (
 )
 
 type ConsCellSuite struct {
-	a    *Data
-	b    *Data
-	cell *Data
+	a                    *Data
+	b                    *Data
+	cell                 *Data
+	OldVectorizationFlag bool
 }
 
 var _ = Suite(&ConsCellSuite{})
@@ -23,6 +24,12 @@ func (s *ConsCellSuite) SetUpTest(c *C) {
 	s.a = IntegerWithValue(1)
 	s.b = IntegerWithValue(2)
 	s.cell = Cons(s.a, s.b)
+	s.OldVectorizationFlag = UseVectorization
+	UseVectorization = true
+}
+
+func (s *ConsCellSuite) TearDownSuite(c *C) {
+	UseVectorization = s.OldVectorizationFlag
 }
 
 func (s *ConsCellSuite) TestCar(c *C) {

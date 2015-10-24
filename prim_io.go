@@ -31,6 +31,9 @@ func RegisterIOPrimitives() {
 	MakePrimitiveFunction("list-directory", "1|2", ListDirectoryImpl)
 
 	MakePrimitiveFunction("format", ">=2", FormatImpl)
+
+	MakePrimitiveFunction("use-vectorization!", "1", SetUseVectorizationImpl)
+	MakePrimitiveFunction("use-vectorization?", "0", GetUseVectorizationImpl)
 }
 
 func OpenOutputFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -347,4 +350,17 @@ func FormatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	return
+}
+
+func SetUseVectorizationImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if !BooleanP(Car(args)) {
+		err = ProcessError(fmt.Sprintf("use-vectorization! expects a boolean argument, but was %s", String(Car(args))), env)
+		return
+	}
+	UseVectorization = BooleanValue(Car(args))
+	return
+}
+
+func GetUseVectorizationImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return BooleanWithValue(UseVectorization), nil
 }

@@ -12,12 +12,19 @@ import (
 )
 
 type EvalSuite struct {
+	OldVectorizationFlag bool
 }
 
 var _ = Suite(&EvalSuite{})
 
 func (s *EvalSuite) SetUpSuite(c *C) {
 	InitLisp()
+	s.OldVectorizationFlag = UseVectorization
+	UseVectorization = true
+}
+
+func (s *EvalSuite) TearDownSuite(c *C) {
+	UseVectorization = s.OldVectorizationFlag
 }
 
 func (s *EvalSuite) TestEvalWithNilFunction(c *C) {

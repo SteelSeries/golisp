@@ -27,12 +27,16 @@ func JsonToLispWithFrames(json interface{}) (result *Data) {
 
 	arrayValue, ok := json.([]interface{})
 	if ok {
-		var ary *Data
+		var ary []*Data = make([]*Data, 0, 10)
 		for _, val := range arrayValue {
 			value := JsonToLispWithFrames(val)
-			ary = Cons(value, ary)
+			ary = append(ary, value)
 		}
-		return Reverse(ary)
+		if UseVectorization {
+			return ArrayToVectorizedList(ary)
+		} else {
+			return ArrayToList(ary)
+		}
 	}
 
 	numValue, ok := json.(float64)
@@ -99,7 +103,7 @@ func LispWithFramesToJson(d *Data) (result interface{}) {
 		return BooleanValue(d)
 	}
 
-	if PairP(d) {
+	if PairP(d) || VectorizedListP(d) {
 		ary := make([]interface{}, 0, Length(d))
 		for c := d; NotNilP(c); c = Cdr(c) {
 			ary = append(ary, LispWithFramesToJson(Car(c)))
