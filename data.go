@@ -22,8 +22,6 @@ const (
 	NilType = iota
 	ConsCellType
 	VectorizedListType
-	AlistType
-	AlistCellType
 	IntegerType
 	FloatType
 	BooleanType
@@ -91,10 +89,6 @@ func TypeName(t uint8) string {
 		return "Nil"
 	case ConsCellType, VectorizedListType:
 		return "List"
-	case AlistType:
-		return "Association List"
-	case AlistCellType:
-		return "Association List Cell"
 	case IntegerType:
 		return "Integer"
 	case FloatType:
@@ -128,7 +122,7 @@ func NilP(d *Data) bool {
 	if d == nil {
 		return true
 	}
-	if (PairP(d) || AlistP(d) || DottedPairP(d)) && Car(d) == nil && Cdr(d) == nil {
+	if PairP(d) && Car(d) == nil && Cdr(d) == nil {
 		return true
 	}
 	if VectorizedListP(d) {
@@ -150,15 +144,7 @@ func VectorizedListP(d *Data) bool {
 }
 
 func ListP(d *Data) bool {
-	return PairP(d) || AlistP(d) || VectorizedListP(d)
-}
-
-func DottedPairP(d *Data) bool {
-	return d == nil || TypeOf(d) == AlistCellType
-}
-
-func AlistP(d *Data) bool {
-	return d == nil || TypeOf(d) == AlistType
+	return PairP(d) || VectorizedListP(d)
 }
 
 func BooleanP(d *Data) bool {
@@ -357,27 +343,11 @@ func RemoveFromListBang(l *Data, item *Data) (result *Data) {
 func Acons(car *Data, cdr *Data, alist *Data) *Data {
 	pair, _ := Assoc(car, alist)
 	if NilP(pair) {
-		p := ConsCell{Car: car, Cdr: cdr}
-		cell := Data{Type: AlistCellType, Value: unsafe.Pointer(&p)}
-		conscell := ConsCell{Car: &cell, Cdr: alist}
-		return &Data{Type: AlistType, Value: unsafe.Pointer(&conscell)}
+		return Cons(Cons(car, cdr), alist)
 	} else {
 		((*ConsCell)(pair.Value)).Cdr = cdr
 		return alist
 	}
-}
-
-func Alist(d *Data) *Data {
-	if NilP(d) {
-		return nil
-	}
-
-	if PairP(d) {
-		headPair := Car(d)
-		return Acons(Car(headPair), Cdr(headPair), Alist(Cdr(d)))
-	}
-
-	return d
 }
 
 func InternalMakeList(c ...*Data) *Data {
@@ -467,7 +437,7 @@ func ConsValue(d *Data) *ConsCell {
 		return nil
 	}
 
-	if PairP(d) || AlistP(d) || DottedPairP(d) {
+	if PairP(d) {
 		return (*ConsCell)(d.Value)
 	}
 
@@ -500,7 +470,7 @@ func Car(d *Data) *Data {
 		return nil
 	}
 
-	if PairP(d) || AlistP(d) || DottedPairP(d) {
+	if PairP(d) {
 		cell := ConsValue(d)
 		if cell != nil {
 			return cell.Car
@@ -520,7 +490,7 @@ func Cdr(d *Data) *Data {
 		return nil
 	}
 
-	if PairP(d) || AlistP(d) || DottedPairP(d) {
+	if PairP(d) {
 		cell := ConsValue(d)
 		if cell != nil {
 			return cell.Cdr
@@ -706,7 +676,7 @@ func Length(d *Data) int {
 		return 0
 	}
 
-	if PairP(d) || AlistP(d) {
+	if PairP(d) {
 		return 1 + Length(Cdr(d))
 	}
 
@@ -820,7 +790,7 @@ func QuoteAll(d *Data) (result *Data) {
 func Assoc(key *Data, alist *Data) (result *Data, err error) {
 	for c := alist; NotNilP(c); c = Cdr(c) {
 		pair := Car(c)
-		if !DottedPairP(pair) && !PairP(pair) {
+		if !PairP(pair) {
 			err = errors.New("An alist MUST be made of pairs.")
 			return
 		}
@@ -833,18 +803,18 @@ func Assoc(key *Data, alist *Data) (result *Data, err error) {
 }
 
 func Dissoc(key *Data, alist *Data) (result *Data, err error) {
-	var newList *Data = nil
+	newList := make([]*Data, 0, Length(alist))
 	for c := alist; NotNilP(c); c = Cdr(c) {
 		pair := Car(c)
-		if !DottedPairP(pair) && !PairP(pair) {
+		if !PairP(pair) {
 			err = errors.New("An alist MUST be made of pairs.")
 			return
 		}
 		if !IsEqual(Car(pair), key) {
-			newList = Acons(Car(pair), Cdr(pair), newList)
+			newList = append(newList, pair)
 		}
 	}
-	return newList, nil
+	return ArrayToList(newList), nil
 }
 
 func Copy(d *Data) *Data {
@@ -853,14 +823,6 @@ func Copy(d *Data) *Data {
 	}
 
 	switch d.Type {
-	case AlistType:
-		{
-			alist := Acons(Copy(Caar(d)), Copy(Cdar(d)), nil)
-			for c := Cdr(d); NotNilP(c); c = Cdr(c) {
-				alist = Acons(Copy(Caar(c)), Copy(Cdar(c)), alist)
-			}
-			return alist
-		}
 	case ConsCellType:
 		{
 			if NilP(d) {
@@ -871,7 +833,10 @@ func Copy(d *Data) *Data {
 		}
 	case VectorizedListType:
 		{
-			return VectorizedListWithValue(VectorizedListValue(d)[:])
+			vect := VectorizedListValue(d)
+			newVect := make([]*Data, len(vect))
+			copy(newVect, vect)
+			return VectorizedListWithValue(newVect)
 		}
 	case FrameType:
 		{
@@ -895,37 +860,12 @@ func IsEqual(d *Data, o *Data) bool {
 		return false
 	}
 
-	if AlistP(d) {
-		if !AlistP(o) && !ListP(o) {
-			return false
-		}
-	} else if DottedPairP(d) {
-		if !PairP(o) && !DottedPairP(o) {
-			return false
-		}
-	} else if ListP(d) {
+	if ListP(d) {
 		if !ListP(o) {
 			return false
 		}
 	} else if TypeOf(o) != TypeOf(d) {
 		return false
-	}
-
-	if AlistP(d) {
-		if Length(d) != Length(o) {
-			return false
-		}
-		for c := d; NotNilP(c); c = Cdr(c) {
-			otherPair, err := Assoc(Caar(c), o)
-			if err != nil || NilP(otherPair) || !IsEqual(Cdar(c), Cdr(otherPair)) {
-				return false
-			}
-		}
-		return true
-	}
-
-	if DottedPairP(d) {
-		return IsEqual(Car(d), Car(o)) && IsEqual(Cdr(d), Cdr(o))
 	}
 
 	if PairP(d) {
@@ -1090,19 +1030,6 @@ func String(d *Data) string {
 				return fmt.Sprintf("(%s)", strings.Join(contents, " "))
 			}
 		}
-	case AlistType:
-		{
-			if NilP(d) {
-				return "()"
-			}
-			contents := make([]string, 0, Length(d))
-			for c := d; NotNilP(c); c = Cdr(c) {
-				contents = append(contents, String(Car(c)))
-			}
-			return fmt.Sprintf("(%s)", strings.Join(contents, " "))
-		}
-	case AlistCellType:
-		return fmt.Sprintf("(%s . %s)", String(Car(d)), String(Cdr(d)))
 	case IntegerType:
 		return fmt.Sprintf("%d", IntegerValue(d))
 	case FloatType:

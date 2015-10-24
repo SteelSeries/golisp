@@ -9,9 +9,8 @@ package golisp
 
 func RegisterTypePredicatePrimitives() {
 	MakePrimitiveFunction("atom?", "1", IsAtomImpl)
-	MakePrimitiveFunction("list?", "1", IsPairImpl)
+	MakePrimitiveFunction("list?", "1", IsListImpl)
 	MakePrimitiveFunction("pair?", "1", IsPairImpl)
-	MakePrimitiveFunction("alist?", "1", IsAlistImpl)
 	MakePrimitiveFunction("nil?", "1", NilPImpl)
 	MakePrimitiveFunction("null?", "1", NilPImpl)
 	MakePrimitiveFunction("notnil?", "1", NotNilPImpl)
@@ -33,12 +32,12 @@ func IsAtomImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return BooleanWithValue(NumberP(val) || SymbolP(val) || StringP(val) || BooleanP(val)), nil
 }
 
-func IsPairImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return BooleanWithValue(PairP(Car(args))), nil
+func IsListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return BooleanWithValue(PairP(Car(args)) || VectorizedListP(Car(args))), nil
 }
 
-func IsAlistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return BooleanWithValue(AlistP(Car(args))), nil
+func IsPairImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return BooleanWithValue(PairP(Car(args))), nil
 }
 
 func NilPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

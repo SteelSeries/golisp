@@ -21,7 +21,7 @@
                         "(1 2)")
              (assert-eq (str '(1 . 2))
                         "(1 . 2)")
-             (assert-eq (str (alist '((a . 1))))
+             (assert-eq (str '((a . 1)))
                         "((a . 1))")
              (assert-eq (str "abc" 1 "-" 34.2 '(a b c))
                         "abc1-34.2(a b c)"))

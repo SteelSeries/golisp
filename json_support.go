@@ -4,115 +4,25 @@
 
 // This package implements a basic LISP interpretor for embedding in a go program for scripting.
 // This file implements Json<->Lisp conversions.
+// The alist based json representtion has been removed, replaced by the frame based representation.
+// These functions now simply forward to the frame based equivalents.
 
 package golisp
 
-import (
-	"encoding/json"
-	"errors"
-	"fmt"
-	"math"
-)
-
 func JsonToLisp(json interface{}) (result *Data) {
-	mapValue, ok := json.(map[string]interface{})
-	if ok {
-		var alist *Data
-		for key, val := range mapValue {
-			value := JsonToLisp(val)
-			alist = Acons(StringWithValue(key), value, alist)
-		}
-		return alist
-	}
-
-	arrayValue, ok := json.([]interface{})
-	if ok {
-		var ary []*Data = make([]*Data, 0, 10)
-		for _, val := range arrayValue {
-			value := JsonToLisp(val)
-			ary = append(ary, value)
-		}
-		if UseVectorization {
-			return ArrayToVectorizedList(ary)
-		} else {
-			return ArrayToList(ary)
-		}
-
-	}
-
-	numValue, ok := json.(float64)
-	if ok {
-		if math.Trunc(numValue) == numValue {
-			return IntegerWithValue(int64(numValue))
-		} else {
-			return FloatWithValue(float32(numValue))
-		}
-	}
-
-	strValue, ok := json.(string)
-	if ok {
-		return StringWithValue(strValue)
-	}
-
-	boolValue, ok := json.(bool)
-	if ok {
-		return BooleanWithValue(boolValue)
-	}
-
-	return
+	return JsonToLispWithFrames(json)
 }
 
 func JsonStringToLisp(jsonData string) (result *Data) {
-	b := []byte(jsonData)
-	var data interface{}
-	err := json.Unmarshal(b, &data)
-	if err != nil {
-		panic(errors.New(fmt.Sprintf("Badly formed json: '%s'", jsonData)))
-	}
-	return JsonToLisp(data)
+	return JsonStringToLispWithFrames(jsonData)
 }
 
 func LispToJson(d *Data) (result interface{}) {
-	if d == nil {
-		return ""
-	}
-
-	if IntegerP(d) {
-		return IntegerValue(d)
-	}
-
-	if StringP(d) || SymbolP(d) {
-		return StringValue(d)
-	}
-
-	if PairP(d) || VectorizedListP(d) {
-		ary := make([]interface{}, 0, Length(d))
-		for c := d; NotNilP(c); c = Cdr(c) {
-			ary = append(ary, LispToJson(Car(c)))
-		}
-		return ary
-	}
-
-	if AlistP(d) {
-		dict := make(map[string]interface{}, Length(d))
-		for c := d; NotNilP(c); c = Cdr(c) {
-			pair := Car(c)
-			dict[StringValue(Car(pair))] = LispToJson(Cdr(pair))
-		}
-		return dict
-	}
-
-	return ""
+	return LispWithFramesToJson(d)
 }
 
 func LispToJsonString(d *Data) (result string) {
-	temp := LispToJson(d)
-	j, err := json.Marshal(temp)
-	if err == nil {
-		return string(j)
-	} else {
-		return ""
-	}
+	return LispWithFramesToJsonString(d)
 }
 
 func TransformJson(xform *Data, jsonNode *Data, parentNode *Data) (xformedJson *Data, err error) {

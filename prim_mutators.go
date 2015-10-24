@@ -84,22 +84,32 @@ func SetCdrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func SetNthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(First(args), env)
+	index, err := Eval(First(args), env)
+	if err != nil {
+		return
+	}
+	if !IntegerP(index) {
+		err = ProcessError("set-nth! requires an integer as it's first argument.", env)
+	}
+
+	l, err := Eval(Second(args), env)
 	if err != nil {
 		return
 	}
 	if !ListP(l) {
-		err = ProcessError("set-nth! requires a list as it's first argument.", env)
+		err = ProcessError("set-nth! requires a list as it's second argument.", env)
 	}
 
-	index, err := Eval(Second(args), env)
-	if err != nil {
-		return
+	i := int(IntegerValue(index))
+	if i < 0 || i >= Length(l) {
+		err = ProcessError("set-nth! was given an out of bound index.", env)
 	}
+
 	value, err := Eval(Third(args), env)
 	if err != nil {
 		return
 	}
 
-	return SetNth(l, int(IntegerValue(index)), value), nil
+	return SetNth(l, i, value), nil
+
 }

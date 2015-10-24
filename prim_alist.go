@@ -7,7 +7,9 @@
 
 package golisp
 
-import ()
+import (
+	"fmt"
+)
 
 func RegisterAListPrimitives() {
 	MakePrimitiveFunction("acons", "2|3", AconsImpl)
@@ -15,18 +17,11 @@ func RegisterAListPrimitives() {
 	MakePrimitiveFunction("assoc", "2", AssocImpl)
 	MakePrimitiveFunction("dissoc", "2", DissocImpl)
 	MakePrimitiveFunction("rassoc", "2", RassocImpl)
-	MakePrimitiveFunction("alist", "1", AlistImpl)
-}
-
-func AlistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l := Car(args)
-	result = Alist(l)
-	return
 }
 
 func AconsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	key := First(args)
-	if PairP(key) {
+	if ListP(key) {
 		err = ProcessError("Alist key can not be a list", env)
 		return
 	}
@@ -42,39 +37,40 @@ func AconsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func PairlisImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	keys := Car(args)
-	if !PairP(keys) {
+	keys := First(args)
+	if !ListP(keys) {
 		err = ProcessError("First arg of pairlis must be a list", env)
 		return
 	}
 
-	values := Cadr(args)
+	values := Second(args)
 
-	if !PairP(values) {
-		err = ProcessError("Second arg of Pairlis must be a list", env)
+	if !ListP(values) {
+		err = ProcessError("Second arg of pairlis must be a list", env)
 		return
 	}
 
 	if Length(keys) != Length(values) {
-		err = ProcessError("Pairlis requires the same number of keys and values", env)
+		err = ProcessError("pairlis requires the same number of keys and values", env)
 		return
 	}
 
-	result = Third(args)
+	if Length(args) == 3 {
+		result = Third(args)
 
-	if NotNilP(result) {
-		if !PairP(result) {
-			err = ProcessError("Third arg of pairlis must be an association list (if provided)", env)
+		if !ListP(result) {
+			err = ProcessError("Third arg of pairlis must be an list (if provided)", env)
 			return
 		}
 	}
 
-	for keyCell, valueCell := keys, values; NotNilP(keyCell); keyCell, valueCell = Cdr(keyCell), Cdr(valueCell) {
-		key := Car(keyCell)
+	for remainingKeys, remainingValues := keys, values; NotNilP(remainingKeys); remainingKeys, remainingValues = Cdr(remainingKeys), Cdr(remainingValues) {
+		key := Car(remainingKeys)
 		if NilP(key) {
 			err = ProcessError("Assoc list keys can not be nil", env)
+			return
 		}
-		value := Car(valueCell)
+		value := Car(remainingValues)
 		result = Acons(key, value, result)
 	}
 
@@ -82,18 +78,27 @@ func PairlisImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func AssocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	key := Car(args)
-	list := Cadr(args)
+	key := First(args)
+	list := Second(args)
+	if !ListP(list) {
+		err = ProcessError(fmt.Sprintf("assoc require a list as its second arument, but received %s.", String(list)), env)
+		return
+	}
+
 	return Assoc(key, list)
 }
 
 func RassocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	value := Car(args)
-	list := Cadr(args)
+	value := First(args)
+	list := Second(args)
+	if !ListP(list) {
+		err = ProcessError(fmt.Sprintf("rassoc require a list as its second arument, but received %s.", String(list)), env)
+		return
+	}
 
 	for c := list; NotNilP(c); c = Cdr(c) {
 		pair := Car(c)
-		if !PairP(pair) && !DottedPairP(pair) {
+		if !PairP(pair) {
 			err = ProcessError("Assoc list must consist of dotted pairs", env)
 			return
 		}
@@ -106,7 +111,12 @@ func RassocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func DissocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	key := Car(args)
-	list := Cadr(args)
+	key := First(args)
+	list := Second(args)
+	if !ListP(list) {
+		err = ProcessError(fmt.Sprintf("dissoc require a list as its second arument, but received %s.", String(list)), env)
+		return
+	}
+
 	return Dissoc(key, list)
 }

@@ -256,6 +256,7 @@ func NthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	index := First(args)
 	if !IntegerP(index) {
 		err = ProcessError("nth requires an integer as it's first argument.", env)
+		return
 	}
 
 	l := Second(args)
@@ -264,9 +265,14 @@ func NthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
+	if NilP(l) {
+		return nil, nil
+	}
+
 	i := int(IntegerValue(index))
 	if i < 0 || i >= Length(l) {
 		err = ProcessError("nth was given an out of bound index.", env)
+		return
 	}
 
 	return Nth(l, i+1), nil
@@ -339,18 +345,30 @@ func DropImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func ListRefImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	col := Car(args)
-	if !PairP(col) {
-		err = ProcessError("First arg to list-ref must be a list", env)
-		return
+	l := First(args)
+
+	if NilP(l) {
+		return nil, nil
 	}
-	count := Cadr(args)
-	if !IntegerP(count) {
-		err = ProcessError("Second arg to list-ref must be a number", env)
+
+	if !ListP(l) {
+		err = ProcessError("list-ref requires a list as it's first argument.", env)
 		return
 	}
 
-	return Nth(col, int(IntegerValue(count))+1), nil
+	index := Second(args)
+	if !IntegerP(index) {
+		err = ProcessError("list-ref requires an integer as it's second argument.", env)
+		return
+	}
+
+	i := int(IntegerValue(index))
+	if i < 0 || i >= Length(l) {
+		err = ProcessError("list-ref was given an out of bound index.", env)
+		return
+	}
+
+	return Nth(l, i+1), nil
 }
 
 func ListHeadImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -408,7 +426,12 @@ func LastPairImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	var cell *Data
-	for cell = l; NotNilP(Cdr(cell)) && PairP(Cdr(cell)); cell = Cdr(cell) {
+	if VectorizedListP(l) {
+		vect := VectorizedListValue(l)
+		cell = Cons(vect[len(vect)-1], nil)
+	} else {
+		for cell = l; NotNilP(Cdr(cell)) && PairP(Cdr(cell)); cell = Cdr(cell) {
+		}
 	}
 
 	return cell, nil

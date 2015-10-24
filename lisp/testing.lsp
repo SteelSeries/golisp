@@ -65,7 +65,7 @@
                         (lambda (err)
                           (let* ((err-parts (string-split err "\n"))
                                  (last-line (car (last-pair err-parts))))
-                            (log-error (cadr (string-split last-line ". ")))))))))
+                            (log-error last-line)))))))
 
 (defmacro (assert-true sexpr)
   `(let ((actual ,sexpr)
