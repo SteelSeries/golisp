@@ -275,7 +275,7 @@ func NthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	return Nth(l, i+1), nil
+	return Nth(l, i), nil
 }
 
 func TakeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -368,7 +368,7 @@ func ListRefImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	return Nth(l, i+1), nil
+	return Nth(l, i), nil
 }
 
 func ListHeadImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
