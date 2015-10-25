@@ -135,23 +135,53 @@ func ReduceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	if Length(col) == 0 {
+	length := Length(col)
+
+	if length == 0 {
 		return initial, nil
 	}
 
-	if Length(col) == 1 {
+	if length == 1 {
 		return Car(col), nil
 	}
 
-	result = Car(col)
-	for c := Cdr(col); NotNilP(c); c = Cdr(c) {
-		result, err = ApplyWithoutEval(f, InternalMakeList(result, Car(c)), env)
-		if err != nil {
-			return
+	if VectorizedListP(col) {
+		vect := VectorizedListValue(col)
+		result = vect[0]
+		for _, v := range vect[1:] {
+			result, err = ApplyWithoutEval(f, InternalMakeList(result, v), env)
+			if err != nil {
+				return
+			}
+		}
+	} else {
+		result = Car(col)
+		for c := Cdr(col); NotNilP(c); c = Cdr(c) {
+			result, err = ApplyWithoutEval(f, InternalMakeList(result, Car(c)), env)
+			if err != nil {
+				return
+			}
 		}
 	}
 
 	return
+}
+
+func filterElement(d []*Data, f *Data, e *Data, env *SymbolTableFrame) (result []*Data, err error) {
+	v, err := ApplyWithoutEval(f, Cons(e, nil), env)
+	if err != nil {
+		return
+	}
+	if !BooleanP(v) {
+		err = ProcessError("filter needs a predicate function as its first argument.", env)
+		return
+	}
+
+	if BooleanValue(v) {
+		d = append(d, e)
+	}
+
+	return d, nil
 }
 
 func FilterImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -168,23 +198,45 @@ func FilterImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	var d []*Data = make([]*Data, 0, Length(col))
-	var v *Data
-	for c := col; NotNilP(c); c = Cdr(c) {
-		v, err = ApplyWithoutEval(f, Cons(Car(c), nil), env)
-		if err != nil {
-			return
-		}
-		if !BooleanP(v) {
-			err = ProcessError("filter needs a predicate function as its first argument.", env)
-			return
-		}
 
-		if BooleanValue(v) {
-			d = append(d, Car(c))
+	if VectorizedListP(col) {
+		for _, e := range VectorizedListValue(col) {
+			d, err = filterElement(d, f, e, env)
+			if err != nil {
+				return
+			}
+		}
+	} else {
+		for c := col; NotNilP(c); c = Cdr(c) {
+			d, err = filterElement(d, f, Car(c), env)
+			if err != nil {
+				return
+			}
 		}
 	}
 
-	return ArrayToList(d), nil
+	if VectorizedListP(col) {
+		return VectorizedListWithValue(d), nil
+	} else {
+		return ArrayToList(d), nil
+	}
+}
+
+func removeElement(d []*Data, f *Data, e *Data, env *SymbolTableFrame) (result []*Data, err error) {
+	v, err := ApplyWithoutEval(f, Cons(e, nil), env)
+	if err != nil {
+		return
+	}
+	if !BooleanP(v) {
+		err = ProcessError("filter needs a predicate function as its first argument.", env)
+		return
+	}
+
+	if !BooleanValue(v) {
+		d = append(d, e)
+	}
+
+	return d, nil
 }
 
 func RemoveImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -201,23 +253,27 @@ func RemoveImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	var d []*Data = make([]*Data, 0, Length(col))
-	var v *Data
-	for c := col; NotNilP(c); c = Cdr(c) {
-		v, err = ApplyWithoutEval(f, Cons(Car(c), nil), env)
-		if err != nil {
-			return
+	if VectorizedListP(col) {
+		for _, e := range VectorizedListValue(col) {
+			d, err = removeElement(d, f, e, env)
+			if err != nil {
+				return
+			}
 		}
-		if !BooleanP(v) {
-			err = ProcessError("remove needs a predicate function as its first argument.", env)
-			return
-		}
-
-		if !BooleanValue(v) {
-			d = append(d, Car(c))
+	} else {
+		for c := col; NotNilP(c); c = Cdr(c) {
+			d, err = removeElement(d, f, Car(c), env)
+			if err != nil {
+				return
+			}
 		}
 	}
 
-	return ArrayToList(d), nil
+	if VectorizedListP(col) {
+		return VectorizedListWithValue(d), nil
+	} else {
+		return ArrayToList(d), nil
+	}
 }
 
 func MemqImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -225,9 +281,18 @@ func MemqImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	l := Second(args)
 
-	for c := l; NotNilP(c); c = Cdr(c) {
-		if IsEqual(key, Car(c)) {
-			return c, nil
+	if VectorizedListP(l) {
+		vect := VectorizedListValue(l)
+		for i, e := range vect {
+			if IsEqual(key, e) {
+				return VectorizedListWithValue(vect[i:]), nil
+			}
+		}
+	} else {
+		for c := l; NotNilP(c); c = Cdr(c) {
+			if IsEqual(key, Car(c)) {
+				return c, nil
+			}
 		}
 	}
 
@@ -243,20 +308,36 @@ func FindTailImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	l := Second(args)
 	if !ListP(l) {
-		err = ProcessError(fmt.Sprintf("find-tail needs a list as its second argument, but got %s.", String(l)), env)
+		err = ProcessError(fmt.Sprintf("find-tail/memp needs a list as its second argument, but got %s.", String(l)), env)
 		return
 	}
 
 	var found *Data
-	for c := l; NotNilP(c); c = Cdr(c) {
-		found, err = ApplyWithoutEval(f, InternalMakeList(Car(c)), env)
 
-		if !BooleanP(found) {
-			err = ProcessError("find-tail needs a predicate function as its first argument.", env)
-			return
+	if VectorizedListP(l) {
+		vect := VectorizedListValue(l)
+		for i, e := range vect {
+			found, err = ApplyWithoutEval(f, InternalMakeList(e), env)
+
+			if !BooleanP(found) {
+				err = ProcessError("find-tail/memp needs a predicate function as its first argument.", env)
+				return
+			}
+			if BooleanValue(found) {
+				return VectorizedListWithValue(vect[i:]), nil
+			}
 		}
-		if BooleanValue(found) {
-			return c, nil
+	} else {
+		for c := l; NotNilP(c); c = Cdr(c) {
+			found, err = ApplyWithoutEval(f, InternalMakeList(Car(c)), env)
+
+			if !BooleanP(found) {
+				err = ProcessError("find-tail/memp needs a predicate function as its first argument.", env)
+				return
+			}
+			if BooleanValue(found) {
+				return c, nil
+			}
 		}
 	}
 
@@ -277,14 +358,29 @@ func FindImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	var found *Data
-	for c := l; NotNilP(c); c = Cdr(c) {
-		found, err = ApplyWithoutEval(f, InternalMakeList(Car(c)), env)
-		if !BooleanP(found) {
-			err = ProcessError("find needs a predicate function as its first argument.", env)
-			return
+	if VectorizedListP(l) {
+		vect := VectorizedListValue(l)
+		for _, e := range vect {
+			found, err = ApplyWithoutEval(f, InternalMakeList(e), env)
+
+			if !BooleanP(found) {
+				err = ProcessError("find needs a predicate function as its first argument.", env)
+				return
+			}
+			if BooleanValue(found) {
+				return e, nil
+			}
 		}
-		if BooleanValue(found) {
-			return Car(c), nil
+	} else {
+		for c := l; NotNilP(c); c = Cdr(c) {
+			found, err = ApplyWithoutEval(f, InternalMakeList(Car(c)), env)
+			if !BooleanP(found) {
+				err = ProcessError("find needs a predicate function as its first argument.", env)
+				return
+			}
+			if BooleanValue(found) {
+				return Car(c), nil
+			}
 		}
 	}
 
