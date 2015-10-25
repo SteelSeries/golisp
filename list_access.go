@@ -37,6 +37,14 @@ func Caar(d *Data) *Data {
 }
 
 func Cadr(d *Data) *Data {
+	if VectorizedListP(d) {
+		vect := VectorizedListValue(d)
+		if len(vect) >= 2 {
+			return vect[1]
+		} else {
+			return nil
+		}
+	}
 	return WalkList(d, "ad")
 }
 
@@ -63,6 +71,14 @@ func Cadar(d *Data) *Data {
 }
 
 func Caddr(d *Data) *Data {
+	if VectorizedListP(d) {
+		vect := VectorizedListValue(d)
+		if len(vect) >= 3 {
+			return vect[2]
+		} else {
+			return nil
+		}
+	}
 	return WalkList(d, "add")
 }
 
