@@ -51,3 +51,23 @@ func ToArray(list *Data) []*Data {
 		return result
 	}
 }
+
+func Vectorize(l *Data) *Data {
+	if VectorizedListP(l) {
+		return l
+	} else if PairP(l) {
+		return VectorizedListWithValue(ToArray(l))
+	} else {
+		return nil
+	}
+}
+
+func Consify(l *Data) *Data {
+	if PairP(l) {
+		return l
+	} else if VectorizedListP(l) {
+		return ArrayToList(VectorizedListValue(l))
+	} else {
+		return nil
+	}
+}

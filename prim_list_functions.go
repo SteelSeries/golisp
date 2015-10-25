@@ -293,22 +293,20 @@ func FindImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func VectorizeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	l := Car(args)
-	if VectorizedListP(l) {
-		return l, nil
-	} else if PairP(l) {
-		return VectorizedListWithValue(ToArray(l)), nil
+	if ListP(l) {
+		result = Vectorize(l)
+	} else {
+		err = ProcessError(fmt.Sprintf("vectorize needs a list or vectorized list as its argument, but got %s.", String(l)), env)
 	}
-	err = ProcessError(fmt.Sprintf("vectorize needs a list or vectorized list as its argument, but got %s.", String(l)), env)
 	return
 }
 
 func ConsifyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	v := Car(args)
-	if PairP(v) {
-		return v, nil
-	} else if VectorizedListP(v) {
-		return ArrayToList(VectorizedListValue(v)), nil
+	l := Car(args)
+	if ListP(l) {
+		result = Consify(l)
+	} else {
+		err = ProcessError(fmt.Sprintf("consify needs a vectorized list or list as its argument, but got %s.", String(l)), env)
 	}
-	err = ProcessError(fmt.Sprintf("consify needs a vectorized list or list as its argument, but got %s.", String(v)), env)
 	return
 }
