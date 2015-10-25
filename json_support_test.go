@@ -29,7 +29,7 @@ func (s *JsonLispSuite) TearDownSuite(c *C) {
 func (s *JsonLispSuite) TestJsonToLispMap(c *C) {
 	jsonData := `{"map": 1}`
 	sexpr := JsonStringToLisp(jsonData)
-	expected := Acons(StringWithValue("map"), IntegerWithValue(1), nil)
+	expected, _ := ParseAndEval("{map: 1}")
 
 	c.Assert(IsEqual(sexpr, expected), Equals, true)
 }
@@ -53,7 +53,7 @@ func (s *JsonLispSuite) TestJsonToLispArray(c *C) {
 func (s *JsonLispSuite) TestJsonToLispBool(c *C) {
 	jsonData := `{"map": true}`
 	sexpr := JsonStringToLisp(jsonData)
-	expected := Acons(StringWithValue("map"), BooleanWithValue(true), nil)
+	expected, _ := ParseAndEval("{map: #t}")
 
 	c.Assert(IsEqual(sexpr, expected), Equals, true)
 }
@@ -62,13 +62,7 @@ func (s *JsonLispSuite) TestJsonToLispMixed(c *C) {
 	jsonData := `{"map": {"f1": [47, 75], "f2": 185}, "f3": 85}`
 	sexpr := JsonStringToLisp(jsonData)
 
-	expected := Acons(StringWithValue("map"),
-		Acons(StringWithValue("f1"),
-			InternalMakeList(IntegerWithValue(47), IntegerWithValue(75)),
-			Acons(StringWithValue("f2"),
-				IntegerWithValue(185), nil)),
-		Acons(StringWithValue("f3"),
-			IntegerWithValue(85), nil))
+	expected, _ := ParseAndEval("{map: {f1: '(47 75) f2: 185} f3: 85}")
 
 	c.Assert(IsEqual(sexpr, expected), Equals, true)
 }
@@ -80,12 +74,8 @@ func (s *JsonLispSuite) TestJsonToLispMixedWithFrames(c *C) {
 	c.Assert(IsEqual(sexpr, expected), Equals, true)
 }
 
-func (s *JsonLispSuite) TestJsonToLispIllegal(c *C) {
-	c.Assert(func() { JsonStringToLisp("hello") }, PanicMatches, `Badly formed json: 'hello'`)
-}
-
 func (s *JsonLispSuite) TestLispToJsonMap(c *C) {
-	alist := Acons(StringWithValue("map"), IntegerWithValue(1), nil)
+	alist, _ := ParseAndEval("{map: 1}")
 	data := LispToJsonString(alist)
 	c.Assert(data, Equals, `{"map":1}`)
 }
@@ -97,7 +87,7 @@ func (s *JsonLispSuite) TestLispToJsonArray(c *C) {
 }
 
 func (s *JsonLispSuite) TestLispToJsonMixed(c *C) {
-	alist := Acons(StringWithValue("map"), Acons(StringWithValue("f1"), InternalMakeList(IntegerWithValue(47), IntegerWithValue(75)), Acons(StringWithValue("f2"), IntegerWithValue(185), nil)), Acons(StringWithValue("f3"), IntegerWithValue(85), nil))
+	alist, _ := ParseAndEval("{f3: 85 map: {f1: '(47 75) f2: 185}}")
 	data := LispToJsonString(alist)
 	c.Assert(data, Equals, `{"f3":85,"map":{"f1":[47,75],"f2":185}}`)
 }
@@ -112,67 +102,3 @@ func (s *JsonLispSuite) TestLispToJsonNil(c *C) {
 	data := LispToJsonString(nil)
 	c.Assert(data, Equals, `""`)
 }
-
-// func (s *JsonLispSuite) TestSimpleJsonTransformation(c *C) {
-// 	jsonData := Acons(StringWithValue("map"), Acons(StringWithValue("f1"), InternalMakeList(IntegerWithValue(47), IntegerWithValue(75)), Acons(StringWithValue("f2"), IntegerWithValue(185), nil)), Acons(StringWithValue("f3"), IntegerWithValue(85), nil))
-
-// 	xform, err := Parse(`(lambda (node parent) (acons "f3" 42 parent))`)
-// 	c.Assert(err, IsNil)
-// 	parent := jsonData
-// 	pair, _ := Assoc(StringWithValue("f3"), jsonData)
-// 	_, err = TransformJson(xform, Cdr(pair), parent)
-// 	c.Assert(err, IsNil)
-
-// 	var newNode *Data
-// 	newNode, err = Assoc(StringWithValue("f3"), jsonData)
-// 	c.Assert(err, IsNil)
-// 	c.Assert(IntegerValue(Cdr(newNode)), Equals, int64(42))
-// }
-
-// func (s *JsonLispSuite) TestSimpleJsonTransformationReturnsNewValue(c *C) {
-// 	jsonData := Acons(StringWithValue("map"), Acons(StringWithValue("f1"), InternalMakeList(IntegerWithValue(47), IntegerWithValue(75)), Acons(StringWithValue("f2"), IntegerWithValue(185), nil)), Acons(StringWithValue("f3"), IntegerWithValue(85), nil))
-
-// 	xform, err := Parse(`(lambda (node parent) (+ node 5))`)
-// 	c.Assert(err, IsNil)
-// 	parent := jsonData
-// 	pair, _ := Assoc(StringWithValue("f3"), jsonData)
-// 	newValue, err := TransformJson(xform, Cdr(pair), parent)
-// 	c.Assert(err, IsNil)
-
-// 	c.Assert(IntegerValue(newValue), Equals, int64(90))
-// }
-
-// func (s *JsonLispSuite) TestMoreComplexJsonTransformation(c *C) {
-// 	jsonData := Acons(StringWithValue("map"), Acons(StringWithValue("f1"), InternalMakeList(IntegerWithValue(47), IntegerWithValue(75)), Acons(StringWithValue("f2"), IntegerWithValue(185), nil)), Acons(StringWithValue("f3"), IntegerWithValue(85), nil))
-
-// 	xform, err := Parse(`(lambda (node parent) (acons "f3" '(1 2 3) parent))`)
-// 	c.Assert(err, IsNil)
-// 	parent := jsonData
-// 	pair, _ := Assoc(StringWithValue("f3"), jsonData)
-// 	_, err = TransformJson(xform, Cdr(pair), parent)
-// 	c.Assert(err, IsNil)
-
-// 	var newNode *Data
-// 	newNode, err = Assoc(StringWithValue("f3"), jsonData)
-// 	c.Assert(err, IsNil)
-// 	c.Assert(IsEqual(Cdr(newNode), InternalMakeList(IntegerWithValue(1), IntegerWithValue(2), IntegerWithValue(3))), Equals, true)
-// }
-
-// func (s *JsonLispSuite) TestEvenMoreComplexJsonTransformation(c *C) {
-// 	jsonData := Acons(StringWithValue("map"), Acons(StringWithValue("f1"), InternalMakeList(IntegerWithValue(47), IntegerWithValue(75)), Acons(StringWithValue("f2"), IntegerWithValue(185), nil)), Acons(StringWithValue("f3"), IntegerWithValue(85), nil))
-
-// 	xform, err := Parse(`(lambda (node parent) (acons "f3" (acons "a" (+ node 1) nil) parent))`)
-// 	c.Assert(err, IsNil)
-// 	parent := jsonData
-// 	pair, _ := Assoc(StringWithValue("f3"), jsonData)
-// 	_, err = TransformJson(xform, Cdr(pair), parent)
-// 	c.Assert(err, IsNil)
-
-// 	var newNode *Data
-// 	var newerNode *Data
-// 	newNode, err = Assoc(StringWithValue("f3"), jsonData)
-// 	c.Assert(err, IsNil)
-// 	newerNode, err = Assoc(StringWithValue("a"), Cdr(newNode))
-// 	c.Assert(err, IsNil)
-// 	c.Assert(IntegerValue(Cdr(newerNode)), Equals, int64(86))
-// }
