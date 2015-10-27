@@ -41,6 +41,15 @@
         ((eq? n 0) (stream-car s))
         (else (stream-ref (stream-cdr s) (- n 1)))))
 
+;;; take some number of elements from a stream
+
+(define (stream-take s n)
+   (cond ((stream-null? s) the-empty-stream)
+	((eq? n 0) 'done)
+	(else (write-line (stream-car s))
+	      (print-stream (stream-cdr s) (- n 1)))))
+
+
 ;;; filter a stream by pred
 
 (define (stream-filter pred stream)
