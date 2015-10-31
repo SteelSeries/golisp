@@ -100,18 +100,23 @@ func (self *PrimitiveFunction) Apply(args *Data, env *SymbolTableFrame) (result 
 		argArray = append(argArray, argValue)
 	}
 
-	localGuid := atomic.AddInt64(&ProfileGUID, 1) - 1
-
-	fType := "prim"
-	if self.Special {
-		fType = "form"
+	var localGuid int64
+	var fType string
+	if ProfileEnabled {
+		localGuid = atomic.AddInt64(&ProfileGUID, 1) - 1
+		if self.Special {
+			fType = "form"
+		} else {
+			fType = "prim"
+		}
+		ProfileEnter(fType, self.Name, localGuid)
 	}
-
-	ProfileEnter(fType, self.Name, localGuid)
 
 	result, err = (self.Body)(ArrayToList(argArray), env)
 
-	ProfileExit(fType, self.Name, localGuid)
+	if ProfileEnabled {
+		ProfileExit(fType, self.Name, localGuid)
+	}
 
 	return
 }

@@ -39,23 +39,19 @@ func EndProfiling() {
 }
 
 func ProfileEnter(funcType string, name string, guid int64) {
-	if ProfileEnabled {
-		msg := fmt.Sprintf("{time: %d guid: %d mode: 'enter type: '%s name: '%s}\n", time.Now().UnixNano(), guid, funcType, name)
-		if profileOutput == nil {
-			fmt.Printf(msg)
-		} else {
-			fmt.Fprintf(profileOutput, msg)
-		}
+	msg := fmt.Sprintf("{time: %d guid: %d mode: 'enter type: '%s name: '%s}\n", time.Now().UnixNano(), guid, funcType, name)
+	if profileOutput == nil {
+		fmt.Printf(msg)
+	} else {
+		fmt.Fprintf(profileOutput, msg)
 	}
 }
 
 func ProfileExit(funcType string, name string, guid int64) {
-	if ProfileEnabled {
-		msg := fmt.Sprintf("{time: %d guid: %d mode: 'exit type: '%s name: '%s}\n", time.Now().UnixNano(), guid, funcType, name)
-		if profileOutput == nil {
-			fmt.Printf(msg)
-		} else {
-			fmt.Fprintf(profileOutput, msg)
-		}
+	msg := fmt.Sprintf("{time: %d guid: %d mode: 'exit type: '%s name: '%s}\n", time.Now().UnixNano(), guid, funcType, name)
+	if profileOutput == nil {
+		fmt.Printf(msg)
+	} else {
+		fmt.Fprintf(profileOutput, msg)
 	}
 }

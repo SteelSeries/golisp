@@ -54,10 +54,8 @@ func (self *Function) makeLocalBindings(args *Data, argEnv *SymbolTableFrame, lo
 		if Length(args) < self.RequiredArgCount {
 			return errors.New(fmt.Sprintf("%s expected at least %d parameters, received %d.", self.Name, self.RequiredArgCount, Length(args)))
 		}
-	} else {
-		if Length(args) != self.RequiredArgCount {
-			return errors.New(fmt.Sprintf("%s expected %d parameters, received %d.", self.Name, self.RequiredArgCount, Length(args)))
-		}
+	} else if Length(args) != self.RequiredArgCount {
+		return errors.New(fmt.Sprintf("%s expected %d parameters, received %d.", self.Name, self.RequiredArgCount, Length(args)))
 	}
 
 	var argValue *Data
@@ -104,10 +102,8 @@ func (self *Function) internalApply(args *Data, argEnv *SymbolTableFrame, frame 
 		}
 	}
 
-	parentProcSym := Intern("parentProcess")
 	if self.ParentProcess != nil {
-		procObj := ObjectWithTypeAndValue("Process", unsafe.Pointer(self.ParentProcess))
-		localEnv.BindLocallyTo(parentProcSym, procObj)
+		localEnv.BindLocallyTo(Intern("parentProcess"), ObjectWithTypeAndValue("Process", unsafe.Pointer(self.ParentProcess)))
 	}
 
 	err = self.makeLocalBindings(args, argEnv, localEnv, eval)
@@ -115,19 +111,33 @@ func (self *Function) internalApply(args *Data, argEnv *SymbolTableFrame, frame 
 		return
 	}
 
-	localGuid := atomic.AddInt64(&ProfileGUID, 1) - 1
+	var localGuid int64
+	if ProfileEnabled {
+		localGuid = atomic.AddInt64(&ProfileGUID, 1) - 1
+		ProfileEnter("func", self.Name, localGuid)
+	}
 
-	ProfileEnter("func", self.Name, localGuid)
-
-	for s := self.Body; NotNilP(s); s = Cdr(s) {
-		result, err = Eval(Car(s), localEnv)
-		if err != nil {
-			result, err = nil, errors.New(fmt.Sprintf("In '%s': %s", self.Name, err))
-			break
+	if VectorizedListP(self.Body) {
+		for _, s := range VectorizedListValue(self.Body) {
+			result, err = Eval(s, localEnv)
+			if err != nil {
+				result, err = nil, errors.New(fmt.Sprintf("In '%s': %s", self.Name, err))
+				break
+			}
+		}
+	} else {
+		for s := self.Body; NotNilP(s); s = Cdr(s) {
+			result, err = Eval(Car(s), localEnv)
+			if err != nil {
+				result, err = nil, errors.New(fmt.Sprintf("In '%s': %s", self.Name, err))
+				break
+			}
 		}
 	}
 
-	ProfileExit("func", self.Name, localGuid)
+	if ProfileEnabled {
+		ProfileExit("func", self.Name, localGuid)
+	}
 
 	return
 }
@@ -155,9 +165,11 @@ func (self *Function) ApplyOveriddingEnvironment(args *Data, argEnv *SymbolTable
 		return
 	}
 
-	localGuid := atomic.AddInt64(&ProfileGUID, 1) - 1
-
-	ProfileEnter("func", self.Name, localGuid)
+	var localGuid int64
+	if ProfileEnabled {
+		localGuid = atomic.AddInt64(&ProfileGUID, 1) - 1
+		ProfileEnter("func", self.Name, localGuid)
+	}
 
 	for s := self.Body; NotNilP(s); s = Cdr(s) {
 		result, err = Eval(Car(s), localEnv)
@@ -167,7 +179,9 @@ func (self *Function) ApplyOveriddingEnvironment(args *Data, argEnv *SymbolTable
 		}
 	}
 
-	ProfileExit("func", self.Name, localGuid)
+	if ProfileEnabled {
+		ProfileExit("func", self.Name, localGuid)
+	}
 
 	return
 }
