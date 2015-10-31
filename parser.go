@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 	"unsafe"
 )
 
@@ -69,6 +70,38 @@ func makeSymbol(str string) (s *Data, err error) {
 	return
 }
 
+func postProcessShortcuts(d *Data) *Data {
+	symbolObj := Car(d)
+
+	if !SymbolP(symbolObj) {
+		return d
+	}
+
+	pseudoFunction := StringValue(symbolObj)
+
+	switch {
+	// channel shortcuts
+	case strings.HasPrefix(pseudoFunction, "<-"):
+		return AppendBangList(InternalMakeList(Intern("channel-read"), Intern(strings.TrimPrefix(pseudoFunction, "<-"))), Cdr(d))
+	case strings.HasSuffix(pseudoFunction, "<-"):
+		return AppendBangList(InternalMakeList(Intern("channel-write"), Intern(strings.TrimSuffix(pseudoFunction, "<-"))), Cdr(d))
+
+		// frame shortcuts
+	case strings.HasSuffix(pseudoFunction, ":"):
+		return AppendBangList(InternalMakeList(Intern("get-slot"), Cadr(d), Car(d)), Cddr(d))
+	case strings.HasSuffix(pseudoFunction, ":!"):
+		return AppendBangList(InternalMakeList(Intern("set-slot!"), Cadr(d), Intern(strings.TrimSuffix(pseudoFunction, "!")), Caddr(d)), Cdddr(d))
+	case strings.HasSuffix(pseudoFunction, ":?"):
+		return AppendBangList(InternalMakeList(Intern("has-slot?"), Cadr(d), Intern(strings.TrimSuffix(pseudoFunction, "?"))), Cddr(d))
+	case strings.HasSuffix(pseudoFunction, ":>"):
+		return AppendBangList(InternalMakeList(Intern("send"), Cadr(d), Intern(strings.TrimSuffix(pseudoFunction, ">"))), Cddr(d))
+	case strings.HasSuffix(pseudoFunction, ":^"):
+		return AppendBangList(InternalMakeList(Intern("send-super"), Intern(strings.TrimSuffix(pseudoFunction, "^"))), Cdr(d))
+	default:
+		return d
+	}
+}
+
 func parseList(s *Tokenizer, vectorize bool) (sexpr *Data, eof bool, err error) {
 	tok, _ := s.NextToken()
 
@@ -76,7 +109,7 @@ func parseList(s *Tokenizer, vectorize bool) (sexpr *Data, eof bool, err error) 
 	var cdr *Data
 	cells := make([]*Data, 0, 10)
 	for tok != RPAREN {
-		if tok == PERIOD {
+		if tok == PERIOD { // NOTE: this list can NOT be a function call
 			s.ConsumeToken()
 			cdr, eof, err = parseExpression(s, vectorize)
 			if eof || err != nil {
@@ -110,6 +143,9 @@ func parseList(s *Tokenizer, vectorize bool) (sexpr *Data, eof bool, err error) 
 	} else {
 		sexpr = ArrayToList(cells)
 	}
+
+	sexpr = postProcessShortcuts(sexpr) // This could be a function call, so it's fair game to rewrite it if it has syntax sugar
+
 	return
 }
 
