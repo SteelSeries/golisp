@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 )
@@ -36,6 +37,8 @@ func RegisterSystemPrimitives() {
 
 	MakeSpecialForm("time", "1", TimeImpl)
 	MakeSpecialForm("profile", "1|2", ProfileImpl)
+
+	MakeRestrictedPrimitiveFunction("exec", ">=1", ExecImpl)
 }
 
 func LoadFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -244,5 +247,32 @@ func ProfileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	EndProfiling()
 
+	return
+}
+
+func ExecImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if !StringP(First(args)) {
+		err = ProcessError(fmt.Sprintf("exec requires a string command, but received %s.", String(First(args))), env)
+	}
+	cmdString := StringValue(First(args))
+
+	cmdArgs := make([]string, 0, Length(args)-1)
+
+	var cmd *exec.Cmd
+
+	if Length(args) > 1 {
+		for cell := Cdr(args); !NilP(cell); cell = Cdr(cell) {
+			value := Car(cell)
+			if StringP(value) || SymbolP(value) {
+				cmdArgs = append(cmdArgs, StringValue(value))
+			} else {
+				cmdArgs = append(cmdArgs, String(value))
+			}
+		}
+		cmd = exec.Command(cmdString, cmdArgs...)
+	} else {
+		cmd = exec.Command(cmdString)
+	}
+	err = cmd.Start()
 	return
 }
