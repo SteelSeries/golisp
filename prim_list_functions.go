@@ -19,6 +19,8 @@ func RegisterListFunctionsPrimitives() {
 	MakePrimitiveFunction("filter", "2", FilterImpl)
 	MakePrimitiveFunction("remove", "2", RemoveImpl)
 	MakePrimitiveFunction("memq", "2", MemqImpl)
+	MakePrimitiveFunction("memv", "2", MemqImpl)
+	MakePrimitiveFunction("member", "2", MemqImpl)
 	MakePrimitiveFunction("memp", "2", FindTailImpl)
 	MakePrimitiveFunction("find-tail", "2", FindTailImpl)
 	MakePrimitiveFunction("find", "2", FindImpl)
