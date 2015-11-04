@@ -12,6 +12,8 @@ import ()
 func RegisterAListPrimitives() {
 	MakePrimitiveFunction("acons", "2|3", AconsImpl)
 	MakePrimitiveFunction("pairlis", "2|3", PairlisImpl)
+	MakePrimitiveFunction("assq", "2", AssocImpl)
+	MakePrimitiveFunction("assv", "2", AssocImpl)
 	MakePrimitiveFunction("assoc", "2", AssocImpl)
 	MakePrimitiveFunction("dissoc", "2", DissocImpl)
 	MakePrimitiveFunction("rassoc", "2", RassocImpl)
