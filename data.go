@@ -34,6 +34,7 @@ const (
 	FrameType
 	EnvironmentType
 	PortType
+	VectorType
 )
 
 type ConsCell struct {
@@ -117,6 +118,8 @@ func TypeName(t uint8) string {
 		return "Environment"
 	case PortType:
 		return "Port"
+	case VectorType:
+		return "Vector"
 	default:
 		return "Unknown"
 	}
@@ -210,6 +213,10 @@ func EnvironmentP(d *Data) bool {
 
 func PortP(d *Data) bool {
 	return d != nil && TypeOf(d) == PortType
+}
+
+func VectorP(d *Data) bool {
+	return d != nil && TypeOf(d) == VectorType
 }
 
 func EmptyCons() *Data {
@@ -398,6 +405,14 @@ func EnvironmentWithValue(e *SymbolTableFrame) *Data {
 
 func PortWithValue(e *os.File) *Data {
 	return &Data{Type: PortType, Value: unsafe.Pointer(e)}
+}
+
+func VectorWithValues(c ...*Data) *Data {
+	return ArrayToVector(c)
+}
+
+func VectorWithValue(c []*Data) *Data {
+	return &Data{Type: VectorType, Value: unsafe.Pointer(&c)}
 }
 
 func ConsValue(d *Data) *ConsCell {
@@ -601,6 +616,18 @@ func PortValue(d *Data) *os.File {
 
 	if PortP(d) {
 		return (*os.File)(d.Value)
+	}
+
+	return nil
+}
+
+func VectorValue(d *Data) []*Data {
+	if d == nil {
+		return nil
+	}
+
+	if VectorP(d) {
+		return *((*([]*Data))(d.Value))
 	}
 
 	return nil
