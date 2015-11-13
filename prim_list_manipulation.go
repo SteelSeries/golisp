@@ -300,19 +300,19 @@ func merge(a []*Data, b []*Data, proc *Data, env *SymbolTableFrame) (result []*D
 	return r, nil
 }
 
-func mergesort(items []*Data, proc *Data, env *SymbolTableFrame) (result []*Data, err error) {
+func MergeSort(items []*Data, proc *Data, env *SymbolTableFrame) (result []*Data, err error) {
 	if len(items) < 2 {
 		return items, nil
 	}
 
 	var middle = len(items) / 2
 
-	a, err := mergesort(items[:middle], proc, env)
+	a, err := MergeSort(items[:middle], proc, env)
 	if err != nil {
 		return
 	}
 
-	b, err := mergesort(items[middle:], proc, env)
+	b, err := MergeSort(items[middle:], proc, env)
 	if err != nil {
 		return
 	}
@@ -321,19 +321,19 @@ func mergesort(items []*Data, proc *Data, env *SymbolTableFrame) (result []*Data
 }
 
 func SortImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	coll := Car(args)
+	coll := First(args)
 	if !ListP(coll) {
 		err = ProcessError("sort requires a list as it's first argument.", env)
 		return
 	}
 
-	proc := Cadr(args)
+	proc := Second(args)
 	if !FunctionOrPrimitiveP(proc) {
 		err = ProcessError("sort requires a function or primitive as it's second argument.", env)
 		return
 	}
 
-	sorted, err := mergesort(ToArray(coll), proc, env)
+	sorted, err := MergeSort(ToArray(coll), proc, env)
 	if err != nil {
 		return
 	}
