@@ -844,6 +844,7 @@ func IsEqual(d *Data, o *Data) bool {
 		if Length(d) != Length(o) {
 			return false
 		}
+
 		for a1, a2 := d, o; NotNilP(a1); a1, a2 = Cdr(a1), Cdr(a2) {
 			if !IsEqual(Car(a1), Car(a2)) {
 				return false
@@ -852,15 +853,34 @@ func IsEqual(d *Data, o *Data) bool {
 		return true
 	}
 
+	if VectorP(d) {
+		v1 := VectorValue(d)
+		v2 := VectorValue(o)
+
+		if len(v1) != len(v2) {
+			return false
+		}
+
+		for i := 0; i < len(v1); i++ {
+			if !IsEqual(v1[i], v2[i]) {
+				return false
+			}
+		}
+
+		return true
+	}
+
 	if FrameP(d) {
 		if len(*(FrameValue(d))) != len(*(FrameValue(o))) {
 			return false
 		}
+
 		for k, v := range *FrameValue(d) {
 			if !IsEqual(v, (*(FrameValue(o)))[k]) {
 				return false
 			}
 		}
+
 		return true
 	}
 
@@ -871,13 +891,14 @@ func IsEqual(d *Data, o *Data) bool {
 
 		if len(dBytes) != len(oBytes) {
 			return false
-		} else {
-			for i := 0; i < len(dBytes); i++ {
-				if dBytes[i] != oBytes[i] {
-					return false
-				}
+		}
+
+		for i := 0; i < len(dBytes); i++ {
+			if dBytes[i] != oBytes[i] {
+				return false
 			}
 		}
+
 		return true
 	}
 
@@ -1014,6 +1035,13 @@ func String(d *Data) string {
 		return fmt.Sprintf("<environment: %s>", EnvironmentValue(d).Name)
 	case PortType:
 		return fmt.Sprintf("<port: %s>", PortValue(d).Name())
+	case VectorType:
+		vals := VectorValue(d)
+		svals := make([]string, 0, len(vals))
+		for _, v := range vals {
+			svals = append(svals, String(v))
+		}
+		return fmt.Sprintf("#(%s)", strings.Join(svals, " "))
 	}
 
 	return ""

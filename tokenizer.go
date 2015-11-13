@@ -37,6 +37,7 @@ const (
 	PERIOD
 	TRUE
 	FALSE
+	OPEN_VECTOR
 	COMMENT
 	EOF
 )
@@ -295,6 +296,9 @@ func (self *Tokenizer) readNextToken() (token int, lit string) {
 		} else if self.CurrentCh == 'b' {
 			self.Advance()
 			return self.readBinaryNumber()
+		} else if self.CurrentCh == '(' {
+			self.Advance()
+			return OPEN_VECTOR, "#("
 		} else {
 			return ILLEGAL, fmt.Sprintf("#%c", self.NextCh)
 		}

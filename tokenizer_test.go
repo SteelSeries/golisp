@@ -337,3 +337,15 @@ func (s *TokenizerSuite) TestTrue(c *C) {
 	c.Assert(tok, Equals, TRUE)
 	c.Assert(lit, Equals, `#t`)
 }
+
+func (s *TokenizerSuite) TestOpenVector(c *C) {
+	t := NewTokenizerFromString(`#(1 2)`)
+	tok, lit := t.NextToken()
+	c.Assert(tok, Equals, OPEN_VECTOR)
+	c.Assert(lit, Equals, `#(`)
+
+	t.ConsumeToken()
+	tok, lit = t.NextToken()
+	c.Assert(tok, Equals, NUMBER)
+	c.Assert(lit, Equals, `1`)
+}

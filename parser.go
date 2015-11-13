@@ -166,6 +166,36 @@ func parseBytearray(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 	return
 }
 
+func parseVector(s *Tokenizer) (sexpr *Data, eof bool, err error) {
+	tok, _ := s.NextToken()
+	if tok == RPAREN {
+		s.ConsumeToken()
+		values := make([]*Data, 0)
+		sexpr = VectorWithValue(values)
+		return
+	}
+
+	var element *Data
+	values := make([]*Data, 0, 10)
+	for tok != RPAREN {
+		element, eof, err = parseExpression(s)
+		if eof {
+			err = errors.New("Unexpected EOF (expected closing paren)")
+			return
+		}
+		if err != nil {
+			return
+		}
+		values = append(values, element)
+		tok, _ = s.NextToken()
+	}
+
+	s.ConsumeToken()
+	sexpr = VectorWithValue(values)
+
+	return
+}
+
 func parseFrame(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 	tok, _ := s.NextToken()
 	if tok == RBRACKET {
@@ -237,6 +267,10 @@ func parseExpression(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 		case LBRACE:
 			s.ConsumeToken()
 			sexpr, eof, err = parseFrame(s)
+			return
+		case OPEN_VECTOR:
+			s.ConsumeToken()
+			sexpr, eof, err = parseVector(s)
 			return
 		case SYMBOL:
 			s.ConsumeToken()

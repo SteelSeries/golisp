@@ -272,6 +272,17 @@ func (s *ParsingSuite) TestEmptyByteArray(c *C) {
 	c.Assert(len(*bytes), Equals, 0)
 }
 
+func (s *ParsingSuite) TestVector(c *C) {
+	sexpr, err := Parse("#(1 2)")
+	c.Assert(err, IsNil)
+	c.Assert(sexpr, NotNil)
+	c.Assert(int(TypeOf(sexpr)), Equals, VectorType)
+	values := VectorValue(sexpr)
+	c.Assert(len(values), Equals, 2)
+	c.Assert(IntegerValue(values[0]), Equals, int64(1))
+	c.Assert(IntegerValue(values[1]), Equals, int64(2))
+}
+
 func (s *ParsingSuite) TestQuote(c *C) {
 	sexpr, err := Parse("'a")
 	c.Assert(err, IsNil)
