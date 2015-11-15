@@ -627,7 +627,8 @@ func VectorValue(d *Data) []*Data {
 	}
 
 	if VectorP(d) {
-		return *((*([]*Data))(d.Value))
+		vptr := (*([]*Data))(d.Value)
+		return *vptr
 	}
 
 	return nil
