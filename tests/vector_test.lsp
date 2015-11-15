@@ -11,7 +11,8 @@
              (assert-true (vector? v)))
 
          (it "has the right length"
-             (assert-eq (vector-length v) 5))
+             (assert-eq (vector-length v) 5)
+             (assert-eq (length v) 5))
 
          (it "has converts to a list of nils"
              (assert-eq (vector->list v) '(() () () () ())))
@@ -81,6 +82,12 @@
              (assert-eq (vector-ref v 2) 1)
              (assert-eq (vector-ref v 3) '(b d)))
 
+         (it "support access using nth as well"
+             (assert-eq (nth v 0) 'a)
+             (assert-eq (nth v 1) 'b)
+             (assert-eq (nth v 2) 1)
+             (assert-eq (nth v 3) '(b d)))
+         
          (it "supports mutation of elements"
              (vector-set! v 1 "test")
              (assert-eq (vector-ref v 1) "test"))
@@ -109,34 +116,44 @@
          ((define v (vector 1 2 3 4 5 6 7 8 9 10)))
 
          (it "supports access to the first element (element 0)"
-             (assert-eq (vector-first v) 1))
+             (assert-eq (vector-first v) 1)
+             (assert-eq (first v) 1))
 
          (it "supports access to the second element (element 1)"
-             (assert-eq (vector-second v) 2))
+             (assert-eq (vector-second v) 2)
+             (assert-eq (second v) 2))
 
          (it "supports access to the third element (element 2)"
-             (assert-eq (vector-third v) 3))
+             (assert-eq (vector-third v) 3)
+             (assert-eq (third v) 3))
 
          (it "supports access to the fourth element (element 3)"
-             (assert-eq (vector-fourth v) 4))
+             (assert-eq (vector-fourth v) 4)
+             (assert-eq (fourth v) 4))
 
          (it "supports access to the fifth element (element 4)"
-             (assert-eq (vector-fifth v) 5))
+             (assert-eq (vector-fifth v) 5)
+             (assert-eq (fifth v) 5))
 
          (it "supports access to the sixth element (element 5)"
-             (assert-eq (vector-sixth v) 6))
+             (assert-eq (vector-sixth v) 6)
+             (assert-eq (sixth v) 6))
 
          (it "supports access to the seventh element (element 6)"
-             (assert-eq (vector-seventh v) 7))
+             (assert-eq (vector-seventh v) 7)
+             (assert-eq (seventh v) 7))
 
          (it "supports access to the eighth element (element 7)"
-             (assert-eq (vector-eighth v) 8))
+             (assert-eq (vector-eighth v) 8)
+             (assert-eq (eighth v) 8))
 
          (it "supports access to the ninth element (element 8)"
-             (assert-eq (vector-ninth v) 9))
+             (assert-eq (vector-ninth v) 9)
+             (assert-eq (ninth v) 9))
 
          (it "supports access to the tenth element (element 9)"
-             (assert-eq (vector-tenth v) 10)))
+             (assert-eq (vector-tenth v) 10)
+             (assert-eq (tenth v) 10)))
 
 (context "An empty vector"
 
@@ -250,9 +267,51 @@
              (assert-eq (vector-second result) 'e)
              (assert-eq (vector-third result) 'h))
 
-         (it "generates appropriate errors"
-             (assert-error (vector-map 1 v))
+         (it "generates an error when given a non function"
+             (assert-error (vector-map 1 v)))
+
+         (it "generates an error when given a non vectors"
              (assert-error (vector-map + '(a b c)))))
+
+(context "The result of mapping over multiple vectors"
+
+         ((define v1 '#(1 2 3 4))
+          (define v2 '#(5 6 7 8))
+          (define result (vector-map + v1 v2)))
+
+         (it "is a vector"
+             (assert-true (vector? result)))
+         
+         (it "has the correct length"
+             (assert-eq (vector-length result) 4))
+
+         (it "has the correct values"
+             (assert-eq (vector-first result) 6)
+             (assert-eq (vector-second result) 8)
+             (assert-eq (vector-third result) 10)
+             (assert-eq (vector-fourth result) 12))
+
+         (it "generates an error when given a non function"
+             (assert-error (vector-map 1 v1 v2)))
+
+         (it "generates an error when given a non vectors"
+             (assert-error (vector-map + '(a b c) '#(1 2 3)))))
+
+(context "The result of mapping a vector using the generic map function"
+
+         ((define v '#((a b) (d e) (g h)))
+          (define result (map cadr v)))
+
+         (it "is a vector"
+             (assert-true (vector? result)))
+         
+         (it "has the correct length"
+             (assert-eq (vector-length result) 3))
+
+         (it "has the correct values"
+             (assert-eq (vector-first result) 'b)
+             (assert-eq (vector-second result) 'e)
+             (assert-eq (vector-third result) 'h)))
 
 (context "Subvector extraction"
 
@@ -281,16 +340,20 @@
 (context "Taking the head of a vector"
 
          ((define v '#(1 2 3 4 5 6 7 8 9 10))
-          (define h (vector-head v 5)))
+          (define h (vector-head v 5))
+          (define t (take 5 v)))
 
          (it "results in a vector"
-             (assert-true (vector? h)))
+             (assert-true (vector? h))
+             (assert-true (vector? t)))
 
          (it "has the correct length"
-             (assert-eq (vector-length h) 5))
+             (assert-eq (vector-length h) 5)
+             (assert-eq (vector-length t) 5))
 
          (it "has the correct contents"
-             (assert-eq h '#(1 2 3 4 5)))
+             (assert-eq h '#(1 2 3 4 5))
+             (assert-eq t '#(1 2 3 4 5)))
 
          (it "can take a zero length head"
              (assert-eq (vector-head v 0) '#()))
@@ -307,16 +370,20 @@
 (context "Taking the tail of a vector"
 
          ((define v '#(1 2 3 4 5 6 7 8 9 10))
-          (define t (vector-tail v 5)))
+          (define t (vector-tail v 5))
+          (define d (drop 5 v)))
 
          (it "results in a vector"
-             (assert-true (vector? t)))
+             (assert-true (vector? t))
+             (assert-true (vector? d)))
 
          (it "has the correct length"
-             (assert-eq (vector-length t) 5))
+             (assert-eq (vector-length t) 5)
+             (assert-eq (vector-length d) 5))
 
          (it "has the correct contents"
-             (assert-eq t '#(6 7 8 9 10)))
+             (assert-eq t '#(6 7 8 9 10))
+             (assert-eq d '#(6 7 8 9 10)))
 
          (it "can take a zero length tail"
              (assert-eq (vector-tail v 10) '#()))
@@ -462,6 +529,29 @@
 
          ((define unsorted '#(8 9 2 3 6 6 9 2 0 5 7))
           (define sorted (vector-sort unsorted <)))
+
+         (it "returns a vector"
+             (assert-true (vector? sorted)))
+
+         (it "returns something with the right length"
+             (assert-eq (vector-length sorted) 11))
+
+         (it "returns a sorted result"
+             (assert-eq sorted '#(0 2 2 3 5 6 6 7 8 9 9)))
+
+         (it "doesn't affect the original"
+             (assert-eq unsorted '#(8 9 2 3 6 6 9 2 0 5 7)))
+
+         (it "raises an error when given a non vector"
+             (assert-error (vector-sort '(1 2 3) <)))
+
+         (it "raises an error if given a non procedure"
+             (assert-error (vector-sort unsorted 5))))
+
+(context "Sorting a vector using the generic sort function"
+
+         ((define unsorted '#(8 9 2 3 6 6 9 2 0 5 7))
+          (define sorted (sort unsorted <)))
 
          (it "returns a vector"
              (assert-true (vector? sorted)))

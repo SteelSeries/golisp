@@ -213,46 +213,79 @@ func GeneralCarCdrImpl(args *Data, env *SymbolTableFrame) (result *Data, err err
 }
 
 func FirstImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if VectorP(Car(args)) {
+		return VectorFirstImpl(args, env)
+	}
 	return First(Car(args)), nil
 }
 
 func SecondImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if VectorP(Car(args)) {
+		return VectorSecondImpl(args, env)
+	}
 	return Second(Car(args)), nil
 }
 
 func ThirdImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if VectorP(Car(args)) {
+		return VectorThirdImpl(args, env)
+	}
 	return Third(Car(args)), nil
 }
 
 func FourthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if VectorP(Car(args)) {
+		return VectorFourthImpl(args, env)
+	}
 	return Fourth(Car(args)), nil
 }
 
 func FifthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if VectorP(Car(args)) {
+		return VectorFifthImpl(args, env)
+	}
 	return Fifth(Car(args)), nil
 }
 
 func SixthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if VectorP(Car(args)) {
+		return VectorSixthImpl(args, env)
+	}
 	return Sixth(Car(args)), nil
 }
 
 func SeventhImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if VectorP(Car(args)) {
+		return VectorSeventhImpl(args, env)
+	}
 	return Seventh(Car(args)), nil
 }
 
 func EighthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if VectorP(Car(args)) {
+		return VectorEighthImpl(args, env)
+	}
 	return Eighth(Car(args)), nil
 }
 
 func NinthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if VectorP(Car(args)) {
+		return VectorNinthImpl(args, env)
+	}
 	return Ninth(Car(args)), nil
 }
 
 func TenthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if VectorP(Car(args)) {
+		return VectorTenthImpl(args, env)
+	}
 	return Tenth(Car(args)), nil
 }
 
 func NthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if VectorP(Car(args)) {
+		return VectorRefImpl(args, env)
+	}
 	col := Car(args)
 	if !PairP(col) {
 		err = ProcessError("First arg to nth must be a list", env)
@@ -273,6 +306,10 @@ func TakeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		err = ProcessError("take requires a number as its first argument.", env)
 	}
 	size := int(IntegerValue(n))
+
+	if VectorP(Second(args)) {
+		return VectorHeadImpl(InternalMakeList(Second(args), First(args)), env)
+	}
 
 	l := Cadr(args)
 	if ListP(l) {
@@ -295,7 +332,7 @@ func TakeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		}
 		result = ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&newBytes))
 	} else {
-		err = ProcessError("take requires a list or bytearray as its second argument.", env)
+		err = ProcessError("take requires a list, vector, or bytearray as its second argument.", env)
 	}
 	return
 }
@@ -306,6 +343,10 @@ func DropImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		err = ProcessError("drop requires a number as its first argument.", env)
 	}
 	size := int(IntegerValue(n))
+
+	if VectorP(Second(args)) {
+		return VectorTailImpl(InternalMakeList(Second(args), First(args)), env)
+	}
 
 	l := Cadr(args)
 
@@ -328,7 +369,7 @@ func DropImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 			result = ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&newBytes))
 		}
 	} else {
-		err = ProcessError("drop requires a list or bytearray as its second argument.", env)
+		err = ProcessError("drop requires a list, vector, or bytearray as its second argument.", env)
 	}
 	return
 }

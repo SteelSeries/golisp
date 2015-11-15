@@ -41,6 +41,10 @@ func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
+	if VectorP(Second(args)) {
+		return VectorMapImpl(args, env)
+	}
+
 	var collections []*Data = make([]*Data, 0, Length(args)-1)
 	var loopCount int64 = math.MaxInt64
 	var col *Data

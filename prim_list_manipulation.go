@@ -322,8 +322,8 @@ func MergeSort(items []*Data, proc *Data, env *SymbolTableFrame) (result []*Data
 
 func SortImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	coll := First(args)
-	if !ListP(coll) {
-		err = ProcessError("sort requires a list as it's first argument.", env)
+	if !ListP(coll) && !VectorP(coll) {
+		err = ProcessError("sort requires a list or vector as it's first argument.", env)
 		return
 	}
 
@@ -331,6 +331,10 @@ func SortImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if !FunctionOrPrimitiveP(proc) {
 		err = ProcessError("sort requires a function or primitive as it's second argument.", env)
 		return
+	}
+
+	if VectorP(First(args)) {
+		return VectorSortImpl(args, env)
 	}
 
 	sorted, err := MergeSort(ToArray(coll), proc, env)
