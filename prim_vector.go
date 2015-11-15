@@ -9,6 +9,7 @@ package golisp
 
 import (
 	"fmt"
+	"math"
 )
 
 func RegisterVectorPrimitives() {
@@ -19,7 +20,7 @@ func RegisterVectorPrimitives() {
 	MakePrimitiveFunction("vector->list", "1", VectorToListImpl)
 	MakePrimitiveFunction("make-initialized-vector", "2", MakeInitializedVectorImpl)
 	MakePrimitiveFunction("vector-grow", "2", VectorGrowImpl)
-	MakePrimitiveFunction("vector-map", "2", VectorMapImpl)
+	MakePrimitiveFunction("vector-map", ">=2", VectorMapImpl)
 	MakePrimitiveFunction("vector?", "1", VectorPImpl)
 	MakePrimitiveFunction("vector-length", "1", VectorLengthImpl)
 	MakePrimitiveFunction("vector-ref", "2", VectorRefImpl)
@@ -176,20 +177,40 @@ func VectorMapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 		return
 	}
 
-	v := Second(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("vector-map needs a vector as its second argument, but got %s.", String(v)), env)
+	var collections [][]*Data = make([][]*Data, 0, Length(args)-1)
+	var loopCount int64 = math.MaxInt64
+	var col *Data
+	for a := Cdr(args); NotNilP(a); a = Cdr(a) {
+		col = Car(a)
+		if !VectorP(col) {
+			err = ProcessError(fmt.Sprintf("vector-map needs vectors as its other arguments, but got %s.", String(col)), env)
+			return
+		}
+		if NilP(col) || col == nil {
+			return
+		}
+		collections = append(collections, VectorValue(col))
+		loopCount = intMin(loopCount, int64(Length(col)))
+	}
+
+	if loopCount == math.MaxInt64 {
 		return
 	}
-	originalValues := VectorValue(v)
-	size := len(originalValues)
 
-	vals := make([]*Data, size)
-	for i, val := range originalValues {
-		vals[i], err = ApplyWithoutEval(f, InternalMakeList(val), env)
+	var vals []*Data = make([]*Data, loopCount)
+	var v *Data
+	var a *Data
+	for index := 0; index < int(loopCount); index++ {
+		mapArgs := make([]*Data, 0, len(collections))
+		for _, mapArgCollection := range collections {
+			a = mapArgCollection[index]
+			mapArgs = append(mapArgs, a)
+		}
+		v, err = ApplyWithoutEval(f, ArrayToList(mapArgs), env)
 		if err != nil {
 			return
 		}
+		vals[index] = v
 	}
 
 	result = VectorWithValue(vals)
@@ -208,7 +229,7 @@ func VectorLengthImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 		return
 	}
 
-	result = IntegerWithValue(int64(len(VectorValue(v))))
+	result = IntegerWithValue(int64(Length(v)))
 	return
 }
 
