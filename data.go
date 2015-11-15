@@ -639,6 +639,10 @@ func Length(d *Data) int {
 		return 0
 	}
 
+	if VectorP(d) {
+		return len(VectorValue(d))
+	}
+
 	if ListP(d) || AlistP(d) {
 		return 1 + Length(Cdr(d))
 	}
