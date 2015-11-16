@@ -1,10 +1,10 @@
 ;;; -*- mode: Scheme -*-
 
-(context filter
+(context "filter"
 
          ()
 
-         (it works
+         (it "works"
              (assert-eq (filter even? '())
                         '())
              (assert-eq (filter even? '(1 3 5))
@@ -28,11 +28,11 @@
          (it "rejects a non-boolean predicate"
              (assert-error (filter + '(1 2)))))
 
-(context remove
+(context "remove"
 
          ()
 
-         (it works
+         (it "works"
              (assert-eq (remove even? '())
                         '())
              (assert-eq (remove even? '(2 4 6))
