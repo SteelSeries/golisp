@@ -20,30 +20,35 @@ func RegisterVectorPrimitives() {
 	MakePrimitiveFunction("vector->list", "1", VectorToListImpl)
 	MakePrimitiveFunction("make-initialized-vector", "2", MakeInitializedVectorImpl)
 	MakePrimitiveFunction("vector-grow", "2", VectorGrowImpl)
-	MakePrimitiveFunction("vector-map", ">=2", VectorMapImpl)
+	MakePrimitiveFunction("vector-map", ">=2", VectorMapImpl)          // also called by map
+	MakePrimitiveFunction("vector-for-each", ">=2", VectorForEachImpl) // also called by for-each
+	MakePrimitiveFunction("vector-reduce", "3", VectorReduceImpl)      // also called by reduce
+	MakePrimitiveFunction("vector-filter", "2", VectorFilterImpl)      // also called by filter
+	MakePrimitiveFunction("vector-remove", "2", VectorRemoveImpl)      // also clled by remove
 	MakePrimitiveFunction("vector?", "1", VectorPImpl)
-	MakePrimitiveFunction("vector-length", "1", VectorLengthImpl)
-	MakePrimitiveFunction("vector-ref", "2", VectorRefImpl)
-	MakePrimitiveFunction("vector-set!", "3", VectorSetImpl)
-	MakePrimitiveFunction("vector-first", "1", VectorFirstImpl)
-	MakePrimitiveFunction("vector-second", "1", VectorSecondImpl)
-	MakePrimitiveFunction("vector-third", "1", VectorThirdImpl)
-	MakePrimitiveFunction("vector-fourth", "1", VectorFourthImpl)
-	MakePrimitiveFunction("vector-fifth", "1", VectorFifthImpl)
-	MakePrimitiveFunction("vector-sixth", "1", VectorSixthImpl)
-	MakePrimitiveFunction("vector-seventh", "1", VectorSeventhImpl)
-	MakePrimitiveFunction("vector-eighth", "1", VectorEighthImpl)
-	MakePrimitiveFunction("vector-ninth", "1", VectorNinthImpl)
-	MakePrimitiveFunction("vector-tenth", "1", VectorTenthImpl)
+	MakePrimitiveFunction("vector-length", "1", VectorLengthImpl)   // also called by length
+	MakePrimitiveFunction("vector-ref", "2", VectorRefImpl)         // also called by nth
+	MakePrimitiveFunction("vector-set!", "3", VectorSetImpl)        // also called by set-nth!
+	MakePrimitiveFunction("vector-first", "1", VectorFirstImpl)     // also called by first
+	MakePrimitiveFunction("vector-second", "1", VectorSecondImpl)   // also called by second
+	MakePrimitiveFunction("vector-third", "1", VectorThirdImpl)     // also called by third
+	MakePrimitiveFunction("vector-fourth", "1", VectorFourthImpl)   // also called by fourth
+	MakePrimitiveFunction("vector-fifth", "1", VectorFifthImpl)     // also called by fifth
+	MakePrimitiveFunction("vector-sixth", "1", VectorSixthImpl)     // also called by sixth
+	MakePrimitiveFunction("vector-seventh", "1", VectorSeventhImpl) // also called by seventh
+	MakePrimitiveFunction("vector-eighth", "1", VectorEighthImpl)   // also called by eighth
+	MakePrimitiveFunction("vector-ninth", "1", VectorNinthImpl)     // also called by ninth
+	MakePrimitiveFunction("vector-tenth", "1", VectorTenthImpl)     // also called by tenth
 	MakePrimitiveFunction("vector-binary-search", "4", VectorBinarySearchImpl)
+	MakePrimitiveFunction("vector-find", "2", VectorFindImpl) // also called by find
 	MakePrimitiveFunction("subvector", "3", SubVectorImpl)
-	MakePrimitiveFunction("vector-head", "2", VectorHeadImpl)
-	MakePrimitiveFunction("vector-tail", "2", VectorTailImpl)
+	MakePrimitiveFunction("vector-head", "2", VectorHeadImpl) // also called by take
+	MakePrimitiveFunction("vector-tail", "2", VectorTailImpl) // also called by drop
 	MakePrimitiveFunction("vector-fill!", "2", VectorFillImpl)
 	MakePrimitiveFunction("subvector-fill!", "4", SubVectorFillImpl)
 	MakePrimitiveFunction("subvector-move-left!", "5", SubVectorMoveLeftImpl)
 	MakePrimitiveFunction("subvector-move-right!", "5", SubVectorMoveRightImpl)
-	MakePrimitiveFunction("vector-sort", "2", VectorSortImpl)
+	MakePrimitiveFunction("vector-sort", "2", VectorSortImpl) // also called by sort
 	MakePrimitiveFunction("vector-sort!", "2", VectorSortInPlaceImpl)
 }
 
@@ -215,6 +220,151 @@ func VectorMapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 
 	result = VectorWithValue(vals)
 	return
+}
+
+func VectorForEachImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	f := First(args)
+	if !FunctionOrPrimitiveP(f) {
+		err = ProcessError(fmt.Sprintf("vector-for-each needs a function as its first argument, but got %s.", String(f)), env)
+		return
+	}
+
+	var collections [][]*Data = make([][]*Data, 0, Length(args)-1)
+	var loopCount int64 = math.MaxInt64
+	var col *Data
+	for a := Cdr(args); NotNilP(a); a = Cdr(a) {
+		col = Car(a)
+		if !VectorP(col) {
+			err = ProcessError(fmt.Sprintf("vector-for-each needs vectors as its other arguments, but got %s.", String(col)), env)
+			return
+		}
+		if NilP(col) || col == nil {
+			return
+		}
+		collections = append(collections, VectorValue(col))
+		loopCount = intMin(loopCount, int64(Length(col)))
+	}
+
+	if loopCount == math.MaxInt64 {
+		return
+	}
+
+	var a *Data
+	for index := 0; index < int(loopCount); index++ {
+		mapArgs := make([]*Data, 0, len(collections))
+		for _, mapArgCollection := range collections {
+			a = mapArgCollection[index]
+			mapArgs = append(mapArgs, a)
+		}
+		_, err = ApplyWithoutEval(f, ArrayToList(mapArgs), env)
+		if err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+func VectorReduceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	f := First(args)
+	if !FunctionOrPrimitiveP(f) {
+		err = ProcessError("vector-reduce needs a function as its first argument", env)
+		return
+	}
+
+	initial := Second(args)
+	col := Third(args)
+
+	if !VectorP(col) {
+		err = ProcessError("vector-reduce needs a vector as its third argument", env)
+		return
+	}
+
+	v := VectorValue(col)
+
+	if Length(col) == 0 {
+		return initial, nil
+	}
+
+	if Length(col) == 1 {
+		return v[0], nil
+	}
+
+	result = v[0]
+	for _, val := range v[1:] {
+		result, err = ApplyWithoutEval(f, InternalMakeList(result, val), env)
+		if err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+func VectorFilterImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	f := First(args)
+	if !FunctionOrPrimitiveP(f) {
+		err = ProcessError(fmt.Sprintf("vector-filter needs a function as its first argument, but got %s.", String(f)), env)
+		return
+	}
+
+	v := Second(args)
+	if !VectorP(v) {
+		err = ProcessError(fmt.Sprintf("vector-filter needs a vector as its second argument, but got %s.", String(v)), env)
+		return
+	}
+	vals := VectorValue(v)
+
+	var d []*Data = make([]*Data, 0, len(vals))
+	for _, val := range vals {
+		v, err = ApplyWithoutEval(f, InternalMakeList(val), env)
+		if err != nil {
+			return
+		}
+		if !BooleanP(v) {
+			err = ProcessError("vector-filter needs a predicate function as its first argument.", env)
+			return
+		}
+
+		if BooleanValue(v) {
+			d = append(d, val)
+		}
+	}
+
+	return VectorWithValue(d), nil
+}
+
+func VectorRemoveImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	f := First(args)
+	if !FunctionOrPrimitiveP(f) {
+		err = ProcessError(fmt.Sprintf("vector-remove needs a function as its first argument, but got %s.", String(f)), env)
+		return
+	}
+
+	v := Second(args)
+	if !VectorP(v) {
+		err = ProcessError(fmt.Sprintf("vector-remove needs a vector as its second argument, but got %s.", String(v)), env)
+		return
+	}
+	vals := VectorValue(v)
+
+	var d []*Data = make([]*Data, 0, len(vals))
+	for _, val := range vals {
+		v, err = ApplyWithoutEval(f, InternalMakeList(val), env)
+		if err != nil {
+			return
+		}
+		if !BooleanP(v) {
+			err = ProcessError("vector-remove needs a predicate function as its first argument.", env)
+			return
+		}
+
+		if !BooleanValue(v) {
+			d = append(d, val)
+		}
+	}
+
+	return VectorWithValue(d), nil
 }
 
 func VectorPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -462,6 +612,34 @@ func VectorTenthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 
 func VectorBinarySearchImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return
+}
+
+func VectorFindImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	f := First(args)
+	if !FunctionOrPrimitiveP(f) {
+		err = ProcessError("vector-find needs a function as its first argument", env)
+		return
+	}
+
+	v := Second(args)
+	if !VectorP(v) {
+		err = ProcessError(fmt.Sprintf("vector-find needs a vector as its second argument, but got %s.", String(v)), env)
+		return
+	}
+
+	var found *Data
+	for _, val := range VectorValue(v) {
+		found, err = ApplyWithoutEval(f, InternalMakeList(val), env)
+		if !BooleanP(found) {
+			err = ProcessError("vector-find needs a predicate function as its first argument.", env)
+			return
+		}
+		if BooleanValue(found) {
+			return val, nil
+		}
+	}
+
+	return LispFalse, nil
 }
 
 func SubVectorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
