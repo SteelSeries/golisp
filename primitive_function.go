@@ -76,12 +76,12 @@ func (self *PrimitiveFunction) checkArgumentCount(argCount int) bool {
 
 func (self *PrimitiveFunction) Apply(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if self.IsRestricted && env.IsRestricted {
-		err = fmt.Errorf("The %s primitive is restricted from execution in this environment\n", self.Name)
+		err = fmt.Errorf("The %s primitive is restricted from execution in this environment", self.Name)
 		return
 	}
 
 	if !self.checkArgumentCount(Length(args)) {
-		err = fmt.Errorf("Wrong number of args to %s. Expected %s but got %d.\n", self.Name, self.NumberOfArgs, Length(args))
+		err = fmt.Errorf("Wrong number of args to %s, expected %s but got %d.", self.Name, self.NumberOfArgs, Length(args))
 		return
 	}
 
