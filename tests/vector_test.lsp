@@ -17,8 +17,8 @@
          (it "has converts to a list of nils"
              (assert-eq (vector->list v) '(() () () () ())))
 
-         (it "generates appropriate errors"
-             (assert-error (make-vector "hi")))) ;non integer size
+         (it "raises an error when given a non integer size"
+             (assert-error (make-vector "hi"))))
 
 
 (context "A vector initialized with a size and value"
@@ -37,8 +37,8 @@
          (it "has converts to the correct list"
              (assert-eq (vector->list v) '(a a a a a)))
 
-          (it "generates appropriate errors"
-              (assert-error (make-vector "hi")))) ;non integer size
+          (it "raises an error when given a non integer size"
+              (assert-error (make-vector "hi"))))
 
 (context "A vector initialized with values"
 
@@ -92,12 +92,24 @@
              (vector-set! v 1 "test")
              (assert-eq (vector-ref v 1) "test"))
 
-         (it "generates appropriate errors"
-             (assert-error (vector-set! '(a b) 1 0)) ;not a vector
-             (assert-error (vector-set! v "hi" 0)) ;not an integer index
-             (assert-error (vector-ref '(a) 0)) ;not a vector
-             (assert-error (vector-ref v "hi")) ;not an integer index
-             (assert-error (vector-ref v 4)))) ;index out of bounds
+         (it "support element mutation using generic set-nth!"
+             (set-nth! v 1 "test")
+             (assert-eq (vector-ref v 1) "test"))
+
+         (it "raises an error when given a non vector"
+             (assert-error (vector-set! '(a b) 1 0)))
+
+         (it "raises an error when given a non integer index"
+             (assert-error (vector-set! v "hi" 0)))
+
+         (it "raises an error when given a non vector"
+             (assert-error (vector-ref '(a) 0)))
+
+         (it "raises an error when given a non integer index"
+             (assert-error (vector-ref v "hi")))
+
+         (it "raises an error when the index is out of bounds"
+             (assert-error (vector-ref v 4))))
 
 (context "Taking the length of a vector"
 
@@ -107,9 +119,8 @@
              (assert-eq (vector-length '#(1 2 3)) 3)
              (assert-eq (vector-length '#()) 0))
 
-         (it "generate appropriate errors"
-             (assert-error (vector-length '(1 2 3)))
-             (assert-error (vector-length 5))))
+         (it "raises an error when given a non vector"
+             (assert-error (vector-length '(1 2 3)))))
 
 (context "A long vector"
 
@@ -159,7 +170,11 @@
 
          ((define v '#()))
 
-         (it "generates errors on access"
+         (it "has a length of 0"
+             (assert-eq (vector-length v) 0)
+             (assert-eq (length v) 0))
+
+         (it "raise an error on any element access"
              (assert-error (vector-ref v 0))
              (assert-error (vector-first v))
              (assert-error (vector-second v))
@@ -172,20 +187,33 @@
              (assert-error (vector-ninth v))
              (assert-error (vector-tenth v))))
 
-(context "A list"
+(context "List to vector conversion"
 
          ((define l '(1 2 3 4))
           (define v (list->vector l)))
 
-         (it "can be converted to a vector"
+         (it "converts a list to a vector"
              (assert-true (vector? v)))
 
-         (it "can be converted to the right vector"
+         (it "converts to the correct vector"
              (assert-eq v '#(1 2 3 4)))
 
-         (it "generates appropriate errors"
-             (assert-error (list->vector 3)) ;non list
-             (assert-error (vector->list 5)))) ;non vector
+         (it "raises an error when given a non list"
+             (assert-error (list->vector 3))))
+
+(context "vector to list conversion"
+
+         ((define v '#(1 2 3 4))
+          (define l (vector->list v)))
+         
+         (it "converts a vector to a list"
+             (assert-true (list? l)))
+
+         (it "converts to the correct  list"
+             (assert-eq l '(1 2 3 4)))
+
+         (it "raises an error when given a non vector"
+             (assert-error (vector->list 3))))
 
 (context "A copied vector"
 
@@ -199,8 +227,8 @@
              (vector-set! v2 2 "hi")
              (assert-neq v v2))
 
-         (it "generates appropriate errors"
-             (assert-error (vector-copy '(a b c))))) ;non vector
+         (it "raises an error when given a non vector"
+             (assert-error (vector-copy '(a b c)))))
 
 (context "A vector created with an initialization procedure"
 
@@ -219,9 +247,11 @@
              (assert-eq (vector-fourth v) 9)
              (assert-eq (vector-fifth v) 16))
 
-         (it "generates appropriate errors"
-             (assert-error (make-initialized-vector 'a +)) ;not an integer size
-             (assert-error (make-initialized-vector 5 'a)))) ;not a function
+         (it "raises an error when given a non integer size"
+             (assert-error (make-initialized-vector 'a +)))
+
+         (it "raises an error when given a non function for initialization"
+             (assert-error (make-initialized-vector 5 'a))))
 
 (context "A result of growing a vector"
 
@@ -246,10 +276,14 @@
              (assert-eq (vector-ninth v2) '())
              (assert-eq (vector-tenth v2) '()))
 
-         (it "generates appropriate errors"
-             (assert-error (vector-grow 1 1)) ;non vector
-             (assert-error (vector-grow v 'a)) ;non integer size
-             (assert-error (vector-grow v 2)))) ;size <= length
+         (it "raises an error when given a non vector"
+             (assert-error (vector-grow 1 1)))
+
+         (it "raises an error when given a non integer size"
+             (assert-error (vector-grow v 'a)))
+
+         (it "raises an error when given a new size not greater than the existing size"
+             (assert-error (vector-grow v 2))))
 
 (context "The result of mapping a vector"
 
@@ -312,6 +346,115 @@
              (assert-eq (vector-first result) 'b)
              (assert-eq (vector-second result) 'e)
              (assert-eq (vector-third result) 'h)))
+
+
+(context "Iterating over a vector using vector-for-each"
+
+         ((define count 0)
+          (define result (vector-for-each (lambda (x) (set! count (+ count x))) '#(1 2 3 4))))
+         
+         (it "returns nil"
+             (assert-eq result '()))
+         
+         (it "has the required side effect"
+             (assert-eq count 10))
+
+         (it "raises an error when given a non function"
+             (assert-error (vector-for-each 5 '#())))
+
+         (it "raises an error when given a non vector"
+             (assert-error (vector-for-each zero? '()))))
+
+
+(context "Iterating over a vector using the generic for-each"
+
+         ((define count 0)
+          (define result (for-each (lambda (x) (set! count (+ count x))) '(1 2 3 4))))
+         
+         (it "returns nil"
+             (assert-eq result '()))
+         
+         (it "has the required side effect"
+             (assert-eq count 10)))
+
+
+(context "Reducing a vector"
+
+         ()
+
+         (it "returns initial value when given an empty vector"
+             (assert-eq (vector-reduce + 0 '#()) 0))
+
+         (it "returns first item when given a singleton vector"
+             (assert-eq (vector-reduce + 0 '#(1)) 1))
+
+         (it "returns correct value using a lambda"
+             (assert-eq (vector-reduce (lambda (acc item) (+ acc item)) 0 '#(1 2 3)) 6))
+
+         (it "returns correct value using a primitive"
+             (assert-eq (vector-reduce + 0 '#(1 2 3)) 6))
+
+         (it "works if you use the generic reduce function"
+             (assert-eq (reduce + 0 '#(1 2 3)) 6))
+
+         (it "raises an error is given a non function"
+             (assert-error (vector-reduce 7 0 '#())))
+
+         (it "raises an error if given a non-vector"
+             (assert-error (vector-reduce + 0 '()))))
+
+
+(context "Filtering a vector"
+
+         ((define evens '#(0 2 4 6 8))
+          (define odds '#(1 3 5 7 9))
+          (define all '#(0 1 2 3 4 5 6 7 8 9)))
+
+         (it "returns an empty vector when given an empty vector"
+             (assert-eq (vector-filter even? '#()) '#()))
+
+         (it "returns the correct value"
+             (assert-eq (vector-filter even? all) evens)
+             (assert-eq (vector-filter odd? all) odds))
+
+         (it "returns an empty vector when nothing matches"
+             (assert-eq (vector-filter even? odds) '#()))
+
+         (it "works when using the generic filter function"
+             (assert-eq (filter even? all) evens)
+             (assert-eq (filter odd? all) odds))
+
+         (it "raises an error when given a non funtion"
+             (assert-error (vector-filter 5 all)))
+
+         (it "raises an error when given a non-vector"
+             (assert-error (vector-filter even? '()))))
+
+(context "Removing from a vector"
+
+         ((define evens '#(0 2 4 6 8))
+          (define odds '#(1 3 5 7 9))
+          (define all '#(0 1 2 3 4 5 6 7 8 9)))
+
+         (it "returns an empty vector when given an empty vector"
+             (assert-eq (vector-remove even? '#()) '#()))
+
+         (it "returns the correct value"
+             (assert-eq (vector-remove even? all) odds)
+             (assert-eq (vector-remove odd? all) evens))
+
+         (it "returns an empty vector when everything matches"
+             (assert-eq (vector-remove even? evens) '#()))
+
+         (it "works when using the generic remove function"
+             (assert-eq (remove even? all) odds)
+             (assert-eq (remove odd? all) evens))
+
+         (it "raises an error when given a non funtion"
+             (assert-error (vector-remove 5 all)))
+
+         (it "raises an error when given a non-vector"
+             (assert-error (vector-remove even? '()))))
 
 (context "Subvector extraction"
 
@@ -594,4 +737,22 @@
          (it "raises an error if given a non procedure"
              (assert-error (vector-sort! unsorted 5))))
 
+(context "Linear search of a vector using a predicate"
+
+         ()
+         
+         (it "returns the item if present"
+             (assert-eq (vector-find even? '#(3 1 4 1 5 9)) 4))
+
+         (it "returns #f if not found"
+             (assert-false (vector-find even? '#(1 3 5 7 9))))
+
+         (it "raises an error if given a nonfunction"
+             (assert-error (find 5 '())))
+
+         (it "raises an error if given a non predicate"
+             (assert-error (vector-find + '(1 2))))
+
+         (it "raises an error if given a non vector"
+             (assert-error (find even? 5))))
 
