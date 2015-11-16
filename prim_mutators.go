@@ -7,19 +7,21 @@
 
 package golisp
 
-import ()
+import (
+	"fmt"
+)
 
 func RegisterMutatorPrimitives() {
 	MakeSpecialForm("set!", "2", SetVarImpl)
-	MakeSpecialForm("set-car!", "2", SetCarImpl)
-	MakeSpecialForm("set-cdr!", "2", SetCdrImpl)
-	MakeSpecialForm("set-nth!", "3", SetNthImpl)
+	MakePrimitiveFunction("set-car!", "2", SetCarImpl)
+	MakePrimitiveFunction("set-cdr!", "2", SetCdrImpl)
+	MakePrimitiveFunction("set-nth!", "3", SetNthImpl)
 }
 
 func SetVarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	symbol := Car(args)
 	if !SymbolP(symbol) {
-		err = ProcessError("set! requires a raw (unevaluated) symbol as it's first argument.", env)
+		err = ProcessError(fmt.Sprintf("set! requires a raw (unevaluated) symbol as it's first argument, but got %s.", String(symbol)), env)
 	}
 	value, err := Eval(Cadr(args), env)
 	if err != nil {
@@ -29,45 +31,43 @@ func SetVarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func SetCarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	pair, err := Eval(Car(args), env)
+	pair := First(args)
 	if !PairP(pair) {
-		err = ProcessError("set-car! requires a pair as it's first argument.", env)
+		err = ProcessError(fmt.Sprintf("set-car! requires a pair as it's first argument, but got %s.", String(pair)), env)
 	}
-	value, err := Eval(Cadr(args), env)
-	if err != nil {
-		return
-	}
+	value := Second(args)
 	ConsValue(pair).Car = value
 	return value, nil
 }
 
 func SetCdrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	pair, err := Eval(Car(args), env)
+	pair := First(args)
 	if !PairP(pair) {
-		err = ProcessError("set-cdr! requires a pair as it's first argument.", env)
+		err = ProcessError(fmt.Sprintf("set-cdr! requires a pair as it's first argument, but got %s.", String(pair)), env)
 	}
-	value, err := Eval(Cadr(args), env)
-	if err != nil {
-		return
-	}
+	value := Second(args)
 	ConsValue(pair).Cdr = value
-
 	return value, nil
 }
 
 func SetNthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(First(args), env)
-	if !ListP(l) {
-		err = ProcessError("set-nth! requires a list as it's first argument.", env)
-	}
-	index, err := Eval(Second(args), env)
-	if err != nil {
+	l := First(args)
+	if !ListP(l) && !VectorP(l) {
+		err = ProcessError(fmt.Sprintf("set-nth! requires a list or vector as it's first argument, but got %s.", String(l)), env)
 		return
 	}
-	value, err := Eval(Third(args), env)
-	if err != nil {
+
+	index := Second(args)
+	if !IntegerP(index) {
+		err = ProcessError(fmt.Sprintf("set-nth! requires an integer index as it's second argument, but got %s.", String(index)), env)
 		return
 	}
+
+	if VectorP(l) {
+		return VectorSetImpl(args, env)
+	}
+
+	value := Third(args)
 
 	return SetNth(l, int(IntegerValue(index)), value), nil
 }
