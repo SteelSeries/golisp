@@ -64,8 +64,9 @@
               (on-error (begin ,@body)
                         (lambda (err)
                           (let* ((err-parts (string-split err "\n"))
-                                 (last-line (car (last-pair err-parts))))
-                            (log-error (cadr (string-split last-line ". ")))))))))
+                                 (last-line (car (last-pair err-parts)))
+                                 (report (second (string-split last-line ". "))))
+                            (log-error report)))))))
 
 (defmacro (assert-true sexpr)
   `(let ((actual ,sexpr)
@@ -144,16 +145,16 @@
   (format #t "~%Ran ~A tests in ~A seconds~%"
           (+ number-of-passes number-of-failures number-of-errors)
           (/ duration 1000.0))
-  (format #t "~A passes, ~A failures, ~A errors~%"
-          number-of-passes
-          number-of-failures
-          number-of-errors)
+  (format #t "~A pass~A, ~A failure~A, ~A error~A~%"
+          number-of-passes (if (eq? number-of-passes 1) "" "es")
+          number-of-failures (if (eq? number-of-failures 1) "" "s")
+          number-of-errors (if (eq? number-of-errors 1) "" "s"))
   (unless (zero? number-of-failures)
-    (format #t "~%Failures:~%")
+          (format #t "~%Failure~A:~%" (if (eq? number-of-failures 1) "" "s"))
     (for-each (lambda (m) (format #t "  ~A~%" m))
               failure-messages))
   (unless (zero? number-of-errors)
-    (format #t "~%Errors:~%")
+    (format #t "~%Error~A:~%" (if (eq? number-of-errors 1) "" "s"))
     (for-each (lambda (m) (format #t "  ~A~%" m))
               error-messages))
   (and (zero? number-of-failures) (zero? number-of-errors)))
