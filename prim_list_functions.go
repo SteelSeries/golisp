@@ -87,8 +87,12 @@ func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 func ForEachImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
 	if !FunctionOrPrimitiveP(f) {
-		err = ProcessError(fmt.Sprintf("foreach needs a function as its first argument, but got %s.", String(f)), env)
+		err = ProcessError(fmt.Sprintf("for-each needs a function as its first argument, but got %s.", String(f)), env)
 		return
+	}
+
+	if VectorP(Second(args)) {
+		return VectorForEachImpl(args, env)
 	}
 
 	var collections []*Data = make([]*Data, 0, Length(args)-1)
@@ -97,7 +101,7 @@ func ForEachImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	for a := Cdr(args); NotNilP(a); a = Cdr(a) {
 		col = Car(a)
 		if !ListP(col) {
-			err = ProcessError(fmt.Sprintf("foreach needs lists as its other arguments, but got %s.", String(col)), env)
+			err = ProcessError(fmt.Sprintf("for-each needs lists as its other arguments, but got %s.", String(col)), env)
 			return
 		}
 		collections = append(collections, col)
@@ -131,11 +135,15 @@ func ReduceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
+	if VectorP(Third(args)) {
+		return VectorReduceImpl(args, env)
+	}
+
 	initial := Second(args)
 	col := Third(args)
 
 	if !ListP(col) {
-		err = ProcessError("map needs a list as its third argument", env)
+		err = ProcessError("reduce needs a list as its third argument", env)
 		return
 	}
 
@@ -166,15 +174,19 @@ func FilterImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	col := Second(args)
-	if !ListP(col) {
-		err = ProcessError(fmt.Sprintf("filter needs a list as its second argument, but got %s.", String(col)), env)
+	if !ListP(col) && !VectorP(col) {
+		err = ProcessError(fmt.Sprintf("filter needs a list or vector as its second argument, but got %s.", String(col)), env)
 		return
+	}
+
+	if VectorP(col) {
+		return VectorFilterImpl(args, env)
 	}
 
 	var d []*Data = make([]*Data, 0, Length(col))
 	var v *Data
 	for c := col; NotNilP(c); c = Cdr(c) {
-		v, err = ApplyWithoutEval(f, Cons(Car(c), nil), env)
+		v, err = ApplyWithoutEval(f, InternalMakeList(Car(c)), env)
 		if err != nil {
 			return
 		}
@@ -199,9 +211,13 @@ func RemoveImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	col := Second(args)
-	if !ListP(col) {
+	if !ListP(col) && !VectorP(col) {
 		err = ProcessError(fmt.Sprintf("remove needs a list as its second argument, but got %s.", String(col)), env)
 		return
+	}
+
+	if VectorP(col) {
+		return VectorRemoveImpl(args, env)
 	}
 
 	var d []*Data = make([]*Data, 0, Length(col))
@@ -274,14 +290,18 @@ func FindImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	l := Second(args)
-	if !ListP(l) {
-		err = ProcessError(fmt.Sprintf("find needs a list as its second argument, but got %s.", String(l)), env)
+	col := Second(args)
+	if !ListP(col) && !VectorP(col) {
+		err = ProcessError(fmt.Sprintf("find needs a list or vector as its second argument, but got %s.", String(col)), env)
 		return
 	}
 
+	if VectorP(col) {
+		return VectorFindImpl(args, env)
+	}
+
 	var found *Data
-	for c := l; NotNilP(c); c = Cdr(c) {
+	for c := col; NotNilP(c); c = Cdr(c) {
 		found, err = ApplyWithoutEval(f, InternalMakeList(Car(c)), env)
 		if !BooleanP(found) {
 			err = ProcessError("find needs a predicate function as its first argument.", env)
