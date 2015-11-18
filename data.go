@@ -187,6 +187,14 @@ func ObjectP(d *Data) bool {
 	return d != nil && TypeOf(d) == BoxedObjectType
 }
 
+func BytearrayP(d *Data) bool {
+	return d != nil && TypeOf(d) == BoxedObjectType && ObjectType(d) == "[]byte"
+}
+
+func ChannelP(d *Data) bool {
+	return d != nil && TypeOf(d) == BoxedObjectType && ObjectType(d) == "Channel"
+}
+
 func FunctionOrPrimitiveP(d *Data) bool {
 	return d != nil && (TypeOf(d) == FunctionType || TypeOf(d) == PrimitiveType)
 }
