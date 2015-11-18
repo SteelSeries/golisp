@@ -231,15 +231,18 @@ func divideFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func DivideImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	areFloats, err := anyFloats(args, env)
+	q, err := divideFloats(args, env)
 	if err != nil {
 		return
 	}
-	if areFloats {
-		return divideFloats(args, env)
+
+	qval := FloatValue(q)
+	if qval == float32(math.Trunc(float64(qval))) {
+		result = IntegerWithValue(int64(qval))
 	} else {
-		return divideInts(args, env)
+		result = q
 	}
+	return
 }
 
 func QuotientImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
