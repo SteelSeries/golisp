@@ -478,10 +478,12 @@ func maxFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func MaxImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	numbers := Car(args)
-	if !ListP(numbers) {
-		err = ProcessError(fmt.Sprintf("max requires a list of numbers, received %s", String(numbers)), env)
-		return
+	var numbers *Data
+
+	if ListP(First(args)) {
+		numbers = First(args)
+	} else {
+		numbers = args
 	}
 
 	if Length(numbers) == 0 {
