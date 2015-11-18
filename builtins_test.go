@@ -101,12 +101,12 @@ func (s *BuiltinsSuite) TestTrinaryMultiply(c *C) {
 // Quotient
 
 func (s *BuiltinsSuite) TestUnaryQuotient(c *C) {
-	code, _ := Parse("(/ 24)")
+	code, _ := Parse("(/ 4)")
 	result, err := Eval(code, Global)
 	c.Assert(err, IsNil)
 	c.Assert(result, NotNil)
-	c.Assert(int(TypeOf(result)), Equals, IntegerType)
-	c.Assert(IntegerValue(result), Equals, int64(24))
+	c.Assert(int(TypeOf(result)), Equals, FloatType)
+	c.Assert(FloatValue(result), Equals, float32(0.25))
 }
 
 func (s *BuiltinsSuite) TestBinaryQuotient(c *C) {
