@@ -815,6 +815,89 @@ func Copy(d *Data) *Data {
 	return d
 }
 
+func IsEqv(d *Data, o *Data) bool {
+	if d == o {
+		return true
+	}
+
+	if d == nil || o == nil {
+		return false
+	}
+
+	if NilP(d) && NilP(o) {
+		return true
+	}
+
+	if TypeOf(d) != TypeOf(o) {
+		return false
+	}
+
+	switch TypeOf(d) {
+	case IntegerType:
+		return IntegerValue(d) == IntegerValue(o)
+	case FloatType:
+		return FloatValue(d) == FloatValue(o)
+	case BooleanType:
+		return BooleanValue(d) == BooleanValue(o)
+	case BoxedObjectType:
+		return (ObjectType(d) == ObjectType(o)) && (ObjectValue(d) == ObjectValue(o))
+	}
+
+	return d.Value == o.Value
+}
+
+func IsEq(d *Data, o *Data) bool {
+	if d == o {
+		return true
+	}
+
+	if d == nil || o == nil {
+		return false
+	}
+
+	if NilP(d) && NilP(o) {
+		return true
+	}
+
+	if TypeOf(d) != TypeOf(o) {
+		return false
+	}
+
+	if VectorP(d) {
+
+	}
+
+	switch TypeOf(d) {
+	case IntegerType:
+		return IntegerValue(d) == IntegerValue(o)
+	case FloatType:
+		return FloatValue(d) == FloatValue(o)
+	case BooleanType:
+		return BooleanValue(d) == BooleanValue(o)
+	case BoxedObjectType:
+		return (ObjectType(d) == ObjectType(o)) && (ObjectValue(d) == ObjectValue(o))
+	case VectorType:
+		v1 := VectorValue(d)
+		v2 := VectorValue(o)
+
+		if len(v1) != len(v2) {
+			return false
+		}
+
+		for i := 0; i < len(v1); i++ {
+			if !IsEqual(v1[i], v2[i]) {
+				return false
+			}
+		}
+
+		return true
+	case StringType:
+		return StringValue(d) == StringValue(o)
+	}
+
+	return d.Value == o.Value
+}
+
 func IsEqual(d *Data, o *Data) bool {
 	if d == o {
 		return true

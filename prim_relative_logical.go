@@ -14,11 +14,11 @@ import (
 func RegisterRelativePrimitives() {
 	MakePrimitiveFunction("<", "2", LessThanImpl)
 	MakePrimitiveFunction(">", "2", GreaterThanImpl)
-	MakePrimitiveFunction("==", "2", EqualToImpl)
-	MakePrimitiveFunction("=", "2", EqualToImpl)
-	MakePrimitiveFunction("eqv?", "2", EqualToImpl)
-	MakePrimitiveFunction("eq?", "2", EqualToImpl)
-	MakePrimitiveFunction("equal?", "2", EqualToImpl)
+	MakePrimitiveFunction("==", "2", EqualImpl)
+	MakePrimitiveFunction("=", "2", EqualImpl)
+	MakePrimitiveFunction("eqv?", "2", EqvImpl)
+	MakePrimitiveFunction("eq?", "2", EqImpl)
+	MakePrimitiveFunction("equal?", "2", EqualImpl)
 	MakePrimitiveFunction("!=", "2", NotEqualImpl)
 	MakePrimitiveFunction("/=", "2", NotEqualImpl)
 	MakePrimitiveFunction("neq?", "2", NotEqualImpl)
@@ -64,7 +64,19 @@ func GreaterThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 	return BooleanWithValue(val), nil
 }
 
-func EqualToImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func EqvImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	arg1 := Car(args)
+	arg2 := Cadr(args)
+	return BooleanWithValue(IsEqv(arg1, arg2)), nil
+}
+
+func EqImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	arg1 := Car(args)
+	arg2 := Cadr(args)
+	return BooleanWithValue(IsEq(arg1, arg2)), nil
+}
+
+func EqualImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	arg1 := Car(args)
 	arg2 := Cadr(args)
 	return BooleanWithValue(IsEqual(arg1, arg2)), nil

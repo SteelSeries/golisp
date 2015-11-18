@@ -104,7 +104,7 @@
   `(let* ((actual ,sexpr)
           (expected ,expected-sexpr)
           (msg (format #f "(assert-eq ~A ~A)" ',sexpr ',expected-sexpr)))
-     (if (eq? actual expected)
+     (if (equal? actual expected)
          (log-pass msg)
          (log-failure msg (format #f "expected ~A, but was ~A" expected actual)))))
 
@@ -113,7 +113,7 @@
   `(let* ((actual ,sexpr)
           (expected ,expected-sexpr)
           (msg (format #f "(assert-neq ~A ~A)" ',sexpr ',expected-sexpr)))
-     (if (neq? actual expected)
+     (if (not (equal? actual expected))
          (log-pass msg)
          (log-failure msg (format #f "did not expect ~A, but it was" expected)))))
 
