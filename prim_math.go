@@ -120,16 +120,24 @@ func AddImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func subtractInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	acc := IntegerValue(Car(args))
-	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-		acc -= IntegerValue(Car(c))
+	if Length(args) == 1 {
+		acc = -1 * acc
+	} else {
+		for c := Cdr(args); NotNilP(c); c = Cdr(c) {
+			acc -= IntegerValue(Car(c))
+		}
 	}
 	return IntegerWithValue(acc), nil
 }
 
 func subtractFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	acc := FloatValue(Car(args))
-	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-		acc -= FloatValue(Car(c))
+	if Length(args) == 1 {
+		acc = -1.0 * acc
+	} else {
+		for c := Cdr(args); NotNilP(c); c = Cdr(c) {
+			acc -= FloatValue(Car(c))
+		}
 	}
 	return FloatWithValue(acc), nil
 }
@@ -175,28 +183,48 @@ func MultiplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func divideInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	acc := IntegerValue(Car(args))
-	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-		v := IntegerValue(Car(c))
-		if v == 0 {
+	var acc int64
+	if Length(args) == 1 {
+		v := FloatValue(First(args))
+		if v == 0.0 {
 			err = ProcessError(fmt.Sprintf("Quotent: %s -> Divide by zero.", String(args)), env)
 			return
-		} else {
-			acc /= v
+		}
+		return FloatWithValue(1.0 / v), nil
+	} else {
+		acc = IntegerValue(Car(args))
+		for c := Cdr(args); NotNilP(c); c = Cdr(c) {
+			v := IntegerValue(Car(c))
+			if v == 0 {
+				err = ProcessError(fmt.Sprintf("Quotent: %s -> Divide by zero.", String(args)), env)
+				return
+			} else {
+				acc /= v
+			}
 		}
 	}
 	return IntegerWithValue(acc), nil
 }
 
 func divideFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var acc float32 = FloatValue(Car(args))
-	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-		v := FloatValue(Car(c))
-		if v == 0 {
+	var acc float32
+	if Length(args) == 1 {
+		v := FloatValue(First(args))
+		if v == 0.0 {
 			err = ProcessError(fmt.Sprintf("Quotent: %s -> Divide by zero.", String(args)), env)
 			return
-		} else {
-			acc /= v
+		}
+		acc = 1.0 / v
+	} else {
+		acc = FloatValue(Car(args))
+		for c := Cdr(args); NotNilP(c); c = Cdr(c) {
+			v := FloatValue(Car(c))
+			if v == 0.0 {
+				err = ProcessError(fmt.Sprintf("Quotent: %s -> Divide by zero.", String(args)), env)
+				return
+			} else {
+				acc /= v
+			}
 		}
 	}
 	return FloatWithValue(acc), nil
@@ -548,10 +576,12 @@ func maxFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func MaxImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	numbers := Car(args)
-	if !ListP(numbers) {
-		err = ProcessError(fmt.Sprintf("max requires a list of numbers, received %s", String(numbers)), env)
-		return
+	var numbers *Data
+
+	if ListP(First(args)) {
+		numbers = First(args)
+	} else {
+		numbers = args
 	}
 
 	if Length(numbers) == 0 {
