@@ -245,10 +245,12 @@ func bindLetLocals(bindingForms *Data, rec bool, localEnv *SymbolTableFrame, eva
 
 	for cell := bindingForms; NotNilP(cell); cell = Cdr(cell) {
 		bindingPair := Car(cell)
-		name = Car(bindingPair)
-		value, err = Eval(Cadr(bindingPair), evalEnv)
-		if err != nil {
-			return
+		name = First(bindingPair)
+		if Length(bindingPair) != 1 {
+			value, err = Eval(Second(bindingPair), evalEnv)
+			if err != nil {
+				return
+			}
 		}
 		localEnv.BindLocallyTo(name, value)
 	}
