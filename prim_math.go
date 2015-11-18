@@ -119,16 +119,24 @@ func AddImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func subtractInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	acc := IntegerValue(Car(args))
-	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-		acc -= IntegerValue(Car(c))
+	if Length(args) == 1 {
+		acc = -1 * acc
+	} else {
+		for c := Cdr(args); NotNilP(c); c = Cdr(c) {
+			acc -= IntegerValue(Car(c))
+		}
 	}
 	return IntegerWithValue(acc), nil
 }
 
 func subtractFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	acc := FloatValue(Car(args))
-	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-		acc -= FloatValue(Car(c))
+	if Length(args) == 1 {
+		acc = -1.0 * acc
+	} else {
+		for c := Cdr(args); NotNilP(c); c = Cdr(c) {
+			acc -= FloatValue(Car(c))
+		}
 	}
 	return FloatWithValue(acc), nil
 }
@@ -174,28 +182,48 @@ func MultiplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func quotientInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	acc := IntegerValue(Car(args))
-	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-		v := IntegerValue(Car(c))
-		if v == 0 {
+	var acc int64
+	if Length(args) == 1 {
+		v := FloatValue(First(args))
+		if v == 0.0 {
 			err = ProcessError(fmt.Sprintf("Quotent: %s -> Divide by zero.", String(args)), env)
 			return
-		} else {
-			acc /= v
+		}
+		return FloatWithValue(1.0 / v), nil
+	} else {
+		acc = IntegerValue(Car(args))
+		for c := Cdr(args); NotNilP(c); c = Cdr(c) {
+			v := IntegerValue(Car(c))
+			if v == 0 {
+				err = ProcessError(fmt.Sprintf("Quotent: %s -> Divide by zero.", String(args)), env)
+				return
+			} else {
+				acc /= v
+			}
 		}
 	}
 	return IntegerWithValue(acc), nil
 }
 
 func quotientFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var acc float32 = FloatValue(Car(args))
-	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-		v := FloatValue(Car(c))
-		if v == 0 {
+	var acc float32
+	if Length(args) == 1 {
+		v := FloatValue(First(args))
+		if v == 0.0 {
 			err = ProcessError(fmt.Sprintf("Quotent: %s -> Divide by zero.", String(args)), env)
 			return
-		} else {
-			acc /= v
+		}
+		acc = 1.0 / v
+	} else {
+		acc = FloatValue(Car(args))
+		for c := Cdr(args); NotNilP(c); c = Cdr(c) {
+			v := FloatValue(Car(c))
+			if v == 0.0 {
+				err = ProcessError(fmt.Sprintf("Quotent: %s -> Divide by zero.", String(args)), env)
+				return
+			} else {
+				acc /= v
+			}
 		}
 	}
 	return FloatWithValue(acc), nil
