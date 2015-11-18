@@ -42,7 +42,7 @@
 
          (it set-nth!
              (assert-eq (let ((l '(a b c d)))
-                          (set-nth! l 3 1)
-                          (nth l 3))
+                          (set-nth! 3 l 1)
+                          (nth 3 l))
                         1))
 )

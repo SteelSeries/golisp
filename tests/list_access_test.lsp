@@ -90,22 +90,22 @@
              (assert-eq (tenth l) 10))
 
          (it nth
-             (assert-eq (nth nil 1) nil)
-             (assert-eq (nth '() 1) nil)
-             (assert-eq (nth l 0) nil)
-             (assert-eq (nth l 1) 1)
-             (assert-eq (nth l 2) 2)
-             (assert-eq (nth l 3) 3)
-             (assert-eq (nth l 4) 4)
-             (assert-eq (nth l 5) 5)
-             (assert-eq (nth l 6) 6)
-             (assert-eq (nth l 7) 7)
-             (assert-eq (nth l 8) 8)
-             (assert-eq (nth l 9) 9)
-             (assert-eq (nth l 10) 10)
-             (assert-eq (nth l 11) nil)
-             (assert-error (nth 5 1))      ;1st arg must be a list
-             (assert-error (nth '() 'a)))  ;2nd arg must be a number
+             (assert-eq (nth 1 nil) nil)
+             (assert-eq (nth 1 '()) nil)
+             (assert-eq (nth 0 l) nil)
+             (assert-eq (nth 1 l) 1)
+             (assert-eq (nth 2 l) 2)
+             (assert-eq (nth 3 l) 3)
+             (assert-eq (nth 4 l) 4)
+             (assert-eq (nth 5 l) 5)
+             (assert-eq (nth 6 l) 6)
+             (assert-eq (nth 7 l) 7)
+             (assert-eq (nth 8 l) 8)
+             (assert-eq (nth 9 l) 9)
+             (assert-eq (nth 10 l) 10)
+             (assert-eq (nth 11 l) nil)
+             (assert-error (nth 1 5))      ;1st arg must be a list
+             (assert-error (nth -a '())))  ;2nd arg must be a number
 
          (it list-ref
              (assert-eq (list-ref nil 1) nil)

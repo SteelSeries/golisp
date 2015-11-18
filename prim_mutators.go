@@ -51,23 +51,23 @@ func SetCdrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func SetNthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l := First(args)
-	if !ListP(l) && !VectorP(l) {
-		err = ProcessError(fmt.Sprintf("set-nth! requires a list or vector as it's first argument, but got %s.", String(l)), env)
-		return
-	}
-
-	index := Second(args)
+	index := First(args)
 	if !IntegerP(index) {
-		err = ProcessError(fmt.Sprintf("set-nth! requires an integer index as it's second argument, but got %s.", String(index)), env)
+		err = ProcessError(fmt.Sprintf("set-nth! requires an integer index as it's first argument, but got %s.", String(index)), env)
 		return
 	}
 
-	if VectorP(l) {
-		return VectorSetImpl(args, env)
+	col := Second(args)
+	if !ListP(col) && !VectorP(col) {
+		err = ProcessError(fmt.Sprintf("set-nth! requires a list or vector as it's second argument, but got %s.", String(col)), env)
+		return
 	}
 
 	value := Third(args)
 
-	return SetNth(l, int(IntegerValue(index)), value), nil
+	if VectorP(col) {
+		return VectorSetImpl(InternalMakeList(col, index, value), env)
+	}
+
+	return SetNth(col, int(IntegerValue(index)), value), nil
 }

@@ -283,21 +283,23 @@ func TenthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func NthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if VectorP(Car(args)) {
-		return VectorRefImpl(args, env)
-	}
-	col := Car(args)
-	if !PairP(col) {
-		err = ProcessError("First arg to nth must be a list", env)
-		return
-	}
-	count := Cadr(args)
-	if !IntegerP(count) {
-		err = ProcessError("Second arg to nth must be a number", env)
+	index := First(args)
+	if !IntegerP(index) {
+		err = ProcessError("First arg to nth must be an integer index", env)
 		return
 	}
 
-	return Nth(col, int(IntegerValue(count))), nil
+	col := Second(args)
+	if !PairP(col) && !VectorP(col) {
+		err = ProcessError("Second arg to nth must be a list or vector", env)
+		return
+	}
+
+	if VectorP(col) {
+		return VectorRefImpl(InternalMakeList(col, index), env)
+	}
+
+	return Nth(col, int(IntegerValue(index))), nil
 }
 
 func TakeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

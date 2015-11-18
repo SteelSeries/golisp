@@ -83,17 +83,17 @@
              (assert-eq (vector-ref v 3) '(b d)))
 
          (it "support access using nth as well"
-             (assert-eq (nth v 0) 'a)
-             (assert-eq (nth v 1) 'b)
-             (assert-eq (nth v 2) 1)
-             (assert-eq (nth v 3) '(b d)))
+             (assert-eq (nth 0 v) 'a)
+             (assert-eq (nth 1 v) 'b)
+             (assert-eq (nth 2 v) 1)
+             (assert-eq (nth 3 v) '(b d)))
          
          (it "supports mutation of elements"
              (vector-set! v 1 "test")
              (assert-eq (vector-ref v 1) "test"))
 
          (it "support element mutation using generic set-nth!"
-             (set-nth! v 1 "test")
+             (set-nth! 1 v "test")
              (assert-eq (vector-ref v 1) "test"))
 
          (it "raises an error when given a non vector"
