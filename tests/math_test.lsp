@@ -16,13 +16,7 @@
              (assert-eq (* 2 4)
                         8)
              (assert-eq (/ 25 5)
-                        5)
-             (assert-eq (quotient 25 5)
-                        5)
-             (assert-eq (% 7 5)
-                        2)
-             (assert-eq (modulo 7 5)
-                        2))
+                        5))
 
          (it subtraction-going-negative
              (assert-eq (- 5 9)
@@ -128,3 +122,30 @@
              (assert-error (odd? 'r))
              (assert-error (sign 's)))
 )
+
+
+(context "Quotient"
+
+         ()
+
+         (it "gives correct results"
+             (assert-eq (quotient 10 5) 2)
+             (assert-eq (quotient 10 3) 3)
+             (assert-eq (quotient 10 -3) -3)))
+
+(context "Modulo and remainder"
+
+         ()
+
+         (it "gives correct results"
+             (assert-eq (modulo 13 4) 1)
+             (assert-eq (remainder 13 4) 1)
+             
+             (assert-eq (modulo -13 4) 3)
+             (assert-eq (remainder -13 4) -1)
+             
+             (assert-eq (modulo 13 -4) -3)
+             (assert-eq (remainder 13 -4) 1)
+             
+             (assert-eq (modulo -13 -4) -1)
+             (assert-eq (remainder -13 -4) -1)))

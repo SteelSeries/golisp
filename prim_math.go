@@ -17,12 +17,13 @@ func RegisterMathPrimitives() {
 	MakePrimitiveFunction("+", "*", AddImpl)
 	MakePrimitiveFunction("-", "*", SubtractImpl)
 	MakePrimitiveFunction("*", "*", MultiplyImpl)
-	MakePrimitiveFunction("/", "*", QuotientImpl)
+	MakePrimitiveFunction("/", "*", DivideImpl)
 	MakePrimitiveFunction("succ", "1", IncrementImpl)
 	MakePrimitiveFunction("pred", "1", DecrementImpl)
-	MakePrimitiveFunction("quotient", "*", QuotientImpl)
+	MakePrimitiveFunction("quotient", "2", QuotientImpl)
+	MakePrimitiveFunction("modulo", "2", ModuloImpl)
+	MakePrimitiveFunction("remainder", "2", RemainderImpl)
 	MakePrimitiveFunction("%", "2", RemainderImpl)
-	MakePrimitiveFunction("modulo", "2", RemainderImpl)
 	MakePrimitiveFunction("random-byte", "0", RandomByteImpl)
 	MakePrimitiveFunction("interval", "1|2|3", IntervalImpl)
 	MakePrimitiveFunction("integer", "1", ToIntImpl)
@@ -173,7 +174,7 @@ func MultiplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 }
 
-func quotientInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func divideInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	acc := IntegerValue(Car(args))
 	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
 		v := IntegerValue(Car(c))
@@ -187,7 +188,7 @@ func quotientInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return IntegerWithValue(acc), nil
 }
 
-func quotientFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func divideFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var acc float32 = FloatValue(Car(args))
 	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
 		v := FloatValue(Car(c))
@@ -201,32 +202,101 @@ func quotientFloats(args *Data, env *SymbolTableFrame) (result *Data, err error)
 	return FloatWithValue(acc), nil
 }
 
-func QuotientImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func DivideImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	areFloats, err := anyFloats(args, env)
 	if err != nil {
 		return
 	}
 	if areFloats {
-		return quotientFloats(args, env)
+		return divideFloats(args, env)
 	} else {
-		return quotientInts(args, env)
+		return divideInts(args, env)
 	}
 }
 
+func QuotientImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	dividendObj := First(args)
+	if !IntegerP(dividendObj) {
+		err = ProcessError(fmt.Sprintf("quotient expected an integer dividend, received %s", String(dividendObj)), env)
+		return
+	}
+	dividend := IntegerValue(dividendObj)
+
+	divisorObj := Second(args)
+	if !IntegerP(dividendObj) {
+		err = ProcessError(fmt.Sprintf("quotient expected an integer divisor, received %s", String(divisorObj)), env)
+		return
+	}
+	divisor := IntegerValue(divisorObj)
+
+	if divisor == 0 {
+		err = ProcessError("quotient: Divide by zero.", env)
+		return
+	}
+
+	val := dividend / divisor
+
+	if intSgn(val) != intSgn(divisor) {
+		val = val * -1
+	}
+
+	return IntegerWithValue(val), nil
+}
+
+func ModuloImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	dividendObj := First(args)
+	if !IntegerP(dividendObj) {
+		err = ProcessError(fmt.Sprintf("modulo expected an integer dividend, received %s", String(dividendObj)), env)
+		return
+	}
+	dividend := IntegerValue(dividendObj)
+
+	divisorObj := Second(args)
+	if !IntegerP(dividendObj) {
+		err = ProcessError(fmt.Sprintf("modulo expected an integer divisor, received %s", String(divisorObj)), env)
+		return
+	}
+	divisor := IntegerValue(divisorObj)
+
+	if divisor == 0 {
+		err = ProcessError("modulo: Divide by zero.", env)
+		return
+	}
+
+	val := dividend % divisor
+	if intSgn(val) != intSgn(divisor) {
+		val = val + divisor
+	}
+
+	return IntegerWithValue(val), nil
+}
+
 func RemainderImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	dividend := Car(args)
-	if !IntegerP(dividend) {
-		err = ProcessError(fmt.Sprintf("%/modulo expected an integer first arg, received %s", String(dividend)), env)
+	dividendObj := First(args)
+	if !IntegerP(dividendObj) {
+		err = ProcessError(fmt.Sprintf("remainder expected an integer dividend, received %s", String(dividendObj)), env)
+		return
+	}
+	dividend := IntegerValue(dividendObj)
+
+	divisorObj := Second(args)
+	if !IntegerP(dividendObj) {
+		err = ProcessError(fmt.Sprintf("remainder expected an integer divisor, received %s", String(divisorObj)), env)
+		return
+	}
+	divisor := IntegerValue(divisorObj)
+
+	if divisor == 0 {
+		err = ProcessError("remainder: Divide by zero.", env)
 		return
 	}
 
-	divisor := Cadr(args)
-	if !IntegerP(dividend) {
-		err = ProcessError(fmt.Sprintf("%/modulo expected an integer second arg, received %s", String(divisor)), env)
-		return
+	val := dividend % divisor
+
+	if intSgn(val) != intSgn(dividend) {
+		val = val * -1
 	}
 
-	val := IntegerValue(dividend) % IntegerValue(divisor)
 	return IntegerWithValue(val), nil
 }
 
