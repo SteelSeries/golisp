@@ -201,6 +201,10 @@ func (self *Tokenizer) readString() (token int, lit string) {
 			self.Advance()
 			if rune(self.CurrentCh) == 'n' {
 				buffer = append(buffer, '\n')
+			} else if rune(self.CurrentCh) == 't' {
+				buffer = append(buffer, '\t')
+			} else if rune(self.CurrentCh) == 'f' {
+				buffer = append(buffer, '\f')
 			} else {
 				buffer = append(buffer, rune(self.CurrentCh))
 			}
