@@ -21,32 +21,29 @@ const (
 func RegisterStringPrimitives() {
 	MakePrimitiveFunction("string-split", "2", StringSplitImpl)
 	MakePrimitiveFunction("string-join", "1|2", StringJoinImpl)
+
 	MakePrimitiveFunction("string-trim", "1|2", StringTrimImpl)
 	MakePrimitiveFunction("string-trim-left", "1|2", StringTrimLeftImpl)
 	MakePrimitiveFunction("string-trim-right", "1|2", StringTrimRightImpl)
+
 	MakePrimitiveFunction("string-upcase", "1", StringUpcaseImpl)
 	MakePrimitiveFunction("string-upcase!", "1", StringUpcaseBangImpl)
 	MakePrimitiveFunction("string-downcase", "1", StringDowncaseImpl)
 	MakePrimitiveFunction("string-downcase!", "1", StringDowncaseBangImpl)
 	MakePrimitiveFunction("string-capitalize", "1", StringCapitalizeImpl)
 	MakePrimitiveFunction("string-capitalize!", "1", StringCapitalizeBangImpl)
+
 	MakePrimitiveFunction("string-length", "1", StringLengthImpl)
 	MakePrimitiveFunction("string-null?", "1", StringNullImpl)
+
 	MakePrimitiveFunction("substring", "3", SubstringImpl)
 	MakePrimitiveFunction("substring?", "2", SubstringpImpl)
+
 	MakePrimitiveFunction("string-prefix?", "2", StringPrefixpImpl)
 	MakePrimitiveFunction("string-suffix?", "2", StringSuffixpImpl)
 
-	MakePrimitiveFunction("string=?", "2", StringEqualImpl)
-	MakePrimitiveFunction("string-ci=?", "2", StringEqualCiImpl)
-	MakePrimitiveFunction("string<?", "2", StringLessThanImpl)
-	MakePrimitiveFunction("string-ci<?", "2", StringLessThanCiImpl)
-	MakePrimitiveFunction("string>?", "2", StringGreaterThanImpl)
-	MakePrimitiveFunction("string-ci>?", "2", StringGreaterThanCiImpl)
-	MakePrimitiveFunction("string<=?", "2", StringLessThanEqualImpl)
-	MakePrimitiveFunction("string-ci<=?", "2", StringLessThanEqualCiImpl)
-	MakePrimitiveFunction("string>=?", "2", StringGreaterThanEqualImpl)
-	MakePrimitiveFunction("string-ci>=?", "2", StringGreaterThanEqualCiImpl)
+	MakePrimitiveFunction("string-compare", "5", StringCompareImpl)
+	MakePrimitiveFunction("string-compare-ci", "5", StringCompareCiImpl)
 }
 
 func StringSplitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -321,8 +318,8 @@ func StringSuffixpImpl(args *Data, env *SymbolTableFrame) (result *Data, err err
 	return BooleanWithValue(strings.HasSuffix(stringValue, suffixValue)), nil
 }
 
-func stringProcessArgs(name string, caseInsensitive bool, args *Data, env *SymbolTableFrame) (string1 string, string2 string, err error) {
-	string1Obj := Car(args)
+func checkAndExtractStringArgs(name string, caseInsensitive bool, args *Data, env *SymbolTableFrame) (string1 string, string2 string, err error) {
+	string1Obj := First(args)
 	if !StringP(string1Obj) {
 		err = ProcessError(fmt.Sprintf("%s requires a string but was given %s.", name, String(string1Obj)), env)
 		return
@@ -333,7 +330,7 @@ func stringProcessArgs(name string, caseInsensitive bool, args *Data, env *Symbo
 		string1 = StringValue(string1Obj)
 	}
 
-	string2Obj := Cadr(args)
+	string2Obj := Second(args)
 	if !StringP(string2Obj) {
 		err = ProcessError(fmt.Sprintf("%s requires a string but was given %s.", name, String(string2Obj)), env)
 		return
@@ -348,82 +345,52 @@ func stringProcessArgs(name string, caseInsensitive bool, args *Data, env *Symbo
 	return
 }
 
-func StringEqualImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	string1, string2, err := stringProcessArgs("string=?", false, args, env)
-	if err == nil {
-		result = BooleanWithValue(string1 == string2)
+func doStringComparison(name string, string1 string, string2 string, args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	ltProc := Third(args)
+	if !FunctionP(ltProc) {
+		err = ProcessError(fmt.Sprintf("string-compare-ci requires a function for argument 3 but was given %s.", String(ltProc)), env)
+		return
 	}
+
+	eqProc := Fourth(args)
+	if !FunctionP(eqProc) {
+		err = ProcessError(fmt.Sprintf("string-compare-ci requires a function for argument 4 but was given %s.", String(eqProc)), env)
+		return
+	}
+
+	gtProc := Fifth(args)
+	if !FunctionP(gtProc) {
+		err = ProcessError(fmt.Sprintf("string-compare-ci requires a function for argument 4 but was given %s.", String(gtProc)), env)
+		return
+	}
+
+	switch strings.Compare(string1, string2) {
+	case -1:
+		return Apply(ltProc, EmptyCons(), env)
+	case 0:
+		return Apply(eqProc, EmptyCons(), env)
+	case 1:
+		return Apply(gtProc, EmptyCons(), env)
+	}
+
 	return
 }
 
-func StringEqualCiImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	string1, string2, err := stringProcessArgs("string-ci=?", true, args, env)
+func StringCompareImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	string1, string2, err := checkAndExtractStringArgs("string-compare", false, args, env)
 	if err == nil {
-		result = BooleanWithValue(string1 == string2)
+		result, err = doStringComparison("string-compare", string1, string2, args, env)
 	}
+
 	return
 }
 
-func StringLessThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	string1, string2, err := stringProcessArgs("string<?", false, args, env)
-	if err == nil {
-		result = BooleanWithValue(string1 < string2)
-	}
-	return
-}
+func StringCompareCiImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	string1, string2, err := checkAndExtractStringArgs("string-compare-ci", true, args, env)
 
-func StringLessThanCiImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	string1, string2, err := stringProcessArgs("string-ci<?", true, args, env)
 	if err == nil {
-		result = BooleanWithValue(string1 < string2)
+		result, err = doStringComparison("string-compare-ci", string1, string2, args, env)
 	}
-	return
-}
 
-func StringGreaterThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	string1, string2, err := stringProcessArgs("string>?", false, args, env)
-	if err == nil {
-		result = BooleanWithValue(string1 > string2)
-	}
-	return
-}
-
-func StringGreaterThanCiImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	string1, string2, err := stringProcessArgs("string-ci>?", true, args, env)
-	if err == nil {
-		result = BooleanWithValue(string1 > string2)
-	}
-	return
-}
-
-func StringLessThanEqualImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	string1, string2, err := stringProcessArgs("string<=?", false, args, env)
-	if err == nil {
-		result = BooleanWithValue(string1 <= string2)
-	}
-	return
-}
-
-func StringLessThanEqualCiImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	string1, string2, err := stringProcessArgs("string-ci<=?", true, args, env)
-	if err == nil {
-		result = BooleanWithValue(string1 <= string2)
-	}
-	return
-}
-
-func StringGreaterThanEqualImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	string1, string2, err := stringProcessArgs("string>=?", false, args, env)
-	if err == nil {
-		result = BooleanWithValue(string1 >= string2)
-	}
-	return
-}
-
-func StringGreaterThanEqualCiImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	string1, string2, err := stringProcessArgs("string-ci>=?", true, args, env)
-	if err == nil {
-		result = BooleanWithValue(string1 >= string2)
-	}
 	return
 }

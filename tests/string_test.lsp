@@ -1,10 +1,12 @@
 ;;; -*- mode: Scheme -*-
 
+(load "lisp/strings.lsp")
+
 (context "string"
 
          ()
          
-         (it str
+         (it "str"
              (assert-eq (str '())
                         "()")
              (assert-eq (str 0)
@@ -26,7 +28,7 @@
              (assert-eq (str "abc" 1 "-" 34.2 '(a b c))
                         "abc1-34.2(a b c)"))
 
-         (it string->number
+         (it "string->number"
              (assert-eq (string->number "10")
                         10)
              (assert-eq (string->number "10" 2)
@@ -40,7 +42,7 @@
              (assert-eq (string->number "10" 20)
                         0))
 
-         (it number->string
+         (it "number->string"
              (assert-eq (number->string 10)
                         "10")
              (assert-eq (number->string 2 2)
@@ -54,7 +56,7 @@
              (assert-eq (number->string 20 20)
                         "Unsupported base: 20"))
 
-         (it string-split
+         (it "string-split"
              (assert-eq (string-split "1-2" "-")
                         '("1" "2"))
              (assert-eq (string-split "one,two" ",")
@@ -62,7 +64,7 @@
              (assert-error (string-split 3 ""))
              (assert-error (string-split "" 3)))
 
-         (it string-trim
+         (it "string-trim"
              (assert-eq (string-trim "  hello ")
                         "hello")
              (assert-eq (string-trim "++ yo --" "+-")
@@ -72,7 +74,7 @@
              (assert-error (string-trim 3 ""))
              (assert-error (string-trim "" 3)))
 
-         (it string-trim-left
+         (it "string-trim-left"
              (assert-eq (string-trim-left "  hello ")
                         "hello ")
              (assert-eq (string-trim-left "++ yo --" "+-")
@@ -82,7 +84,7 @@
              (assert-error (string-trim-left 3 ""))
              (assert-error (string-trim-left "" 3)))
 
-         (it string-trim-right
+         (it "string-trim-right"
              (assert-eq (string-trim-right "  hello ")
                         "  hello")
              (assert-eq (string-trim-right "++ yo --" "+-")
@@ -92,7 +94,7 @@
              (assert-error (string-trim-right 3 ""))
              (assert-error (string-trim-right "" 3)))
 
-         (it string-upcase
+         (it "string-upcase"
              (assert-eq (string-upcase "hello")
                         "HELLO")
              (assert-eq (string-upcase "HeLlo")
@@ -101,7 +103,7 @@
                         "HELLO")
              (assert-error (string-upcase 4)))
 
-         (it string-downcase
+         (it "string-downcase"
              (assert-eq (string-downcase "hello")
                         "hello")
              (assert-eq (string-downcase "HeLlo")
@@ -110,7 +112,7 @@
                         "hello")
              (assert-error (string-downcase 5)))
 
-         (it string-capitalize
+         (it "string-capitalize"
              (assert-eq (string-capitalize "hello")
                         "Hello")
              (assert-eq (string-capitalize "HeLlo")
@@ -119,7 +121,7 @@
                         "Hello")
              (assert-error (string-capitalize 5)))
 
-         (it string-upcase!
+         (it "string-upcase!"
              (let ((s "hello"))
                (assert-eq (string-upcase! s)
                           "HELLO")
@@ -127,7 +129,7 @@
                           "HELLO"))
              (assert-error (string-upcase! 5)))
 
-         (it downcase!
+         (it "downcase!"
              (let ((s "HELLO"))
                (assert-eq (string-downcase! s)
                           "hello")
@@ -135,7 +137,7 @@
                           "hello"))
              (assert-error (string-downcase! 5)))
 
-         (it string-capitalize!
+         (it "string-capitalize!"
              (let ((s "hello"))
                (assert-eq (string-capitalize! s)
                           "Hello")
@@ -144,7 +146,7 @@
              (assert-error (string-capitalize! 6)))
 
 
-         (it string-length
+         (it "string-length"
              (assert-eq (string-length "")
                         0)
              (assert-eq (string-length "1")
@@ -154,12 +156,12 @@
              (assert-error (string-length 5)))
 
 
-         (it string-null?
+         (it "string-null?"
              (assert-true (string-null? ""))
              (assert-false (string-null? "hello"))
              (assert-error (string-null? 5)))
 
-         (it substring
+         (it "substring"
              (assert-eq (substring "hello" 0 0)
                         "")
              (assert-eq (substring "arduous" 2 5)
@@ -171,7 +173,7 @@
              (assert-error (substring "hello" 1 10)))
 
 
-         (it substring?
+         (it "substring?"
              (assert-true (substring? "rat" "pirate"))
              (assert-false (substring? "rat" "outrage"))
              (assert-true (substring? "" "hjdfgds"))
@@ -179,7 +181,7 @@
              (assert-error (substring? "" 3))
              (assert-error (substring? 3 "")))
 
-         (it string-prefix?
+         (it "string-prefix?"
              (assert-true (string-prefix? "abc" "abcdef"))
              (assert-false (string-prefix? "abz" "abcdef"))
              (assert-true (string-prefix? "" "akjsdfh"))
@@ -187,14 +189,15 @@
              (assert-error (string-prefix? "" 3))
              (assert-error (string-prefix? 3 "")))
 
-         (it string-suffix?
+         (it "string-suffix?"
              (assert-true (string-suffix? "def" "abcdef"))
              (assert-false (string-suffix? "dez" "abcdef"))
              (assert-true (string-suffix? "" "akjsdfh"))
              (assert-error (string-suffix? 5 5))
              (assert-error (string-suffix? "" 3))
-             (assert-error (string-suffix? 3 "")))
+             (assert-error (string-suffix? 3 ""))))
 
+(context "String comparison"
          (it "can test string equality"
              (assert-true (string=? "a" "a"))
              (assert-false (string=? "a" "b"))
@@ -228,3 +231,38 @@
              (assert-true (string>=? "a" "a"))
              (assert-true (string>=? "a" "A"))
              (assert-true (string-ci>=? "a" "A"))))
+
+(context "Substring comparison"
+         (it "can test string equality"
+             (assert-true (substring=? "-a-" 1 2 "-a-" 1 2))
+             (assert-false (substring=? "-a-" 1 2 "-b-" 1 2))
+             (assert-false (substring=? "-a-" 1 2 "-A-" 1 2))
+             (assert-true (substring-ci=? "-a-" 1 2 "-A-" 1 2)))
+
+         (it "can test string less than"
+             (assert-true (substring<? "-a-" 1 2 "-b-" 1 2))
+             (assert-false (substring<? "-b-" 1 2 "-a-" 1 2))
+             (assert-false (substring<? "-a-" 1 2 "-a-" 1 2))
+             (assert-true (substring<? "-A-" 1 2 "-a-" 1 2))
+             (assert-false (substring-ci<? "-A-" 1 2 "-a-" 1 2)))
+
+         (it "can test string greater than"
+             (assert-true (substring>? "-b-" 1 2 "-a-" 1 2))
+             (assert-false (substring>? "-a-" 1 2 "-b-" 1 2))
+             (assert-false (substring>? "-a-" 1 2 "-a-" 1 2))
+             (assert-true (substring>? "-a-" 1 2 "-A-" 1 2))
+             (assert-false (substring-ci>? "-a-" 1 2 "-A-" 1 2)))
+
+         (it "can test string less than equal"
+             (assert-true (substring<=? "-a-" 1 2 "-b-" 1 2))
+             (assert-false (substring<=? "-b-" 1 2 "-a-" 1 2))
+             (assert-true (substring<=? "-a-" 1 2 "-a-" 1 2))
+             (assert-true (substring<=? "-A-" 1 2 "-a-" 1 2))
+             (assert-true (substring-ci<=? "-A-" 1 2 "-a-" 1 2)))
+
+         (it "can test string greater than equal"
+             (assert-true (substring>=? "-b-" 1 2 "-a-" 1 2))
+             (assert-false (substring>=? "-a-" 1 2 "-b-" 1 2))
+             (assert-true (substring>=? "-a-" 1 2 "-a-" 1 2))
+             (assert-true (substring>=? "-a-" 1 2 "-A-" 1 2))
+             (assert-true (substring-ci>=? "-a-" 1 2 "-A-" 1 2))))
