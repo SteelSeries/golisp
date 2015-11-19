@@ -26,7 +26,7 @@ func RegisterBytearrayPrimitives() {
 	MakePrimitiveFunction("extract-bytes", "3", ExtractBytesImpl)
 }
 
-func BytearrayImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func BytearrayPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return BooleanWithValue(BytearrayP(First(args))), nil
 }
 
