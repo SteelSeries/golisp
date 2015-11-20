@@ -113,24 +113,6 @@
                         "hello")
              (assert-error (string-downcase 5)))
 
-         (it "can capitalize"
-             (assert-eq (string-capitalize "hello") "Hello")
-             (assert-eq (string-capitalize "HeLlo") "Hello")
-             (assert-eq (string-capitalize "HELLO") "Hello")
-             (assert-error (string-capitalize 5)))
-
-         (it "can capitalize in place"
-             (assert-eq (string-capitalize! lowercase-string) "Abcdefg")
-             (assert-eq lowercase-string "Abcdefg")
-             (assert-eq (string-capitalize! uppercase-string) "Abcdefg")
-             (assert-eq uppercase-string "Abcdefg"))
-
-         (it "can capitalize a substring in place"
-             (assert-eq (substring-capitalize! lowercase-string 3 5) "abcDefg")
-             (assert-eq lowercase-string "abcDefg")
-             (assert-eq (substring-capitalize! uppercase-string 3 5) "ABCDeFG")
-             (assert-eq uppercase-string "abcDefg"))
-         
          (it "string-upcase!"
              (let ((s "hello"))
                (assert-eq (string-upcase! s)
@@ -206,6 +188,82 @@
              (assert-error (string-suffix? 5 5))
              (assert-error (string-suffix? "" 3))
              (assert-error (string-suffix? 3 ""))))
+
+
+(context "capitalization"
+
+         ()
+         
+         (it "can capitalize"
+             (assert-eq (string-capitalize "hello") "Hello")
+             (assert-eq (string-capitalize "HeLlo") "Hello")
+             (assert-eq (string-capitalize "HELLO") "Hello")
+             (assert-error (string-capitalize 5)))
+
+         (it "can capitalize in place"
+             (let  ((lowercase-string "abcdefg")
+                    (uppercase-string "ABCDEFG"))
+               (assert-eq (string-capitalize! lowercase-string) "Abcdefg")
+               (assert-eq lowercase-string "Abcdefg")
+               (assert-eq (string-capitalize! uppercase-string) "Abcdefg")
+               (assert-eq uppercase-string "Abcdefg")))
+
+         (it "can capitalize a substring in place"
+             (let  ((lowercase-string "abcdefg")
+                    (uppercase-string "ABCDEFG"))
+               (assert-eq (substring-capitalize! lowercase-string 3 5) "abcDefg")
+               (assert-eq lowercase-string "abcDefg")
+               (assert-eq (substring-capitalize! uppercase-string 3 5) "ABCDeFG")
+               (assert-eq uppercase-string "ABCDeFG"))))
+
+(context "string-trim"
+
+         ()
+         
+         (it "defaults to trimming whitespace from both ends"
+             (assert-eq (string-trim "  hello ") "hello"))
+         
+         (it "can trim everything but a set of characters from both ends"
+             (assert-eq (string-trim "++ yo --" "abcdefghijklmnopqrstuvwxyz") "yo"))
+         
+         (it "raises an error when given a non string to trim"
+             (assert-error (string-trim 3 "")))
+
+         (it "raises an error when given a non string keep-set"
+             (assert-error (string-trim "" 3))))
+
+(context "string-trim-left"
+
+         ()
+         
+         (it "defaults to trimming whitespace from the start"
+             (assert-eq (string-trim-left "  hello ") "hello "))
+
+         (it "can trim everything but a set of characters from the start"
+             (assert-eq (string-trim-left "++ yo --" "abcdefghijklmnopqrstuvwxyz") "yo --"))
+
+         (it "raises an error when given a non string to trim"
+             (assert-error (string-trim-left 3 "")))
+
+         (it "raises an error when given a non string keep-set"
+             (assert-error (string-trim-left "" 3))))
+
+(context "string-trim-right"
+
+         ()
+         
+         (it "defaults to trimming whitespace from the end"
+             (assert-eq (string-trim-right "  hello ") "  hello"))
+         
+         (it "can trim everything but a set of characters from the end"
+             (assert-eq (string-trim-right "++ yo --" "abcdefghijklmnopqrstuvwxyz") "++ yo"))
+
+         (it "raises an error when given a non string to trim"
+             (assert-error (string-trim-right 3 "")))
+
+         (it "raises an error when given a non string keep-set"
+             (assert-error (string-trim-right "" 3))))
+
 
 (context "String comparison"
          (it "can test string equality"
