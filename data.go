@@ -146,8 +146,43 @@ func PairP(d *Data) bool {
 	return d == nil || TypeOf(d) == ConsCellType
 }
 
+func hasVisited(cell *Data, visitedCells []*Data) bool {
+	found := sort.Search(len(visitedCells), func(i int) bool { return visitedCells[i] == cell })
+	return found < len(visitedCells)
+}
+
 func ListP(d *Data) bool {
-	return PairP(d) || AlistP(d)
+	if !PairP(d) {
+		return false
+	}
+
+	visitedCells := make([]*Data, 0, 5)
+	var cell *Data
+	for cell = d; NotNilP(cell) && PairP(cell); cell = Cdr(cell) {
+		if hasVisited(cell, visitedCells) {
+			return false
+		}
+		visitedCells = append(visitedCells, cell)
+	}
+
+	return NilP(cell)
+}
+
+func ListWithLoopP(d *Data) bool {
+	if !PairP(d) {
+		return false
+	}
+
+	visitedCells := make([]*Data, 0, 5)
+	var cell *Data
+	for cell = d; NotNilP(cell) && PairP(cell); cell = Cdr(cell) {
+		if hasVisited(cell, visitedCells) {
+			return true
+		}
+		visitedCells = append(visitedCells, cell)
+	}
+
+	return false
 }
 
 func DottedPairP(d *Data) bool {

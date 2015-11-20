@@ -9,7 +9,7 @@ package golisp
 
 func RegisterTypePredicatePrimitives() {
 	MakePrimitiveFunction("atom?", "1", IsAtomImpl)
-	MakePrimitiveFunction("list?", "1", IsPairImpl)
+	MakePrimitiveFunction("list?", "1", IsListImpl)
 	MakePrimitiveFunction("pair?", "1", IsPairImpl)
 	MakePrimitiveFunction("alist?", "1", IsAlistImpl)
 	MakePrimitiveFunction("nil?", "1", NilPImpl)
@@ -30,7 +30,12 @@ func RegisterTypePredicatePrimitives() {
 
 func IsAtomImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	val := Car(args)
-	return BooleanWithValue(NumberP(val) || SymbolP(val) || StringP(val) || BooleanP(val)), nil
+	return BooleanWithValue(NumberP(val) || SymbolP(val) || StringP(val) || BooleanP(val) || CharacterP(val)), nil
+}
+
+func IsListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	result = BooleanWithValue(ListP(First(args)))
+	return
 }
 
 func IsPairImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
