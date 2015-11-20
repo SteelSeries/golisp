@@ -140,6 +140,10 @@ func PairP(d *Data) bool {
 	return d == nil || TypeOf(d) == ConsCellType
 }
 
+func DottedPairP(d *Data) bool {
+	return PairP(d) && !ListP(Cdr(d))
+}
+
 func hasVisited(cell *Data, visitedCells []*Data) bool {
 	found := sort.Search(len(visitedCells), func(i int) bool { return visitedCells[i] == cell })
 	return found < len(visitedCells)
