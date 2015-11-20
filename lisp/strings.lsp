@@ -8,6 +8,30 @@
 ;;; Adds the rich set of standard Scheme string functions.  Only the
 ;;; basic string functions are builtin
 
+
+(define (make-string count . character-arg)   
+  (let ((element-string (cond ((null? character-arg) #\space)
+                              ((eq? (length character-arg) 1) (car character-arg))
+                              (else (error "make-string expected a single character")))))
+    (list->string (make-list count element-string))))
+
+(define string str)
+
+(define string-append str)
+
+(define (string-copy s)
+  (substring s 0 (string-length s)))
+
+(define (string-null? s)
+  (zero? (string-length s)))
+
+(define (string-head string end)
+  (substring string 0 end))
+
+(define (string-tail string start)
+  (substring string start (string-length string)))
+
+
 (define (compare-false-proc)
     #f)
 

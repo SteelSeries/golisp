@@ -65,50 +65,6 @@
              (assert-error (string-split 3 ""))
              (assert-error (string-split "" 3)))
 
-
-         (it "string-upcase"
-             (assert-eq (string-upcase "hello")
-                        "HELLO")
-             (assert-eq (string-upcase "HeLlo")
-                        "HELLO")
-             (assert-eq (string-upcase "HELLO")
-                        "HELLO")
-             (assert-error (string-upcase 4)))
-
-         (it "string-downcase"
-             (assert-eq (string-downcase "hello")
-                        "hello")
-             (assert-eq (string-downcase "HeLlo")
-                        "hello")
-             (assert-eq (string-downcase "HELLO")
-                        "hello")
-             (assert-error (string-downcase 5)))
-
-         (it "string-upcase!"
-             (let ((s "hello"))
-               (assert-eq (string-upcase! s)
-                          "HELLO")
-               (assert-eq s
-                          "HELLO"))
-             (assert-error (string-upcase! 5)))
-
-         (it "downcase!"
-             (let ((s "HELLO"))
-               (assert-eq (string-downcase! s)
-                          "hello")
-               (assert-eq s
-                          "hello"))
-             (assert-error (string-downcase! 5)))
-
-         (it "string-capitalize!"
-             (let ((s "hello"))
-               (assert-eq (string-capitalize! s)
-                          "Hello")
-               (assert-eq s
-                          "Hello"))
-             (assert-error (string-capitalize! 6)))
-
-
          (it "string-length"
              (assert-eq (string-length "")
                         0)
@@ -158,10 +114,52 @@
              (assert-true (string-suffix? "" "akjsdfh"))
              (assert-error (string-suffix? 5 5))
              (assert-error (string-suffix? "" 3))
-             (assert-error (string-suffix? 3 ""))))
+             (assert-error (string-suffix? 3 "")))
+
+         (it "can convert a substring to uppercase in place"
+             (let  ((lowercase-string "abcdefg"))
+               (assert-eq (substring-upcase! lowercase-string 3 5) "abcDEfg")
+               (assert-eq lowercase-string "abcDEfg"))))
 
 
-(context "capitalization"
+(context "Downcasing"
+
+         ()
+
+         (it "can convert to lowercase"
+             (assert-eq (string-downcase "hello") "hello")
+             (assert-eq (string-downcase "HeLlo") "hello")
+             (assert-eq (string-downcase "HELLO") "hello")
+             (assert-error (string-downcase 5)))
+
+         (it "can convert to lowercase in place"
+             (let ((s "HELLO"))
+               (assert-eq (string-downcase! s) "hello")
+               (assert-eq s "hello"))
+             (assert-error (string-downcase! 5)))
+
+         (it "can convert a substring to lowercase in place"
+             (let  ((uppercase-string "ABCDEFG"))
+               (assert-eq (substring-downcase! uppercase-string 3 5) "ABCdeFG")
+               (assert-eq uppercase-string "ABCdeFG"))))
+
+(context "Upcasing"
+
+         ()
+
+         (it "can convert to uppercase"
+             (assert-eq (string-upcase "hello") "HELLO")
+             (assert-eq (string-upcase "HeLlo") "HELLO")
+             (assert-eq (string-upcase "HELLO") "HELLO")
+             (assert-error (string-upcase 4)))
+
+         (it "can convert to uppercase in place"
+             (let ((s "hello"))
+               (assert-eq (string-upcase! s) "HELLO")
+               (assert-eq s "HELLO"))
+             (assert-error (string-upcase! 5))))
+
+(context "Capitalizing"
 
          ()
          
@@ -305,3 +303,42 @@
              (assert-true (substring>=? "-a-" 1 2 "-a-" 1 2))
              (assert-true (substring>=? "-a-" 1 2 "-A-" 1 2))
              (assert-true (substring-ci>=? "-a-" 1 2 "-A-" 1 2))))
+
+(context "Character access"
+
+         ()
+
+         (it "can extract characters"
+             (assert-eq (string-ref "Hello" 1) #\e))
+
+         (it "raises an error when given a non string"
+             (assert-error (string-ref 'hi 1)))
+
+         (it "raises an error when given a non integer"
+             (assert-error (string-ref "Hello" 'a)))
+         
+         (it "raises an error when given an out of range index"
+             (assert-error (string-ref "Hello" -1))
+             (assert-error (string-ref "Hello" 10))))
+
+(context "Character replacment"
+
+         ()
+         
+         (it "can replace characters"
+             (let ((a "Hello"))
+               (assert-eq (string-set! a 3 #\O) "HelOo")
+               (assert-eq a "HelOo")))
+
+         (it "raises an error when given a non string"
+             (assert-error (string-set! 'hi 1 #\e)))
+
+         (it "raises an error when given a non integer"
+             (assert-error (string-set! "Hello" 'a #\e)))
+
+         (it "raises an error when given an out of range index"
+             (assert-error (string-set! "Hello" -1 #\e))
+             (assert-error (string-set! "Hello" 10 #\e)))
+
+         (it "raises an error when given a non character"
+             (assert-error (string-set! "Hello" 1 "a"))))

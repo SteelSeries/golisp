@@ -20,6 +20,12 @@ const (
 )
 
 func RegisterStringPrimitives() {
+	MakePrimitiveFunction("string->list", "1", StringToListImpl)
+	MakePrimitiveFunction("list->string", "1", ListToStringImpl)
+
+	MakePrimitiveFunction("string-ref", "2", StringRefImpl)
+	MakePrimitiveFunction("string-set!", "3", StringSetImpl)
+
 	MakePrimitiveFunction("string-split", "2", StringSplitImpl)
 	MakePrimitiveFunction("string-join", "1|2", StringJoinImpl)
 
@@ -44,7 +50,6 @@ func RegisterStringPrimitives() {
 	MakePrimitiveFunction("substring-capitalize!", "3", SubstringCapitalizeBangImpl)
 
 	MakePrimitiveFunction("string-length", "1", StringLengthImpl)
-	MakePrimitiveFunction("string-null?", "1", StringNullImpl)
 
 	MakePrimitiveFunction("substring", "3", SubstringImpl)
 	MakePrimitiveFunction("substring?", "2", SubstringpImpl)
@@ -54,6 +59,102 @@ func RegisterStringPrimitives() {
 
 	MakePrimitiveFunction("string-compare", "5", StringCompareImpl)
 	MakePrimitiveFunction("string-compare-ci", "5", StringCompareCiImpl)
+}
+
+func StringToListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	theString := First(args)
+
+	if !StringP(theString) {
+		err = ProcessError(fmt.Sprintf("string->list requires a string but was given %s.", String(theString)), env)
+		return
+	}
+
+	stringValue := StringValue(theString)
+	resultStrings := make([]*Data, len(stringValue))
+	for i, s := range strings.Split(stringValue, "") {
+		resultStrings[i] = CharacterWithValue(s)
+	}
+
+	result = ArrayToList(resultStrings)
+	return
+}
+
+func ListToStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	l := First(args)
+	if !ListP(l) {
+		err = ProcessError(fmt.Sprintf("list->string requires a list but was given %s.", String(l)), env)
+		return
+	}
+
+	stringValues := make([]string, 0, Length(l))
+	for cell := l; NotNilP(cell); cell = Cdr(cell) {
+		c := Car(cell)
+		if !CharacterP(c) {
+			err = ProcessError(fmt.Sprintf("list->string requires a list of characters but found %s.", String(c)), env)
+			return
+		}
+		stringValues = append(stringValues, StringValue(c))
+	}
+	result = StringWithValue(strings.Join(stringValues, ""))
+	return
+}
+
+func StringRefImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	theString := First(args)
+	if !StringP(theString) {
+		err = ProcessError(fmt.Sprintf("string-ref requires a string but was given %s.", String(theString)), env)
+		return
+	}
+	stringValue := StringValue(theString)
+
+	kObj := Second(args)
+	if !IntegerP(kObj) {
+		err = ProcessError(fmt.Sprintf("string-ref requires integer index but was given %s.", String(kObj)), env)
+		return
+	}
+	kValue := int(IntegerValue(kObj))
+
+	if kValue < 0 || kValue >= len(stringValue) {
+		err = ProcessError(fmt.Sprintf("string-ref was given an index that was out of range: %d.", kValue), env)
+		return
+	}
+
+	result = CharacterWithValue(stringValue[kValue : kValue+1])
+	return
+}
+
+func StringSetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	theString := First(args)
+	if !StringP(theString) {
+		err = ProcessError(fmt.Sprintf("string-set! requires a string but was given %s.", String(theString)), env)
+		return
+	}
+	stringValue := StringValue(theString)
+
+	kObj := Second(args)
+	if !IntegerP(kObj) {
+		err = ProcessError(fmt.Sprintf("string-set! requires integer index but was given %s.", String(kObj)), env)
+		return
+	}
+	kValue := int(IntegerValue(kObj))
+
+	if kValue < 0 || kValue >= len(stringValue) {
+		err = ProcessError(fmt.Sprintf("string-set! was given an index that was out of range: %d.", kValue), env)
+		return
+	}
+
+	charObj := Third(args)
+	if !CharacterP(charObj) {
+		err = ProcessError(fmt.Sprintf("string-set! requires a Character replacement value but was given %s.", String(charObj)), env)
+		return
+	}
+	charValue := StringValue(charObj)
+
+	prefix := stringValue[:kValue]
+	suffix := stringValue[kValue+1:]
+	parts := []string{prefix, charValue, suffix}
+	result = SetStringValue(theString, strings.Join(parts, ""))
+	return
 }
 
 func checkAndExtractSubstringArgs(name string, args *Data, env *SymbolTableFrame) (stringValue string, startValue int, endValue int, err error) {
@@ -376,16 +477,6 @@ func StringLengthImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 		return
 	}
 	return IntegerWithValue(int64(len(StringValue(theString)))), nil
-}
-
-func StringNullImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	theString := Car(args)
-
-	if !StringP(theString) {
-		err = ProcessError(fmt.Sprintf("string-null? requires a string but was given %s.", String(theString)), env)
-		return
-	}
-	return BooleanWithValue(len(StringValue(theString)) == 0), nil
 }
 
 func SubstringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
