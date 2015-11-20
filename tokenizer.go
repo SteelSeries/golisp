@@ -222,14 +222,16 @@ func (self *Tokenizer) readString() (token int, lit string) {
 	return STRING, string(buffer)
 }
 
-func isCharCharacter(ch rune) bool {
-	return !unicode.IsSpace(ch) && !strings.ContainsRune(")]}", ch)
+func isCharCharacter(position int, ch rune) bool {
+	return !unicode.IsSpace(ch) && (position == 0 || !strings.ContainsRune(")]}", ch))
 }
 
 func (self *Tokenizer) ReadCharacter() (token int, lit string) {
 	buffer := make([]rune, 0, 10)
-	for !self.isEof() && isCharCharacter(rune(self.CurrentCh)) {
+	i := 0
+	for !self.isEof() && isCharCharacter(i, rune(self.CurrentCh)) {
 		buffer = append(buffer, rune(self.CurrentCh))
+		i = i + 1
 		self.Advance()
 	}
 
