@@ -4,7 +4,8 @@
 
 (context "string"
 
-         ()
+         ((define lowercase-string "abcdefg")
+          (define uppercase-string "ABCDEFG"))
          
          (it "str"
              (assert-eq (str '())
@@ -112,15 +113,24 @@
                         "hello")
              (assert-error (string-downcase 5)))
 
-         (it "string-capitalize"
-             (assert-eq (string-capitalize "hello")
-                        "Hello")
-             (assert-eq (string-capitalize "HeLlo")
-                        "Hello")
-             (assert-eq (string-capitalize "HELLO")
-                        "Hello")
+         (it "can capitalize"
+             (assert-eq (string-capitalize "hello") "Hello")
+             (assert-eq (string-capitalize "HeLlo") "Hello")
+             (assert-eq (string-capitalize "HELLO") "Hello")
              (assert-error (string-capitalize 5)))
 
+         (it "can capitalize in place"
+             (assert-eq (string-capitalize! lowercase-string) "Abcdefg")
+             (assert-eq lowercase-string "Abcdefg")
+             (assert-eq (string-capitalize! uppercase-string) "Abcdefg")
+             (assert-eq uppercase-string "Abcdefg"))
+
+         (it "can capitalize a substring in place"
+             (assert-eq (substring-capitalize! lowercase-string 3 5) "abcDefg")
+             (assert-eq lowercase-string "abcDefg")
+             (assert-eq (substring-capitalize! uppercase-string 3 5) "ABCDeFG")
+             (assert-eq uppercase-string "abcDefg"))
+         
          (it "string-upcase!"
              (let ((s "hello"))
                (assert-eq (string-upcase! s)

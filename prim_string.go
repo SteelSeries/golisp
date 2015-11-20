@@ -10,6 +10,7 @@ package golisp
 import (
 	"fmt"
 	"strings"
+	"unicode"
 )
 
 const (
@@ -26,12 +27,21 @@ func RegisterStringPrimitives() {
 	MakePrimitiveFunction("string-trim-left", "1|2", StringTrimLeftImpl)
 	MakePrimitiveFunction("string-trim-right", "1|2", StringTrimRightImpl)
 
+	MakePrimitiveFunction("string-capitalized?", "1", StringCapitalizedPImpl)
+	MakePrimitiveFunction("string-upper-case?", "1", StringUpperCasePImpl)
+	MakePrimitiveFunction("string-lower-case?", "1", StringLowerCasePImpl)
+
 	MakePrimitiveFunction("string-upcase", "1", StringUpcaseImpl)
 	MakePrimitiveFunction("string-upcase!", "1", StringUpcaseBangImpl)
+	MakePrimitiveFunction("substring-upcase!", "3", SubstringUpcaseBangImpl)
+
 	MakePrimitiveFunction("string-downcase", "1", StringDowncaseImpl)
 	MakePrimitiveFunction("string-downcase!", "1", StringDowncaseBangImpl)
+	MakePrimitiveFunction("substring-downcase!", "3", SubstringDowncaseBangImpl)
+
 	MakePrimitiveFunction("string-capitalize", "1", StringCapitalizeImpl)
 	MakePrimitiveFunction("string-capitalize!", "1", StringCapitalizeBangImpl)
+	MakePrimitiveFunction("substring-capitalize!", "3", SubstringCapitalizeBangImpl)
 
 	MakePrimitiveFunction("string-length", "1", StringLengthImpl)
 	MakePrimitiveFunction("string-null?", "1", StringNullImpl)
@@ -44,6 +54,45 @@ func RegisterStringPrimitives() {
 
 	MakePrimitiveFunction("string-compare", "5", StringCompareImpl)
 	MakePrimitiveFunction("string-compare-ci", "5", StringCompareCiImpl)
+}
+
+func checkAndExtractSubstringArgs(name string, args *Data, env *SymbolTableFrame) (stringValue string, startValue int, endValue int, err error) {
+	theString := First(args)
+
+	if !StringP(theString) {
+		err = ProcessError(fmt.Sprintf("%s requires a string but was given %s.", name, String(theString)), env)
+		return
+	}
+	stringValue = StringValue(theString)
+
+	startObj := Second(args)
+	if !IntegerP(startObj) {
+		err = ProcessError(fmt.Sprintf("%s requires integer start but was given %s.", name, String(startObj)), env)
+		return
+	}
+	startValue = int(IntegerValue(startObj))
+	if startValue > len(stringValue) {
+		err = ProcessError(fmt.Sprintf("%s requires start < length of the string.", name), env)
+		return
+	}
+
+	endObj := Third(args)
+	if !IntegerP(endObj) {
+		err = ProcessError(fmt.Sprintf("%s requires integer end but was given %s.", name, String(endObj)), env)
+		return
+	}
+	endValue = int(IntegerValue(endObj))
+	if endValue > len(stringValue) {
+		err = ProcessError(fmt.Sprintf("%s requires end < length of the string.", name), env)
+		return
+	}
+
+	if startValue > endValue {
+		err = ProcessError(fmt.Sprintf("%s requires start <= end.", name), env)
+		return
+	}
+
+	return
 }
 
 func StringSplitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -141,6 +190,62 @@ func StringTrimRightImpl(args *Data, env *SymbolTableFrame) (result *Data, err e
 	return doTrim(TrimRight, args, env)
 }
 
+func StringCapitalizedPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	theString := Car(args)
+	if !StringP(theString) {
+		err = ProcessError(fmt.Sprintf("string-capitalized? requires a string but was given %s.", String(theString)), env)
+		return
+	}
+	f := func(c rune) bool {
+		return !unicode.IsLetter(c)
+	}
+	words := strings.FieldsFunc(StringValue(theString), f)
+	for index, word := range words {
+		initial := word[:1]
+		rest := word[1:]
+		if (index == 0 && strings.ContainsAny(initial, "abcedfghijklmnopqrstuvwxyz")) || (index > 0 && strings.ContainsAny(rest, "ABCDEFGHIJKLMNOPQRSTUVWXYZ")) {
+			result = LispFalse
+			return
+		}
+	}
+	result = LispTrue
+	return
+}
+
+func StringLowerCasePImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	theString := Car(args)
+	if !StringP(theString) {
+		err = ProcessError(fmt.Sprintf("string-lower-case? requires a string but was given %s.", String(theString)), env)
+		return
+	}
+
+	s := StringValue(theString)
+	if !strings.ContainsAny(s, "abcedfghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") {
+		result = LispFalse
+		return
+	}
+
+	result = BooleanWithValue(!strings.ContainsAny(s, "ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
+	return
+}
+
+func StringUpperCasePImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	theString := Car(args)
+	if !StringP(theString) {
+		err = ProcessError(fmt.Sprintf("string-upper-case? requires a string but was given %s.", String(theString)), env)
+		return
+	}
+
+	s := StringValue(theString)
+	if !strings.ContainsAny(s, "abcedfghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") {
+		result = LispFalse
+		return
+	}
+
+	result = BooleanWithValue(!strings.ContainsAny(s, "abcedfghijklmnopqrstuvwxyz"))
+	return
+}
+
 func StringUpcaseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	theString := Car(args)
 	if !StringP(theString) {
@@ -157,6 +262,21 @@ func StringUpcaseBangImpl(args *Data, env *SymbolTableFrame) (result *Data, err 
 		return
 	}
 	return SetStringValue(theString, strings.ToUpper(StringValue(theString))), nil
+}
+
+func SubstringUpcaseBangImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	stringValue, startValue, endValue, err := checkAndExtractSubstringArgs("substring-upcase!", args, env)
+	if err != nil {
+		return
+	}
+
+	prefix := stringValue[:startValue]
+	substring := strings.ToUpper(stringValue[startValue:endValue])
+	suffix := stringValue[endValue:]
+	parts := []string{prefix, substring, suffix}
+	newString := strings.Join(parts, "")
+
+	return SetStringValue(First(args), newString), nil
 }
 
 func StringDowncaseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -177,8 +297,23 @@ func StringDowncaseBangImpl(args *Data, env *SymbolTableFrame) (result *Data, er
 	return SetStringValue(theString, strings.ToLower(StringValue(theString))), nil
 }
 
+func SubstringDowncaseBangImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	stringValue, startValue, endValue, err := checkAndExtractSubstringArgs("substring-downcase!", args, env)
+	if err != nil {
+		return
+	}
+
+	prefix := stringValue[:startValue]
+	substring := strings.ToLower(stringValue[startValue:endValue])
+	suffix := stringValue[endValue:]
+	parts := []string{prefix, substring, suffix}
+	newString := strings.Join(parts, "")
+
+	return SetStringValue(First(args), newString), nil
+}
+
 func capitalize(s string) string {
-	firstChar := s[0:1]
+	firstChar := s[:1]
 	remainingChars := s[1:]
 	parts := make([]string, 0, 2)
 	parts = append(parts, strings.ToUpper(firstChar))
@@ -206,6 +341,21 @@ func StringCapitalizeBangImpl(args *Data, env *SymbolTableFrame) (result *Data, 
 	return SetStringValue(theString, capitalize(StringValue(theString))), nil
 }
 
+func SubstringCapitalizeBangImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	stringValue, startValue, endValue, err := checkAndExtractSubstringArgs("substring-capitalize!", args, env)
+	if err != nil {
+		return
+	}
+
+	prefix := stringValue[:startValue]
+	substring := strings.Title(strings.ToLower(stringValue[startValue:endValue]))
+	suffix := stringValue[endValue:]
+	parts := []string{prefix, substring, suffix}
+	newString := strings.Join(parts, "")
+
+	return SetStringValue(First(args), newString), nil
+}
+
 func StringLengthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	theString := Car(args)
 
@@ -227,37 +377,8 @@ func StringNullImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 }
 
 func SubstringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	theString := Car(args)
-	if !StringP(theString) {
-		err = ProcessError(fmt.Sprintf("substring requires a string but was given %s.", String(theString)), env)
-		return
-	}
-	stringValue := StringValue(theString)
-
-	startObj := Cadr(args)
-	if !IntegerP(startObj) {
-		err = ProcessError(fmt.Sprintf("substring requires integer start but was given %s.", String(startObj)), env)
-		return
-	}
-	startValue := int(IntegerValue(startObj))
-	if startValue > len(stringValue) {
-		err = ProcessError(fmt.Sprintf("substring requires start < length of the string."), env)
-		return
-	}
-
-	endObj := Caddr(args)
-	if !IntegerP(endObj) {
-		err = ProcessError(fmt.Sprintf("substring requires integer end but was given %s.", String(endObj)), env)
-		return
-	}
-	endValue := int(IntegerValue(endObj))
-	if endValue > len(stringValue) {
-		err = ProcessError(fmt.Sprintf("substring requires end < length of the string."), env)
-		return
-	}
-
-	if startValue > endValue {
-		err = ProcessError(fmt.Sprintf("substring requires start <= end."), env)
+	stringValue, startValue, endValue, err := checkAndExtractSubstringArgs("substring-capitalize!", args, env)
+	if err != nil {
 		return
 	}
 

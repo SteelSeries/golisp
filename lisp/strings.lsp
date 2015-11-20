@@ -6,7 +6,7 @@
 
 ;;; Strings support llibrary
 ;;; Adds the rich set of standard Scheme string functions.  Only the
-;;; most generic string comparison is builtin
+;;; basic string functions are builtin
 
 (define (compare-false-proc)
     #f)
@@ -160,5 +160,12 @@
                      compare-true-proc))
 
 
+(define (substring-capitalized? string start end)
+  (string-capitalized? (substring string start end)))
 
+(define (substring-upper-case? string start end)
+  (string-upper-case? (substring string start end)))
+
+(define (substring-lower-case? string start end)
+  (string-lower-case? (substring string start end)))
 
