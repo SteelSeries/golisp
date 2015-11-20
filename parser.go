@@ -62,6 +62,11 @@ func makeString(str string) (s *Data, err error) {
 	return
 }
 
+func makeCharacter(str string) (c *Data, err error) {
+	c = CharacterWithValue(str)
+	return
+}
+
 func makeSymbol(str string) (s *Data, err error) {
 	s = Intern(str)
 	return
@@ -255,6 +260,10 @@ func parseExpression(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 		case STRING:
 			s.ConsumeToken()
 			sexpr, err = makeString(lit)
+			return
+		case CHARACTER:
+			s.ConsumeToken()
+			sexpr, err = makeCharacter(lit)
 			return
 		case LPAREN:
 			s.ConsumeToken()

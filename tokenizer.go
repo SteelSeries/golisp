@@ -24,6 +24,7 @@ const (
 	BINARYNUMBER
 	FLOAT
 	STRING
+	CHARACTER
 	QUOTE
 	BACKQUOTE
 	COMMA
@@ -221,6 +222,47 @@ func (self *Tokenizer) readString() (token int, lit string) {
 	return STRING, string(buffer)
 }
 
+func isCharCharacter(ch rune) bool {
+	return !unicode.IsSpace(ch) && !strings.ContainsRune(")]}", ch)
+}
+
+func (self *Tokenizer) ReadCharacter() (token int, lit string) {
+	buffer := make([]rune, 0, 10)
+	for !self.isEof() && isCharCharacter(rune(self.CurrentCh)) {
+		buffer = append(buffer, rune(self.CurrentCh))
+		self.Advance()
+	}
+
+	charValue := string(buffer)
+	var c string
+	switch strings.ToLower(charValue) {
+	case `altmode`, `esc`:
+		c = "\x1B"
+	case `backspace`:
+		c = "\x08"
+	case `linefeed`:
+		c = "\n"
+	case `newline`:
+		c = "\n"
+	case `page`:
+		c = "\x0C"
+	case `return`:
+		c = "\x0D"
+	case `rubout`:
+		c = "\x7F"
+	case `space`:
+		c = " "
+	case `tab`:
+		c = "\t"
+	default:
+		c = charValue[0:1]
+	}
+
+	charBuffer := make([]rune, 1)
+	charBuffer[0] = rune(c[0])
+	return CHARACTER, string(charBuffer)
+}
+
 func (self *Tokenizer) isEof() bool {
 	return self.Eof
 }
@@ -303,6 +345,9 @@ func (self *Tokenizer) readNextToken() (token int, lit string) {
 		} else if self.CurrentCh == '(' {
 			self.Advance()
 			return OPEN_VECTOR, "#("
+		} else if self.CurrentCh == '\\' {
+			self.Advance()
+			return self.ReadCharacter()
 		} else {
 			return ILLEGAL, fmt.Sprintf("#%c", self.NextCh)
 		}

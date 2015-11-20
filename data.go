@@ -26,6 +26,7 @@ const (
 	FloatType
 	BooleanType
 	StringType
+	CharacterType
 	SymbolType
 	FunctionType
 	MacroType
@@ -102,6 +103,8 @@ func TypeName(t uint8) string {
 		return "Boolean"
 	case StringType:
 		return "String"
+	case CharacterType:
+		return "Character"
 	case SymbolType:
 		return "Symbol"
 	case FunctionType:
@@ -169,6 +172,10 @@ func NakedP(d *Data) bool {
 
 func StringP(d *Data) bool {
 	return d != nil && TypeOf(d) == StringType
+}
+
+func CharacterP(d *Data) bool {
+	return d != nil && TypeOf(d) == CharacterType
 }
 
 func IntegerP(d *Data) bool {
@@ -369,6 +376,10 @@ func StringWithValue(s string) *Data {
 	return &Data{Type: StringType, Value: unsafe.Pointer(&s)}
 }
 
+func CharacterWithValue(c string) *Data {
+	return &Data{Type: CharacterType, Value: unsafe.Pointer(&c)}
+}
+
 func SetStringValue(d *Data, s string) *Data {
 	if StringP(d) {
 		d.Value = unsafe.Pointer(&s)
@@ -502,11 +513,23 @@ func StringValue(d *Data) string {
 		return ""
 	}
 
-	if StringP(d) || SymbolP(d) {
+	if StringP(d) || SymbolP(d) || CharacterP(d) {
 		return *((*string)(d.Value))
 	}
 
 	return ""
+}
+
+func CharacterValue(d *Data) string {
+	if NilP(d) {
+		return " "
+	}
+
+	if CharacterP(d) {
+		return *((*string)(d.Value))
+	}
+
+	return " "
 }
 
 func BooleanValue(d *Data) bool {
@@ -891,7 +914,7 @@ func IsEq(d *Data, o *Data) bool {
 		}
 
 		return true
-	case StringType:
+	case StringType, CharacterType:
 		return StringValue(d) == StringValue(o)
 	}
 
@@ -1005,7 +1028,7 @@ func IsEqual(d *Data, o *Data) bool {
 		return FloatValue(d) == FloatValue(o)
 	case BooleanType:
 		return BooleanValue(d) == BooleanValue(o)
-	case StringType:
+	case StringType, CharacterType:
 		return StringValue(d) == StringValue(o)
 	case FunctionType:
 		return FunctionValue(d) == FunctionValue(o)
@@ -1094,6 +1117,27 @@ func String(d *Data) string {
 		}
 	case StringType:
 		return fmt.Sprintf(`"%s"`, escapeQuotes(StringValue(d)))
+	case CharacterType:
+		switch CharacterValue(d) {
+		case "\x1B":
+			return `#\esc`
+		case "\x08":
+			return `#\backspace`
+		case "\n":
+			return `#\newline`
+		case "\x0C":
+			return `#\page`
+		case "\x0D":
+			return `#\return`
+		case "\x7F":
+			return `#\rubout`
+		case " ":
+			return `#\space`
+		case "\t":
+			return `#\tab`
+		default:
+			return fmt.Sprintf("#\\%s", CharacterValue(d))
+		}
 	case SymbolType:
 		return StringValue(d)
 	case FunctionType:
@@ -1144,7 +1188,7 @@ func String(d *Data) string {
 }
 
 func PrintString(d *Data) string {
-	if StringP(d) {
+	if StringP(d) || CharacterP(d) {
 		return StringValue(d)
 	} else {
 		return String(d)

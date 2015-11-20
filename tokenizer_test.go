@@ -349,3 +349,17 @@ func (s *TokenizerSuite) TestOpenVector(c *C) {
 	c.Assert(tok, Equals, NUMBER)
 	c.Assert(lit, Equals, `1`)
 }
+
+func (s *TokenizerSuite) TestCharacter(c *C) {
+	t := NewTokenizerFromString(`#\* a`)
+	tok, lit := t.NextToken()
+	c.Assert(tok, Equals, CHARACTER)
+	c.Assert(lit, Equals, "*")
+}
+
+func (s *TokenizerSuite) TestSpaceCharacter(c *C) {
+	t := NewTokenizerFromString(`#\space a`)
+	tok, lit := t.NextToken()
+	c.Assert(tok, Equals, CHARACTER)
+	c.Assert(lit, Equals, " ")
+}
