@@ -20,8 +20,6 @@ import (
 const (
 	NilType = iota
 	ConsCellType
-	AlistType
-	AlistCellType
 	IntegerType
 	FloatType
 	BooleanType
@@ -91,10 +89,6 @@ func TypeName(t uint8) string {
 		return "Nil"
 	case ConsCellType:
 		return "List"
-	case AlistType:
-		return "Association List"
-	case AlistCellType:
-		return "Association List Cell"
 	case IntegerType:
 		return "Integer"
 	case FloatType:
@@ -132,7 +126,7 @@ func NilP(d *Data) bool {
 	if d == nil {
 		return true
 	}
-	if (PairP(d) || AlistP(d) || DottedPairP(d)) && Car(d) == nil && Cdr(d) == nil {
+	if PairP(d) && Car(d) == nil && Cdr(d) == nil {
 		return true
 	}
 	return false
@@ -183,14 +177,6 @@ func ListWithLoopP(d *Data) bool {
 	}
 
 	return false
-}
-
-func DottedPairP(d *Data) bool {
-	return d == nil || TypeOf(d) == AlistCellType
-}
-
-func AlistP(d *Data) bool {
-	return d == nil || TypeOf(d) == AlistType
 }
 
 func BooleanP(d *Data) bool {
@@ -356,27 +342,12 @@ func RemoveFromListBang(l *Data, item *Data) (result *Data) {
 func Acons(car *Data, cdr *Data, alist *Data) *Data {
 	pair, _ := Assoc(car, alist)
 	if NilP(pair) {
-		p := ConsCell{Car: car, Cdr: cdr}
-		cell := Data{Type: AlistCellType, Value: unsafe.Pointer(&p)}
-		conscell := ConsCell{Car: &cell, Cdr: alist}
-		return &Data{Type: AlistType, Value: unsafe.Pointer(&conscell)}
+		cell := Cons(car, cdr)
+		return Cons(cell, alist)
 	} else {
 		((*ConsCell)(pair.Value)).Cdr = cdr
 		return alist
 	}
-}
-
-func Alist(d *Data) *Data {
-	if NilP(d) {
-		return nil
-	}
-
-	if PairP(d) {
-		headPair := Car(d)
-		return Acons(Car(headPair), Cdr(headPair), Alist(Cdr(d)))
-	}
-
-	return d
 }
 
 func InternalMakeList(c ...*Data) *Data {
@@ -474,7 +445,7 @@ func ConsValue(d *Data) *ConsCell {
 		return nil
 	}
 
-	if PairP(d) || AlistP(d) || DottedPairP(d) {
+	if PairP(d) {
 		return (*ConsCell)(d.Value)
 	}
 
@@ -486,7 +457,7 @@ func Car(d *Data) *Data {
 		return nil
 	}
 
-	if PairP(d) || AlistP(d) || DottedPairP(d) {
+	if PairP(d) {
 		cell := ConsValue(d)
 		if cell != nil {
 			return cell.Car
@@ -501,7 +472,7 @@ func Cdr(d *Data) *Data {
 		return nil
 	}
 
-	if PairP(d) || AlistP(d) || DottedPairP(d) {
+	if PairP(d) {
 		cell := ConsValue(d)
 		if cell != nil {
 			return cell.Cdr
@@ -709,7 +680,7 @@ func Length(d *Data) int {
 		return len(VectorValue(d))
 	}
 
-	if ListP(d) || AlistP(d) {
+	if ListP(d) {
 		return 1 + Length(Cdr(d))
 	}
 
@@ -844,14 +815,6 @@ func Copy(d *Data) *Data {
 	}
 
 	switch d.Type {
-	case AlistType:
-		{
-			alist := Acons(Copy(Caar(d)), Copy(Cdar(d)), nil)
-			for c := Cdr(d); NotNilP(c); c = Cdr(c) {
-				alist = Acons(Copy(Caar(c)), Copy(Cdar(c)), alist)
-			}
-			return alist
-		}
 	case ConsCellType:
 		{
 			if NilP(d) {
@@ -868,6 +831,13 @@ func Copy(d *Data) *Data {
 			}
 			return FrameWithValue(&m)
 		}
+	case VectorType:
+		v := VectorValue(vect)
+		newV := make([]*Data, 0, len(v))
+		for _, e := range v {
+			newV = append(newV, e)
+		}
+		return VectorWithValue(newV)
 	}
 
 	return d
@@ -921,10 +891,6 @@ func IsEq(d *Data, o *Data) bool {
 		return false
 	}
 
-	if VectorP(d) {
-
-	}
-
 	switch TypeOf(d) {
 	case IntegerType:
 		return IntegerValue(d) == IntegerValue(o)
@@ -965,33 +931,8 @@ func IsEqual(d *Data, o *Data) bool {
 		return false
 	}
 
-	if AlistP(d) {
-		if !AlistP(o) && !ListP(o) {
-			return false
-		}
-	} else if DottedPairP(d) {
-		if !PairP(o) && !DottedPairP(o) {
-			return false
-		}
-	} else if TypeOf(o) != TypeOf(d) {
+	if TypeOf(o) != TypeOf(d) {
 		return false
-	}
-
-	if AlistP(d) {
-		if Length(d) != Length(o) {
-			return false
-		}
-		for c := d; NotNilP(c); c = Cdr(c) {
-			otherPair, err := Assoc(Caar(c), o)
-			if err != nil || NilP(otherPair) || !IsEqual(Cdar(c), Cdr(otherPair)) {
-				return false
-			}
-		}
-		return true
-	}
-
-	if DottedPairP(d) {
-		return IsEqual(Car(d), Car(o)) && IsEqual(Cdr(d), Cdr(o))
 	}
 
 	if ListP(d) {
@@ -1005,6 +946,21 @@ func IsEqual(d *Data, o *Data) bool {
 			}
 		}
 		return true
+	}
+
+	if ListWithLoopP(d) {
+		return false
+	}
+
+	if PairP(d) {
+		var a1 *Data
+		var a2 *Data
+		for a1, a2 = d, o; PairP(a1) && NotNilP(a1) && PairP(a2) && NotNilP(a2); a1, a2 = Cdr(a1), Cdr(a2) {
+			if !IsEqual(Car(a1), Car(a2)) {
+				return false
+			}
+		}
+		return IsEqual(a1, a2)
 	}
 
 	if VectorP(d) {
@@ -1126,19 +1082,6 @@ func String(d *Data) string {
 				return fmt.Sprintf("(%s . %s)", strings.Join(contents, " "), String(c))
 			}
 		}
-	case AlistType:
-		{
-			if NilP(d) {
-				return "()"
-			}
-			contents := make([]string, 0, Length(d))
-			for c := d; NotNilP(c); c = Cdr(c) {
-				contents = append(contents, String(Car(c)))
-			}
-			return fmt.Sprintf("(%s)", strings.Join(contents, " "))
-		}
-	case AlistCellType:
-		return fmt.Sprintf("(%s . %s)", String(Car(d)), String(Cdr(d)))
 	case IntegerType:
 		return fmt.Sprintf("%d", IntegerValue(d))
 	case FloatType:
