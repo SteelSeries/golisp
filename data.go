@@ -1100,6 +1100,11 @@ func String(d *Data) string {
 			if NilP(d) {
 				return "()"
 			}
+
+			if ListWithLoopP(d) {
+				return "<Unprintable looping pair structure>"
+			}
+
 			var c *Data = d
 
 			contents := make([]string, 0, Length(d))
