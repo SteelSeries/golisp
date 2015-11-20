@@ -17,13 +17,6 @@ func RegisterAListPrimitives() {
 	MakePrimitiveFunction("assoc", "2", AssocImpl)
 	MakePrimitiveFunction("dissoc", "2", DissocImpl)
 	MakePrimitiveFunction("rassoc", "2", RassocImpl)
-	MakePrimitiveFunction("alist", "1", AlistImpl)
-}
-
-func AlistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l := Car(args)
-	result = Alist(l)
-	return
 }
 
 func AconsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
