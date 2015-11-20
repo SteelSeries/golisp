@@ -155,6 +155,16 @@ func doTrim(lrb int, args *Data, env *SymbolTableFrame) (result *Data, err error
 	}
 
 	var trimset string
+	var f func(rune) bool
+
+	trimWhiteSpaceFunc := func(c rune) bool {
+		return unicode.IsSpace(c)
+	}
+
+	trimCustomCharsFunc := func(c rune) bool {
+		return !strings.ContainsRune(trimset, c)
+	}
+
 	if Length(args) == 2 {
 		theTrimSet := Cadr(args)
 		if !StringP(theTrimSet) {
@@ -163,16 +173,18 @@ func doTrim(lrb int, args *Data, env *SymbolTableFrame) (result *Data, err error
 		}
 
 		trimset = StringValue(theTrimSet)
+		f = trimCustomCharsFunc
 	} else {
-		trimset = " \t\r\n\v\f"
+		f = trimWhiteSpaceFunc
 	}
+
 	switch lrb {
 	case TrimLeft:
-		return StringWithValue(strings.TrimLeft(StringValue(theString), trimset)), nil
+		return StringWithValue(strings.TrimLeftFunc(StringValue(theString), f)), nil
 	case TrimBoth:
-		return StringWithValue(strings.Trim(StringValue(theString), trimset)), nil
+		return StringWithValue(strings.TrimFunc(StringValue(theString), f)), nil
 	case TrimRight:
-		return StringWithValue(strings.TrimRight(StringValue(theString), trimset)), nil
+		return StringWithValue(strings.TrimRightFunc(StringValue(theString), f)), nil
 	default:
 		return theString, nil
 	}

@@ -65,35 +65,6 @@
              (assert-error (string-split 3 ""))
              (assert-error (string-split "" 3)))
 
-         (it "string-trim"
-             (assert-eq (string-trim "  hello ")
-                        "hello")
-             (assert-eq (string-trim "++ yo --" "+-")
-                        " yo ")
-             (assert-eq (string-trim "++ yo --" "+- ")
-                        "yo")
-             (assert-error (string-trim 3 ""))
-             (assert-error (string-trim "" 3)))
-
-         (it "string-trim-left"
-             (assert-eq (string-trim-left "  hello ")
-                        "hello ")
-             (assert-eq (string-trim-left "++ yo --" "+-")
-                        " yo --")
-             (assert-eq (string-trim-left "++ yo --" "+- ")
-                        "yo --")
-             (assert-error (string-trim-left 3 ""))
-             (assert-error (string-trim-left "" 3)))
-
-         (it "string-trim-right"
-             (assert-eq (string-trim-right "  hello ")
-                        "  hello")
-             (assert-eq (string-trim-right "++ yo --" "+-")
-                        "++ yo ")
-             (assert-eq (string-trim-right "++ yo --" "+- ")
-                        "++ yo")
-             (assert-error (string-trim-right 3 ""))
-             (assert-error (string-trim-right "" 3)))
 
          (it "string-upcase"
              (assert-eq (string-upcase "hello")
