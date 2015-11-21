@@ -799,18 +799,26 @@ func Assoc(key *Data, alist *Data) (result *Data, err error) {
 }
 
 func Dissoc(key *Data, alist *Data) (result *Data, err error) {
-	var newList *Data = nil
+	didRemoval := false
+	newList := make([]*Data, 0, 5)
 	for c := alist; NotNilP(c); c = Cdr(c) {
 		pair := Car(c)
-		if !DottedPairP(pair) && !PairP(pair) {
+		if !PairP(pair) {
 			err = errors.New("An alist MUST be made of pairs.")
 			return
 		}
-		if !IsEqual(Car(pair), key) {
-			newList = Acons(Car(pair), Cdr(pair), newList)
+		if IsEqual(Car(pair), key) {
+			didRemoval = true
+		} else {
+			newList = append(newList, pair)
 		}
 	}
-	return newList, nil
+	if didRemoval {
+		result = ArrayToList(newList)
+	} else {
+		result = alist
+	}
+	return
 }
 
 func Copy(d *Data) *Data {
