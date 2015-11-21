@@ -7,7 +7,9 @@
 
 package golisp
 
-import ()
+import (
+	"fmt"
+)
 
 func RegisterAListPrimitives() {
 	MakePrimitiveFunction("acons", "2|3", AconsImpl)
@@ -77,9 +79,15 @@ func PairlisImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func AssocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	key := Car(args)
-	list := Cadr(args)
-	return Assoc(key, list)
+	alist := Second(args)
+	key := First(args)
+
+	if FrameP(alist) {
+		frame := FrameValue(alist)
+		return frame.Get(fmt.Sprintf("%s:", StringValue(key))), nil
+	} else {
+		return Assoc(key, alist)
+	}
 }
 
 func RassocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
