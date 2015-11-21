@@ -141,7 +141,7 @@ func PairP(d *Data) bool {
 }
 
 func DottedPairP(d *Data) bool {
-	return PairP(d) && !ListP(Cdr(d))
+	return PairP(d) && !PairP(Cdr(d))
 }
 
 func hasVisited(cell *Data, visitedCells []*Data) bool {
