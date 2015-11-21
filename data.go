@@ -166,6 +166,23 @@ func ListP(d *Data) bool {
 	return NilP(cell)
 }
 
+func DottedListP(d *Data) bool {
+	if !PairP(d) {
+		return false
+	}
+
+	visitedCells := make([]*Data, 0, 5)
+	var cell *Data
+	for cell = d; NotNilP(cell) && PairP(cell); cell = Cdr(cell) {
+		if hasVisited(cell, visitedCells) {
+			return false
+		}
+		visitedCells = append(visitedCells, cell)
+	}
+
+	return NotNilP(cell)
+}
+
 func ListWithLoopP(d *Data) bool {
 	if !PairP(d) {
 		return false
