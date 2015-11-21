@@ -7,7 +7,9 @@
 
 package golisp
 
-import ()
+import (
+	"fmt"
+)
 
 func RegisterListManipulationPrimitives() {
 	MakePrimitiveFunction("list", "*", ListImpl)
@@ -66,7 +68,17 @@ func ConsStarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func ListLengthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return IntegerWithValue(int64(Length(Car(args)))), nil
+	col := First(args)
+	if !ListP(col) && !VectorP(col) {
+		err = ProcessError(fmt.Sprintf("length requires a list or vector but was given %s.", String(col)), env)
+		return
+	}
+
+	if VectorP(col) {
+		return VectorLengthImpl(args, env)
+	}
+
+	return IntegerWithValue(int64(Length(col))), nil
 }
 
 func ConsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
