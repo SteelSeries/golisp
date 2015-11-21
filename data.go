@@ -836,7 +836,7 @@ func Copy(d *Data) *Data {
 			return FrameWithValue(&m)
 		}
 	case VectorType:
-		v := VectorValue(vect)
+		v := VectorValue(d)
 		newV := make([]*Data, 0, len(v))
 		for _, e := range v {
 			newV = append(newV, e)
