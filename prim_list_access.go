@@ -9,6 +9,7 @@ package golisp
 
 import (
 	"errors"
+	"fmt"
 	"unsafe"
 )
 
@@ -436,12 +437,12 @@ func LastPairImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	l := Car(args)
 
 	if NilP(l) {
-		err = ProcessError("last-pair requires a non-empty list as its argument.", env)
+		err = ProcessError(fmt.Sprintf("last-pair requires a non-empty list but was given %s.", String(l)), env)
 		return
 	}
 
-	if !ListP(l) {
-		err = ProcessError("last-pair requires a list as its argument.", env)
+	if !ListP(l) && !DottedListP(l) {
+		err = ProcessError(fmt.Sprintf("last-pair requires a list but was given %s.", String(l)), env)
 		return
 	}
 

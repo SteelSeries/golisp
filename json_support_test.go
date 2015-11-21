@@ -52,15 +52,15 @@ func (s *JsonLispSuite) TestJsonToLispMixed(c *C) {
 	jsonData := `{"map": {"f1": [47, 75], "f2": 185}, "f3": 85}`
 	sexpr := JsonStringToLisp(jsonData)
 
-	expected := Acons(StringWithValue("map"),
-		Acons(StringWithValue("f1"),
-			InternalMakeList(IntegerWithValue(47), IntegerWithValue(75)),
-			Acons(StringWithValue("f2"),
-				IntegerWithValue(185), nil)),
-		Acons(StringWithValue("f3"),
-			IntegerWithValue(85), nil))
+	f3Value, _ := Assoc(StringWithValue("f3"), sexpr)
+	c.Assert(IntegerValue(Cdr(f3Value)), Equals, int64(85))
 
-	c.Assert(IsEqual(sexpr, expected), Equals, true)
+	mapValue, _ := Assoc(StringWithValue("map"), sexpr)
+	f1Value, _ := Assoc(StringWithValue("f1"), Cdr(mapValue))
+	c.Assert(IntegerValue(First(Cdr(f1Value))), Equals, int64(47))
+	c.Assert(IntegerValue(Second(Cdr(f1Value))), Equals, int64(75))
+	f2Value, _ := Assoc(StringWithValue("f2"), Cdr(mapValue))
+	c.Assert(IntegerValue(Cdr(f2Value)), Equals, int64(185))
 }
 
 func (s *JsonLispSuite) TestJsonToLispMixedWithFrames(c *C) {
@@ -87,7 +87,8 @@ func (s *JsonLispSuite) TestLispToJsonArray(c *C) {
 }
 
 func (s *JsonLispSuite) TestLispToJsonMixed(c *C) {
-	alist := Acons(StringWithValue("map"), Acons(StringWithValue("f1"), InternalMakeList(IntegerWithValue(47), IntegerWithValue(75)), Acons(StringWithValue("f2"), IntegerWithValue(185), nil)), Acons(StringWithValue("f3"), IntegerWithValue(85), nil))
+	alist, _ := Parse(`(("map" . (("f1" . (47 75)) ("f2" . 185))) ("f3" . 85))`)
+	// alist := Acons(StringWithValue("map"), Acons(StringWithValue("f1"), InternalMakeList(IntegerWithValue(47), IntegerWithValue(75)), Acons(StringWithValue("f2"), IntegerWithValue(185), nil)), Acons(StringWithValue("f3"), IntegerWithValue(85), nil))
 	data := LispToJsonString(alist)
 	c.Assert(data, Equals, `{"f3":85,"map":{"f1":[47,75],"f2":185}}`)
 }

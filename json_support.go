@@ -76,25 +76,30 @@ func LispToJson(d *Data) (result interface{}) {
 		return IntegerValue(d)
 	}
 
+	if FloatP(d) {
+		return FloatValue(d)
+	}
+
 	if StringP(d) || SymbolP(d) {
 		return StringValue(d)
 	}
 
-	if PairP(d) {
-		ary := make([]interface{}, 0, Length(d))
-		for c := d; NotNilP(c); c = Cdr(c) {
-			ary = append(ary, LispToJson(Car(c)))
+	if ListP(d) {
+		fmt.Printf("LispToJson %s\n", String(d))
+		if DottedPairP(Car(d)) {
+			dict := make(map[string]interface{}, Length(d))
+			for c := d; NotNilP(c); c = Cdr(c) {
+				pair := Car(c)
+				dict[StringValue(Car(pair))] = LispToJson(Cdr(pair))
+			}
+			return dict
+		} else {
+			ary := make([]interface{}, 0, Length(d))
+			for c := d; NotNilP(c); c = Cdr(c) {
+				ary = append(ary, LispToJson(Car(c)))
+			}
+			return ary
 		}
-		return ary
-	}
-
-	if AlistP(d) {
-		dict := make(map[string]interface{}, Length(d))
-		for c := d; NotNilP(c); c = Cdr(c) {
-			pair := Car(c)
-			dict[StringValue(Car(pair))] = LispToJson(Cdr(pair))
-		}
-		return dict
 	}
 
 	return ""

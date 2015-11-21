@@ -24,18 +24,6 @@ func (s *TypeSuite) TestList(c *C) {
 	c.Assert(TypeName(ConsCellType), Equals, "List")
 }
 
-// func (s *TypeSuite) TestAlist(c *C) {
-// 	sexpr := Acons(IntegerWithValue(5), StringWithValue("five"), nil)
-// 	c.Assert(AlistP(sexpr), Equals, true)
-// 	c.Assert(ListP(sexpr), Equals, true)
-// 	c.Assert(int(TypeOf(sexpr)), Equals, AlistType)
-// 	c.Assert(TypeName(AlistType), Equals, "Association List")
-
-// 	c.Assert(DottedPairP(Car(sexpr)), Equals, true)
-// 	c.Assert(TypeOf(Car(sexpr)), Equals, AlistCellType)
-// 	c.Assert(TypeName(AlistCellType), Equals, "Association List Cell")
-// }
-
 func (s *TypeSuite) TestInteger(c *C) {
 	sexpr := IntegerWithValue(5)
 	c.Assert(IntegerP(sexpr), Equals, true)

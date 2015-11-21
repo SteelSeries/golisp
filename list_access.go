@@ -15,7 +15,7 @@ func WalkList(d *Data, path string) *Data {
 		if c == nil {
 			return nil
 		}
-		if !PairP(c) && !AlistP(c) && !DottedPairP(c) {
+		if !PairP(c) {
 			return nil
 		}
 		switch path[index] {
