@@ -11,11 +11,12 @@ func RegisterTypePredicatePrimitives() {
 	MakePrimitiveFunction("atom?", "1", IsAtomImpl)
 	MakePrimitiveFunction("list?", "1", IsListImpl)
 	MakePrimitiveFunction("pair?", "1", IsPairImpl)
-	MakePrimitiveFunction("alist?", "1", IsAlistImpl)
-	MakePrimitiveFunction("nil?", "1", NilPImpl)
-	MakePrimitiveFunction("null?", "1", NilPImpl)
-	MakePrimitiveFunction("notnil?", "1", NotNilPImpl)
-	MakePrimitiveFunction("notnull?", "1", NotNilPImpl)
+	MakePrimitiveFunction("circular-list?", "1", IsCircularListImpl)
+	MakePrimitiveFunction("dotted-list?", "1", IsDottedListImpl)
+	MakePrimitiveFunction("nil?", "1", IsNilImpl)
+	MakePrimitiveFunction("null?", "1", IsNilImpl)
+	MakePrimitiveFunction("notnil?", "1", IsNotNilImpl)
+	MakePrimitiveFunction("notnull?", "1", IsNotNilImpl)
 	MakePrimitiveFunction("symbol?", "1", IsSymbolImpl)
 	MakePrimitiveFunction("string?", "1", IsStringImpl)
 	MakePrimitiveFunction("integer?", "1", IsIntegerImpl)
@@ -42,15 +43,19 @@ func IsPairImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return BooleanWithValue(PairP(Car(args))), nil
 }
 
-func IsAlistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return BooleanWithValue(AlistP(Car(args))), nil
+func IsCircularListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return BooleanWithValue(ListWithLoopP(Car(args))), nil
 }
 
-func NilPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func IsDottedListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return BooleanWithValue(DottedListP(Car(args))), nil
+}
+
+func IsNilImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return BooleanWithValue(NilP(Car(args))), nil
 }
 
-func NotNilPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func IsNotNilImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return BooleanWithValue(NotNilP(Car(args))), nil
 }
 
