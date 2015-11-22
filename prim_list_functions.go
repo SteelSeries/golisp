@@ -15,7 +15,11 @@ import (
 func RegisterListFunctionsPrimitives() {
 	MakePrimitiveFunction("map", ">=2", MapImpl)
 	MakePrimitiveFunction("for-each", ">=2", ForEachImpl)
-	MakePrimitiveFunction("reduce", "3", ReduceImpl)
+	MakePrimitiveFunction("reduce", "3", ReduceLeftImpl)
+	MakePrimitiveFunction("reduce-left", "3", ReduceLeftImpl)
+	MakePrimitiveFunction("fold-left", "3", FoldLeftImpl)
+	MakePrimitiveFunction("reduce-right", "3", ReduceRightImpl)
+	MakePrimitiveFunction("fold-right", "3", FoldRightImpl)
 	MakePrimitiveFunction("filter", "2", FilterImpl)
 	MakePrimitiveFunction("remove", "2", RemoveImpl)
 	MakePrimitiveFunction("memq", "2", MemqImpl)
@@ -128,10 +132,10 @@ func ForEachImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return nil, nil
 }
 
-func ReduceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func ReduceLeftImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
 	if !FunctionOrPrimitiveP(f) {
-		err = ProcessError("reduce needs a function as its first argument", env)
+		err = ProcessError(fmt.Sprintf("reduce-left requires a function as its first argument but received %s.", String(f)), env)
 		return
 	}
 
@@ -143,7 +147,7 @@ func ReduceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	col := Third(args)
 
 	if !ListP(col) {
-		err = ProcessError("reduce needs a list as its third argument", env)
+		err = ProcessError(fmt.Sprintf("reduce-left requires a proper list as its third argument but received %s.", String(col)), env)
 		return
 	}
 
@@ -163,6 +167,107 @@ func ReduceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		}
 	}
 
+	return
+}
+
+func ReduceRightImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	f := First(args)
+	if !FunctionOrPrimitiveP(f) {
+		err = ProcessError(fmt.Sprintf("reduce-right requires a function as its first argument but received %s.", String(f)), env)
+		return
+	}
+
+	if VectorP(Third(args)) {
+		return VectorReduceImpl(args, env)
+	}
+
+	initial := Second(args)
+	col := Third(args)
+
+	if !ListP(col) {
+		err = ProcessError(fmt.Sprintf("reduce-right requires a proper list as its third argument but received %s.", String(col)), env)
+		return
+	}
+
+	if Length(col) == 0 {
+		return initial, nil
+	}
+
+	if Length(col) == 1 {
+		return Car(col), nil
+	}
+
+	ary := ToArray(col)
+
+	result = ary[len(ary)-1]
+	for i := len(ary) - 2; i >= 0; i-- {
+		result, err = ApplyWithoutEval(f, InternalMakeList(ary[i], result), env)
+		if err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+func FoldLeftImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	f := First(args)
+	if !FunctionOrPrimitiveP(f) {
+		err = ProcessError(fmt.Sprintf("fold-left requires a function as its first argument but received %s.", String(f)), env)
+		return
+	}
+
+	initial := Second(args)
+	col := Third(args)
+
+	if !ListP(col) {
+		err = ProcessError(fmt.Sprintf("fold-left requires a proper list as its third argument but received %s.", String(col)), env)
+		return
+	}
+
+	result = initial
+	for c := col; NotNilP(c); c = Cdr(c) {
+		result, err = ApplyWithoutEval(f, InternalMakeList(result, Car(c)), env)
+		if err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+func FoldRightImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	f := First(args)
+	if !FunctionOrPrimitiveP(f) {
+		err = ProcessError(fmt.Sprintf("fold-right requires a function as its first argument but received %s.", String(f)), env)
+		return
+	}
+
+	initial := Second(args)
+	col := Third(args)
+
+	if !ListP(col) {
+		err = ProcessError(fmt.Sprintf("fold-right requires a proper list as its third argument but received %s.", String(col)), env)
+		return
+	}
+
+	result = initial
+	for c := col; NotNilP(c); c = Cdr(c) {
+		result, err = ApplyWithoutEval(f, InternalMakeList(result, Car(c)), env)
+		if err != nil {
+			return
+		}
+	}
+
+	ary := ToArray(col)
+
+	result = initial
+	for i := len(ary) - 1; i >= 0; i-- {
+		result, err = ApplyWithoutEval(f, InternalMakeList(ary[i], result), env)
+		if err != nil {
+			return
+		}
+	}
 	return
 }
 
