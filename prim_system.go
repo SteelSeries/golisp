@@ -24,8 +24,9 @@ func RegisterSystemPrimitives() {
 	MakePrimitiveFunction("write-line", "*", WriteLineImpl)
 	MakePrimitiveFunction("write-log", "*", WriteLogImpl)
 	MakePrimitiveFunction("str", "*", MakeStringImpl)
-	MakePrimitiveFunction("intern", "1", InternImpl)
 	MakePrimitiveFunction("quit", "0", QuitImpl)
+	MakePrimitiveFunction("intern", "1", InternImpl)
+	MakePrimitiveFunction("symbol->string", "1", SymbolToStringImpl)
 	MakePrimitiveFunction("gensym", "0|1", GensymImpl)
 	MakePrimitiveFunction("eval", "1|2", EvalImpl)
 
@@ -183,6 +184,16 @@ func InternImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	return Intern(StringValue(sym)), nil
+}
+
+func SymbolToStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	sym := First(args)
+	if !SymbolP(sym) {
+		err = ProcessError(fmt.Sprintf("symbol->string expects a symbol, but received %s.", String(sym)), env)
+		return
+	}
+
+	return StringWithValue(StringValue(sym)), nil
 }
 
 func GensymImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
