@@ -20,3 +20,37 @@
 
 (define (substring->list string start end)
     (string->list (substring string start end)))
+(define (list-head l k)
+  (cond ((list? l)
+         (sublist l 0 k))
+        (else
+         (error "list-head requires a proper list"))))
+
+(define (list-tail l k)
+  (cond ((list? l)
+         (let loop ((the-tail l)
+                    (n k))
+           (cond ((= n 0)
+                  the-tail)
+                 ((null? the-tail)
+                  (error "list-tail requires an index <= the length of the list"))
+                 (else
+                  (loop (cdr the-tail) (- n 1))))))
+        (else
+         (error "list-tail require a proper list."))))
+
+(define (list-ref l k)
+  (nth k l))
+
+(define (last-pair x)
+  (cond ((null? x)
+         (error "last-pair requires a non-empty list"))
+        ((circular-list? x)
+         (error "last-pair requires a non-circular list"))
+        (else
+         (let loop ((l x))
+           (cond ((pair? (cdr l))
+                  (loop (cdr l)))
+                 (else
+                  l))))))
+

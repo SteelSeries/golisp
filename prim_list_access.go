@@ -66,12 +66,6 @@ func RegisterListAccessPrimitives() {
 	MakePrimitiveFunction("nth", "2", NthImpl)
 	MakePrimitiveFunction("take", "2", TakeImpl)
 	MakePrimitiveFunction("drop", "2", DropImpl)
-
-	MakePrimitiveFunction("list-ref", "2", ListRefImpl)
-	MakePrimitiveFunction("list-head", "2", ListHeadImpl)
-	MakePrimitiveFunction("list-tail", "2", ListTailImpl)
-
-	MakePrimitiveFunction("last-pair", "1", LastPairImpl)
 }
 
 func CarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -381,80 +375,4 @@ func DropImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		err = ProcessError("drop requires a list, vector, or bytearray as its second argument.", env)
 	}
 	return
-}
-
-func ListRefImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	col := Car(args)
-	if !PairP(col) {
-		err = ProcessError("First arg to list-ref must be a list", env)
-		return
-	}
-	count := Cadr(args)
-	if !IntegerP(count) {
-		err = ProcessError("Second arg to list-ref must be a number", env)
-		return
-	}
-
-	return Nth(col, int(IntegerValue(count))+1), nil
-}
-
-func ListHeadImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	n := Cadr(args)
-	if !IntegerP(n) {
-		err = ProcessError("list-head requires a number as its second argument.", env)
-	}
-	size := int(IntegerValue(n))
-
-	l := Car(args)
-	if ListP(l) {
-		var items []*Data = make([]*Data, 0, Length(args))
-		for i, cell := 0, l; i < size && NotNilP(cell); i, cell = i+1, Cdr(cell) {
-			items = append(items, Car(cell))
-		}
-		result = ArrayToList(items)
-	} else {
-		err = ProcessError("list-head requires a list as its first argument.", env)
-	}
-	return
-}
-
-func ListTailImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	n := Cadr(args)
-	if !IntegerP(n) {
-		err = ProcessError("list-tail requires a number as its second argument.", env)
-	}
-	size := int(IntegerValue(n))
-
-	l := Car(args)
-
-	if ListP(l) {
-		var cell *Data
-		var i int
-		for i, cell = 0, l; i < size && NotNilP(cell); i, cell = i+1, Cdr(cell) {
-		}
-		result = cell
-	} else {
-		err = ProcessError("list-tail requires a list or bytearray as its first argument.", env)
-	}
-	return
-}
-
-func LastPairImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l := Car(args)
-
-	if NilP(l) {
-		err = ProcessError(fmt.Sprintf("last-pair requires a non-empty list but was given %s.", String(l)), env)
-		return
-	}
-
-	if !ListP(l) && !DottedListP(l) {
-		err = ProcessError(fmt.Sprintf("last-pair requires a list but was given %s.", String(l)), env)
-		return
-	}
-
-	var cell *Data
-	for cell = l; NotNilP(Cdr(cell)) && PairP(Cdr(cell)); cell = Cdr(cell) {
-	}
-
-	return cell, nil
 }
