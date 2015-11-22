@@ -231,7 +231,7 @@ func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 	first := int(IntegerValue(n))
 
-	if first <= 0 {
+	if first < 0 {
 		err = ProcessError("sublist requires positive indecies.", env)
 		return
 	}
@@ -243,7 +243,7 @@ func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 	last := int(IntegerValue(n))
 
-	if last <= 0 {
+	if last < 0 {
 		err = ProcessError("sublist requires positive indecies.", env)
 		return
 	}
@@ -254,7 +254,7 @@ func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	var cell *Data
 	var i int
-	for i, cell = 1, l; i < first && NotNilP(cell); i, cell = i+1, Cdr(cell) {
+	for i, cell = 0, l; i < first && NotNilP(cell); i, cell = i+1, Cdr(cell) {
 	}
 
 	var items []*Data = make([]*Data, 0, Length(args))
