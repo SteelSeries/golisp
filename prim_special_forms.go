@@ -195,7 +195,7 @@ func DefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		body := Cdr(args)
 		value = FunctionWithNameParamsBodyAndParent(StringValue(name), params, body, env)
 	} else {
-		err = ProcessError("Invalid definition", env)
+		err = ProcessError(fmt.Sprintf("define expected a symbol or formals list as its first argument but received %s.", String(thing)), env)
 		return
 	}
 	env.BindLocallyTo(thing, value)
