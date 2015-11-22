@@ -72,7 +72,7 @@ func PanicImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func ErrorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return nil, ProcessError(String(Car(args)), env)
+	return nil, ProcessError(PrintString(Car(args)), env)
 }
 
 func OnErrorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
