@@ -126,7 +126,7 @@ func NilP(d *Data) bool {
 	if d == nil {
 		return true
 	}
-	if PairP(d) && Car(d) == nil && Cdr(d) == nil {
+	if TypeOf(d) == ConsCellType && Car(d) == nil && Cdr(d) == nil {
 		return true
 	}
 	return false
@@ -137,7 +137,7 @@ func NotNilP(d *Data) bool {
 }
 
 func PairP(d *Data) bool {
-	return d == nil || TypeOf(d) == ConsCellType
+	return NotNilP(d) && TypeOf(d) == ConsCellType
 }
 
 func DottedPairP(d *Data) bool {
@@ -150,6 +150,10 @@ func hasVisited(cell *Data, visitedCells []*Data) bool {
 }
 
 func ListP(d *Data) bool {
+	if d == nil || NilP(d) {
+		return true
+	}
+
 	if !PairP(d) {
 		return false
 	}
@@ -466,7 +470,7 @@ func ConsValue(d *Data) *ConsCell {
 		return nil
 	}
 
-	if PairP(d) {
+	if TypeOf(d) == ConsCellType {
 		return (*ConsCell)(d.Value)
 	}
 
@@ -478,7 +482,7 @@ func Car(d *Data) *Data {
 		return nil
 	}
 
-	if PairP(d) {
+	if TypeOf(d) == ConsCellType {
 		cell := ConsValue(d)
 		if cell != nil {
 			return cell.Car
@@ -493,7 +497,7 @@ func Cdr(d *Data) *Data {
 		return nil
 	}
 
-	if PairP(d) {
+	if TypeOf(d) == ConsCellType {
 		cell := ConsValue(d)
 		if cell != nil {
 			return cell.Cdr

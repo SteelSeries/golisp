@@ -46,7 +46,7 @@ func CondImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var condition *Data
 	for c := args; NotNilP(c); c = Cdr(c) {
 		clause := Car(c)
-		if !PairP(clause) {
+		if !ListP(clause) {
 			err = ProcessError("Cond expect a sequence of clauses that are lists", env)
 			return
 		}
@@ -75,7 +75,7 @@ func CaseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	for clauseCell := Cdr(args); NotNilP(clauseCell); clauseCell = Cdr(clauseCell) {
 		clause := Car(clauseCell)
-		if !PairP(clause) {
+		if !ListP(clause) {
 			err = ProcessError("Case expectes a sequence of clauses that are lists", env)
 			return
 		}
@@ -146,17 +146,18 @@ func UnlessImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func LambdaImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if !PairP(Car(args)) {
-		err = ProcessError("A lambda requires a parameter list", env)
+	formals := First(args)
+	if !ListP(formals) && !DottedListP(formals) {
+		err = ProcessError(fmt.Sprintf("lambda requires a parameter list but recieved %s.", String(formals)), env)
 		return
 	}
-	params := Car(args)
+	params := formals
 	body := Cdr(args)
 	return FunctionWithNameParamsBodyAndParent("unnamed", params, body, env), nil
 }
 
 func NamedLambdaImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if !PairP(Car(args)) {
+	if !ListP(Car(args)) {
 		err = ProcessError("A lambda requires a name/parameter list", env)
 		return
 	}
@@ -178,7 +179,7 @@ func DefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		if err != nil {
 			return
 		}
-	} else if PairP(thing) {
+	} else if ListP(thing) || DottedListP(thing) {
 		name := Car(thing)
 		params := Cdr(thing)
 		thing = name
@@ -204,7 +205,7 @@ func DefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 func DefmacroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var value *Data
 	thing := Car(args)
-	if PairP(thing) {
+	if ListP(thing) || DottedListP(thing) {
 		name := Car(thing)
 		params := Cdr(thing)
 		thing = name
@@ -228,7 +229,7 @@ func bindLetLocals(bindingForms *Data, rec bool, localEnv *SymbolTableFrame, eva
 
 	for cell := bindingForms; NotNilP(cell); cell = Cdr(cell) {
 		bindingPair := Car(cell)
-		if !PairP(bindingPair) {
+		if !ListP(bindingPair) {
 			err = ProcessError("Let requires a list of bindings (with are pairs) as it's first argument", evalEnv)
 			return
 		}
@@ -258,7 +259,7 @@ func bindLetLocals(bindingForms *Data, rec bool, localEnv *SymbolTableFrame, eva
 }
 
 func LetCommon(args *Data, env *SymbolTableFrame, star bool, rec bool) (result *Data, err error) {
-	if !PairP(Car(args)) {
+	if !ListP(Car(args)) {
 		err = ProcessError("Let requires a list of bindings as it's first argument", env)
 		return
 	}
@@ -295,7 +296,7 @@ func namedLetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	bindings := Cadr(args)
-	if !PairP(bindings) {
+	if !ListP(bindings) {
 		err = ProcessError("A named let requires a list of bindings as it's second argument", env)
 		return
 	}
@@ -377,13 +378,13 @@ func rebindDoLocals(bindingForms *Data, env *SymbolTableFrame) (err error) {
 
 func DoImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	bindings := Car(args)
-	if !PairP(bindings) {
+	if !ListP(bindings) {
 		err = ProcessError("Do requires a list of bindings as it's first argument", env)
 		return
 	}
 
 	testClause := Cadr(args)
-	if !PairP(testClause) {
+	if !ListP(testClause) {
 		err = ProcessError("Do requires a list as it's second argument", env)
 		return
 	}
