@@ -23,8 +23,8 @@ func RegisterListFunctionsPrimitives() {
 	MakePrimitiveFunction("filter", "2", FilterImpl)
 	MakePrimitiveFunction("remove", "2", RemoveImpl)
 	MakePrimitiveFunction("memq", "2", MemqImpl)
-	MakePrimitiveFunction("memv", "2", MemqImpl)
-	MakePrimitiveFunction("member", "2", MemqImpl)
+	MakePrimitiveFunction("memv", "2", MemvImpl)
+	MakePrimitiveFunction("member", "2", MemberImpl)
 	MakePrimitiveFunction("memp", "2", FindTailImpl)
 	MakePrimitiveFunction("find-tail", "2", FindTailImpl)
 	MakePrimitiveFunction("find", "2", FindImpl)
@@ -349,7 +349,44 @@ func MemqImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	key := First(args)
 
 	l := Second(args)
+	if !ListP(l) {
+		err = ProcessError(fmt.Sprintf("memq needs a list as its second argument, but got %s.", String(l)), env)
+		return
+	}
+	for c := l; NotNilP(c); c = Cdr(c) {
+		if IsEq(key, Car(c)) {
+			return c, nil
+		}
+	}
 
+	return LispFalse, nil
+}
+
+func MemvImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	key := First(args)
+
+	l := Second(args)
+	if !ListP(l) {
+		err = ProcessError(fmt.Sprintf("memv needs a list as its second argument, but got %s.", String(l)), env)
+		return
+	}
+	for c := l; NotNilP(c); c = Cdr(c) {
+		if IsEqv(key, Car(c)) {
+			return c, nil
+		}
+	}
+
+	return LispFalse, nil
+}
+
+func MemberImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	key := First(args)
+
+	l := Second(args)
+	if !ListP(l) {
+		err = ProcessError(fmt.Sprintf("member needs a list as its second argument, but got %s.", String(l)), env)
+		return
+	}
 	for c := l; NotNilP(c); c = Cdr(c) {
 		if IsEqual(key, Car(c)) {
 			return c, nil
