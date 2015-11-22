@@ -72,7 +72,7 @@ func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var d []*Data = make([]*Data, 0, loopCount)
 	var v *Data
 	var a *Data
-	for index := 1; index <= int(loopCount); index++ {
+	for index := 0; index < int(loopCount); index++ {
 		mapArgs := make([]*Data, 0, len(collections))
 		for _, mapArgCollection := range collections {
 			a = Nth(mapArgCollection, index)
@@ -117,7 +117,7 @@ func ForEachImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	var a *Data
-	for index := 1; index <= int(loopCount); index++ {
+	for index := 0; index < int(loopCount); index++ {
 		mapArgs := make([]*Data, 0, len(collections))
 		for _, mapArgCollection := range collections {
 			a = Nth(mapArgCollection, index)
