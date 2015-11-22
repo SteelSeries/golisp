@@ -4,7 +4,7 @@
 ;;; Use of this source code is governed by a BSD-style
 ;;; license that can be found in the LICENSE file.
 
-;;; Lists support llibrary
+;;; Lists support library
 ;;; Adds the rich set of standard Scheme list functions.  Only the
 ;;; basic list functions are builtin
 
@@ -102,3 +102,7 @@
 
 (define (delete element l)
   (remove (lambda (x) (equal? x element)) l))
+
+(define (alist? x)
+  (and (list? x)
+       (every dotted-pair? x)))
