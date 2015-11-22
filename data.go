@@ -365,14 +365,8 @@ func RemoveFromListBang(l *Data, item *Data) (result *Data) {
 }
 
 func Acons(car *Data, cdr *Data, alist *Data) *Data {
-	pair, _ := Assoc(car, alist)
-	if NilP(pair) {
-		cell := Cons(car, cdr)
-		return Cons(cell, alist)
-	} else {
-		((*ConsCell)(pair.Value)).Cdr = cdr
-		return alist
-	}
+	cell := Cons(car, cdr)
+	return Cons(cell, alist)
 }
 
 func InternalMakeList(c ...*Data) *Data {
@@ -804,14 +798,14 @@ func QuoteAll(d *Data) (result *Data) {
 	return ArrayToList(l)
 }
 
-func Assoc(key *Data, alist *Data) (result *Data, err error) {
+func doAssoc(comparator func(d *Data, o *Data) bool, key *Data, alist *Data) (result *Data, err error) {
 	for c := alist; NotNilP(c); c = Cdr(c) {
 		pair := Car(c)
 		if !DottedPairP(pair) && !PairP(pair) {
 			err = errors.New("An alist MUST be made of pairs.")
 			return
 		}
-		if IsEqual(Car(pair), key) {
+		if comparator(Car(pair), key) {
 			result = pair
 			return
 		}
@@ -819,7 +813,19 @@ func Assoc(key *Data, alist *Data) (result *Data, err error) {
 	return
 }
 
-func Dissoc(key *Data, alist *Data) (result *Data, err error) {
+func Assq(key *Data, alist *Data) (result *Data, err error) {
+	return doAssoc(IsEq, key, alist)
+}
+
+func Assv(key *Data, alist *Data) (result *Data, err error) {
+	return doAssoc(IsEqv, key, alist)
+}
+
+func Assoc(key *Data, alist *Data) (result *Data, err error) {
+	return doAssoc(IsEqual, key, alist)
+}
+
+func doDissoc(comparator func(d *Data, o *Data) bool, key *Data, alist *Data) (result *Data, err error) {
 	didRemoval := false
 	newList := make([]*Data, 0, 5)
 	for c := alist; NotNilP(c); c = Cdr(c) {
@@ -828,7 +834,7 @@ func Dissoc(key *Data, alist *Data) (result *Data, err error) {
 			err = errors.New("An alist MUST be made of pairs.")
 			return
 		}
-		if IsEqual(Car(pair), key) {
+		if comparator(Car(pair), key) {
 			didRemoval = true
 		} else {
 			newList = append(newList, pair)
@@ -840,6 +846,18 @@ func Dissoc(key *Data, alist *Data) (result *Data, err error) {
 		result = alist
 	}
 	return
+}
+
+func Dissq(key *Data, alist *Data) (result *Data, err error) {
+	return doDissoc(IsEq, key, alist)
+}
+
+func Dissv(key *Data, alist *Data) (result *Data, err error) {
+	return doDissoc(IsEqv, key, alist)
+}
+
+func Dissoc(key *Data, alist *Data) (result *Data, err error) {
+	return doDissoc(IsEqual, key, alist)
 }
 
 func Copy(d *Data) *Data {
