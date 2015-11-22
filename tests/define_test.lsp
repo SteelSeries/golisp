@@ -1,13 +1,12 @@
 ;;; -*- mode: Scheme -*-
 
-(define x 5)
 
-(define (f a b . c)
-  (cons a (cons b c)))
 
 (context "define"
 
-         ()
+         ((define x 5)
+          (define (f a b . c)
+            (cons a (cons b c))))
 
          (it "scopes properly"
              (assert-eq ((lambda (y)
@@ -15,16 +14,15 @@
                            x)
                          1)
                         10))
-
+         
          (it "supports var-args"
-                   (assert-eq (f 1 2 3 4 5)
-                              '(1 2 3 4 5))
-                   (assert-eq ((lambda (a . b)
-                                 (apply a b))
-                               + 1 2 3)
-                              6))
-
+             (assert-eq (f 1 2 3 4 5) '(1 2 3 4 5))
+             (assert-eq ((lambda (a . b)
+                           (apply a b))
+                         + 1 2 3)
+                        6))
+         
          (it "errors appropriately"
-                   (assert-error (define "x" 4))
-                   (assert-error (define ("x") 4))
-                   (assert-error (define (+ x y) 42))))
+             (assert-error (define "x" 4))
+             (assert-error (define ("x") 4))
+             (assert-error (define (+ x y) 42))))
