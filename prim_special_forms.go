@@ -32,11 +32,24 @@ func RegisterSpecialFormPrimitives() {
 	MakeSpecialForm("definition-of", "1", DefinitionOfImpl)
 }
 
-func evaluateBody(sexprs *Data, env *SymbolTableFrame) (result *Data, err error) {
-	for e := sexprs; NotNilP(e); e = Cdr(e) {
-		result, err = Eval(Car(e), env)
+func evaluateBody(value *Data, sexprs *Data, env *SymbolTableFrame) (result *Data, err error) {
+	var f *Data
+	if value != nil && StringValue(First(sexprs)) == "=>" {
+		f, err = Eval(Second(sexprs), env)
 		if err != nil {
 			return
+		}
+		if !FunctionOrPrimitiveP(f) {
+			err = ProcessError(fmt.Sprintf("The alternate Cond clause syntax requires a function to follow => but was given %s.", String(f)), env)
+			return
+		}
+		return ApplyWithoutEval(f, InternalMakeList(value), env)
+	} else {
+		for e := sexprs; NotNilP(e); e = Cdr(e) {
+			result, err = Eval(Car(e), env)
+			if err != nil {
+				return
+			}
 		}
 	}
 	return
@@ -51,14 +64,14 @@ func CondImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 			return
 		}
 		if IsEqual(Car(clause), Intern("else")) {
-			return evaluateBody(Cdr(clause), env)
+			return evaluateBody(nil, Cdr(clause), env)
 		} else {
 			condition, err = Eval(Car(clause), env)
 			if err != nil {
 				return
 			}
 			if BooleanValue(condition) {
-				return evaluateBody(Cdr(clause), env)
+				return evaluateBody(condition, Cdr(clause), env)
 			}
 		}
 	}
@@ -80,11 +93,11 @@ func CaseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 			return
 		}
 		if IsEqual(Car(clause), Intern("else")) {
-			return evaluateBody(Cdr(clause), env)
+			return evaluateBody(nil, Cdr(clause), env)
 		} else if ListP(Car(clause)) {
 			for v := Car(clause); NotNilP(v); v = Cdr(v) {
 				if IsEqual(Car(v), keyValue) {
-					return evaluateBody(Cdr(clause), env)
+					return evaluateBody(nil, Cdr(clause), env)
 				}
 			}
 		} else {
