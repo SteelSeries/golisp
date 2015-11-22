@@ -198,13 +198,13 @@ func partitionByPredicate(determiner *Data, l *Data, env *SymbolTableFrame) (res
 }
 
 func PartitionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	determiner := Car(args)
+	determiner := First(args)
 	if !IntegerP(determiner) && !FunctionOrPrimitiveP(determiner) {
 		err = ProcessError("partition requires an integer or function as it's first argument.", env)
 		return
 	}
 
-	l := Cadr(args)
+	l := Second(args)
 	if !ListP(l) {
 		err = ProcessError("partition requires a list as it's second argument.", env)
 		return
