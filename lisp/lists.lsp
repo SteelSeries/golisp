@@ -20,6 +20,15 @@
 
 (define (substring->list string start end)
     (string->list (substring string start end)))
+
+(define (length+ object)
+  (cond ((list? object)
+         (length object))
+        ((circular-list? object)
+         #f)
+        (else
+         (error "length+ expected a proper or circular list"))))
+
 (define (list-head l k)
   (cond ((list? l)
          (sublist l 0 k))
@@ -54,3 +63,42 @@
                  (else
                   l))))))
 
+(define (except-last-pair x)
+  (cond ((null? x)
+         (error "except-last-pair requires a non-empty list"))
+        ((circular-list? x)
+         (error "except-last-pair requires a non-circular list."))
+        (else
+         (let loop ((l x)
+                    (result '()))
+           (cond ((pair? (cdr l))
+                  (loop (cdr l) (append! result (car l))))
+                 (else
+                  result))))))
+
+(define (except-last-pair! x)
+  (cond ((null? x)
+         (error "except-last-pair requires a non-empty list"))
+        ((circular-list? x)
+         (error "except-last-pair requires a non-circular list."))
+        ((and (or (list? x) (dotted-list? x))
+              (pair? (cdr x)))
+         (let loop ((l x)
+                    (prev '())
+                    (result x))
+           (cond ((pair? (cdr l))
+                  (loop (cdr l) l result))
+                 (else
+                  (set-cdr! prev '())
+                  result))))
+        (else
+         '())))
+
+(define (delq element l)
+  (remove (lambda (x) (eq? x element)) l))
+
+(define (delv element l)
+  (remove (lambda (x) (eqv? x element)) l))
+
+(define (delete element l)
+  (remove (lambda (x) (equal? x element)) l))
