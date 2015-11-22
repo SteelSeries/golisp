@@ -7,16 +7,16 @@
 
 package golisp
 
-import (
-	"fmt"
-)
+import ()
 
 func RegisterAListPrimitives() {
 	MakePrimitiveFunction("acons", "2|3", AconsImpl)
 	MakePrimitiveFunction("pairlis", "2|3", PairlisImpl)
-	MakePrimitiveFunction("assq", "2", AssocImpl)
-	MakePrimitiveFunction("assv", "2", AssocImpl)
+	MakePrimitiveFunction("assq", "2", AssqImpl)
+	MakePrimitiveFunction("assv", "2", AssvImpl)
 	MakePrimitiveFunction("assoc", "2", AssocImpl)
+	MakePrimitiveFunction("dissq", "2", DissqImpl)
+	MakePrimitiveFunction("dissv", "2", DissvImpl)
 	MakePrimitiveFunction("dissoc", "2", DissocImpl)
 	MakePrimitiveFunction("rassoc", "2", RassocImpl)
 }
@@ -78,16 +78,22 @@ func PairlisImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return
 }
 
+func AssqImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	alist := Second(args)
+	key := First(args)
+	return Assq(key, alist)
+}
+
+func AssvImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	alist := Second(args)
+	key := First(args)
+	return Assv(key, alist)
+}
+
 func AssocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	alist := Second(args)
 	key := First(args)
-
-	if FrameP(alist) {
-		frame := FrameValue(alist)
-		return frame.Get(fmt.Sprintf("%s:", StringValue(key))), nil
-	} else {
-		return Assoc(key, alist)
-	}
+	return Assoc(key, alist)
 }
 
 func RassocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -106,6 +112,18 @@ func RassocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		}
 	}
 	return
+}
+
+func DissqImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	key := Car(args)
+	list := Cadr(args)
+	return Dissq(key, list)
+}
+
+func DissvImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	key := Car(args)
+	list := Cadr(args)
+	return Dissv(key, list)
 }
 
 func DissocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
