@@ -286,13 +286,13 @@ func TenthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 func NthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	index := First(args)
 	if !IntegerP(index) {
-		err = ProcessError("First arg to nth must be an integer index", env)
+		err = ProcessError(fmt.Sprintf("nth requires integer index but received %s.", String(index)), env)
 		return
 	}
 
 	col := Second(args)
-	if !PairP(col) && !VectorP(col) {
-		err = ProcessError("Second arg to nth must be a list or vector", env)
+	if !ListP(col) && !VectorP(col) {
+		err = ProcessError(fmt.Sprintf("nth required a list or vector but received %s.", String(col)), env)
 		return
 	}
 
@@ -300,7 +300,13 @@ func NthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return VectorRefImpl(InternalMakeList(col, index), env)
 	}
 
-	return Nth(col, int(IntegerValue(index))), nil
+	indexVal := int(IntegerValue(index))
+	if indexVal < 0 || indexVal >= Length(col) {
+		err = ProcessError(fmt.Sprintf("nth index out of bounds: %d.", indexVal), env)
+		return
+	}
+
+	return Nth(col, indexVal), nil
 }
 
 func TakeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

@@ -85,58 +85,58 @@ func Cdddr(d *Data) *Data {
 // nth
 
 func Nth(d *Data, n int) *Data {
-	if d == nil || n < 1 || n > Length(d) {
+	if d == nil || n < 0 || n >= Length(d) {
 		return nil
 	}
 
 	var c *Data = d
-	for i := n; i > 1; c, i = Cdr(c), i-1 {
+	for i := n; i > 0; c, i = Cdr(c), i-1 {
 	}
 	return Car(c)
 }
 
 func First(d *Data) *Data {
-	return Nth(d, 1)
+	return Nth(d, 0)
 }
 
 func Second(d *Data) *Data {
-	return Nth(d, 2)
+	return Nth(d, 1)
 }
 
 func Third(d *Data) *Data {
-	return Nth(d, 3)
+	return Nth(d, 2)
 }
 
 func Fourth(d *Data) *Data {
-	return Nth(d, 4)
+	return Nth(d, 3)
 }
 
 func Fifth(d *Data) *Data {
-	return Nth(d, 5)
+	return Nth(d, 4)
 }
 
 func Sixth(d *Data) *Data {
-	return Nth(d, 6)
+	return Nth(d, 5)
 }
 
 func Seventh(d *Data) *Data {
-	return Nth(d, 7)
+	return Nth(d, 6)
 }
 
 func Eighth(d *Data) *Data {
-	return Nth(d, 8)
+	return Nth(d, 7)
 }
 
 func Ninth(d *Data) *Data {
-	return Nth(d, 9)
+	return Nth(d, 8)
 }
 
 func Tenth(d *Data) *Data {
-	return Nth(d, 10)
+	return Nth(d, 9)
 }
 
 func SetNth(list *Data, index int, value *Data) *Data {
-	for i := index; i > 1; list, i = Cdr(list), i-1 {
+	for i := index; i > 0; list, i = Cdr(list), i-1 {
 	}
 	if !NilP(list) {
 		ConsValue(list).Car = value
