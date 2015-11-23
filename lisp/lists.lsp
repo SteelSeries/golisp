@@ -106,3 +106,7 @@
 (define (alist? x)
   (and (list? x)
        (every dotted-pair? x)))
+
+(define del-assq dissq)
+(define del-assv dissv)
+(define del-assoc dissoc)
