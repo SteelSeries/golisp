@@ -559,7 +559,7 @@ func CharacterValue(d *Data) string {
 
 func BooleanValue(d *Data) bool {
 	if NilP(d) {
-		return false
+		return true
 	}
 
 	if BooleanP(d) {
