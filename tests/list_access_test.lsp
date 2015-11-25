@@ -1,4 +1,4 @@
-;;; -*- mode: Scheme -*-
+;; -*- mode: Scheme -*-
 
 (load "lisp/lists.lsp")
 

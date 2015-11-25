@@ -27,13 +27,13 @@
         ((circular-list? object)
          #f)
         (else
-         (error "length+ expected a proper or circular list"))))
+         (error "length+ expected a proper or circular list."))))
 
 (define (list-head l k)
   (cond ((list? l)
          (sublist l 0 k))
         (else
-         (error "list-head requires a proper list"))))
+         (error "list-head requires a proper list."))))
 
 (define (list-tail l k)
   (cond ((list? l)
@@ -42,7 +42,7 @@
            (cond ((= n 0)
                   the-tail)
                  ((null? the-tail)
-                  (error "list-tail requires an index <= the length of the list"))
+                  (error "list-tail requires an index <= the length of the list."))
                  (else
                   (loop (cdr the-tail) (- n 1))))))
         (else
@@ -53,19 +53,20 @@
 
 (define (last-pair x)
   (cond ((null? x)
-         (error "last-pair requires a non-empty list"))
+         (error "last-pair requires a non-empty list."))
         ((circular-list? x)
-         (error "last-pair requires a non-circular list"))
-        (else
+         (error "last-pair requires a non-circular list."))
+        ((or (list? x) (dotted-list? x))
          (let loop ((l x))
            (cond ((pair? (cdr l))
                   (loop (cdr l)))
                  (else
-                  l))))))
+                  l))))
+        (else (error "last-pair requires a proper or dotted list."))))
 
 (define (except-last-pair x)
   (cond ((null? x)
-         (error "except-last-pair requires a non-empty list"))
+         (error "except-last-pair requires a non-empty list."))
         ((circular-list? x)
          (error "except-last-pair requires a non-circular list."))
         (else
@@ -78,7 +79,7 @@
 
 (define (except-last-pair! x)
   (cond ((null? x)
-         (error "except-last-pair requires a non-empty list"))
+         (error "except-last-pair requires a non-empty list."))
         ((circular-list? x)
          (error "except-last-pair requires a non-circular list."))
         ((and (or (list? x) (dotted-list? x))

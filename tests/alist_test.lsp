@@ -10,7 +10,7 @@
                    (assert-eq (acons 'a 1 '((b . 2) (c . 3)))
                               '((a . 1) (b . 2) (c . 3)))
                    (assert-eq (acons 'a 5 '((a . 1) (b . 2) (c . 3)))
-                              '((a . 5) (b . 2) (c . 3)))
+                              '((a . 5) (a . 1) (b . 2) (c . 3)))
 
                    (assert-error (acons '(1 2) 1 '()))) ;first arg can not be a list
 

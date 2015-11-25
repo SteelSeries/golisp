@@ -8,7 +8,7 @@
 
          ()
 
-         (it arithmetic-test
+         (it "arithmetic-test"
              (assert-eq (+ 5 5)
                         10)
              (assert-eq (- 10 7)
@@ -18,11 +18,11 @@
              (assert-eq (/ 25 5)
                         5))
 
-         (it subtraction-going-negative
+         (it "subtraction-going-negative"
              (assert-eq (- 5 9)
                         -4))
 
-         (it condition-test
+         (it "condition-test"
              (assert-true (< xx y))
              (assert-false (< y z))
              (assert-error (< "a" 5))
@@ -49,7 +49,7 @@
              (assert-true (not #f))
              (assert-false (not #t))
              (assert-false (not '(a b)))
-             (assert-true (not '()))
+             (assert-false (not '()))
              (assert-false (or #f #f))
              (assert-true (or #f #f #t))
              (assert-false (and #t #f #t))
@@ -67,31 +67,31 @@
              (assert-eq #t (or (> 4 2) (+ 4 1)))
              (assert-eq 5 (or (< 4 2) (+ 4 1))))
 
-         (it int-min
+         (it "int-min"
              (assert-eq (min '(1 2))
                         1)
              (assert-eq (min '(3 4 2 8 8 6 1))
                         1))
 
-         (it float-min
+         (it "float-min"
              (assert-eq (min '(1.3 2.0))
                         1.3)
              (assert-eq (min '(3 4.8 2 8 8.3 6 1))
                         1.0))
 
-         (it int-max
+         (it "int-max"
              (assert-eq (max '(1 2))
                         2)
              (assert-eq (max '(3 4 2 8 8 6 1))
                         8))
 
-         (it float-max
+         (it "float-max"
              (assert-eq (max '(1.3 2.2))
                         2.2)
              (assert-eq (max '(3 4.8 2 8 8.3 6 1))
                         8.3))
 
-         (it floor
+         (it "floor"
              (assert-eq (floor 3.4)
                         3.0)
              (assert-eq (floor -3.4)
@@ -99,7 +99,7 @@
              (assert-eq (floor 3)
                         3.0))
 
-         (it ceiling
+         (it "ceiling"
              (assert-eq (ceiling 3.4)
                         4.0)
              (assert-eq (ceiling -3.4)
@@ -107,7 +107,7 @@
              (assert-eq (ceiling 3)
                         3.0))
 
-         (it general-math-errors
+         (it "general-math-errors"
              (assert-error (/ 3 0))
              (assert-error (% 3.5 6))
              (assert-error (min '(1 d)))
