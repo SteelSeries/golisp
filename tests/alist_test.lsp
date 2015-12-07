@@ -71,7 +71,7 @@
                         '()))
 
          (it "raises an error if given a non-alist to search"
-             (assert-error (assoc 'a '(a (b . 2)))))
+             (assert-error (assoc 'a '(a (b . 2))))))
 
 (context "can be searched by value"
 
