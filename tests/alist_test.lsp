@@ -99,4 +99,4 @@
          
          (it "returns an alist without the first pair with the given key"
              (assert-eq (dissoc 'a '((a . 1) (b . 2) (a . 3)))
-                        '((b . 2) (a . 3)))))
+                        '((b . 2)))))
