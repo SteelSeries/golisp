@@ -341,7 +341,11 @@ func FormatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		port := PortValue(destination)
 		_, err = port.WriteString(combinedString)
 	} else if BooleanValue(destination) {
-		_, err = os.Stdout.WriteString(combinedString)
+		// Make sure Stdout exists before writing to it, prevents issues with LDFLAGS="-H windowsgui"
+		stat, statErr := os.Stdout.Stat()
+		if stat != nil && statErr == nil {
+			_, err = os.Stdout.WriteString(combinedString)
+		}
 	} else {
 		result = StringWithValue(combinedString)
 	}
