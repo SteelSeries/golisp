@@ -26,6 +26,7 @@ func RegisterTypePredicatePrimitives() {
 	MakePrimitiveFunction("frame?", "1", IsFrameImpl)
 	MakePrimitiveFunction("bytearray?", "1", IsByteArrayImpl)
 	MakePrimitiveFunction("port?", "1", IsPortImpl)
+	MakePrimitiveFunction("boolean?", "1", IsBooleanImpl)
 }
 
 func IsAtomImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -87,4 +88,8 @@ func IsByteArrayImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 
 func IsPortImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return BooleanWithValue(PortP(Car(args))), nil
+}
+
+func IsBooleanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return BooleanWithValue(BooleanP(Car(args))), nil
 }
