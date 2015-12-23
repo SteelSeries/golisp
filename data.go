@@ -619,6 +619,11 @@ func Length(d *Data) int {
 		return len(*FrameValue(d))
 	}
 
+	if ObjectP(d) && ObjectType(d) == "[]byte" {
+		dBytes := *(*[]byte)(ObjectValue(d))
+		return len(dBytes)
+	}
+
 	return 0
 }
 
