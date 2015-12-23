@@ -47,6 +47,8 @@ func RegisterStringPrimitives() {
 	MakePrimitiveFunction("string-ci<=?", "2", StringLessThanEqualCiImpl)
 	MakePrimitiveFunction("string>=?", "2", StringGreaterThanEqualImpl)
 	MakePrimitiveFunction("string-ci>=?", "2", StringGreaterThanEqualCiImpl)
+
+	MakePrimitiveFunction("parse", "1", ParseImpl)
 }
 
 func StringSplitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -426,4 +428,15 @@ func StringGreaterThanEqualCiImpl(args *Data, env *SymbolTableFrame) (result *Da
 		result = BooleanWithValue(string1 >= string2)
 	}
 	return
+}
+
+func ParseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	str := First(args)
+	if !StringP(str) {
+		err = fmt.Errorf("parse requires its argument to be a string but it was %s", String(str))
+		return
+	}
+	strValue := StringValue(str)
+
+	return Parse(strValue)
 }
