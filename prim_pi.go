@@ -12,16 +12,15 @@ import (
 )
 
 func RegisterPiPrimitives() {
-	Global.BindTo(Intern("gpio:INPUT"), IntegerWithValue(hwio.INPUT))
-	Global.BindTo(Intern("gpio:OUTPUT"), IntegerWithValue(hwio.OUTPUT))
-	Global.BindTo(Intern("gpio:INPUT_PULLUP"), IntegerWithValue(hwio.INPUT_PULLUP))
-	Global.BindTo(Intern("gpio:INPUT_PULLDOWN"), IntegerWithValue(hwio.INPUT_PULLDOWN))
-	Global.BindTo(Intern("gpio:HIGH"), IntegerWithValue(hwio.HIGH))
-	Global.BindTo(Intern("gpio:LOW"), IntegerWithValue(hwio.LOW))
+	Global.BindTo(Intern("gpio:INPUT"), IntegerWithValue(int64(hwio.INPUT)))
+	Global.BindTo(Intern("gpio:OUTPUT"), IntegerWithValue(int64(hwio.OUTPUT)))
+	Global.BindTo(Intern("gpio:INPUT_PULLUP"), IntegerWithValue(int64(hwio.INPUT_PULLUP)))
+	Global.BindTo(Intern("gpio:INPUT_PULLDOWN"), IntegerWithValue(int64(hwio.INPUT_PULLDOWN)))
+	Global.BindTo(Intern("gpio:HIGH"), IntegerWithValue(int64(hwio.HIGH)))
+	Global.BindTo(Intern("gpio:LOW"), IntegerWithValue(int64(hwio.LOW)))
 
 	MakePrimitiveFunction("gpio:get-pin", "1|2", GPIOGetPinImpl)
 	MakePrimitiveFunction("gpio:set-pin-mode", "2", GPIOSetPinModeImpl)
-	MakePrimitiveFunction("gpio:pin?", "2", GPIOPinPImpl)
 	MakePrimitiveFunction("gpio:digital-write", "2", GPIODigitalWriteImpl)
 	MakePrimitiveFunction("gpio:digital-read", "1", GPIODigitalReadImpl)
 }
@@ -46,7 +45,7 @@ func GPIOGetPinImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 			err = ProcessError(fmt.Sprintf("gpio:get-pin expects an integer as it's second argument but received %s.", String(modeObj)))
 			return
 		}
-		mode = IntegerValue(modeObj)
+		mode = int(IntegerValue(modeObj))
 		if mode < hwio.INPUT || mode > hwio.INPUT_PULLDOWN {
 			err = ProcessError(fmt.Sprintf("gpio:get-pin expected a valid pin mode as its second argument but received %d.", mode))
 		}
@@ -56,7 +55,7 @@ func GPIOGetPinImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 		}
 	}
 
-	result = IntegerWithValue(pin)
+	result = IntegerWithValue(int64(pin))
 	return
 }
 
@@ -66,14 +65,14 @@ func GPIOSetPinModeImpl(args *Data, env *SymbolTableFrame) (result *Data, err er
 		err = ProcessError(fmt.Sprintf("gpio:set-pin-mode expected a pin number as its first argument but received %s.", String(pinObj)))
 		return
 	}
-	pin := IntegerValue(pinObj)
+	pin := int(IntegerValue(pinObj))
 
 	modeObj = Second(args)
 	if !IntegerP(modeObj) {
 		err = ProcessError(fmt.Sprintf("gpio:set-pin-mode expects an integer as it's second argument but received %s.", String(modeObj)))
 		return
 	}
-	mode = IntegerValue(modeObj)
+	mode = int(IntegerValue(modeObj))
 	if mode < hwio.INPUT || mode > hwio.INPUT_PULLDOWN {
 		err = ProcessError(fmt.Sprintf("gpio:set-pin-mode expected a valid pin mode as its second argument but received %d.", mode))
 	}
@@ -89,7 +88,7 @@ func GPIODigitalWriteImpl(args *Data, env *SymbolTableFrame) (result *Data, err 
 		err = ProcessError(fmt.Sprintf("gpio:digital-write expected a pin number as its first argument but received %s.", String(pinObj)))
 		return
 	}
-	pin := IntegerValue(pinObj)
+	pin := int(IntegerValue(pinObj))
 
 	valueObj = Second(args)
 	value := 0
@@ -121,7 +120,7 @@ func GPIODigitalReadImpl(args *Data, env *SymbolTableFrame) (result *Data, err e
 		err = ProcessError(fmt.Sprintf("gpio:digital-read expected a pin number as its first argument but received %s.", String(pinObj)))
 		return
 	}
-	pin := IntegerValue(pinObj)
+	pin := int(IntegerValue(pinObj))
 
 	value, err := hwio.DigitalRead(pin)
 	if err != nil {
