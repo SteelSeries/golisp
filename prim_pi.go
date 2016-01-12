@@ -8,6 +8,7 @@
 package golisp
 
 import (
+       "fmt"
 	"github.com/mrmorphic/hwio"
 )
 
