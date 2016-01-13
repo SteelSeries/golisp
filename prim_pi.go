@@ -41,12 +41,12 @@ func GPIOGetPinImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 			return
 		}
 	} else {
-		modeObj = Second(args)
+		modeObj := Second(args)
 		if !IntegerP(modeObj) {
 			err = ProcessError(fmt.Sprintf("gpio:get-pin expects an integer as it's second argument but received %s.", String(modeObj)), env)
 			return
 		}
-		mode = int(IntegerValue(modeObj))
+		mode := int(IntegerValue(modeObj))
 		if mode < hwio.INPUT || mode > hwio.INPUT_PULLDOWN {
 			err = ProcessError(fmt.Sprintf("gpio:get-pin expected a valid pin mode as its second argument but received %d.", mode), env)
 		}
@@ -68,12 +68,12 @@ func GPIOSetPinModeImpl(args *Data, env *SymbolTableFrame) (result *Data, err er
 	}
 	pin := Pin(int(IntegerValue(pinObj)))
 
-	modeObj = Second(args)
+	modeObj := Second(args)
 	if !IntegerP(modeObj) {
 		err = ProcessError(fmt.Sprintf("gpio:set-pin-mode expects an integer as it's second argument but received %s.", String(modeObj)), env)
 		return
 	}
-	mode = int(IntegerValue(modeObj))
+	mode := PinIOMode(int(IntegerValue(modeObj)))
 	if mode < hwio.INPUT || mode > hwio.INPUT_PULLDOWN {
 		err = ProcessError(fmt.Sprintf("gpio:set-pin-mode expected a valid pin mode as its second argument but received %d.", mode), env)
 	}
