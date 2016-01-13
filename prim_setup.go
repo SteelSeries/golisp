@@ -49,4 +49,5 @@ func InitBuiltins() {
 	RegisterIOPrimitives()
 	RegisterChannelPrimitives()
 	RegisterVectorPrimitives()
+	RegisterPiPrimitives()
 }
