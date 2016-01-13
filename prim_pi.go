@@ -22,6 +22,7 @@ func RegisterPiPrimitives() {
 
 	MakePrimitiveFunction("gpio:get-pin", "1|2", GPIOGetPinImpl)
 	MakePrimitiveFunction("gpio:set-pin-mode", "2", GPIOSetPinModeImpl)
+	MakePrimitiveFunction("gpio:close-pin", "1", GPIOClosePinImpl)
 	MakePrimitiveFunction("gpio:digital-write", "2", GPIODigitalWriteImpl)
 	MakePrimitiveFunction("gpio:digital-read", "1", GPIODigitalReadImpl)
 }
@@ -79,6 +80,21 @@ func GPIOSetPinModeImpl(args *Data, env *SymbolTableFrame) (result *Data, err er
 	}
 
 	hwio.PinMode(pin, mode)
+	result = LispTrue
+	return
+}
+
+func GPIOClosePinImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	pinObj := First(args)
+	if !IntegerP(pinObj) {
+		err = ProcessError(fmt.Sprintf("gpio:close-pin expected a pin number as its first argument but received %s.", String(pinObj)), env)
+		return
+	}
+	pin := hwio.Pin(int(IntegerValue(pinObj)))
+	err = hwio.ClosePin(pin)
+	if err != nil {
+		return
+	}
 	result = LispTrue
 	return
 }
