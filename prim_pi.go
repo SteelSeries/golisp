@@ -94,7 +94,7 @@ func GPIODigitalWriteImpl(args *Data, env *SymbolTableFrame) (result *Data, err 
 	valueObj := Second(args)
 	value := 0
 	if IntegerP(valueObj) {
-		value = IntegerValue(valueObj)
+		value = int(IntegerValue(valueObj))
 		if value != hwio.HIGH && value != hwio.LOW {
 			err = ProcessError(fmt.Sprintf("gpio:digital-write expected a valid value as its second argument but received %d.", value), env)
 			return
@@ -106,7 +106,7 @@ func GPIODigitalWriteImpl(args *Data, env *SymbolTableFrame) (result *Data, err 
 			value = 0
 		}
 	} else {
-		err = ProcessError(fmt.Sprintf("gpio:digital-write expected %d, %d, #f, or #t as its second argument but received %s.", hwio.Low, hwio.HIGH, String(valueObj)), env)
+		err = ProcessError(fmt.Sprintf("gpio:digital-write expected %d, %d, #f, or #t as its second argument but received %s.", hwio.LOW, hwio.HIGH, String(valueObj)), env)
 		return
 	}
 
