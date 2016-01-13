@@ -33,7 +33,7 @@ func GPIOGetPinImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 	}
 	pinName := StringValue(First(args))
 
-	pin := 0
+	var pin Pin
 
 	if Length(args) == 1 {
 		pin, err = hwio.GetPin(pinName)
@@ -66,7 +66,7 @@ func GPIOSetPinModeImpl(args *Data, env *SymbolTableFrame) (result *Data, err er
 		err = ProcessError(fmt.Sprintf("gpio:set-pin-mode expected a pin number as its first argument but received %s.", String(pinObj)), env)
 		return
 	}
-	pin := int(IntegerValue(pinObj))
+	pin := Pin(int(IntegerValue(pinObj)))
 
 	modeObj = Second(args)
 	if !IntegerP(modeObj) {
@@ -89,7 +89,7 @@ func GPIODigitalWriteImpl(args *Data, env *SymbolTableFrame) (result *Data, err 
 		err = ProcessError(fmt.Sprintf("gpio:digital-write expected a pin number as its first argument but received %s.", String(pinObj)), env)
 		return
 	}
-	pin := int(IntegerValue(pinObj))
+	pin := Pin(int(IntegerValue(pinObj)))
 
 	valueObj = Second(args)
 	value := 0
@@ -121,7 +121,7 @@ func GPIODigitalReadImpl(args *Data, env *SymbolTableFrame) (result *Data, err e
 		err = ProcessError(fmt.Sprintf("gpio:digital-read expected a pin number as its first argument but received %s.", String(pinObj)), env)
 		return
 	}
-	pin := int(IntegerValue(pinObj))
+	pin := Pin(int(IntegerValue(pinObj)))
 
 	value, err := hwio.DigitalRead(pin)
 	if err != nil {
