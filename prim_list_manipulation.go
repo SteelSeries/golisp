@@ -267,12 +267,12 @@ func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func mergeCompare(a *Data, b *Data, proc *Data, env *SymbolTableFrame) (result bool, err error) {
 	if FunctionP(proc) {
-		b, err := FunctionValue(proc).Apply(InternalMakeList(a, b), env)
+		b, err := FunctionValue(proc).ApplyWithoutEval(InternalMakeList(a, b), env)
 		if err == nil {
 			result = BooleanValue(b)
 		}
 	} else {
-		b, err := PrimitiveValue(proc).Apply(InternalMakeList(a, b), env)
+		b, err := PrimitiveValue(proc).ApplyWithoutEval(InternalMakeList(a, b), env)
 		if err == nil {
 			result = BooleanValue(b)
 		}
