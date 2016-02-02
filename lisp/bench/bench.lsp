@@ -156,15 +156,13 @@
           result)))
 
 (define (run-benchmark name count run-maker . args)
-  (format #t "~A ~A outer iterations, ~A inner iterations~%    " name 10 count)
+  (format #t "~A~%" name)
   (let* ((loop-count 10)
          (run (apply run-maker args))
          (results (map (lambda (ignored)
-                         (format #t ".")
                          (time (run-bench name count run)))
                        (interval loop-count))))
-    (format #t "~%")
-    (list name count loop-count (min results) (max results) (/ (apply + results) loop-count))))
+     (list name count loop-count (min results) (max results) (/ (apply + results) loop-count))))
 
 (define (fatal-error . args)
     (for-each (lambda (x) (format #t "~A " x)) args)
@@ -180,7 +178,6 @@
 (define **DIVITER-ITERS** 100)
 (define **FIB-ITERS** 1)
 (define **ARRAY1-ITERS** 1)
-(define **GRAPHS-ITERS** 1)
 
 (define **BENCHMARKS**
     (list (lambda ()
@@ -201,25 +198,23 @@
                            600
                            50))
           (lambda ()
-            (run-benchmark "diviter"
-                           **DIVITER-ITERS**
-                           (lambda (l) (lambda () (iterative-div2 l)))
-                           *ll*))
+            (run-benchmark
+             "diviter"
+             **DIVITER-ITERS**
+             (lambda (l) (lambda () (iterative-div2 l)))
+             *ll*))
           (lambda ()
-            (run-benchmark "fib"
-                           **FIB-ITERS**
-                           (lambda (n) (lambda () (fib n)))
-                          25))
+            (run-benchmark
+             "fib"
+             **FIB-ITERS**
+             (lambda (n) (lambda () (fib n)))
+             35))
           (lambda ()
-            (run-benchmark "array1"
-                           **ARRAY1-ITERS**
-                           (lambda (n) (lambda () (go-array n)))
-                           20000))
-          (lambda ()
-            (run-benchmark "graphs"
-                           **GRAPHS-ITERS**
-                           (lambda (n) (lambda () (run-graphs n)))
-                           5))))
+            (run-benchmark
+             "array1"
+             **ARRAY1-ITERS**
+             (lambda (n) (lambda () (go n)))
+             20000))))
 
 
 (define (run label)
