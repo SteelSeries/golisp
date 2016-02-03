@@ -131,7 +131,12 @@ func SleepImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func MillisImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	result = IntegerWithValue(int64(time.Now().UnixNano() / 1e6))
+	now := time.Now()
+	hour := now.Hour()
+	minute := now.Minute()
+	second := now.Second()
+	milli := now.Nanosecond() / 1000000
+	result = IntegerWithValue(int64(hour*3600000 + minute*60000 + second*1000 + milli))
 	return
 }
 
