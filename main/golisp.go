@@ -9,7 +9,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/steelseries/golisp"
+	. "github.com/steelseries/golisp"
 	"strings"
 )
 
@@ -33,8 +33,8 @@ func test() {
 	}
 
 	testCommand := fmt.Sprintf("(%s \"%s\"%s)", testFunction, testName, verboseFlag)
-	golisp.ProcessFile("lisp/testing.lsp")
-	golisp.ParseAndEval(testCommand)
+	ProcessFile("lisp/testing.lsp")
+	ParseAndEval(testCommand)
 }
 
 func main() {
@@ -44,14 +44,37 @@ func main() {
 	if runTests {
 		test()
 	} else {
+		var programArgs []string
 		for i := 0; i < flag.NArg(); i = i + 1 {
-			fmt.Printf("Loading %s\n", flag.Arg(i))
-			_, err := golisp.ProcessFile(flag.Arg(i))
-			if err != nil {
-				fmt.Printf("Error: %s\n", err)
+			if flag.Arg(i) == "--" {
+				programArgs = flag.Args()[i+1:]
+				break
+			} else {
+				fmt.Printf("Loading %s\n", flag.Arg(i))
+				_, err := ProcessFile(flag.Arg(i))
+				if err != nil {
+					fmt.Printf("Error: %s\n", err)
+				}
 			}
 		}
 
-		golisp.Repl()
+		mainValue := Global.ValueOf(Intern("main"))
+
+		if FunctionP(mainValue) {
+			println("Calling main")
+			args := make([]*Data, 0, len(flag.Args()))
+			for _, arg := range programArgs {
+				args = append(args, StringWithValue(arg))
+			}
+			argList := Cons(InternalMakeList(Intern("quote"), ArrayToList(args)), nil)
+			result, err := FunctionValue(mainValue).Apply(argList, Global)
+			if err != nil {
+				fmt.Printf("Error: %s\n", err)
+			} else {
+				fmt.Printf("==> %s\n", String(result))
+			}
+		} else {
+			Repl()
+		}
 	}
 }
