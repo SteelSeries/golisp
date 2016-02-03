@@ -15,6 +15,8 @@ import (
 func RegisterListFunctionsPrimitives() {
 	MakePrimitiveFunction("map", ">=2", MapImpl)
 	MakePrimitiveFunction("for-each", ">=2", ForEachImpl)
+	MakePrimitiveFunction("any", ">=2", AnyImpl)
+	MakePrimitiveFunction("every", ">=2", EveryImpl)
 	MakePrimitiveFunction("reduce", "3", ReduceImpl)
 	MakePrimitiveFunction("filter", "2", FilterImpl)
 	MakePrimitiveFunction("remove", "2", RemoveImpl)
@@ -118,6 +120,96 @@ func ForEachImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	return nil, nil
+}
+
+func AnyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	f := First(args)
+	if !FunctionOrPrimitiveP(f) {
+		err = ProcessError(fmt.Sprintf("any needs a function as its first argument, but got %s.", String(f)), env)
+		return
+	}
+
+	var collections []*Data = make([]*Data, 0, Length(args)-1)
+	var loopCount int64 = math.MaxInt64
+	var col *Data
+	for a := Cdr(args); NotNilP(a); a = Cdr(a) {
+		col = Car(a)
+		if !ListP(col) {
+			err = ProcessError(fmt.Sprintf("any needs lists as its other arguments, but got %s.", String(col)), env)
+			return
+		}
+		collections = append(collections, col)
+		loopCount = intMin(loopCount, int64(Length(col)))
+	}
+
+	if loopCount == math.MaxInt64 {
+		return
+	}
+
+	var a *Data
+	var b *Data
+	for index := 0; index < int(loopCount); index++ {
+		mapArgs := make([]*Data, 0, len(collections))
+		for _, mapArgCollection := range collections {
+			a = Nth(mapArgCollection, index)
+			mapArgs = append(mapArgs, a)
+		}
+		b, err = ApplyWithoutEval(f, ArrayToList(mapArgs), env)
+		if err != nil {
+			return
+		}
+
+		if BooleanValue(b) {
+			return LispTrue, nil
+		}
+	}
+
+	return LispFalse, nil
+}
+
+func EveryImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	f := First(args)
+	if !FunctionOrPrimitiveP(f) {
+		err = ProcessError(fmt.Sprintf("every needs a function as its first argument, but got %s.", String(f)), env)
+		return
+	}
+
+	var collections []*Data = make([]*Data, 0, Length(args)-1)
+	var loopCount int64 = math.MaxInt64
+	var col *Data
+	for a := Cdr(args); NotNilP(a); a = Cdr(a) {
+		col = Car(a)
+		if !ListP(col) {
+			err = ProcessError(fmt.Sprintf("every needs lists as its other arguments, but got %s.", String(col)), env)
+			return
+		}
+		collections = append(collections, col)
+		loopCount = intMin(loopCount, int64(Length(col)))
+	}
+
+	if loopCount == math.MaxInt64 {
+		return
+	}
+
+	var a *Data
+	var b *Data
+	for index := 0; index < int(loopCount); index++ {
+		mapArgs := make([]*Data, 0, len(collections))
+		for _, mapArgCollection := range collections {
+			a = Nth(mapArgCollection, index)
+			mapArgs = append(mapArgs, a)
+		}
+		b, err = ApplyWithoutEval(f, ArrayToList(mapArgs), env)
+		if err != nil {
+			return
+		}
+
+		if !BooleanValue(b) {
+			return LispFalse, nil
+		}
+	}
+
+	return LispTrue, nil
 }
 
 func ReduceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
