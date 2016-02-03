@@ -151,7 +151,7 @@ func AnyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	for index := 0; index < int(loopCount); index++ {
 		mapArgs := make([]*Data, 0, len(collections))
 		for _, mapArgCollection := range collections {
-			a = Nth(mapArgCollection, index)
+			a = Nth(mapArgCollection, index+1) // Remove the +1 upon merging in v1.1 branch
 			mapArgs = append(mapArgs, a)
 		}
 		b, err = ApplyWithoutEval(f, ArrayToList(mapArgs), env)
@@ -196,7 +196,7 @@ func EveryImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	for index := 0; index < int(loopCount); index++ {
 		mapArgs := make([]*Data, 0, len(collections))
 		for _, mapArgCollection := range collections {
-			a = Nth(mapArgCollection, index)
+			a = Nth(mapArgCollection, index+1) // Remove the +1 upon merging in the v1.1 branch
 			mapArgs = append(mapArgs, a)
 		}
 		b, err = ApplyWithoutEval(f, ArrayToList(mapArgs), env)
