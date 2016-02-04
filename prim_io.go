@@ -25,6 +25,7 @@ func RegisterIOPrimitives() {
 	MakePrimitiveFunction("write-string", "1|2", WriteStringImpl)
 	MakePrimitiveFunction("newline", "0|1", NewlineImpl)
 	MakePrimitiveFunction("write", "1|2", WriteImpl)
+	MakePrimitiveFunction("read-string", "1", ReadStringImpl)
 	MakePrimitiveFunction("read", "1", ReadImpl)
 	MakePrimitiveFunction("eof-object?", "1", EofObjectImpl)
 
@@ -151,6 +152,36 @@ func NewlineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	_, err = port.WriteString("\n")
+	return
+}
+
+func ReadStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	var port *os.File
+	p := First(args)
+	if !PortP(p) {
+		err = ProcessError(fmt.Sprintf("read-string expects its first argument be a port, but got %s", String(p)), env)
+		return
+	}
+	port = PortValue(p)
+
+	if Length(args) == 2 {
+		charset := Second(args)
+		if !StringP(charset) {
+			err = ProcessError(fmt.Sprintf("read-string expects its optional second argument to be a string, but got %s", String(charset)), env)
+			return
+		}
+	}
+
+	readBuffer := make([]byte, 1024)
+
+	n, err := port.Read(readBuffer)
+	if n < 1024 {
+		result = StringWithValue(string(readBuffer[:n]))
+		err = nil
+		return
+	} else if err != nil {
+		return
+	}
 	return
 }
 
