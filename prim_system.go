@@ -12,6 +12,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -19,6 +20,8 @@ import (
 var symbolCounts map[string]int = make(map[string]int)
 
 func RegisterSystemPrimitives() {
+	Global.BindTo(Intern("__OS__"), Intern(runtime.GOOS))
+
 	MakePrimitiveFunction("sleep", "1", SleepImpl)
 	MakePrimitiveFunction("millis", "0", MillisImpl)
 	MakePrimitiveFunction("write-line", "*", WriteLineImpl)
