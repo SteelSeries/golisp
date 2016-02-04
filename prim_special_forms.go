@@ -101,7 +101,7 @@ func CaseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 				}
 			}
 		} else {
-			err = ProcessError("Case the condition part of clauses to be lists of 'else", env)
+			err = ProcessError("Case the condition part of clauses to be lists or 'else", env)
 			return
 		}
 	}
