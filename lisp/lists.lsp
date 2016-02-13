@@ -73,7 +73,9 @@
          (let loop ((l x)
                     (result '()))
            (cond ((pair? (cdr l))
-                  (loop (cdr l) (append! result (car l))))
+                  (loop (cdr l) (if (nil? result)
+                                    (list (car l))
+                                    (append! result (list (car l))))))
                  (else
                   result))))))
 
