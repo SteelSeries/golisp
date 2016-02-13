@@ -26,7 +26,7 @@ func RegisterSpecialFormPrimitives() {
 	MakeSpecialForm("letrec", ">=1", LetRecImpl)
 	MakeSpecialForm("begin", "*", BeginImpl)
 	MakeSpecialForm("do", ">=2", DoImpl)
-	MakeSpecialForm("apply", ">=1", ApplyImpl)
+	MakePrimitiveFunction("apply", ">=1", ApplyImpl)
 	MakeSpecialForm("->", ">=1", ChainImpl)
 	MakeSpecialForm("=>", ">=1", TapImpl)
 	MakeSpecialForm("definition-of", "1", DefinitionOfImpl)
@@ -430,27 +430,14 @@ func DoImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func ApplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	f, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
+	f := Car(args)
 
 	if !FunctionOrPrimitiveP(f) {
 		err = ProcessError(fmt.Sprintf("apply requires a function as it's first argument, but got %s.", String(f)), env)
 		return
 	}
 
-	ary := make([]*Data, 0, Length(args)-1)
-
-	var v *Data
-	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-		v, err = Eval(Car(c), env)
-		if err != nil {
-			return
-		}
-		ary = append(ary, v)
-	}
-
+	ary := ToArray(Cdr(args))
 	var argList *Data
 	if ListP(ary[len(ary)-1]) {
 		if len(ary) > 1 {
