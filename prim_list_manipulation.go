@@ -13,6 +13,7 @@ import (
 
 func RegisterListManipulationPrimitives() {
 	MakePrimitiveFunction("list", "*", ListImpl)
+	MakePrimitiveFunction("circular-list", "*", CircularListImpl)
 	MakePrimitiveFunction("make-list", "1|2", MakeListImpl)
 	MakePrimitiveFunction("length", "1", ListLengthImpl)
 	MakePrimitiveFunction("cons", "2", ConsImpl)
@@ -21,11 +22,20 @@ func RegisterListManipulationPrimitives() {
 	MakePrimitiveFunction("flatten", "1", FlattenImpl)
 	MakePrimitiveFunction("flatten*", "1", RecursiveFlattenImpl)
 	MakePrimitiveFunction("append", "*", AppendImpl)
-	MakeSpecialForm("append!", "2", AppendBangImpl)
+	MakePrimitiveFunction("append!", "*", AppendBangImpl)
 	MakePrimitiveFunction("copy", "1", CopyImpl)
 	MakePrimitiveFunction("partition", "2", PartitionImpl)
 	MakePrimitiveFunction("sublist", "3", SublistImpl)
 	MakePrimitiveFunction("sort", "2", SortImpl)
+}
+
+func ListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return args, nil
+}
+
+func CircularListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	ConsValue(LastPair(args)).Cdr = args
+	return args, nil
 }
 
 func MakeListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -55,10 +65,6 @@ func MakeListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		items = append(items, element)
 	}
 	return ArrayToList(items), nil
-}
-
-func ListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return args, nil
 }
 
 func ConsStarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -100,27 +106,23 @@ func RecursiveFlattenImpl(args *Data, env *SymbolTableFrame) (result *Data, err 
 }
 
 func AppendBangImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	firstList, err := Eval(Car(args), env)
-	if err != nil {
-		return
+
+	for l := args; NotNilP(l); l = Cdr(l) {
+		if !ListP(Car(l)) && NotNilP(Cdr(l)) {
+			err = ProcessError(fmt.Sprintf("append! requires lists for all non-final arguments but was given %s.", String(Car(l))), env)
+			return
+		}
 	}
 
-	second, err := Eval(Cadr(args), env)
-	if err != nil {
-		return
+	var prev *Data = nil
+	for cell := args; NotNilP(cell); cell = Cdr(cell) {
+		if prev != nil {
+			ConsValue(LastPair(prev)).Cdr = Car(cell)
+		}
+		prev = Car(cell)
 	}
 
-	if ListP(second) {
-		result = AppendBangList(firstList, second)
-	} else {
-		result = AppendBang(firstList, second)
-	}
-
-	if SymbolP(Car(args)) {
-		env.BindTo(Car(args), result)
-	}
-
-	return
+	return First(args), nil
 }
 
 func AppendImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -133,13 +135,20 @@ func AppendImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var items []*Data = make([]*Data, 0, 10)
 	var item *Data
 	for cell := args; NotNilP(cell); cell = Cdr(cell) {
+		lastArg := NilP(Cdr(cell))
 		item = Car(cell)
+		if !ListP(item) && !lastArg { // items other than the last NUST be lists
+			err = ProcessError(fmt.Sprintf("append requires lists for all non-final arguments but was given %s.", String(item)), env)
+			return
+		}
+
 		if ListP(item) {
-			for itemCell := item; NotNilP(itemCell); itemCell = Cdr(itemCell) {
-				items = append(items, Car(itemCell))
+			for innerCell := item; NotNilP(innerCell); innerCell = Cdr(innerCell) {
+				items = append(items, Car(innerCell))
 			}
 		} else {
-			items = append(items, item)
+			result = ArrayToListWithTail(items, item)
+			return
 		}
 	}
 	result = ArrayToList(items)

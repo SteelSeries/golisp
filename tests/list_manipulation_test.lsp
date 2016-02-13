@@ -56,22 +56,12 @@
              (assert-error (partition odd? "1 2"))) ;2nd arg must be a list
 
          (it "append"
-             (assert-eq (append list1 '(3 4)) '(1 2 3 4))
-             (assert-eq list1 '(1 2))
-             (assert-eq (append list1 42) '(1 2 42))
-             (assert-eq list1 '(1 2))
-             (assert-eq (append '() 42) '(42))
-             (assert-eq (append '() '(1 2)) '(1 2)))
-
-         (it "append!"
-             (assert-eq (append! list1a '(3 4)) '(1 2 3 4))
-             (assert-eq list1a '(1 2 3 4))
-             (assert-eq (append! list2 42) '(1 2 42))
-             (assert-eq list2 '(1 2 42))
-             (assert-eq (append! '() 42) '(42))
-             (assert-eq (append! '() '(1 2)) '(1 2))
-             (assert-eq (append! list3 42) '(42))
-             (assert-eq list3 '(42)))
+             (assert-eq (append '(x) '(y)) '(x y))
+             (assert-eq (append '(a) '(b c d)) '(a b c d))
+             (assert-eq (append '(a (b)) '((c))) '(a (b) (c)))
+             (assert-eq (append) '())
+             (assert-eq (append '(a b) '(c . d)) '(a b c . d))
+             (assert-eq (append '() 'a) 'a))
 
          (it "take"
              (assert-eq (take 0 '(1 2 3)) '())
@@ -124,4 +114,19 @@
              (assert-error (make-list "3" 1)) ;1st arg must be an integer
              (assert-error (make-list 3.4 1)) ;1st arg must be an integer
              (assert-error (make-list -3 1))) ;1st arg must be a non-negative integer
-)
+         )
+
+(context "Appending in place"
+         
+         ((define x '(a b c))
+          (define y '(d e f))
+          (define z '(g h))
+          (define a (append! x y z)))
+         
+         (it "combines args"
+             (assert-eq a '(a b c d e f g h))
+             (assert-eq x '(a b c d e f g h))
+             (assert-eq y '(d e f g h))
+             (assert-eq z '(g h)))
+         
+         )
