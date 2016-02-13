@@ -501,6 +501,16 @@ func Cdr(d *Data) *Data {
 	return nil
 }
 
+func LastPair(l *Data) *Data {
+	if !ListP(l) {
+		return nil
+	}
+	var c *Data
+	for c = l; NotNilP(Cdr(c)); c = Cdr(c) {
+	}
+	return c
+}
+
 func IntegerValue(d *Data) int64 {
 	if d == nil {
 		return 0
