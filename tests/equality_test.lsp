@@ -16,13 +16,11 @@
              (let ((p (lambda (x) x)))
                (assert-true (eqv? p p))))
 
-         (it "has defined implementation specifric behavior"
+         (it "has defined implementation specific behavior"
              (assert-false (eqv? "" ""))
+             (assert-false (eqv? "a" "a"))
              (assert-false (eqv? '#() '#()))
-             (assert-false (eqv? (lambda (x) x)
-                                 (lambda (x) x)))
-             (assert-false (eqv? (lambda (x) x)
-                                 (lambda (y) y)))))
+             (assert-false (eqv? '(a) '(a)))))
 
 (context "eq?"
 

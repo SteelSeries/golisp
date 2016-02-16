@@ -17,11 +17,13 @@ func RegisterRelativePrimitives() {
 	MakePrimitiveFunction("==", "2", EqualImpl)
 	MakePrimitiveFunction("=", "2", EqualImpl)
 	MakePrimitiveFunction("eqv?", "2", EqvImpl)
+	MakePrimitiveFunction("neqv?", "2", NotEqvImpl)
 	MakePrimitiveFunction("eq?", "2", EqImpl)
+	MakePrimitiveFunction("neq?", "2", NotEqImpl)
 	MakePrimitiveFunction("equal?", "2", EqualImpl)
+	MakePrimitiveFunction("nequal?", "2", NotEqualImpl)
 	MakePrimitiveFunction("!=", "2", NotEqualImpl)
 	MakePrimitiveFunction("/=", "2", NotEqualImpl)
-	MakePrimitiveFunction("neq?", "2", NotEqualImpl)
 	MakePrimitiveFunction("<=", "2", LessThanOrEqualToImpl)
 	MakePrimitiveFunction(">=", "2", GreaterThanOrEqualToImpl)
 	MakePrimitiveFunction("!", "1", BooleanNotImpl)
@@ -70,10 +72,22 @@ func EqvImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return BooleanWithValue(IsEqv(arg1, arg2)), nil
 }
 
+func NotEqvImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	arg1 := Car(args)
+	arg2 := Cadr(args)
+	return BooleanWithValue(!IsEqv(arg1, arg2)), nil
+}
+
 func EqImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	arg1 := Car(args)
 	arg2 := Cadr(args)
 	return BooleanWithValue(IsEq(arg1, arg2)), nil
+}
+
+func NotEqImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	arg1 := Car(args)
+	arg2 := Cadr(args)
+	return BooleanWithValue(!IsEq(arg1, arg2)), nil
 }
 
 func EqualImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
