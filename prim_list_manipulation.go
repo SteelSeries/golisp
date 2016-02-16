@@ -142,13 +142,13 @@ func AppendImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 			return
 		}
 
-		if ListP(item) {
+		if lastArg {
+			result = ArrayToListWithTail(items, item)
+			return
+		} else {
 			for innerCell := item; NotNilP(innerCell); innerCell = Cdr(innerCell) {
 				items = append(items, Car(innerCell))
 			}
-		} else {
-			result = ArrayToListWithTail(items, item)
-			return
 		}
 	}
 	result = ArrayToList(items)
