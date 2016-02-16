@@ -182,30 +182,7 @@ func MultiplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 }
 
-func divideInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var acc int64
-	if Length(args) == 1 {
-		v := FloatValue(First(args))
-		if v == 0.0 {
-			err = ProcessError(fmt.Sprintf("Quotent: %s -> Divide by zero.", String(args)), env)
-			return
-		}
-		return FloatWithValue(1.0 / v), nil
-	} else {
-		acc = IntegerValue(Car(args))
-		for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-			v := IntegerValue(Car(c))
-			if v == 0 {
-				err = ProcessError(fmt.Sprintf("Quotent: %s -> Divide by zero.", String(args)), env)
-				return
-			} else {
-				acc /= v
-			}
-		}
-	}
-	return IntegerWithValue(acc), nil
-}
-
+// TODO roll this into DivideImpl
 func divideFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var acc float32
 	if Length(args) == 1 {
