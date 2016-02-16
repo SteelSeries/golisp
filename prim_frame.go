@@ -20,6 +20,8 @@ func RegisterFramePrimitives() {
 	MakePrimitiveFunction("set-slot!", "3", SetSlotImpl)
 	MakePrimitiveFunction("send", ">=2", SendImpl)
 	MakePrimitiveFunction("send-super", ">=1", SendSuperImpl)
+	MakePrimitiveFunction("apply-slot", ">=3", ApplySlotImpl)
+	MakePrimitiveFunction("apply-slot-super", ">=2", ApplySlotSuperImpl)
 	MakePrimitiveFunction("clone", "1", CloneImpl)
 	MakePrimitiveFunction("json->lisp", "1", JsonToLispImpl)
 	MakePrimitiveFunction("lisp->json", "1", LispToJsonImpl)
@@ -208,6 +210,87 @@ func SendSuperImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 	frameEnv := NewSymbolTableFrameBelowWithFrame(env, env.Frame, fmt.Sprintf("%s'", env.Name))
 	frameEnv.BindLocallyTo(Intern("self"), FrameWithValue(env.Frame))
 	return FunctionValue(fun).ApplyWithoutEval(params, frameEnv)
+}
+
+func ApplySlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	f := First(args)
+	if !FrameP(f) {
+		err = ProcessError(fmt.Sprintf("apply-slot requires a frame as it's first argument, but was given %s.", String(f)), env)
+		return
+	}
+
+	k := Second(args)
+	if !NakedP(k) {
+		err = ProcessError(fmt.Sprintf("apply-slot requires a naked symbol as it's second argument, but was given %s.", String(k)), env)
+		return
+	}
+
+	if !FrameValue(f).HasSlot(StringValue(k)) {
+		err = ProcessError(fmt.Sprintf("apply-slot requires an existing slot, but was given %s.", String(k)), env)
+		return
+	}
+
+	fun := FrameValue(f).Get(StringValue(k))
+	if !FunctionP(fun) {
+		err = ProcessError(fmt.Sprintf("apply-slot requires a function slot, but was given a slot containing a %s.", TypeName(TypeOf(fun))), env)
+		return
+	}
+
+	ary := ToArray(Cddr(args))
+
+	var argList *Data
+	if ListP(ary[len(ary)-1]) {
+		if len(ary) > 1 {
+			argList = ArrayToListWithTail(ary[0:len(ary)-1], ary[len(ary)-1])
+		} else {
+			argList = ary[0]
+		}
+	} else {
+		err = ProcessError("The last argument to apply must be a list", env)
+		return
+	}
+
+	return FunctionValue(fun).ApplyWithoutEvalWithFrame(argList, env, FrameValue(f))
+}
+
+func ApplySlotSuperImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if !env.HasFrame() {
+		err = ProcessError("apply-slot-super can only be used within the context of a frame.", env)
+		return
+	}
+
+	selector := First(args)
+	if err != nil {
+		return
+	}
+	if !NakedP(selector) {
+		err = ProcessError(fmt.Sprintf("apply-slot-super requirs a naked symbol as it's first argumentbut was %s.", TypeName(TypeOf(selector))), env)
+		return
+	}
+
+	fun := getSuperFunction(StringValue(selector), env)
+	if fun == nil || !FunctionP(fun) {
+		err = ProcessError(fmt.Sprintf("apply-slot-super must select a function slot but was %s.", TypeName(TypeOf(fun))), env)
+		return
+	}
+
+	ary := ToArray(Cdr(args))
+
+	var argList *Data
+	if ListP(ary[len(ary)-1]) {
+		if len(ary) > 1 {
+			argList = ArrayToListWithTail(ary[0:len(ary)-1], ary[len(ary)-1])
+		} else {
+			argList = ary[0]
+		}
+	} else {
+		err = ProcessError("The last argument to apply must be a list", env)
+		return
+	}
+
+	frameEnv := NewSymbolTableFrameBelowWithFrame(env, env.Frame, fmt.Sprintf("%s'", env.Name))
+	frameEnv.BindLocallyTo(Intern("self"), FrameWithValue(env.Frame))
+	return FunctionValue(fun).ApplyWithoutEval(argList, frameEnv)
 }
 
 func CloneImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

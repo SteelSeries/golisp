@@ -5,7 +5,7 @@
 
          ()
 
-         (it frame-rendering
+         (it "frame-rendering"
              (assert-eq (str (make-frame a: 1))
                         "{a: 1}")
              (assert-error (make-frame a: 1 b:)) ;must have an even number of args
@@ -13,11 +13,11 @@
              (assert-error (make-frame a: 1 "b" 2)) ;keys must be naked symbols
              (assert-error (make-frame a: 1 3 2))) ;keys must be naked symbols
 
-         (it naked-symbols
+         (it "naked-symbols"
              (assert-eq a:
                         'a:))
 
-         (it get-slot
+         (it "get-slot"
              (assert-eq (get-slot {a: 1 b: 2 c: 3} a:)
                         1)
              (assert-eq (get-slot {a: 1 b: 2 c: 3} b:)
@@ -28,7 +28,7 @@
              (assert-error (get-slot {} 'a))
              (assert-error (get-slot {a: 1} b:)))
 
-         (it get-slot-or-nil
+         (it "get-slot-or-nil"
              (assert-eq (get-slot-or-nil {a: 1 b: 2 c: 3} a:)
                         1)
              (assert-eq (get-slot-or-nil {a: 1 b: 2 c: 3} b:)
@@ -39,7 +39,7 @@
              (assert-error (get-slot-or-nil {} "a"))
              (assert-error (get-slot-or-nil {} 'a)))
 
-         (it set-slot!
+         (it "set-slot!"
              (let ((f {a: 1 b: 2 c: 3}))
                (assert-eq (set-slot! f a: 5)
                           5)
@@ -48,7 +48,7 @@
              (assert-error (set-slot! '() a: 1)) ;1st arg must be a frame
              (assert-error (set-slot! f "a" 1))) ;2nd arg must be a naked symbol
 
-         (it frame-method
+         (it "frame-method"
              (let ((f {a: 5
                           b: 2
                           foo: (lambda (x)
@@ -64,13 +64,20 @@
                (assert-eq (get-slot f b:)
                           6))
 
+             (let ((f {foo: (lambda (x y)
+                              (+ 1x y))}))
+               (assert-eq (apply-slot f foo: '(2 3)) 6)
+               (assert-eq (apply-slot f foo: 2 '(3)) 6)
+               (assert-error (apply-slot f foo: 2)) ;wrong number of parameters
+               (assert-error (apply-slot f foo: 2 3))) ;doesn't end in a list
+
              (assert-error (send '(1 2) foo:)) ;1st arg must be a frame
              (assert-error (send {a: 1} 'a)) ;selector must be a naked symbol
              (assert-error (send {a: 1} 1)) ;selector must be a naked symbol
              (assert-error (send {a: 1} b:)) ;selector must be a key in the frame
              (assert-error (send {a: 1} a:))) ;slot value must be a function
 
-         (it prototypes
+         (it "prototypes"
              (let* ((f {a: 2
                            b: 1})
                     (g {parent*: f
@@ -92,14 +99,14 @@
                (assert-eq (send incrementor add: 3)
                           4)))
 
-         (it new-slots
+         (it "new-slots"
              (let ((f {a: 1}))
                (assert-eq (set-slot! f b: 5)
                           5)
                (assert-eq (get-slot f b:)
                           5)))
 
-         (it function-slot-use
+         (it "function-slot-use"
              (let ((f {a: 5
                           b: 2
                           foo: (lambda (x)
@@ -111,7 +118,7 @@
                (assert-eq (bar:> f)
                           7)))
 
-         (it inherited-function-slot-use
+         (it "inherited-function-slot-use"
              (let* ((f {a: 5
                            foo: (lambda (x)
                                   (+ x a))})
@@ -122,7 +129,7 @@
                (assert-eq (send g bar:)
                           7)))
 
-         (it multiple-parents
+         (it "multiple-parents"
              (let* ((e {a: 5})
                     (f {b: 2})
                     (g {parent-e*: e
@@ -139,7 +146,7 @@
                (assert-eq (get-slot e a:)
                           5)))
 
-         (it calling-super
+         (it "calling-super"
              (let* ((f {foo: (lambda () 42)})
                     (g {parent*: f  foo: (lambda () (+ 1 (send-super foo:)))}))
                (assert-eq (send g foo:)
@@ -154,19 +161,25 @@
                     (g {parent*: f  foo: (lambda () (+ 1 (send-super 'foo)))}))
                (assert-error (send g foo:)))) ;parent's slot value must be a function
 
-         (it calling-super-sugar
+         (it "calling apply-slot-super"
+             (let* ((f {foo: (lambda (x y) (+ x y 3))})
+                    (g {parent*: f  foo: (lambda () (+ 1 (apply-slot-super foo: '(1 2))))}))
+               (assert-eq (send g foo:) 7))
+             (assert-error (apply-slot-super foo:)))) ;only usable in a frame
+
+         (it "calling-super-sugar"
              (let* ((f {foo: (lambda () 42)})
                     (g {parent*: f  foo: (lambda () (+ 1 (foo:^)))}))
                (assert-eq (foo:> g)
                           43)))
 
-         (it locals-override-slots
+         (it "locals-override-slots"
              (let* ((f {a: 42})
                     (g {parent*: f  foo: (lambda () (let ((a 10)) (+ 1 a)))}))
                (assert-eq (send g foo:)
                           11)))
 
-         (it cloning
+         (it "cloning"
              (let* ((f {a: 1 b: 2})
                     (g (clone f)))
                (assert-eq f
@@ -177,7 +190,7 @@
                (assert-eq (get-slot g a:)
                           1)))
 
-         (it has-slot?
+         (it "has-slot?"
              (let ((f {a: 1 b: 2}))
                (assert-true (has-slot? f a:))
                (assert-true (has-slot? f b:))
@@ -186,7 +199,7 @@
                (assert-error (has-slot? f 'a)) ;2nd arg must be a naked symbol
                (assert-error (has-slot? f "a")))) ;2nd arg must be a naked symbol
 
-         (it remove-slot!
+         (it "remove-slot!"
              (let* ((e {a: 5})
                     (f {b: 2})
                     (g {parent-e*: e
@@ -202,7 +215,7 @@
                (assert-error (remove-slot! f 'a)) ;2nd arg must be a naked symbol
                (assert-error (remove-slot! f "a")))) ;2nd arg must be a naked symbol
 
-         (it shortcuts
+         (it "shortcuts"
              (let ((f {a: 1 b: 2}))
                (assert-true (a:? f))
                (assert-false (c:? f))
@@ -214,7 +227,7 @@
                (assert-eq (a: f)
                           42)))
 
-         (it non-function-slots-dont-override-functions
+         (it "non-function-slots-dont-override-functions"
              (let ((f {map: 42
                             foo: (lambda ()
                                    (map (lambda (x)
@@ -223,7 +236,7 @@
                (assert-eq (send f foo:)
                           '(2 3 4))))
 
-         (it function-slots-override-functions
+         (it "function-slots-override-functions"
              (let ((f {map: (lambda (x y) 42)
                             foo: (lambda ()
                                    (map (lambda (x)
@@ -232,7 +245,7 @@
                (assert-eq (send f foo:)
                           42)))
 
-         (it keys_values
+         (it "keys_values"
              (let* ((f {a: 1 b: 2 c: 3})
                     (ks (frame-keys f))
                     (vs (frame-values f)))
