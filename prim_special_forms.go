@@ -30,6 +30,7 @@ func RegisterSpecialFormPrimitives() {
 	MakeSpecialForm("->", ">=1", ChainImpl)
 	MakeSpecialForm("=>", ">=1", TapImpl)
 	MakeSpecialForm("definition-of", "1", DefinitionOfImpl)
+	MakeSpecialForm("doc", "1", DocImpl)
 }
 
 func evaluateBody(value *Data, sexprs *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -166,7 +167,7 @@ func LambdaImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 	params := formals
 	body := Cdr(args)
-	return FunctionWithNameParamsBodyAndParent("unnamed", params, body, env), nil
+	return FunctionWithNameParamsDocBodyAndParent("unnamed", params, "", body, env), nil
 }
 
 func NamedLambdaImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -181,7 +182,7 @@ func NamedLambdaImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 	}
 	params := Cdar(args)
 	body := Cdr(args)
-	return FunctionWithNameParamsBodyAndParent(StringValue(name), params, body, env), nil
+	return FunctionWithNameParamsDocBodyAndParent(StringValue(name), params, "", body, env), nil
 }
 
 func DefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -205,8 +206,13 @@ func DefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 			err = ProcessError(fmt.Sprintf("Primitive function %s can not be redefined.", StringValue(name)), env)
 			return
 		}
-		body := Cdr(args)
-		value = FunctionWithNameParamsBodyAndParent(StringValue(name), params, body, env)
+		var body *Data = Cdr(args)
+		var doc *Data = nil
+		if StringP(Car(body)) {
+			doc = Car(body)
+			body = Cdr(body)
+		}
+		value = FunctionWithNameParamsDocBodyAndParent(StringValue(name), params, StringValue(doc), body, env)
 	} else {
 		err = ProcessError(fmt.Sprintf("define expected a symbol or formals list as its first argument but received %s.", String(thing)), env)
 		return
@@ -330,7 +336,7 @@ func namedLetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	localEnv := NewSymbolTableFrameBelow(env, StringValue(name))
 	localEnv.Previous = env
 	localEnv.BindLocallyTo(name, nil)
-	namedLetProc := FunctionWithNameParamsBodyAndParent(StringValue(name), varsList, body, localEnv)
+	namedLetProc := FunctionWithNameParamsDocBodyAndParent(StringValue(name), varsList, "", body, localEnv)
 	localEnv.BindLocallyTo(name, namedLetProc)
 	return FunctionValue(namedLetProc).Apply(initialsList, env)
 }
@@ -545,7 +551,7 @@ func DefinitionOfImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 		return
 	}
 	if !FunctionP(f) {
-		err = ProcessError(fmt.Sprintf("code requires a function argument, but received a %s.", TypeName(TypeOf(f))), env)
+		err = ProcessError(fmt.Sprintf("definition-of requires a function argument, but received a %s.", TypeName(TypeOf(f))), env)
 		return
 	}
 
@@ -554,5 +560,30 @@ func DefinitionOfImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 		return Cons(Intern("define"), Cons(name, Cons(Cons(Intern("lambda"), Cons(function.Params, function.Body)), nil))), nil
 	} else {
 		return Cons(Intern("define"), Cons(Cons(Intern(function.Name), function.Params), function.Body)), nil
+	}
+}
+
+func DocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	var name *Data = nil
+	if SymbolP(Car(args)) {
+		name = Car(args)
+	} else {
+		name = Intern("anonymous")
+	}
+
+	f, err := Eval(Car(args), env)
+	if err != nil {
+		return
+	}
+	if !FunctionP(f) {
+		err = ProcessError(fmt.Sprintf("doc requires a function argument, but received a %s.", TypeName(TypeOf(f))), env)
+		return
+	}
+
+	function := FunctionValue(f)
+	if function.DocString == "" {
+		return StringWithValue(fmt.Sprintf("%s has no documentation string.", name)), nil
+	} else {
+		return StringWithValue(function.DocString), nil
 	}
 }

@@ -426,8 +426,8 @@ func NakedSymbolFrom(d *Data) *Data {
 	return NakedSymbolWithName(StringValue(d))
 }
 
-func FunctionWithNameParamsBodyAndParent(name string, params *Data, body *Data, parentEnv *SymbolTableFrame) *Data {
-	return &Data{Type: FunctionType, Value: unsafe.Pointer(MakeFunction(name, params, body, parentEnv))}
+func FunctionWithNameParamsDocBodyAndParent(name string, params *Data, doc string, body *Data, parentEnv *SymbolTableFrame) *Data {
+	return &Data{Type: FunctionType, Value: unsafe.Pointer(MakeFunction(name, params, doc, body, parentEnv))}
 }
 
 func MacroWithNameParamsBodyAndParent(name string, params *Data, body *Data, parentEnv *SymbolTableFrame) *Data {
@@ -712,7 +712,6 @@ func Length(d *Data) int {
 	if ListP(d) {
 		return 1 + Length(Cdr(d))
 	}
-
 	if FrameP(d) {
 		return len(*FrameValue(d))
 	}

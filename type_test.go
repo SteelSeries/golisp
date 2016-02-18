@@ -60,7 +60,7 @@ func (s *TypeSuite) TestSymbol(c *C) {
 }
 
 func (s *TypeSuite) TestFunction(c *C) {
-	sexpr := FunctionWithNameParamsBodyAndParent("func", nil, nil, nil)
+	sexpr := FunctionWithNameParamsDocBodyAndParent("func", nil, nil, nil, nil)
 	c.Assert(FunctionP(sexpr), Equals, true)
 	c.Assert(int(TypeOf(sexpr)), Equals, FunctionType)
 	c.Assert(TypeName(FunctionType), Equals, "Function")

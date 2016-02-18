@@ -19,6 +19,7 @@ type Function struct {
 	Params           *Data
 	VarArgs          bool
 	RequiredArgCount int
+	DocString        string
 	Body             *Data
 	Env              *SymbolTableFrame
 	DebugOnEntry     bool
@@ -40,9 +41,9 @@ func computeRequiredArgumentCount(args *Data) (requiredArgumentCount int, varArg
 	return
 }
 
-func MakeFunction(name string, params *Data, body *Data, parentEnv *SymbolTableFrame) *Function {
+func MakeFunction(name string, params *Data, doc string, body *Data, parentEnv *SymbolTableFrame) *Function {
 	requiredArgs, varArgs := computeRequiredArgumentCount(params)
-	return &Function{Name: name, Params: params, VarArgs: varArgs, RequiredArgCount: requiredArgs, Body: body, Env: parentEnv, SlotFunction: false}
+	return &Function{Name: name, Params: params, VarArgs: varArgs, RequiredArgCount: requiredArgs, DocString: doc, Body: body, Env: parentEnv, SlotFunction: false}
 }
 
 func (self *Function) String() string {
