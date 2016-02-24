@@ -40,8 +40,7 @@
                         10)
              (assert-eq (string->number "10" 16)
                         16)
-             (assert-eq (string->number "10" 20)
-                        0))
+             (assert-error (string->number "10" 20)))
 
          (it "number->string"
              (assert-eq (number->string 10)
@@ -54,8 +53,7 @@
                         "10")
              (assert-eq (number->string 16 16)
                         "10")
-             (assert-eq (number->string 20 20)
-                        "Unsupported base: 20"))
+             (assert-error (number->string 20 20)))
 
          (it "string-split"
              (assert-eq (string-split "1-2" "-")

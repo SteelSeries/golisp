@@ -410,8 +410,8 @@ func NumberToStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err er
 	case 16:
 		format = "%x"
 	default:
-		format = "Unsupported base: %d"
-		val = base
+		err = ProcessError(fmt.Sprintf("number->string: unsupported base %d", base), env)
+		return
 	}
 	return StringWithValue(fmt.Sprintf(format, val)), nil
 }
@@ -438,7 +438,8 @@ func StringToNumberImpl(args *Data, env *SymbolTableFrame) (result *Data, err er
 	case 16:
 		format = "%x"
 	default:
-		return IntegerWithValue(0), nil
+		err = ProcessError(fmt.Sprintf("string->number: unsupported base %d", base), env)
+		return
 	}
 	var val int64
 	_, err = fmt.Sscanf(str, format, &val)
