@@ -78,7 +78,7 @@ func (s *PrintingSuite) TestAlist(c *C) {
 }
 
 func (s *PrintingSuite) TestFunction(c *C) {
-	sexpr := FunctionWithNameParamsDocBodyAndParent("func", nil, nil, nil, nil)
+	sexpr := FunctionWithNameParamsDocBodyAndParent("func", nil, "", nil, nil)
 	c.Assert(String(sexpr), Equals, "<function: func>")
 }
 
