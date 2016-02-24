@@ -194,6 +194,16 @@ func (self *Tokenizer) readNumber() (token int, lit string) {
 	return
 }
 
+func (self *Tokenizer) readNumberOrDecrement() (token int, lit string) {
+	token, lit = self.readNumber()
+	if lit == "-1" && self.CurrentCh == '+' {
+		self.Advance()
+		return SYMBOL, "-1+"
+	} else {
+		return
+	}
+}
+
 func (self *Tokenizer) readString() (token int, lit string) {
 	buffer := make([]rune, 0, 10)
 	self.Advance()
@@ -288,10 +298,14 @@ func (self *Tokenizer) readNextToken() (token int, lit string) {
 		self.Advance()
 		self.Advance()
 		return self.readHexNumber()
+	} else if self.CurrentCh == '1' && self.NextCh == '+' {
+		self.Advance()
+		self.Advance()
+		return SYMBOL, "1+"
 	} else if unicode.IsNumber(self.CurrentCh) {
 		return self.readNumber()
 	} else if self.CurrentCh == '-' && unicode.IsNumber(self.NextCh) {
-		return self.readNumber()
+		return self.readNumberOrDecrement()
 	} else if self.CurrentCh == '"' {
 		return self.readString()
 	} else if self.CurrentCh == '\'' {

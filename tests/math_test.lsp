@@ -121,7 +121,28 @@
              (assert-error (even? "j"))
              (assert-error (odd? 'r))
              (assert-error (sign 's)))
-)
+         )
+
+
+(context "Inc/Dec"
+
+         ()
+
+         (it "increments with succ"
+             (assert-eq (succ 5) 6)
+             (assert-eq (succ -5) -4))
+
+         (it "increments with 1+"
+             (assert-eq (1+ 5) 6)
+             (assert-eq (1+ -5) -4))
+
+         (it "decrements with pred"
+             (assert-eq (pred 5) 4)
+             (assert-eq (pred -5) -6))
+
+         (it "decrements with -1+"
+             (assert-eq (-1+ 5) 4)
+             (assert-eq (-1+ -5) -6)))
 
 
 (context "Quotient"
