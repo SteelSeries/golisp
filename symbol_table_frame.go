@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"sync/atomic"
 )
 
 const (
@@ -257,7 +258,7 @@ func (self *SymbolTableFrame) ValueOfWithFunctionSlotCheck(symbol *Data, needFun
 	localBinding, found := self.findBindingInLocalFrameFor(symbol)
 	if found {
 		if FunctionP(localBinding.Val) {
-			FunctionValue(localBinding.Val).SlotFunction = true
+			atomic.StoreInt32(&FunctionValue(localBinding.Val).SlotFunction, 1)
 		}
 		return localBinding.Val
 	}
@@ -271,7 +272,7 @@ func (self *SymbolTableFrame) ValueOfWithFunctionSlotCheck(symbol *Data, needFun
 				return slotValue
 			}
 			if FunctionP(slotValue) {
-				FunctionValue(slotValue).SlotFunction = true
+				atomic.StoreInt32(&FunctionValue(slotValue).SlotFunction, 1)
 				return slotValue
 			}
 		}
@@ -280,7 +281,7 @@ func (self *SymbolTableFrame) ValueOfWithFunctionSlotCheck(symbol *Data, needFun
 	binding, found := self.FindBindingFor(symbol)
 	if found {
 		if FunctionP(binding.Val) {
-			FunctionValue(binding.Val).SlotFunction = false
+			atomic.StoreInt32(&FunctionValue(binding.Val).SlotFunction, 0)
 		}
 		return binding.Val
 	} else {

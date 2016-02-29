@@ -10,20 +10,30 @@ package golisp
 import (
 	"gopkg.in/fatih/set.v0"
 	"strings"
+	"sync"
 )
 
-type FrameMap map[string]*Data
+type FrameMapData map[string]*Data
+
+type FrameMap struct {
+	Data  FrameMapData
+	Mutex sync.RWMutex
+}
 
 func (self *FrameMap) hasSlotLocally(key string) bool {
-	_, ok := (*self)[key]
+	self.Mutex.RLock()
+	_, ok := self.Data[key]
+	self.Mutex.RUnlock()
 	return ok
 }
 
 func (self *FrameMap) localSlots() []string {
-	slots := make([]string, 0, len(*self))
-	for k, _ := range *self {
+	self.Mutex.RLock()
+	slots := make([]string, 0, len(self.Data))
+	for k, _ := range self.Data {
 		slots = append(slots, k)
 	}
+	self.Mutex.RUnlock()
 	return slots
 }
 
@@ -32,32 +42,39 @@ func isParentKey(key string) bool {
 }
 
 func (self *FrameMap) hasParentSlots() bool {
-	for k, _ := range *self {
+	self.Mutex.RLock()
+	for k, _ := range self.Data {
 		if isParentKey(k) {
+			self.Mutex.RUnlock()
 			return true
 		}
 	}
+	self.Mutex.RUnlock()
 
 	return false
 }
 
 func (self *FrameMap) parentSlots() []string {
-	slots := make([]string, 0, len(*self))
-	for k, _ := range *self {
+	self.Mutex.RLock()
+	slots := make([]string, 0, len(self.Data))
+	for k, _ := range self.Data {
 		if isParentKey(k) {
 			slots = append(slots, k)
 		}
 	}
+	self.Mutex.RUnlock()
 	return slots
 }
 
 func (self *FrameMap) Parents() []*FrameMap {
 	parents := make([]*FrameMap, 0, 0)
-	for k, v := range *self {
+	self.Mutex.RLock()
+	for k, v := range self.Data {
 		if isParentKey(k) && v != nil {
 			parents = append(parents, FrameValue(v))
 		}
 	}
+	self.Mutex.RUnlock()
 	return parents
 }
 
@@ -101,7 +118,9 @@ func (self *FrameMap) getHelper(key string, v *set.Set) *Data {
 
 	v.Add(self)
 
-	val, ok := (*self)[key]
+	self.Mutex.RLock()
+	val, ok := self.Data[key]
+	self.Mutex.RUnlock()
 	if ok {
 		return val
 	}
@@ -127,39 +146,50 @@ func (self *FrameMap) Remove(key string) bool {
 	if !self.hasSlotLocally(key) {
 		return false
 	}
-	delete(*self, key)
+	self.Mutex.Lock()
+	delete(self.Data, key)
+	self.Mutex.Unlock()
 	return true
 }
 
 //------------------------------------------------------------
 
 func (self *FrameMap) Set(key string, value *Data) *Data {
-	(*self)[key] = value
+	self.Mutex.Lock()
+	self.Data[key] = value
+	self.Mutex.Unlock()
 	return value
 }
 
 //------------------------------------------------------------
 
 func (self *FrameMap) Clone() *FrameMap {
-	f := make(FrameMap)
-	for k, v := range *self {
-		f[k] = v
+	f := FrameMap{}
+	f.Data = make(FrameMapData)
+	self.Mutex.RLock()
+	for k, v := range self.Data {
+		f.Data[k] = v
 	}
+	self.Mutex.RUnlock()
 	return &f
 }
 
 func (self *FrameMap) Keys() []*Data {
-	keys := make([]*Data, 0, len(*self))
-	for k, _ := range *self {
+	self.Mutex.RLock()
+	keys := make([]*Data, 0, len(self.Data))
+	for k, _ := range self.Data {
 		keys = append(keys, Intern(k))
 	}
+	self.Mutex.RUnlock()
 	return keys
 }
 
 func (self *FrameMap) Values() []*Data {
-	values := make([]*Data, 0, len(*self))
-	for _, v := range *self {
+	self.Mutex.RLock()
+	values := make([]*Data, 0, len(self.Data))
+	for _, v := range self.Data {
 		values = append(values, v)
 	}
+	self.Mutex.RUnlock()
 	return values
 }

@@ -14,6 +14,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"sync/atomic"
 	"unsafe"
 )
 
@@ -616,7 +617,10 @@ func Length(d *Data) int {
 	}
 
 	if FrameP(d) {
-		return len(*FrameValue(d))
+		frame := FrameValue(d)
+		frame.Mutex.RLock()
+		return len(frame.Data)
+		frame.Mutex.RUnlock()
 	}
 
 	if ObjectP(d) && ObjectType(d) == "[]byte" {
@@ -769,10 +773,14 @@ func Copy(d *Data) *Data {
 		}
 	case FrameType:
 		{
-			m := make(FrameMap)
-			for k, v := range *(FrameValue(d)) {
-				m[k] = Copy(v)
+			m := FrameMap{}
+			m.Data = make(FrameMapData)
+			frame := FrameValue(d)
+			frame.Mutex.RLock()
+			for k, v := range frame.Data {
+				m.Data[k] = Copy(v)
 			}
+			frame.Mutex.RUnlock()
 			return FrameWithValue(&m)
 		}
 	}
@@ -831,14 +839,24 @@ func IsEqual(d *Data, o *Data) bool {
 	}
 
 	if FrameP(d) {
-		if len(*(FrameValue(d))) != len(*(FrameValue(o))) {
+		frameD := FrameValue(d)
+		frameO := FrameValue(o)
+		frameD.Mutex.RLock()
+		frameO.Mutex.RLock()
+		if len(frameD.Data) != len(frameO.Data) {
+			frameO.Mutex.RUnlock()
+			frameD.Mutex.RUnlock()
 			return false
 		}
-		for k, v := range *FrameValue(d) {
-			if !IsEqual(v, (*(FrameValue(o)))[k]) {
+		for k, v := range frameD.Data {
+			if !IsEqual(v, frameO.Data[k]) {
+				frameO.Mutex.RUnlock()
+				frameD.Mutex.RUnlock()
 				return false
 			}
 		}
+		frameO.Mutex.RUnlock()
+		frameD.Mutex.RUnlock()
 		return true
 	}
 
@@ -975,18 +993,21 @@ func String(d *Data) string {
 			return fmt.Sprintf("<opaque Go object of type %s : 0x%x>", ObjectType(d), (*uint64)(ObjectValue(d)))
 		}
 	case FrameType:
-		keys := make([]string, 0, len(*FrameValue(d)))
-		for key, _ := range *FrameValue(d) {
+		frame := FrameValue(d)
+		frame.Mutex.RLock()
+		keys := make([]string, 0, len(frame.Data))
+		for key, _ := range frame.Data {
 			keys = append(keys, key)
 		}
 		sort.Strings(keys)
 
-		pairs := make([]string, 0, len(*FrameValue(d)))
+		pairs := make([]string, 0, len(frame.Data))
 		for _, key := range keys {
-			val := (*FrameValue(d))[key]
+			val := frame.Data[key]
 			var valString string = String(val)
 			pairs = append(pairs, fmt.Sprintf("%s %s", key, valString))
 		}
+		frame.Mutex.RUnlock()
 		return fmt.Sprintf("{%s}", strings.Join(pairs, " "))
 	case EnvironmentType:
 		return fmt.Sprintf("<environment: %s>", EnvironmentValue(d).Name)
@@ -1164,7 +1185,7 @@ func Apply(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err
 	}
 	switch function.Type {
 	case FunctionType:
-		if FunctionValue(function).SlotFunction && env.HasFrame() {
+		if atomic.LoadInt32(&FunctionValue(function).SlotFunction) == 1 && env.HasFrame() {
 			result, err = FunctionValue(function).ApplyWithFrame(args, env, env.Frame)
 		} else {
 			result, err = FunctionValue(function).Apply(args, env)
@@ -1188,7 +1209,7 @@ func ApplyWithoutEval(function *Data, args *Data, env *SymbolTableFrame) (result
 	}
 	switch function.Type {
 	case FunctionType:
-		if FunctionValue(function).SlotFunction && env.HasFrame() {
+		if atomic.LoadInt32(&FunctionValue(function).SlotFunction) == 1 && env.HasFrame() {
 			result, err = FunctionValue(function).ApplyWithoutEvalWithFrame(args, env, env.Frame)
 		} else {
 			result, err = FunctionValue(function).ApplyWithoutEval(args, env)

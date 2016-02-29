@@ -17,10 +17,11 @@ import (
 func JsonToLispWithFrames(json interface{}) (result *Data) {
 	mapValue, ok := json.(map[string]interface{})
 	if ok {
-		var m = make(FrameMap, len(mapValue))
+		m := FrameMap{}
+		m.Data = make(FrameMapData, len(mapValue))
 		for key, val := range mapValue {
 			value := JsonToLispWithFrames(val)
-			m[fmt.Sprintf("%s:", key)] = value
+			m.Data[fmt.Sprintf("%s:", key)] = value
 		}
 		return FrameWithValue(&m)
 	}
@@ -72,7 +73,8 @@ func JsonStringToLispWithFrames(jsonData string) (result *Data) {
 	err := json.Unmarshal(b, &data)
 	if err != nil {
 		fmt.Printf("Returning empty frame because of badly formed json: '%s'\n --> %v\n", jsonData, err)
-		m := make(FrameMap, 0)
+		m := FrameMap{}
+		m.Data = make(FrameMapData, 0)
 		return FrameWithValue(&m)
 	}
 	return JsonToLispWithFrames(data)
@@ -109,11 +111,14 @@ func LispWithFramesToJson(d *Data) (result interface{}) {
 
 	if FrameP(d) {
 		dict := make(map[string]interface{}, Length(d))
-		for k, v := range *FrameValue(d) {
+		frame := FrameValue(d)
+		frame.Mutex.RLock()
+		for k, v := range frame.Data {
 			if !FunctionP(v) {
 				dict[strings.TrimRight(k, ":")] = LispWithFramesToJson(v)
 			}
 		}
+		frame.Mutex.RUnlock()
 		return dict
 	}
 

@@ -170,7 +170,8 @@ func parseFrame(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 	tok, _ := s.NextToken()
 	if tok == RBRACKET {
 		s.ConsumeToken()
-		f := make(FrameMap)
+		f := FrameMap{}
+		f.Data = make(FrameMapData)
 		sexpr = FrameWithValue(&f)
 		return
 	}

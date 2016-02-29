@@ -34,7 +34,8 @@ func MakeFrameImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 		err = ProcessError("Frames must be initialized with an even number of arguments.", env)
 		return
 	}
-	m := make(FrameMap)
+	m := FrameMap{}
+	m.Data = make(FrameMapData)
 	for c := args; NotNilP(c); c = Cddr(c) {
 		k := Car(c)
 		if !NakedP(k) {
@@ -42,7 +43,7 @@ func MakeFrameImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 			return
 		}
 		v := Cadr(c)
-		m[StringValue(k)] = v
+		m.Data[StringValue(k)] = v
 	}
 	return FrameWithValue(&m), nil
 }
