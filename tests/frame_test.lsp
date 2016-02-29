@@ -63,6 +63,12 @@
                           6)
                (assert-eq (get-slot f b:)
                           6))
+             (let ((f {foo: (lambda (x y)
+                                 (+ 1x y))}))
+               (assert-eq (apply-slot f foo: '(2 3)) 6)
+               (assert-eq (apply-slot f foo: 2 '(3)) 6)
+               (assert-error (apply-slot f foo: 2)) ;wrong number of parameters
+               (assert-error (apply-slot f foo: 2 3))) ;doesn't end in a list
 
              (assert-error (send '(1 2) foo:)) ;1st arg must be a frame
              (assert-error (send {a: 1} 'a)) ;selector must be a naked symbol
@@ -151,8 +157,15 @@
                (assert-error (send g foo:))) ;selector must be a naked symbol
 
              (let* ((f {foo: 42})
-                    (g {parent*: f  foo: (lambda () (+ 1 (send-super 'foo)))}))
+                    (g {parent*: f  foo: (lambda () (+ 1 (send-super foo:)))}))
                (assert-error (send g foo:)))) ;parent's slot value must be a function
+
+         (it calling apply-slot-super
+             (let* ((f {foo: (lambda (x y) (+ x y 3))})
+                    (g {parent*: f  foo: (lambda () (+ 1 (apply-slot-super foo: '(1 2))))}))
+               (assert-eq (send g foo:)
+                          7))
+               (assert-error (apply-slot-super foo:)))) ;only usable in a frame
 
          (it calling-super-sugar
              (let* ((f {foo: (lambda () 42)})
