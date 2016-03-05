@@ -619,8 +619,9 @@ func Length(d *Data) int {
 	if FrameP(d) {
 		frame := FrameValue(d)
 		frame.Mutex.RLock()
-		return len(frame.Data)
+		length := len(frame.Data)
 		frame.Mutex.RUnlock()
+		return length
 	}
 
 	if ObjectP(d) && ObjectType(d) == "[]byte" {
