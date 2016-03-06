@@ -885,7 +885,7 @@ func IsEqual(d *Data, o *Data) bool {
 		return FloatValue(d) == FloatValue(o)
 	case BooleanType:
 		return BooleanValue(d) == BooleanValue(o)
-	case StringType:
+	case StringType, SymbolType: // check symbols not generated using intern (aka: gensym and gensym-naked)
 		return StringValue(d) == StringValue(o)
 	case FunctionType:
 		return FunctionValue(d) == FunctionValue(o)

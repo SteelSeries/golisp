@@ -27,6 +27,7 @@ func RegisterSystemPrimitives() {
 	MakePrimitiveFunction("intern", "1", InternImpl)
 	MakePrimitiveFunction("quit", "0", QuitImpl)
 	MakePrimitiveFunction("gensym", "0|1", GensymImpl)
+	MakePrimitiveFunction("gensym-naked", "0|1", GensymNakedImpl)
 	MakePrimitiveFunction("eval", "1|2", EvalImpl)
 
 	MakeRestrictedPrimitiveFunction("load", "1", LoadFileImpl)
@@ -185,10 +186,9 @@ func InternImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return Intern(StringValue(sym)), nil
 }
 
-func GensymImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var prefix string
+func gensymHelper(primitiveName string, args *Data, env *SymbolTableFrame) (prefix string, count int, err error) {
 	if Length(args) > 1 {
-		err = ProcessError(fmt.Sprintf("gensym expects 0 or 1 argument, but received %d.", Length(args)), env)
+		err = ProcessError(fmt.Sprintf("%s expects 0 or 1 argument, but received %d.", primitiveName, Length(args)), env)
 		return
 	}
 
@@ -197,20 +197,37 @@ func GensymImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	} else {
 		arg := Car(args)
 		if !StringP(arg) && !SymbolP(arg) {
-			err = ProcessError(fmt.Sprintf("gensym expects a string or symbol, but recieved %s.", String(arg)), env)
+			err = ProcessError(fmt.Sprintf("%s expects a string or symbol, but recieved %s.", primitiveName, String(arg)), env)
 			return
 		}
 		prefix = StringValue(arg)
 	}
 
-	count := symbolCounts[prefix]
+	count = symbolCounts[prefix]
 	if count == 0 {
 		count = 1
 	} else {
 		count += 1
 	}
 	symbolCounts[prefix] = count
-	result = Intern(fmt.Sprintf("%s-%d", prefix, count))
+	return
+}
+
+func GensymImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	prefix, count, err := gensymHelper("gensym", args, env)
+	if err != nil {
+		return
+	}
+	result = SymbolWithName(fmt.Sprintf("%s-%d", prefix, count))
+	return
+}
+
+func GensymNakedImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	prefix, count, err := gensymHelper("gensym-naked", args, env)
+	if err != nil {
+		return
+	}
+	result = NakedSymbolWithName(fmt.Sprintf("%s-%d", prefix, count))
 	return
 }
 
