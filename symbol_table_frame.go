@@ -177,6 +177,10 @@ func (self *SymbolTableFrame) SetBindingAt(name string, b *Binding) {
 	self.Bindings[name] = b
 }
 
+func (self *SymbolTableFrame) DeleteBinding(name string) {
+	delete(self.Bindings, name)
+}
+
 func (self *SymbolTableFrame) findSymbol(name string) (symbol *Data, found bool) {
 	binding, found := self.BindingNamed(name)
 	if found {
