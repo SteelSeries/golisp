@@ -11,7 +11,6 @@ import (
 	"container/list"
 	"errors"
 	"fmt"
-	"strings"
 	"sync"
 	"sync/atomic"
 )
@@ -47,11 +46,6 @@ var TopLevelEnvironments environmentsTable = environmentsTable{make(map[string]*
 var internedSymbols symbolsTable = symbolsTable{make(map[string]*Data, 256), sync.RWMutex{}}
 
 func Intern(name string) (sym *Data) {
-	// Naked symbols do not need to be added to the symbol table
-	if strings.HasSuffix(name, ":") {
-		return SymbolWithName(name)
-	}
-
 	internedSymbols.Mutex.RLock()
 	lock := READ_LOCK
 	defer func() {
