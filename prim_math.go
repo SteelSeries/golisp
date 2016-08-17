@@ -40,6 +40,73 @@ func RegisterMathPrimitives() {
 	MakePrimitiveFunction("even?", "1", EvenImpl)
 	MakePrimitiveFunction("odd?", "1", OddImpl)
 	MakePrimitiveFunction("sign", "1", SignImpl)
+
+	makeUnaryFloatFunction("acos", math.Acos)
+	makeUnaryFloatFunction("acosh", math.Acosh)
+	makeUnaryFloatFunction("asin", math.Asin)
+	makeUnaryFloatFunction("asinh", math.Asinh)
+	makeUnaryFloatFunction("atan", math.Atan)
+	makeUnaryFloatFunction("atanh", math.Atanh)
+	makeUnaryFloatFunction("cbrt", math.Cbrt)
+	makeUnaryFloatFunction("cos", math.Cos)
+	makeUnaryFloatFunction("cosh", math.Cosh)
+	makeUnaryFloatFunction("erf", math.Erf)
+	makeUnaryFloatFunction("erfc", math.Erfc)
+	makeUnaryFloatFunction("exp", math.Exp)
+	makeUnaryFloatFunction("exp2", math.Exp2)
+	makeUnaryFloatFunction("expm1", math.Expm1)
+	makeUnaryFloatFunction("gamma", math.Gamma)
+	makeUnaryFloatFunction("j0", math.J0)
+	makeUnaryFloatFunction("j1", math.J1)
+	makeUnaryFloatFunction("log", math.Log)
+	makeUnaryFloatFunction("log10", math.Log10)
+	makeUnaryFloatFunction("log1p", math.Log1p)
+	makeUnaryFloatFunction("log2", math.Log2)
+	makeUnaryFloatFunction("logb", math.Logb)
+	makeUnaryFloatFunction("sin", math.Sin)
+	makeUnaryFloatFunction("sinh", math.Sinh)
+	makeUnaryFloatFunction("sqrt", math.Sqrt)
+	makeUnaryFloatFunction("tan", math.Tan)
+	makeUnaryFloatFunction("tanh", math.Tanh)
+	makeUnaryFloatFunction("y0", math.Y0)
+	makeUnaryFloatFunction("y1", math.Y1)
+
+	MakePrimitiveFunction("inf?", "1", IsInfImpl)
+	MakePrimitiveFunction("nan?", "1", IsNaNImpl)
+
+	Global.BindTo(Intern("pi"), FloatWithValue(float32(math.Pi)))
+	Global.BindTo(Intern("e"), FloatWithValue(float32(math.E)))
+	Global.BindTo(Intern("phi"), FloatWithValue(float32(math.Phi)))
+	Global.BindTo(Intern("sqrt2"), FloatWithValue(float32(math.Sqrt2)))
+	Global.BindTo(Intern("sqrte"), FloatWithValue(float32(math.SqrtE)))
+	Global.BindTo(Intern("sqrtpi"), FloatWithValue(float32(math.SqrtPi)))
+	Global.BindTo(Intern("sqrtphi"), FloatWithValue(float32(math.SqrtPhi)))
+	Global.BindTo(Intern("ln2"), FloatWithValue(float32(math.Ln2)))
+	Global.BindTo(Intern("log2e"), FloatWithValue(float32(math.Log2E)))
+	Global.BindTo(Intern("ln10"), FloatWithValue(float32(math.Ln10)))
+	Global.BindTo(Intern("log10e"), FloatWithValue(float32(math.Log10E)))
+	Global.BindTo(Intern("nan"), FloatWithValue(float32(math.NaN())))
+	Global.BindTo(Intern("+inf"), FloatWithValue(float32(math.Inf(1))))
+	Global.BindTo(Intern("-inf"), FloatWithValue(float32(math.Inf(-1))))
+}
+
+func makeUnaryFloatFunction(name string, f func(float64) float64) {
+	primFunc := func(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+		valObj := Car(args)
+
+		if !NumberP(valObj) {
+			err = ProcessError(fmt.Sprintf("%s expects a number as a parameter, got %s", name, String(valObj)), env)
+			return
+		}
+
+		val := FloatValue(valObj)
+
+		ret := f(float64(val))
+
+		return FloatWithValue(float32(ret)), nil
+	}
+
+	MakePrimitiveFunction(name, "1", primFunc)
 }
 
 func sgn(a float32) int64 {
@@ -592,5 +659,33 @@ func SignImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return IntegerWithValue(sgn(float32(FloatValue(val)))), nil
 	} else {
 		return IntegerWithValue(intSgn(IntegerValue(val))), nil
+	}
+}
+
+func IsInfImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	val := Car(args)
+	if !NumberP(val) {
+		err = ProcessError(fmt.Sprintf("inf? expected a nunber, received %s", String(val)), env)
+		return
+	}
+
+	if FloatP(val) {
+		return BooleanWithValue(math.IsInf(float64(FloatValue(val)), 0)), nil
+	} else {
+		return BooleanWithValue(false), nil
+	}
+}
+
+func IsNaNImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	val := Car(args)
+	if !NumberP(val) {
+		err = ProcessError(fmt.Sprintf("nan? expected a nunber, received %s", String(val)), env)
+		return
+	}
+
+	if FloatP(val) {
+		return BooleanWithValue(math.IsNaN(float64(FloatValue(val)))), nil
+	} else {
+		return BooleanWithValue(false), nil
 	}
 }
