@@ -288,7 +288,7 @@ func RemainderImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 	}
 
 	divisor := Cadr(args)
-	if !IntegerP(dividend) {
+	if !IntegerP(divisor) {
 		err = ProcessError(fmt.Sprintf("%/modulo expected an integer second arg, received %s", String(divisor)), env)
 		return
 	}
