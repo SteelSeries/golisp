@@ -40,6 +40,9 @@ func RegisterMathPrimitives() {
 	MakePrimitiveFunction("even?", "1", EvenImpl)
 	MakePrimitiveFunction("odd?", "1", OddImpl)
 	MakePrimitiveFunction("sign", "1", SignImpl)
+	MakePrimitiveFunction("pow", "2", PowImpl)
+	MakePrimitiveFunction("inf?", "1", IsInfImpl)
+	MakePrimitiveFunction("nan?", "1", IsNaNImpl)
 
 	makeUnaryFloatFunction("acos", math.Acos)
 	makeUnaryFloatFunction("acosh", math.Acosh)
@@ -70,9 +73,6 @@ func RegisterMathPrimitives() {
 	makeUnaryFloatFunction("tanh", math.Tanh)
 	makeUnaryFloatFunction("y0", math.Y0)
 	makeUnaryFloatFunction("y1", math.Y1)
-
-	MakePrimitiveFunction("inf?", "1", IsInfImpl)
-	MakePrimitiveFunction("nan?", "1", IsNaNImpl)
 
 	Global.BindTo(Intern("pi"), FloatWithValue(float32(math.Pi)))
 	Global.BindTo(Intern("e"), FloatWithValue(float32(math.E)))
@@ -659,6 +659,32 @@ func SignImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return IntegerWithValue(sgn(float32(FloatValue(val)))), nil
 	} else {
 		return IntegerWithValue(intSgn(IntegerValue(val))), nil
+	}
+}
+
+func PowImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	areFloats, err := anyFloats(args, env)
+	if err != nil {
+		return
+	}
+
+	base := Car(args)
+	exponent := Cadr(args)
+
+	if areFloats {
+		return FloatWithValue(float32(math.Pow(float64(FloatValue(base)), float64(FloatValue(exponent))))), nil
+	} else {
+		ret := int64(1)
+		b := IntegerValue(base)
+		e := IntegerValue(exponent)
+		for e > 0 {
+			if e&1 != 0 {
+				ret *= b
+			}
+			b *= b
+			e >>= 1
+		}
+		return IntegerWithValue(ret), nil
 	}
 }
 
