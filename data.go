@@ -790,7 +790,7 @@ func Copy(d *Data) *Data {
 }
 
 func IsEqual(d *Data, o *Data) bool {
-	if d == o {
+	if d == o && !FloatP(d) {
 		return true
 	}
 
