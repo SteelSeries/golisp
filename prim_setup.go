@@ -22,8 +22,8 @@ func InitLisp() {
 
 func InitEnvironments() {
 	Global = NewSymbolTableFrameBelow(nil, "SystemGlobal")
-	Global.BindTo(Intern("nil"), EmptyCons())
-	Global.BindTo(Intern("system-global-environment"), EnvironmentWithValue(Global))
+	Global.BindToProtected(Intern("nil"), EmptyCons())
+	Global.BindToProtected(Intern("system-global-environment"), EnvironmentWithValue(Global))
 }
 
 func InitBuiltins() {

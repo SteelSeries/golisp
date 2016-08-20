@@ -7,8 +7,6 @@
 
 package golisp
 
-import ()
-
 func RegisterListManipulationPrimitives() {
 	MakePrimitiveFunction("list", "*", ListImpl)
 	MakePrimitiveFunction("make-list", "1|2", MakeListImpl)
@@ -105,7 +103,7 @@ func AppendBangImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 	}
 
 	if SymbolP(Car(args)) {
-		env.BindTo(Car(args), result)
+		result, err = env.SetTo(Car(args), result)
 	}
 
 	return

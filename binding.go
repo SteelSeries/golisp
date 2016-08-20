@@ -8,18 +8,23 @@
 package golisp
 
 import (
-    "fmt"
+	"fmt"
 )
 
 type Binding struct {
-    Sym *Data
-    Val *Data
+	Sym       *Data
+	Val       *Data
+	Protected bool
 }
 
 func (self *Binding) Dump() {
-    fmt.Printf("   %s => %s\n", StringValue(self.Sym), String(self.Val))
+	fmt.Printf("   %s => %s\n", StringValue(self.Sym), String(self.Val))
 }
 
 func BindingWithSymbolAndValue(sym *Data, val *Data) *Binding {
-    return &Binding{sym, val}
+	return &Binding{Sym: sym, Val: val}
+}
+
+func ProtectedBindingWithSymbolAndValue(sym *Data, val *Data) *Binding {
+	return &Binding{Sym: sym, Val: val, Protected: true}
 }

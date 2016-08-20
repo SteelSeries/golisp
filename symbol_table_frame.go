@@ -213,19 +213,37 @@ func (self *SymbolTableFrame) Intern(name string) (sym *Data) {
 func (self *SymbolTableFrame) BindTo(symbol *Data, value *Data) *Data {
 	binding, found := self.FindBindingFor(symbol)
 	if found {
-		binding.Val = value
+		if !binding.Protected {
+			binding.Val = value
+		}
 	} else {
-		binding := BindingWithSymbolAndValue(symbol, value)
+		binding = BindingWithSymbolAndValue(symbol, value)
 		self.SetBindingAt(StringValue(symbol), binding)
 	}
-	return value
+	return binding.Val
+}
+
+func (self *SymbolTableFrame) BindToProtected(symbol *Data, value *Data) *Data {
+	binding, found := self.FindBindingFor(symbol)
+	if found {
+		binding.Val = value
+		binding.Protected = true
+	} else {
+		binding = ProtectedBindingWithSymbolAndValue(symbol, value)
+		self.SetBindingAt(StringValue(symbol), binding)
+	}
+	return binding.Val
 }
 
 func (self *SymbolTableFrame) SetTo(symbol *Data, value *Data) (result *Data, err error) {
 	localBinding, found := self.findBindingInLocalFrameFor(symbol)
 	if found {
-		localBinding.Val = value
-		return value, nil
+		if localBinding.Protected {
+			return nil, fmt.Errorf("%s is a protected binding", StringValue(symbol))
+		} else {
+			localBinding.Val = value
+			return value, nil
+		}
 	}
 
 	naked := StringValue(NakedSymbolFrom(symbol))
@@ -236,8 +254,12 @@ func (self *SymbolTableFrame) SetTo(symbol *Data, value *Data) (result *Data, er
 
 	binding, found := self.FindBindingFor(symbol)
 	if found {
-		binding.Val = value
-		return value, nil
+		if binding.Protected {
+			return nil, fmt.Errorf("%s is a protected binding", StringValue(symbol))
+		} else {
+			binding.Val = value
+			return value, nil
+		}
 	}
 
 	return nil, errors.New(fmt.Sprintf("%s is undefined", StringValue(symbol)))
@@ -250,12 +272,14 @@ func (self *SymbolTableFrame) findBindingInLocalFrameFor(symbol *Data) (b *Bindi
 func (self *SymbolTableFrame) BindLocallyTo(symbol *Data, value *Data) *Data {
 	binding, found := self.findBindingInLocalFrameFor(symbol)
 	if found {
-		binding.Val = value
+		if !binding.Protected {
+			binding.Val = value
+		}
 	} else {
-		binding := BindingWithSymbolAndValue(symbol, value)
+		binding = BindingWithSymbolAndValue(symbol, value)
 		self.SetBindingAt(StringValue(symbol), binding)
 	}
-	return value
+	return binding.Val
 }
 
 func (self *SymbolTableFrame) ValueOfWithFunctionSlotCheck(symbol *Data, needFunction bool) *Data {
