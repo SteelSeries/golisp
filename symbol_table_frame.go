@@ -26,6 +26,7 @@ type SymbolTableFrame struct {
 	Previous     *SymbolTableFrame
 	Frame        *FrameMap
 	Bindings     map[string]*Binding
+	Mutex        sync.RWMutex
 	CurrentCode  *list.List
 	IsRestricted bool
 }
@@ -85,6 +86,8 @@ func (self *SymbolTableFrame) CurrentCodeString() string {
 
 func (self *SymbolTableFrame) InternalDump(frameNumber int) {
 	fmt.Printf("Frame %d: %s\n", frameNumber, self.CurrentCodeString())
+	self.Mutex.RLock()
+	defer self.Mutex.RUnlock()
 	for _, b := range self.Bindings {
 		if b.Val == nil || TypeOf(b.Val) != PrimitiveType {
 			b.Dump()
@@ -104,6 +107,8 @@ func (self *SymbolTableFrame) Dump() {
 func (self *SymbolTableFrame) DumpSingleFrame(frameNumber int) {
 	if frameNumber == 0 {
 		fmt.Printf("%s\n", self.CurrentCodeString())
+		self.Mutex.RLock()
+		defer self.Mutex.RUnlock()
 		for _, b := range self.Bindings {
 			if b.Val == nil || TypeOf(b.Val) != PrimitiveType {
 				b.Dump()
@@ -169,15 +174,21 @@ func (self *SymbolTableFrame) HasFrame() bool {
 }
 
 func (self *SymbolTableFrame) BindingNamed(name string) (b *Binding, present bool) {
+	self.Mutex.RLock()
+	defer self.Mutex.RUnlock()
 	b, present = self.Bindings[name]
 	return
 }
 
 func (self *SymbolTableFrame) SetBindingAt(name string, b *Binding) {
+	self.Mutex.Lock()
+	defer self.Mutex.Unlock()
 	self.Bindings[name] = b
 }
 
 func (self *SymbolTableFrame) DeleteBinding(name string) {
+	self.Mutex.Lock()
+	defer self.Mutex.Unlock()
 	delete(self.Bindings, name)
 }
 
