@@ -7,8 +7,6 @@
 
 package golisp
 
-import ()
-
 func RegisterEnvironmentPrimitives() {
 	MakePrimitiveFunction("environment?", "1", EnvironmentPImpl)
 	MakePrimitiveFunction("environment-has-parent?", "1", EnvironmentParentPImpl)
@@ -276,8 +274,8 @@ func EnvironmentDefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err
 		err = ProcessError("environment-define requires a symbol as it's second argument", env)
 		return
 	}
-	EnvironmentValue(Car(args)).BindLocallyTo(Cadr(args), Caddr(args))
-	return Caddr(args), nil
+	_, err = EnvironmentValue(Car(args)).BindLocallyTo(Cadr(args), Caddr(args))
+	return Caddr(args), err
 }
 
 func SystemGlobalEnvironmentImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -313,7 +311,10 @@ func MakeTopLevelEnvironmentImpl(args *Data, env *SymbolTableFrame) (result *Dat
 				err = ProcessError("make-top-level-environment expects binding names to be symbols", env)
 				return
 			}
-			newEnv.BindLocallyTo(Car(cell), nil)
+			_, err = newEnv.BindLocallyTo(Car(cell), nil)
+			if err != nil {
+				return
+			}
 		}
 	} else if Length(args) == 2 {
 		if !ListP(Car(args)) {
@@ -333,7 +334,10 @@ func MakeTopLevelEnvironmentImpl(args *Data, env *SymbolTableFrame) (result *Dat
 				err = ProcessError("make-top-level-environment expects binding names to be symbols", env)
 				return
 			}
-			newEnv.BindLocallyTo(Car(cell), Car(valcell))
+			_, err = newEnv.BindLocallyTo(Car(cell), Car(valcell))
+			if err != nil {
+				return
+			}
 		}
 	}
 

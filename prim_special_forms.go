@@ -197,8 +197,8 @@ func DefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		err = ProcessError("Invalid definition", env)
 		return
 	}
-	env.BindLocallyTo(thing, value)
-	return value, nil
+	_, err = env.BindLocallyTo(thing, value)
+	return value, err
 }
 
 func DefmacroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -218,8 +218,8 @@ func DefmacroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		err = ProcessError("Invalid macro definition", env)
 		return
 	}
-	env.BindLocallyTo(thing, value)
-	return value, nil
+	_, err = env.BindLocallyTo(thing, value)
+	return value, err
 }
 
 func bindLetLocals(bindingForms *Data, rec bool, localEnv *SymbolTableFrame, evalEnv *SymbolTableFrame) (err error) {
@@ -239,7 +239,10 @@ func bindLetLocals(bindingForms *Data, rec bool, localEnv *SymbolTableFrame, eva
 		}
 
 		if rec {
-			localEnv.BindLocallyTo(name, nil)
+			_, err = localEnv.BindLocallyTo(name, nil)
+			if err != nil {
+				return
+			}
 		}
 	}
 
@@ -250,7 +253,10 @@ func bindLetLocals(bindingForms *Data, rec bool, localEnv *SymbolTableFrame, eva
 		if err != nil {
 			return
 		}
-		localEnv.BindLocallyTo(name, value)
+		_, err = localEnv.BindLocallyTo(name, value)
+		if err != nil {
+			return
+		}
 	}
 	return
 }
@@ -313,9 +319,15 @@ func namedLetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	initialsList := ArrayToList(initials)
 	localEnv := NewSymbolTableFrameBelow(env, StringValue(name))
 	localEnv.Previous = env
-	localEnv.BindLocallyTo(name, nil)
+	_, err = localEnv.BindLocallyTo(name, nil)
+	if err != nil {
+		return
+	}
 	namedLetProc := FunctionWithNameParamsBodyAndParent(StringValue(name), varsList, body, localEnv)
-	localEnv.BindLocallyTo(name, namedLetProc)
+	_, err = localEnv.BindLocallyTo(name, namedLetProc)
+	if err != nil {
+		return
+	}
 	return FunctionValue(namedLetProc).Apply(initialsList, env)
 }
 
@@ -368,7 +380,10 @@ func rebindDoLocals(bindingForms *Data, env *SymbolTableFrame) (err error) {
 	}
 
 	for i := 0; i < len(names); i++ {
-		env.BindLocallyTo(names[i], values[i])
+		_, err = env.BindLocallyTo(names[i], values[i])
+		if err != nil {
+			return
+		}
 	}
 	return
 }

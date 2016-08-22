@@ -76,7 +76,10 @@ func (self *Function) makeLocalBindings(args *Data, argEnv *SymbolTableFrame, lo
 		if accumulatingParam != nil {
 			accumulatedArgs = append(accumulatedArgs, argValue)
 		} else {
-			localEnv.BindLocallyTo(Car(p), argValue)
+			_, err = localEnv.BindLocallyTo(Car(p), argValue)
+			if err != nil {
+				return
+			}
 		}
 		if accumulatingParam == nil {
 			p = Cdr(p)
@@ -86,7 +89,10 @@ func (self *Function) makeLocalBindings(args *Data, argEnv *SymbolTableFrame, lo
 		}
 	}
 	if accumulatingParam != nil {
-		localEnv.BindLocallyTo(accumulatingParam, ArrayToList(accumulatedArgs))
+		_, err = localEnv.BindLocallyTo(accumulatingParam, ArrayToList(accumulatedArgs))
+		if err != nil {
+			return
+		}
 	}
 	return nil
 }
@@ -96,18 +102,27 @@ func (self *Function) internalApply(args *Data, argEnv *SymbolTableFrame, frame 
 	localEnv.Previous = argEnv
 	selfSym := Intern("self")
 	if frame != nil {
-		localEnv.BindLocallyTo(selfSym, FrameWithValue(frame))
+		_, err = localEnv.BindLocallyTo(selfSym, FrameWithValue(frame))
+		if err != nil {
+			return
+		}
 	} else if atomic.LoadInt32(&self.SlotFunction) == 1 {
 		selfBinding, found := argEnv.findBindingInLocalFrameFor(selfSym)
 		if found {
-			localEnv.BindLocallyTo(selfSym, selfBinding.Val)
+			_, err = localEnv.BindLocallyTo(selfSym, selfBinding.Val)
+			if err != nil {
+				return
+			}
 		}
 	}
 
 	parentProcSym := Intern("parentProcess")
 	if self.ParentProcess != nil {
 		procObj := ObjectWithTypeAndValue("Process", unsafe.Pointer(self.ParentProcess))
-		localEnv.BindLocallyTo(parentProcSym, procObj)
+		_, err = localEnv.BindLocallyTo(parentProcSym, procObj)
+		if err != nil {
+			return
+		}
 	}
 
 	err = self.makeLocalBindings(args, argEnv, localEnv, eval)

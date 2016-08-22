@@ -215,23 +215,18 @@ func (self *SymbolTableFrame) FindBindingFor(symbol *Data) (binding *Binding, fo
 	}
 }
 
-func (self *SymbolTableFrame) Intern(name string) (sym *Data) {
-	sym = Intern(name)
-	self.BindTo(sym, nil)
-	return
-}
-
-func (self *SymbolTableFrame) BindTo(symbol *Data, value *Data) *Data {
+func (self *SymbolTableFrame) BindTo(symbol *Data, value *Data) (*Data, error) {
 	binding, found := self.FindBindingFor(symbol)
 	if found {
-		if !binding.Protected {
-			binding.Val = value
+		if binding.Protected {
+			return nil, fmt.Errorf("%s is a protected binding", StringValue(symbol))
 		}
+		binding.Val = value
 	} else {
 		binding = BindingWithSymbolAndValue(symbol, value)
 		self.SetBindingAt(StringValue(symbol), binding)
 	}
-	return binding.Val
+	return binding.Val, nil
 }
 
 func (self *SymbolTableFrame) BindToProtected(symbol *Data, value *Data) *Data {
@@ -280,17 +275,18 @@ func (self *SymbolTableFrame) findBindingInLocalFrameFor(symbol *Data) (b *Bindi
 	return self.BindingNamed(StringValue(symbol))
 }
 
-func (self *SymbolTableFrame) BindLocallyTo(symbol *Data, value *Data) *Data {
+func (self *SymbolTableFrame) BindLocallyTo(symbol *Data, value *Data) (*Data, error) {
 	binding, found := self.findBindingInLocalFrameFor(symbol)
 	if found {
-		if !binding.Protected {
-			binding.Val = value
+		if binding.Protected {
+			return nil, fmt.Errorf("%s is a protected binding", StringValue(symbol))
 		}
+		binding.Val = value
 	} else {
 		binding = BindingWithSymbolAndValue(symbol, value)
 		self.SetBindingAt(StringValue(symbol), binding)
 	}
-	return binding.Val
+	return binding.Val, nil
 }
 
 func (self *SymbolTableFrame) ValueOfWithFunctionSlotCheck(symbol *Data, needFunction bool) *Data {

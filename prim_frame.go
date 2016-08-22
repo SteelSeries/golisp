@@ -209,7 +209,10 @@ func SendSuperImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 
 	params := Cdr(args)
 	frameEnv := NewSymbolTableFrameBelowWithFrame(env, env.Frame, fmt.Sprintf("%s'", env.Name))
-	frameEnv.BindLocallyTo(Intern("self"), FrameWithValue(env.Frame))
+	_, err = frameEnv.BindLocallyTo(Intern("self"), FrameWithValue(env.Frame))
+	if err != nil {
+		return
+	}
 	return FunctionValue(fun).ApplyWithoutEval(params, frameEnv)
 }
 
@@ -314,7 +317,10 @@ func ApplySlotSuperImpl(args *Data, env *SymbolTableFrame) (result *Data, err er
 	}
 
 	frameEnv := NewSymbolTableFrameBelowWithFrame(env, env.Frame, fmt.Sprintf("%s'", env.Name))
-	frameEnv.BindLocallyTo(Intern("self"), FrameWithValue(env.Frame))
+	_, err = frameEnv.BindLocallyTo(Intern("self"), FrameWithValue(env.Frame))
+	if err != nil {
+		return
+	}
 	return FunctionValue(fun).ApplyWithoutEval(argList, frameEnv)
 }
 

@@ -34,17 +34,9 @@ func (s *SymbolTableFrameSuite) TestFetching(c *C) {
 	c.Assert(IntegerValue(fetched.Val), Equals, int64(42))
 }
 
-func (s *SymbolTableFrameSuite) TestInterning(c *C) {
-	s.frame.Intern("test")
-	sym, found := s.frame.findSymbol("test")
-	c.Assert(found, Equals, true)
-	c.Assert(int(TypeOf(sym)), Equals, SymbolType)
-	c.Assert(StringValue(sym), Equals, "test")
-}
-
 func (s *SymbolTableFrameSuite) TestBinding(c *C) {
-	sym := s.frame.Intern("test")
-	s.frame.BindTo(sym, IntegerWithValue(42))
+	_, err := s.frame.BindTo(Intern("test"), IntegerWithValue(42))
+	c.Assert(err, IsNil)
 
 	binding, found := s.frame.Bindings["test"]
 	c.Assert(found, Equals, true)
@@ -52,8 +44,9 @@ func (s *SymbolTableFrameSuite) TestBinding(c *C) {
 }
 
 func (s *SymbolTableFrameSuite) TestSymbolValue(c *C) {
-	sym := s.frame.Intern("test")
-	s.frame.BindTo(sym, IntegerWithValue(42))
+	sym := Intern("test")
+	_, err := s.frame.BindTo(sym, IntegerWithValue(42))
+	c.Assert(err, IsNil)
 	val := s.frame.ValueOf(sym)
 	c.Assert(val, NotNil)
 	c.Assert(int(TypeOf(val)), Equals, IntegerType)

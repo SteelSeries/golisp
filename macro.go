@@ -56,7 +56,10 @@ func (self *Macro) makeLocalBindings(args *Data, argEnv *SymbolTableFrame, local
 		if accumulatingParam != nil {
 			accumulatedArgs = append(accumulatedArgs, argValue)
 		} else {
-			localEnv.BindLocallyTo(Car(p), argValue)
+			_, err = localEnv.BindLocallyTo(Car(p), argValue)
+			if err != nil {
+				return
+			}
 		}
 		if accumulatingParam == nil {
 			p = Cdr(p)
@@ -66,7 +69,10 @@ func (self *Macro) makeLocalBindings(args *Data, argEnv *SymbolTableFrame, local
 		}
 	}
 	if accumulatingParam != nil {
-		localEnv.BindLocallyTo(accumulatingParam, ArrayToList(accumulatedArgs))
+		_, err = localEnv.BindLocallyTo(accumulatingParam, ArrayToList(accumulatedArgs))
+		if err != nil {
+			return
+		}
 	}
 
 	return nil
