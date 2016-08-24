@@ -43,6 +43,8 @@ func RegisterMathPrimitives() {
 	MakePrimitiveFunction("pow", "2", PowImpl)
 	MakePrimitiveFunction("inf?", "1", IsInfImpl)
 	MakePrimitiveFunction("nan?", "1", IsNaNImpl)
+	MakePrimitiveFunction("float->bits", "1", FloatToBitsImpl)
+	MakePrimitiveFunction("bits->float", "1", BitsToFloatImpl)
 
 	makeUnaryFloatFunction("acos", math.Acos)
 	makeUnaryFloatFunction("acosh", math.Acosh)
@@ -714,4 +716,24 @@ func IsNaNImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	} else {
 		return BooleanWithValue(false), nil
 	}
+}
+
+func FloatToBitsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	float := Car(args)
+	if !FloatP(float) {
+		err = ProcessError(fmt.Sprintf("float->bits expected a float, received %s", String(float)), env)
+		return
+	}
+
+	return IntegerWithValue(int64(math.Float32bits(FloatValue(float)))), nil
+}
+
+func BitsToFloatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	bits := Car(args)
+	if !IntegerP(bits) {
+		err = ProcessError(fmt.Sprintf("bits->float expected an integer, received %s", String(bits)), env)
+		return
+	}
+
+	return FloatWithValue(math.Float32frombits(uint32(IntegerValue(bits)))), nil
 }
