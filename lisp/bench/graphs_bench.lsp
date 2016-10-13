@@ -594,7 +594,7 @@
     cons
     '()))
 
-(define (main)
+(define (start)
   (run-benchmark
    "graphs"
    graphs-iters
