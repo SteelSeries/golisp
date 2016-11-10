@@ -21,6 +21,7 @@ func RegisterSpecialFormPrimitives() {
 	MakeSpecialForm("named-lambda", ">=1", NamedLambdaImpl)
 	MakeSpecialForm("define", ">=1", DefineImpl)
 	MakeSpecialForm("defmacro", ">=1", DefmacroImpl)
+	MakeSpecialForm("define-macro", ">=1", DefmacroImpl)
 	MakeSpecialForm("let", ">=1", LetImpl)
 	MakeSpecialForm("let*", ">=1", LetStarImpl)
 	MakeSpecialForm("letrec", ">=1", LetRecImpl)
