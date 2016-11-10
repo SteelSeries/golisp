@@ -10,7 +10,7 @@
 ;;; than the standard charset object. The functions & constants here
 ;;; wrap that with the standard char-set verbage.
 
-(load "lisp/strings.lsp")
+(load "lisp/strings.scm")
 
 (define char-set string)
 
