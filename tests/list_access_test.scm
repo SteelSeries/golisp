@@ -1,6 +1,6 @@
 ;; -*- mode: Scheme -*-
 
-(load "lisp/lists.lsp")
+(load "lisp/lists.scm")
 
 // Test list access primitives
 

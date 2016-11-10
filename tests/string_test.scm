@@ -1,6 +1,6 @@
 ;;; -*- mode: Scheme -*-
 
-(load "lisp/strings.lsp")
+(load "lisp/strings.scm")
 
 (context "string"
 
