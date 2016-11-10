@@ -205,7 +205,7 @@ func StringSplitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 
 	theSeparator := Cadr(args)
 	if !StringP(theSeparator) {
-		err = ProcessError(fmt.Sprintf("string-split requires a string separater but was given %s.", String(theSeparator)), env)
+		err = ProcessError(fmt.Sprintf("string-split requires a string separator but was given %s.", String(theSeparator)), env)
 		return
 	}
 
