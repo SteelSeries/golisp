@@ -190,7 +190,7 @@ func divideFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if Length(args) == 1 {
 		v := FloatValue(First(args))
 		if v == 0.0 {
-			err = ProcessError(fmt.Sprintf("Quotent: %s -> Divide by zero.", String(args)), env)
+			err = ProcessError(fmt.Sprintf("Quotient: %s -> Divide by zero.", String(args)), env)
 			return
 		}
 		acc = 1.0 / v
