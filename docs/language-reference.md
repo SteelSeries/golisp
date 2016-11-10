@@ -465,7 +465,12 @@ than as described above.
 ## Macros ##
 
 
+### (define-macro (_formals_) _template_) ###
 ### (defmacro (_formals_) _template_) ###
+
+_The former is from standard Scheme and is the preferred name. The
+latter is retained for backward compatibility with earlier versions of
+GoLisp._
 
 Create a named macro:
 
@@ -479,7 +484,7 @@ the macro's invocation. _template_ is typically (even always) a quasiquoted
 expression using the formal parameter names for purposes of unquotiing in order
 to fill in the template.
 
-    (defmacro (double x)
+    (define-macro (double x)
        `(+ ,x ,x))
 
     (double 5) ⇒ 10
@@ -492,7 +497,7 @@ function) expands and evaluates, `expand` (as you would expect) only expands the
 macro, resulting in the expanded template sexpr. This can then be evaluated as
 desired.
 
-    (defmacro (double x)
+    (define-macro (double x)
        `(+ ,x ,x))
 
     (expand double 5) ⇒ (+ 5 5)
@@ -1332,24 +1337,24 @@ Each is the logical negation of the corresponding equivalence predicate.
 # Logical #
 
 ### (boolean=? _object1_ _object2_) ###
-<p class="annotation">misc.lsp</p>
+<p class="annotation">misc.scm</p>
 
 Returns whether _object1_ and _object2_ are both truthy or are both falsy.
 
 ### (boolean/and _object_...) ###
-<p class="annotation">misc.lsp</p>
+<p class="annotation">misc.scm</p>
 
 Each _object_ is evaluated; if all of the evaluated _objects_ are truthy, returns the value of the final one
 
 ### (boolean/or _object_...) ###
-<p class="annotation">misc.lsp</p>
+<p class="annotation">misc.scm</p>
 
 Each _object_ is evaluated; if any of the evaluated _objects_ are truthy, returns the first one that is
 
 ### (not _object_)
 
 ### (false? _object_) ###
-<p class="annotation">misc.lsp</p>
+<p class="annotation">misc.scm</p>
 
 Returns the boolean negation of the argument.
 
@@ -1477,7 +1482,7 @@ integers less than the length of the string.
 ## Construction of Strings ##
 
 ### (make-string _k_ [_char_]) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 Returns a newly allocated string of length _k_. If you specify _char_, all
 elements of the string are initialized to _char_, otherwise the contents of the
@@ -1486,7 +1491,7 @@ string are unspecified.
     (make-string 10 #\x)              ⇒  "xxxxxxxxxx"
 
 ### (string _char_...) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 Returns a newly allocated string consisting of the specified
 characters.  The arguments should be single character strings.
@@ -1507,7 +1512,7 @@ equivalent to `(apply string _char-list_)`. The inverse of this operation is
     (string->list "Hello")          ⇒  (#\H #\e #\l #\l #\o)
 
 ### (string-copy _string_) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 Returns a newly allocated copy of _string_.
 
@@ -1528,7 +1533,7 @@ Returns the length of _string_ as an non-negative integer.
     (string-length "The length")    ⇒  10
 
 ### (string-null? _string_) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 Returns `#t` if _string_ has zero length; otherwise returns `#f`.
 
@@ -1556,16 +1561,16 @@ an unspecified value. _k_ must be a valid index of _string_.
 ## Comparison of Strings ##
 
 ### (string=? _string1_ _string2_)###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 ### (substring=? _string1_ _start1_ _end1_ _string2_ _start2_ _end2_) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 ### (string-ci=? _string1_ _string2_) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 ### (substring-ci=?_ string1_ _start1_ _end1_ _string2_ _start2_ _end2_) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 Returns `#t` if the two strings (substrings) are the same length and contain the
 same characters in the same (relative) positions; otherwise returns `#f`.
@@ -1578,52 +1583,52 @@ letters, but `string=?` and `substring=?` do.
     (substring=? "Alamo" 1 3 "cola" 2 4)    ⇒  #t ; compares "la"
 
 ### (string<? _string1_ _string2_) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 ### (substring<?_ string1_ _start1_ _end1_ _string2_ _start2_ _end2_) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 ### (string-ci<? _string1_ _string2_) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 ### (substring-ci<?_ string1_ _start1_ _end1_ _string2_ _start2_ _end2_) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
  
 ### (string>? _string1_ _string2_) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 ### (substring>?_ string1_ _start1_ _end1_ _string2_ _start2_ _end2_) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 ### (string-ci>? _string1_ _string2_) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 ### (substring-ci>?_ string1_ _start1_ _end1_ _string2_ _start2_ _end2_) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
  
 ### (string<=? _string1_ _string2_) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 ### (substring<=?_ string1_ _start1_ _end1_ _string2_ _start2_ _end2_) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 ### (string-ci<=? _string1_ _string2_) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 ### (substring-ci<=?_ string1_ _start1_ _end1_ _string2_ _start2_ _end2_) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 ### (string>=? _string1_ _string2_) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 ### (substring>=?_ string1_ _start1_ _end1_ _string2_ _start2_ _end2_) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 ### (string-ci>=? _string1_ _string2_) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 ### (substring-ci>=?_ string1_ _start1_ _end1_ _string2_ _start2_ _end2_) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 These procedures compare strings (substrings) according to the order of the
 characters they contain. The arguments are compared using a lexicographic (or
@@ -1656,14 +1661,14 @@ applied. The value of the procedure is the value of the thunk that is applied.
 
 In GoLisp, only `string-compare` and `string-compare-ci` are available by
 default. If you want the other comparison functions you need to `(load
-"lisp/strings.lsp")`.
+"lisp/strings.scm")`.
 
 ## Alphabetic Case in Strings ##
 
 ### (string-capitalized? _string_) ###
 
 ### (substring-capitalized? _string_ _start_ _end_) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 These procedures return `#t` if the first word in the string (substring) is
 capitalized, and any subsequent words are either lower case or capitalized.
@@ -1678,12 +1683,12 @@ case and all its remaining letters are lower case.
 ### (string-upper-case? _string_) ###
 
 ### (substring-upper-case? _string_ _start_ _end_) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 ### (string-lower-case? _string_) ###
 
 ### (substring-lower-case? _string_ _start_ _end_) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 These procedures return `#t` if all the letters in the string (substring) are of
 the correct case, otherwise they return `#f`. The string (substring) must
@@ -1735,8 +1740,20 @@ specified part of _string_.
 
 ## Cutting and Pasting Strings ##
 
+### (string-split _string_ _separator_) ###
+
+Splits _string_ into a list of substrings that are separated by _separator_.
+
+    (string-split "1-2-3" "-")) ⇒ ("1" "2" "3")
+
+### (string-join _strings_ _separator_) ###
+
+Joins the list of _strings_ into a single string by interposing _separator_.
+
+    (string-join '("1" "2" "3") "-") ⇒ "1-2-3"
+
 ### (string-append _string_...) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 Returns a newly allocated string made from the concatenation of the given
 strings.
@@ -1759,7 +1776,7 @@ with index _start_ (inclusive) and ending with _end_ (exclusive).
       (substring s 0 (string-length s)))
 
 ### (string-head _string_ _end_) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 Returns a newly allocated copy of the initial substring of _string_,
 up to but excluding _end_.  It could have been defined by:
@@ -1770,7 +1787,7 @@ up to but excluding _end_.  It could have been defined by:
     (string-head "uncommon" 2)      ⇒ "un"
 
 ### (string-tail _string_ _start_) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 Returns a newly allocated copy of the final substring of _string_, starting at
 index _start_ and going to the end of _string_. It could have been defined by:
@@ -1781,10 +1798,10 @@ index _start_ and going to the end of _string_. It could have been defined by:
     (string-tail "uncommon" 2)      ⇒  "common"
 
 ### (string-pad-left _string_ _k_ [_char_]) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 ### (string-pad-right _string_ _k_ [_char_]) ###
-<p class="annotation">strings.lsp</p>
+<p class="annotation">strings.scm</p>
 
 These procedures return a newly allocated string created by padding _string_ out
 to length _k_, using _char_. If _char_ is not given, it defaults to `#\space`.
@@ -1818,6 +1835,25 @@ defaults to `char-set:not-whitespace`.
                                             ⇒  "+-=-"
     (string-trim "but (+ x y) is" (char-set #\( #\)))
                                             ⇒  "(+ x y)"
+
+
+## Regexp Support ##
+
+There is some preliminary support for regular expressions.
+
+### (re-string-match-go _regexp_ _string_) ###
+
+This matches regexp against the respective string,
+returning #f for no match, or a list of strings (see below) if
+the match succeeds.
+
+When a successful match occurs, the above procedure returns
+a list of strings. Each string
+corresponds to an instance of the regular-expression grouping
+operator ‘\(’. Additionally, the first string corresponds to the entire
+substring matching the regular expression.
+
+Note that this is different from the Scheme matching procedure.
 
 # Lists #
 
@@ -2104,7 +2140,7 @@ comprising _list_. This could have been defined by
                 (list-copy (cdr list)))))
 
 ### (iota count [start [step]]) ###
-<p class="annotation">lists.lsp</p>
+<p class="annotation">lists.scm</p>
 
 Returns a list containing the elements
 
@@ -2151,7 +2187,7 @@ otherwise positive.
 ### (vector->list _vector_) ###
 
 ### (subvector->list _vector_ _start_ _end_) ###
-<p class="annotation">lists.lsp</p>
+<p class="annotation">lists.scm</p>
 
 `vector->list` returns a newly allocated list of the elements of _vector_.
 `subvector->list` returns a newly allocated list of the elements of the given
@@ -2162,7 +2198,7 @@ subvector. The inverse of `vector->list` is `list->vector`.
 ### (string->list string) ###
 
 ### (substring->list string start end) ###
-<p class="annotation">lists.lsp</p>
+<p class="annotation">lists.scm</p>
 
 `string->list` returns a newly allocated list of the character elements of
 _string_. `substring->list` returns a newly allocated list of the character
@@ -2216,7 +2252,7 @@ Returns the length of _list_. Signals an error if _list_ isn't a proper list.
     (length (circular-list 'a 'b 'c))       ERROR
 
 ### (length+ _clist_) ###
-<p class="annotation">lists.lsp</p>
+<p class="annotation">lists.scm</p>
 
 Returns the length of _clist_, if it is a proper list. Returns `#f` if _clist_ is a
 circular list. Otherwise signals an error.
@@ -2246,7 +2282,7 @@ Returns `#f` if _object_ is the empty list; otherwise returns `#t`.
     (notnull? '())                             ⇒ #t
 
 ### (list-ref _list_ _k_) ###
-<p class="annotation">lists.lsp</p>
+<p class="annotation">lists.scm</p>
 
 ### (nth _k_ _list_) ###
 
@@ -2293,7 +2329,7 @@ _start_ and _end_ must be integers satisfying
 beginning at index _start_ (inclusive) and ending at _end_ (exclusive).
 
 ### (list-head _list_ _k_) ###
-<p class="annotation">lists.lsp</p>
+<p class="annotation">lists.scm</p>
 
 ### (take _k_ _list_)
 
@@ -2306,7 +2342,7 @@ We could have defined `list-head` this way:
             (sublist list 0 k))
 
 ### (list-tail _list_ _k_) ###
-<p class="annotation">lists.lsp</p>
+<p class="annotation">lists.scm</p>
 
 ### (drop _k_ _list_)
 
@@ -2346,7 +2382,7 @@ arguments rather than destroying them.) For example:
     z                                       ⇒ (g h)
 
 ### (last-pair _list_) ###
-<p class="annotation">lists.lsp</p>
+<p class="annotation">lists.scm</p>
 
 Returns the last pair in _list_, which may be an improper list.
 `last-pair` could have been defined this way:
@@ -2358,10 +2394,10 @@ Returns the last pair in _list_, which may be an improper list.
             x)))
 
 ### (except-last-pair _list_) ###
-<p class="annotation">lists.lsp</p>
+<p class="annotation">lists.scm</p>
 
 ### (except-last-pair! _list_) ###
-<p class="annotation">lists.lsp</p>
+<p class="annotation">lists.scm</p>
 
 These procedures remove the last pair from _list_. _list_ may be an improper
 list, except that it must consist of at least one pair. `except-last-pair`
@@ -2411,13 +2447,13 @@ in the result lists in the same order as they occur in the argument _list_.
     (partition 2 '(one 2 3 four five 6 7))  ⇒ ((one 2) (3 four) (five 6) (7))
 
 ### (delq element list) ###
-<p class="annotation">lists.lsp</p>
+<p class="annotation">lists.scm</p>
 
 ### (delv element list) ###
-<p class="annotation">lists.lsp</p>
+<p class="annotation">lists.scm</p>
 
 ### (delete element list) ###
-<p class="annotation">lists.lsp</p>
+<p class="annotation">lists.scm</p>
 
 Returns a newly allocated copy of _list_ with all entries equal to _element_
 removed. `delq` uses `eq?` to compare _element_ with the entries in _list_,
@@ -2976,7 +3012,7 @@ the mapping can be not only augmented but also altered in a non-destructive
 manner by adding new entries to the front of the alist.
 
 ### (alist? _object_) ###
-<p class="annotation">lists.lsp</p>
+<p class="annotation">lists.scm</p>
 
 Returns `#t` if _object_ is an association list (including the empty list);
 otherwise returns `#f`. Any _object_ satisfying this predicate also satisfies
@@ -3032,17 +3068,17 @@ is returned is _value_ isn’t found.
 
 
 ### (del-assq _object_ _alist_) ###
-<p class="annotation">lists.lsp</p>
+<p class="annotation">lists.scm</p>
 
 ### (dissq _object_ _alist_) ###
 
 ### (del-assv _object_ _alist_) ###
-<p class="annotation">lists.lsp</p>
+<p class="annotation">lists.scm</p>
 
 ### (dissv _object_ _alist_) ###
 
 ### (del-assoc _object_ _alist_) ###
-<p class="annotation">lists.lsp</p>
+<p class="annotation">lists.scm</p>
 
 ### (dissoc _object_ _alist_) ###
 
@@ -3428,10 +3464,10 @@ Boolean constants evaluate to themselves, so you don't need to quote them.
      t                                       ERROR Unbound variable
 
 ### false ###
-<p class="annotation">misc.lsp</p>
+<p class="annotation">misc.scm</p>
 
 ### true ###
-<p class="annotation">misc.lsp</p>
+<p class="annotation">misc.scm</p>
 
 These variables are bound to the objects `#f` and `#t` respectively. 
 
@@ -3448,7 +3484,7 @@ Returns `#t` if _object_ is either `#t` or `#f`; otherwise returns `#f`.
 ### (not _object_) ###
 
 ### (false? _object_) ###
-<p class="annotation">misc.lsp</p>
+<p class="annotation">misc.scm</p>
 
 These procedures return `#t` if _object_ is false; otherwise they return `#f`. In
 other words they _invert_ boolean values. These two procedures have identical
@@ -3460,18 +3496,18 @@ semantics; their names are different to give different connotations to the test.
     (not #f)                                ⇒  #t
 
 ### (boolean=? _obj1_ _obj2_) ###
-<p class="annotation">misc.lsp</p>
+<p class="annotation">misc.scm</p>
 
 This predicate is true iff _obj1_ and _obj2_ are either both true or both false.
 
 ### (boolean/and _object_...) ###
-<p class="annotation">misc.lsp</p>
+<p class="annotation">misc.scm</p>
 
 This procedure returns `#t` if none of its arguments are `#f`.
 Otherwise it returns `#f`.
 
 ### (boolean/or _object_...) ###
-<p class="annotation">misc.lsp</p>
+<p class="annotation">misc.scm</p>
 
 This procedure returns `#f` if all of its arguments are `#f`.
 Otherwise it returns `#t`.
@@ -3532,7 +3568,7 @@ The user should take care that _string_ obeys the rules for identifiers,
 otherwise the resulting symbol cannot be read as itself.
 
 ### (string->symbol _string_) ###
-<p class="annotation">misc.lsp</p>
+<p class="annotation">misc.scm</p>
 
 Returns the interned symbol whose name is _string_. Although you can use this
 procedure to create symbols with names containing special characters, it's
@@ -3571,7 +3607,7 @@ generating code and need a unique name (in a macro, for example).
     (gensym)      ⇒ GENSYM4
 
 ### (symbol<? _symbol1_ _symbol2_) ###
-<p class="annotation">misc.lsp</p>
+<p class="annotation">misc.scm</p>
 
 This procedure computes a total order on symbols. It is equivalent to
 
@@ -4462,9 +4498,9 @@ You can also run in quiet mode which only outputs the summary:
 
 You run tests by running the golisp repl in test mode, providing either a
 directory or filename. If you provide a directory all files in it that match
-`*_test.lsp` will be run. If you provide a filename, only that file will be run.
+`*_test.scm` will be run. If you provide a filename, only that file will be run.
 
-    $golisp -t tests/scope_test.lsp
+    $golisp -t tests/scope_test.scm
 
     Ran 4 tests in 0.002 seconds
     4 passes, 0 failures, 0 errors
