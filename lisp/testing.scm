@@ -167,7 +167,7 @@
   (let ((t (time (for-each (lambda (filename)
                              (when verbose-tests (format #t "Loading: ~A~%" filename))
                              (load filename))
-                           (list-directory test-dir "*_test.lsp")))))
+                           (list-directory test-dir "*_test.scm")))))
     (dump-summary t)))
 
 (define (run-test test-file . optionals)
