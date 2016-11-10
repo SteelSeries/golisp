@@ -16,9 +16,10 @@ import (
 )
 
 var (
-	runTests     bool = false
-	verboseTests bool = false
-	runRepl bool = false
+	runTests     bool   = false
+	verboseTests bool   = false
+	runRepl      bool   = false
+	definition   string = ""
 )
 
 func test() {
@@ -29,14 +30,14 @@ func test() {
 	}
 	testName := flag.Arg(0)
 
-	if strings.HasSuffix(testName, ".lsp") {
+	if strings.HasSuffix(testName, ".scm") || strings.HasSuffix(testName, ".lsp") {
 		testFunction = "run-test"
 	} else {
 		testFunction = "run-all-tests"
 	}
 
 	testCommand := fmt.Sprintf("(%s \"%s\"%s)", testFunction, testName, verboseFlag)
-	ProcessFile("lisp/testing.lsp")
+	ProcessFile("lisp/testing.scm")
 	ParseAndEval(testCommand)
 }
 
@@ -62,7 +63,6 @@ func loadFile(path string) error {
 	return nil
 }
 
-
 func walkFunc(path string, info os.FileInfo, err error) error {
 	return loadFile(path)
 }
@@ -71,7 +71,19 @@ func main() {
 	flag.BoolVar(&runRepl, "r", false, "Whether to run the repl after loading golisp code.  Defaults to false.")
 	flag.BoolVar(&runTests, "t", false, "Whether to run tests and exit.  Defaults to false.")
 	flag.BoolVar(&verboseTests, "v", false, "Whether tests should be verbose.  Defaults to false.")
+	flag.StringVar(&definition, "d", "", "symbol=value, where value is a lisp value. Adds thos binding to the global environment before loading any code.")
 	flag.Parse()
+
+	if definition != "" {
+		symbolAndValue := strings.Split(definition, "=")
+		sym := Global.Intern(symbolAndValue[0])
+		val, err := ParseAndEval(symbolAndValue[1])
+		if err != nil {
+			fmt.Println("Error with cmd line definition value")
+			return
+		}
+		Global.BindTo(sym, val)
+	}
 
 	fmt.Printf("Loading the lisp directory\n")
 	walkErr := filepath.Walk("lisp", walkFunc)
@@ -120,7 +132,7 @@ func main() {
 				}
 			}
 		}
-		
+
 		mainValue := Global.ValueOf(Intern("main"))
 
 		if runRepl || !FunctionP(mainValue) {
