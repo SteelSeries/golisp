@@ -140,7 +140,7 @@
 ;;; ================================================================================
 ;;; GRAPHS -- Obtained from Andrew Wright.
 
-(load "lisp/bench/graphs_bench.lsp")
+(load "lisp/bench/graphs_bench.scm")
 
 ;;; ================================================================================
 ;;; Running benchmarks
