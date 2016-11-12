@@ -12,8 +12,10 @@ import (
 )
 
 func RegisterRelativePrimitives() {
-	MakePrimitiveFunction("<", "2", LessThanImpl)
-	MakePrimitiveFunction(">", "2", GreaterThanImpl)
+	MakePrimitiveFunction("<", ">=2", LessThanImpl)
+	MakePrimitiveFunction(">", ">=2", GreaterThanImpl)
+	MakePrimitiveFunction("<=", ">=2", LessThanOrEqualToImpl)
+	MakePrimitiveFunction(">=", ">=2", GreaterThanOrEqualToImpl)
 	MakePrimitiveFunction("==", "2", EqualImpl)
 	MakePrimitiveFunction("=", "2", EqualImpl)
 	MakePrimitiveFunction("eqv?", "2", EqvImpl)
@@ -24,8 +26,6 @@ func RegisterRelativePrimitives() {
 	MakePrimitiveFunction("nequal?", "2", NotEqualImpl)
 	MakePrimitiveFunction("!=", "2", NotEqualImpl)
 	MakePrimitiveFunction("/=", "2", NotEqualImpl)
-	MakePrimitiveFunction("<=", "2", LessThanOrEqualToImpl)
-	MakePrimitiveFunction(">=", "2", GreaterThanOrEqualToImpl)
 	MakePrimitiveFunction("!", "1", BooleanNotImpl)
 	MakePrimitiveFunction("not", "1", BooleanNotImpl)
 	MakeSpecialForm("and", "*", BooleanAndImpl)
@@ -33,37 +33,99 @@ func RegisterRelativePrimitives() {
 }
 
 func LessThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	arg1 := Car(args)
-	if !NumberP(arg1) {
-		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(arg1)), env)
+	lhs := Car(args)
+	if !NumberP(lhs) {
+		err = ProcessError(fmt.Sprintf("Number expected for <, received %s", String(lhs)), env)
 		return
 	}
 
-	arg2 := Cadr(args)
-	if !NumberP(arg2) {
-		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(arg2)), env)
-		return
-	}
+	var holds = true
+	for cell := Cdr(args); NotNilP(cell); cell = Cdr(cell) {
+		rhs := Car(cell)
+		if !NumberP(rhs) {
+			err = ProcessError(fmt.Sprintf("Number expected for <, received %s", String(rhs)), env)
+			return
+		}
 
-	val := FloatValue(arg1) < FloatValue(arg2)
-	return BooleanWithValue(val), nil
+		holds = FloatValue(lhs) < FloatValue(rhs)
+		if !holds {
+			return LispFalse, nil
+		}
+		lhs = rhs
+	}
+	return LispTrue, nil
 }
 
 func GreaterThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	arg1 := Car(args)
-	if !NumberP(arg1) {
-		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(arg1)), env)
+	lhs := Car(args)
+	if !NumberP(lhs) {
+		err = ProcessError(fmt.Sprintf("Number expected for >, received %s", String(lhs)), env)
 		return
 	}
 
-	arg2 := Cadr(args)
-	if !NumberP(arg2) {
-		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(arg2)), env)
+	var holds = true
+	for cell := Cdr(args); NotNilP(cell); cell = Cdr(cell) {
+		rhs := Car(cell)
+		if !NumberP(rhs) {
+			err = ProcessError(fmt.Sprintf("Number expected for >, received %s", String(rhs)), env)
+			return
+		}
+
+		holds = FloatValue(lhs) > FloatValue(rhs)
+		if !holds {
+			return LispFalse, nil
+		}
+		lhs = rhs
+	}
+	return LispTrue, nil
+}
+
+func LessThanOrEqualToImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	lhs := Car(args)
+	if !NumberP(lhs) {
+		err = ProcessError(fmt.Sprintf("Number expected for <=, received %s", String(lhs)), env)
 		return
 	}
 
-	val := FloatValue(arg1) > FloatValue(arg2)
-	return BooleanWithValue(val), nil
+	var holds = true
+	for cell := Cdr(args); NotNilP(cell); cell = Cdr(cell) {
+		rhs := Car(cell)
+		if !NumberP(rhs) {
+			err = ProcessError(fmt.Sprintf("Number expected for <=, received %s", String(rhs)), env)
+			return
+		}
+
+		holds = FloatValue(lhs) <= FloatValue(rhs)
+		if !holds {
+			return LispFalse, nil
+		}
+		lhs = rhs
+	}
+	return LispTrue, nil
+}
+
+func GreaterThanOrEqualToImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	lhs := Car(args)
+	if !NumberP(lhs) {
+		err = ProcessError(fmt.Sprintf("Number expected for >=, received %s", String(lhs)), env)
+		return
+	}
+
+	var holds = true
+	for cell := Cdr(args); NotNilP(cell); cell = Cdr(cell) {
+		rhs := Car(cell)
+		if !NumberP(rhs) {
+			err = ProcessError(fmt.Sprintf("Number expected for >=, received %s", String(rhs)), env)
+			return
+		}
+
+		holds = FloatValue(lhs) >= FloatValue(rhs)
+		if !holds {
+			return LispFalse, nil
+		}
+		lhs = rhs
+	}
+	return LispTrue, nil
 }
 
 func EqvImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -100,40 +162,6 @@ func NotEqualImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	arg1 := Car(args)
 	arg2 := Cadr(args)
 	return BooleanWithValue(!IsEqual(arg1, arg2)), nil
-}
-
-func LessThanOrEqualToImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	arg1 := Car(args)
-	if !NumberP(arg1) {
-		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(arg1)), env)
-		return
-	}
-
-	arg2 := Cadr(args)
-	if !NumberP(arg2) {
-		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(arg2)), env)
-		return
-	}
-
-	val := FloatValue(arg1) <= FloatValue(arg2)
-	return BooleanWithValue(val), nil
-}
-
-func GreaterThanOrEqualToImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	arg1 := Car(args)
-	if !NumberP(arg1) {
-		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(arg1)), env)
-		return
-	}
-
-	arg2 := Cadr(args)
-	if !NumberP(arg2) {
-		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(arg2)), env)
-		return
-	}
-
-	val := FloatValue(arg1) >= FloatValue(arg2)
-	return BooleanWithValue(val), nil
 }
 
 func BooleanNotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
