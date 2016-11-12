@@ -147,14 +147,14 @@ matching treats each in sequence:
 
 **Required**
 
-: All of the _required_ parameters are matched against the arguments first. If
+All of the _required_ parameters are matched against the arguments first. If
 there are fewer arguments than required parameters, an error of type `wrong
 number of arguments` is signalled; this error is also signalled if there are
 more arguments than required parameters and there are no further parameters.
 
 **Rest**
 
-: Finally, if there is a _rest_ parameter (there can only be one), any remaining
+Finally, if there is a _rest_ parameter (there can only be one), any remaining
 arguments are made into a list, and the list is bound to the rest parameter. (If
 there are no remaining arguments, the rest parameter is bound to the empty
 list.)
@@ -307,6 +307,16 @@ Hence the following are identical.
 
     (define inc (lambda (x) (+ x 1)))
     (define (foo x) (+ x 1))
+
+Using this form of define, a function that accepts a completely option set of arguments can be made:
+
+    (define (f . args) args)
+    
+    (f) ⇒ ()
+    (f 1) ⇒ (1)
+    (f 1 2 3) ⇒ (1 2 3)
+
+Please note: You can not currently define a lambda with completely optional arguments.
 
 ## Top-Level Definitions ##
 
@@ -1140,18 +1150,19 @@ All comparison operations work with floating point numbers as well.
 
 ### (/= _number1_ _number2_) ###
 
-### (&lt; _number1_ _number2_)
+### (&lt; _number1_ _number2_ ...)
 
-### (&gt; _number1_ _number2_)
+### (&gt; _number1_ _number2_ ...)
 
-### (&lt;= _number1_ _number2_)
+### (&lt;= _number1_ _number2_ ...)
 
-### (&gt;= _number1_ _number2_)
+### (&gt;= _number1_ _number2_ ...)
 
-These procedures return `#t` if their arguments are (respectively): equal (two
-alternatives), not equal (two alternatives), monotonically increasing,
-monotonically decreasing, monotonically nondecreasing, or monotonically
-nonincreasing. They return `#f` otherwise
+These procedures return `#t` if their arguments are (respectively):
+equal (two alternatives), not equal (two alternatives), monotonically
+increasing, monotonically decreasing, monotonically nondecreasing, or
+monotonically nonincreasing. They return `#f` otherwise. Note that
+`&lt;`, `&gt;`, `&lt;=`, and `&gt;=` can take more than 2 arguements.
 
 ### (zero? _number_)
 
@@ -1180,6 +1191,9 @@ arguments can be a series of numbers or a list of numbers:
     (min 3 7 1 2)     ⇒ 1
     (min '(3 7 1 2))  ⇒ 1
 
+### (log _number_) ###
+
+This computes the natural logarithm of _number_ **(not the base ten logarithm)**. An integer argument will be converted to a float. The result is always a float.
 
 # Equivalence Predicates #
 
@@ -3912,12 +3926,20 @@ Returns the top level environment with the given name.
 
 GoLisp provides a handful of utility functions.
 
-### (random-byte)
+### (random-byte) ###
 
 Returns a psuedo-random unsigned integer between 0 and 255, inclusive.
 
     (random-byte) ⇒ 13
     (random-byte) ⇒ 207
+
+### (random) ###
+
+The return value is a pseudorandom integer in the range [0, 2,147,483,647]
+
+### (random _modulus_) ###
+
+_Modulus_ must be a positive real number. If _modulus_ is an integer, `random` returns a pseudo-random number between zero (inclusive) and _modulus_ (exclusive). If _modulus_ is the float 1.0, the returned number is a float in the range [0.0, 1.0). Other float values of _modulus_ are rejected.
 
 ### (sleep _millis_)
 
