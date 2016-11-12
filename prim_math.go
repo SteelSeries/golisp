@@ -27,6 +27,7 @@ func RegisterMathPrimitives() {
 	MakePrimitiveFunction("remainder", "2", RemainderImpl)
 	MakePrimitiveFunction("%", "2", RemainderImpl)
 	MakePrimitiveFunction("random-byte", "0", RandomByteImpl)
+	MakePrimitiveFunction("random", "0|1", RandomImpl)
 	MakePrimitiveFunction("interval", "1|2|3", IntervalImpl)
 	MakePrimitiveFunction("integer", "1", ToIntImpl)
 	MakePrimitiveFunction("float", "1", ToFloatImpl)
@@ -43,6 +44,7 @@ func RegisterMathPrimitives() {
 	MakePrimitiveFunction("even?", "1", EvenImpl)
 	MakePrimitiveFunction("odd?", "1", OddImpl)
 	MakePrimitiveFunction("sign", "1", SignImpl)
+	MakePrimitiveFunction("log", "1", LogImpl)
 }
 
 func sgn(a float32) int64 {
@@ -314,6 +316,27 @@ func RemainderImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 func RandomByteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	r := uint8(rand.Int())
 	result = IntegerWithValue(int64(r))
+	return
+}
+
+func RandomImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if Length(args) == 0 {
+		result = IntegerWithValue(rand.Int63n(math.MaxUint32))
+	} else {
+		modulus := First(args)
+		if IntegerP(modulus) {
+			result = IntegerWithValue(rand.Int63n(IntegerValue(modulus)))
+		} else if FloatP(modulus) {
+			if FloatValue(modulus) != 1.0 {
+				err = ProcessError(fmt.Sprintf("random only accepts floating point modulus of 1.0, received %s", String(modulus)), env)
+				return
+			}
+			result = FloatWithValue(rand.Float32())
+		} else {
+			err = ProcessError(fmt.Sprintf("random expected an integer or float modulus, received %s", String(modulus)), env)
+			return
+		}
+	}
 	return
 }
 
@@ -676,4 +699,13 @@ func SignImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	} else {
 		return IntegerWithValue(intSgn(IntegerValue(val))), nil
 	}
+}
+
+func LogImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if IntegerP(First(args)) || FloatP(First(args)) {
+		result = FloatWithValue(float32(math.Log(float64(FloatValue(First(args))))))
+	} else {
+		err = ProcessError(fmt.Sprintf("log expects a float argument, received %s", String(First(args))), env)
+	}
+	return
 }
