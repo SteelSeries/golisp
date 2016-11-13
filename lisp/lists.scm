@@ -51,19 +51,6 @@
 (define (list-ref l k)
   (nth k l))
 
-(define (last-pair x)
-  (cond ((null? x)
-         (error "last-pair requires a non-empty list."))
-        ((circular-list? x)
-         (error "last-pair requires a non-circular list."))
-        ((or (list? x) (dotted-list? x))
-         (let loop ((l x))
-           (cond ((pair? (cdr l))
-                  (loop (cdr l)))
-                 (else
-                  l))))
-        (else (error "last-pair requires a proper or dotted list."))))
-
 (define (except-last-pair x)
   (cond ((null? x)
          (error "except-last-pair requires a non-empty list."))
