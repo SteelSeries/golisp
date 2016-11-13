@@ -75,13 +75,17 @@ func ConsStarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func ListLengthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	col := First(args)
-	if !ListP(col) && !VectorP(col) {
+	if !ListP(col) && !VectorP(col) && !FrameP(col) {
 		err = ProcessError(fmt.Sprintf("length requires a list or vector but was given %s.", String(col)), env)
 		return
 	}
 
 	if VectorP(col) {
 		return VectorLengthImpl(args, env)
+	}
+
+	if FrameP(col) {
+		return FrameLengthImpl(args, env)
 	}
 
 	return IntegerWithValue(int64(Length(col))), nil

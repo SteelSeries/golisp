@@ -28,6 +28,7 @@ func RegisterFramePrimitives() {
 	MakePrimitiveFunction("lisp->json", "1", LispToJsonImpl)
 	MakePrimitiveFunction("frame-keys", "1", FrameKeysImpl)
 	MakePrimitiveFunction("frame-values", "1", FrameValuesImpl)
+	MakePrimitiveFunction("frame-length", "1", FrameLengthImpl)
 }
 
 func MakeSlotnameImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -350,4 +351,14 @@ func FrameValuesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 	}
 
 	return ArrayToList(FrameValue(f).Values()), nil
+}
+
+func FrameLengthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	f := First(args)
+	if !FrameP(f) {
+		err = ProcessError(fmt.Sprintf("frame-length requires a frame as it's argument, but was given %s.", String(f)), env)
+		return
+	}
+
+	return IntegerWithValue(int64(len(*FrameValue(f)))), nil
 }
