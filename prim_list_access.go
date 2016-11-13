@@ -62,6 +62,8 @@ func RegisterListAccessPrimitives() {
 	MakePrimitiveFunction("eighth", "1", EighthImpl)
 	MakePrimitiveFunction("ninth", "1", NinthImpl)
 	MakePrimitiveFunction("tenth", "1", TenthImpl)
+	MakePrimitiveFunction("last-pair", "1", LastPairImpl)
+	MakePrimitiveFunction("last", "1", LastImpl)
 
 	MakePrimitiveFunction("nth", "2", NthImpl)
 	MakePrimitiveFunction("take", "2", TakeImpl)
@@ -275,6 +277,26 @@ func TenthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return VectorTenthImpl(args, env)
 	}
 	return Tenth(Car(args)), nil
+}
+
+func LastPairImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if !ListP(Car(args)) || ListWithLoopP(Car(args)) {
+		err = ProcessError(fmt.Sprintf("last-pair requires a non-circular list but received %s.", String(Car(args))), env)
+		return
+	}
+
+	return LastPair(Car(args)), nil
+}
+
+func LastImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if VectorP(Car(args)) {
+		return VectorLastImpl(args, env)
+	}
+	if !ListP(Car(args)) || ListWithLoopP(Car(args)) {
+		err = ProcessError(fmt.Sprintf("last requires a non-circular list but received %s.", String(Car(args))), env)
+		return
+	}
+	return Car(LastPair(Car(args))), nil
 }
 
 func NthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
