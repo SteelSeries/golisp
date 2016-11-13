@@ -17,12 +17,12 @@
 ;;; Distributions
 
 (define (gen/uniform . bounds)
-  "Uniform distribution from lo (inclusive) to hi (exclusive). Defaults to range of Java long."
+  "Uniform distribution from lo (inclusive) to hi (exclusive). Defaults to range of 32 bit positive integers."
   (if (nil? bounds)
-      (random)
+      (lambda () (random))
       (let ((lo (car bounds))
             (hi (cadr bounds)))
-        (integer (floor (+ lo (* (random 1.0) (- hi lo))))))))
+        (lambda () (integer (floor (+ lo (* (random 1.0) (- hi lo)))))))))
 
 (define (gen/geometric p)
   "Geometric distribution with mean 1/p."
@@ -46,7 +46,7 @@
              (result '()))
     (if (zero? n)
         result
-        (loop (-1+ n) (cons (f) result)))))
+        (loop (-1+ n) (cons (gen/call-through f) result)))))
 
 (define (gen/repeat count x)
   "make a list of count copies of f."
@@ -67,9 +67,6 @@
               (take x coll))
             (interval (length coll)))))
 
-(define (gen/last coll)
-  (car (last-pair coll)))
-
 (define (gen/vals alist)
   (map cdr alist))
 
@@ -84,8 +81,12 @@
 ;;; Generators
 
 (define (gen/int)
-  "Returns a int in the int range."
-  (gen/uniform))
+  "Returns a int in the 32 bit int range."
+  (* ((gen/uniform)) (if (gen/boolean) 1 -1)))
+
+(define (gen/uint)
+  "Returns a int in the 32 bit positive int range."
+  ((gen/uniform)))
 
 (define (gen/byte)
   "Returns an int in the byte range."
@@ -99,12 +100,12 @@
   "Returns a bool."
   (eqv? (random 2) 1))
 
-(define (gen/rand-nth coll)
+(define (gen/elements coll)
   "Randomly select an element of coll with equal probability."
   (nth (gen/uniform 0 (length coll)) coll))
 
 (define (gen/char)
-  (gen/rand-nth _list-of-chars_))
+  (gen/elements _list-of-chars_))
 
 (define (gen/tuple . generators)
   "Generate a tuple with one element from each generator."
@@ -160,7 +161,7 @@
          (list->string (gen/reps (cadr args) (car args))))))
 
 (define (**gen/name**)
-  (gen/rand-nth _symbol-chars_))
+  (gen/elements _symbol-chars_))
 
 (define (gen/symbol . maybe-sizer)
   "Create a symbol sized from sizer."
@@ -173,4 +174,28 @@
   (if (nil? maybe-sizer)
       (gen/slotname gen/default-sizer)
       (intern (str (list->string (gen/reps (car maybe-sizer) **gen/name**)) ":"))))
+
+(define (gen/return x)
+  (lambda ()
+    x))
+
+(define (gen/such-that f generator)
+  (lambda ()
+    (let loop ((val (gen/call-through generator)))
+      (if (f val)
+          val
+          (loop (gen/call-through generator))))))
+
+(define (gen/not-empty generator)
+  (gen/such-that (lambda (x) (> (length x) 0))
+                 generator))
+
+(define (gen/fmap f generator)
+  (lambda ()
+    (f (gen/call-through generator)))))
+
+(define (gen/sample generator . maybe-size)
+  (if (nil? maybe-size)
+      (gen/sample generator 10)
+      (gen/list generator (car maybe-size))))
 
