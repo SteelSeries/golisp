@@ -26,8 +26,9 @@
 
 (define (gen/geometric p)
   "Geometric distribution with mean 1/p."
-  (integer (ceiling (/ (log (random 1.0))
-                       (log (- 1.0 p))))))
+  (lambda ()
+    (integer (ceiling (/ (log (random 1.0))
+                         (log (- 1.0 p)))))))
 
 
 ;;; ----------------------------------------------------------------------------
@@ -82,27 +83,27 @@
 
 (define (gen/short)
   "Returns a int in the 16 bit int range."
-  ((gen/uniform -32767 32767)))
+  (lambda () (gen/uniform -32767 32767)))
 
 (define (gen/ushort)
   "Returns a int in the 16 bit int range."
-  ((gen/uniform 0 65535)))
+  (lambda () (gen/uniform 0 65535)))
 
 (define (gen/int)
   "Returns a int in the 32 bit int range."
-  ((gen/uniform -65535 65535)))
+  (gen/uniform -65535 65535))
 
 (define (gen/uint)
   "Returns a int in the 32 bit positive int range."
-  ((gen/uniform)))
+  (gen/uniform))
 
 (define (gen/long)
   "Returns a int in the 64 bit int range."
-  ((gen/uniform -2305843009213693952 2305843009213693952)))
+  (gen/uniform -2305843009213693952 2305843009213693952))
 
 (define (gen/ulong)
   "Returns a int in the 64 bit int range."
-  ((gen/uniform 0 4611686018427387904)))
+  (gen/uniform 0 4611686018427387904))
 
 (define (gen/byte)
   "Returns an int in the byte range."
@@ -110,36 +111,46 @@
 
 (define (gen/float)
   "Generate a float between 0 (inclusive) and 1 (exclusive)"
-  (random 1.0))
+  (lambda ()
+    (random 1.0)))
 
 (define (gen/boolean)
   "Returns a bool."
-  (eqv? (random 2) 1))
+  (lambda ()
+    (eqv? (random 2) 1)))
+
+(define (gen/choose lo hi)
+  "Generate a number in the range [lo...hi]"
+  (gen/uniform lo (1+ hi)))
 
 (define (gen/elements coll)
   "Randomly select an element of coll with equal probability."
-  (nth (gen/uniform 0 (length coll)) coll))
+  (lambda ()
+    (nth ((gen/uniform 0 (length coll)))
+         coll)))
 
 (define (gen/char)
   (gen/elements _list-of-chars_))
 
 (define (gen/tuple . generators)
   "Generate a tuple with one element from each generator."
-  (map (lambda (g) (gen/call-through g)) generators))
+  (lambda ()
+    (map (lambda (g) (gen/call-through g)) generators)))
 
 (define (gen/weighted m)
-  "Given a map of generators and weights, return a value from one of the generators, selecting generator based on weights."
-  (let* ((weights (gen/reductions + 0 (gen/vals m)))
-         (total (gen/last weights))
-         (choices (reverse (pairlis (gen/keys m) weights))))
-    (let ((choice (gen/uniform 0 total)))
-      (let loop ((weighted-choices choices))
-        (let ((c (caar weighted-choices))
-              (w (cdar weighted-choices)))
-          (when w
-            (if (< choice w)
-                (gen/call-through c)
-                (loop (cdr weighted-choices))))))))))))
+  "Given a map of weights and generators, return a value from one of the generators, selecting generator based on weights."
+  (let* ((weights (gen/reductions + 0 (gen/keys m)))
+         (total (last weights))
+         (choices (reverse (pairlis weights (gen/vals m)))))
+    (lambda ()
+      (let ((choice ((gen/uniform 0 total))))
+        (let loop ((weighted-choices choices))
+          (let ((c (cdar weighted-choices))
+                (w (caar weighted-choices)))
+            (when w
+              (if (< choice w)
+                  (gen/call-through (eval c))
+                  (loop (cdr weighted-choices)))))))))))))
 
 (define (gen/one-of . specs)
   "Generates one of the specs passed in, with equal probability."
@@ -149,23 +160,30 @@
   "Create a list with elements from f and sized from sizer."
   (if (nil? maybe-sizer)
       (gen/list f gen/default-sizer)
-      (gen/reps (car maybe-sizer) f)))
+      (let ((sizer (car maybe-sizer)))
+        (lambda ()
+          (gen/reps sizer f)))))
 
 (define (gen/vector . args)
   "Create a vector with elements from f and sized from sizer."
-  (list->vector (apply gen/list args)))
+  (let ((list-generator (apply gen/list args)))
+    (lambda ()
+      (list->vector (list-generator)))))
 
 (define (gen/alist fk fv . maybe-sizer)
   "Create an association list with keys from fk, vals from fv, and sized from sizer."
   (if (nil? maybe-sizer)
       (gen/alist fk fv gen/default-sizer)
-      (pairlis (gen/reps (car maybe-sizer) fk)
-               (gen/reps (car maybe-sizer) fv))))
+      (lambda ()
+        (let ((count (gen/call-through (car maybe-sizer))))
+          (pairlis (gen/reps count fk)
+                   (gen/reps count fv))))))
 
-(define (gen/bytearray f . maybe-sizer)
+(define (gen/bytearray . maybe-sizer)
   (if (nil? maybe-sizer)
-      (gen/bytearray f gen/default-sizer)
-      (list->bytearray (gen/list f (car maybe-sizer)))))
+      (gen/bytearray gen/default-sizer)
+      (lambda ()
+        (list->bytearray ((gen/list gen/byte (car maybe-sizer)))))))
 
 (define (gen/string . args)
   "Create a string with chars from f and sized from sizer."
@@ -176,20 +194,22 @@
         (else
          (list->string (gen/reps (cadr args) (car args))))))
 
-(define (**gen/name**)
+(define (gen/**name**)
   (gen/elements _symbol-chars_))
 
 (define (gen/symbol . maybe-sizer)
   "Create a symbol sized from sizer."
   (if (nil? maybe-sizer)
       (gen/symbol gen/default-sizer)
-      (intern (list->string (reps (car maybe-sizer) **gen/name**)))))
+      (lambda ()
+        (intern (list->string (gen/reps (car maybe-sizer) gen/**name**))))))
 
 (define (gen/slotname . maybe-sizer)
   "Create a slotname sized from sizer."
   (if (nil? maybe-sizer)
       (gen/slotname gen/default-sizer)
-      (intern (str (list->string (gen/reps (car maybe-sizer) **gen/name**)) ":"))))
+      (lambda ()
+        (intern (str (list->string (gen/reps (car maybe-sizer) **gen/name**)) ":")))))
 
 (define (gen/return x)
   (lambda ()
@@ -213,7 +233,7 @@
 (define (gen/sample generator . maybe-size)
   (if (nil? maybe-size)
       (gen/sample generator 10)
-      (gen/list generator (car maybe-size))))
+      ((gen/list generator (car maybe-size)))))
 
 ;;; ----------------------------------------------------------------------------
 ;;; Property support
@@ -371,7 +391,6 @@
              number-of-errors: (length errors)
              simplest-error: (check/find-simplest errors)})
         (begin
-;;          (format #t "~A~%" (car val))
           (loop (-1+ n)
                 (gen/call-through prop)
                 (if (result: val)
