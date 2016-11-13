@@ -12,6 +12,7 @@ import (
 )
 
 func RegisterFramePrimitives() {
+	MakePrimitiveFunction("make-slotname", "1", MakeSlotnameImpl)
 	MakePrimitiveFunction("make-frame", "*", MakeFrameImpl)
 	MakePrimitiveFunction("has-slot?", "2", HasSlotImpl)
 	MakePrimitiveFunction("get-slot", "2", GetSlotImpl)
@@ -27,6 +28,18 @@ func RegisterFramePrimitives() {
 	MakePrimitiveFunction("lisp->json", "1", LispToJsonImpl)
 	MakePrimitiveFunction("frame-keys", "1", FrameKeysImpl)
 	MakePrimitiveFunction("frame-values", "1", FrameValuesImpl)
+}
+
+func MakeSlotnameImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	base := First(args)
+	if NakedP(base) {
+		result = base
+	} else if StringP(base) || SymbolP(base) {
+		result = NakedSymbolFrom(base)
+	} else {
+		err = ProcessError(fmt.Sprintf("Cannot make a slotname from other than a symbol or string, received %s", String(base)), env)
+	}
+	return
 }
 
 func MakeFrameImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
