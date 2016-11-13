@@ -1450,6 +1450,7 @@ ASCII equivalents:
      space
      tab                     HT
 
+
 # Strings #
 
 A "string" is a immutable sequence of characters.
@@ -2331,6 +2332,10 @@ Returns the specified element of _list_. It is an error if _list_ is not long
 enough to contain the specified element (for example, if the argument to
 `seventh` is a list that contains only six elements).
 
+### (last _list_) ###
+
+Returns the last element in the list. An error is raised if _list_ is a circular list.
+
 ## Cutting and Pasting Lists ##
 
 ### (sublist _list_ _start_ _end_) ###
@@ -2396,7 +2401,6 @@ arguments rather than destroying them.) For example:
     z                                       ⇒ (g h)
 
 ### (last-pair _list_) ###
-<p class="annotation">lists.scm</p>
 
 Returns the last pair in _list_, which may be an improper list.
 `last-pair` could have been defined this way:
@@ -2913,7 +2917,11 @@ must be a valid index of _vector_.
 
 These procedures access the first several elements of _vector_ in the obvious
 way. It is an error if the implicit index of one of these procedures is not a
-valid index of _vector_.
+valid index of _vector_.  Using `first` - `tenth` will work on both lists and vectors.
+
+### (vector-last _vector_) ###
+
+Returns the last element of _vector_. `last` will also work on both lists and vectors.
 
 ### (vector-binary-search _vector_ _key<?_ _unwrap-key_ _key_) ###
 
@@ -3129,6 +3137,14 @@ environment, they simply evaluate to themselves.
 
     'a: ⇒ a:
     a:  ⇒ a:
+
+### (make-slotname _symbol_) ###
+
+This function takes a symbol or string and returns an interned slotname based on it, doing what is required.
+
+    (make-slotname 'name) ⇒ name:
+    (make-slotname "name") ⇒ name:
+    (make-slotname name:) ⇒ name:
 
 ## Basic functions
 
