@@ -7,7 +7,12 @@
 
 package golisp
 
+import (
+	"strings"
+)
+
 func RegisterTypePredicatePrimitives() {
+	MakePrimitiveFunction("type-of", "1", TypeofImpl)
 	MakePrimitiveFunction("atom?", "1", IsAtomImpl)
 	MakePrimitiveFunction("list?", "1", IsListImpl)
 	MakePrimitiveFunction("pair?", "1", IsPairImpl)
@@ -29,6 +34,12 @@ func RegisterTypePredicatePrimitives() {
 	MakePrimitiveFunction("frame?", "1", IsFrameImpl)
 	MakePrimitiveFunction("bytearray?", "1", IsByteArrayImpl)
 	MakePrimitiveFunction("port?", "1", IsPortImpl)
+}
+
+func TypeofImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	val := Car(args)
+	result = SymbolWithName(strings.ToLower(TypeName(TypeOf(val))))
+	return
 }
 
 func IsAtomImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
