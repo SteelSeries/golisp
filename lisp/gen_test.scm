@@ -199,3 +199,112 @@
       (gen/sample generator 10)
       (gen/list generator (car maybe-size))))
 
+;;; ----------------------------------------------------------------------------
+;;; Property support
+
+(define-macro (prop/for-all variable generator . declaration)
+  `(let* ((,variable (gen/call-through ,generator))
+          (result (begin ,@declaration)))
+     (list ,variable result))))
+
+;;; ----------------------------------------------------------------------------
+;;; Checking
+
+
+(define (check/find-simplest-list values)
+  (reduce (lambda (a b)
+            (if (< (length a)
+                   (length b))
+                a
+                b))
+          ()
+          values))
+
+(define (check/find-simplest-integer values)
+  (reduce (lambda (a b)
+            (if (< a b)
+                a
+                b))
+          0
+          values))
+
+(define (check/find-simplest-float values)
+  (reduce (lambda (a b)
+            (if (< a b)
+                a
+                b))
+          0.0
+          values))
+
+(define (check/find-simplest-boolean values)
+  (not (any not values)))
+
+(define (check/find-simplest-string values)
+  (reduce (lambda (a b)
+            (if (string<? a b)
+                a
+                b))
+          ""
+          values))
+
+(define (check/find-simplest-symbol values)
+  (reduce (lambda (a b)
+            (if (string<? (str a)
+                          (str b))
+                a
+                b))
+          ""
+          values))
+
+(define (check/find-simplest-frame values)
+  (reduce (lambda (a b)
+            (if (< (length (frame-keys a))
+                   (length (frame-keys b)))
+                a
+                b))
+          {}
+          values))
+
+(define (check/find-simplest-vector values)
+  (reduce (lambda (a b)
+            (if (< (length a)
+                   (length b))
+                a
+                b))
+          #()
+          values))
+
+(define (check/find-simplest values)
+  (let* ((comparison-type (type-of (car values)))
+         (check-function-name (str "check/find-simplest-" comparison-type))
+         (f (eval (intern check-function-name)))
+         )
+    (if (function? f)
+        (f values)
+        (error (format #f "Unsupported comparison requested: ~A" comparison-type)))))
+
+
+(define (check/run count prop)
+  (let loop ((n count)
+             (val '(#t #t))
+             (errors '())
+             (result #t))
+    (if (< n 0)
+        (if result
+            {result: #t
+             num-tests: count}
+            {result: #f
+             num-tests: count
+;;             error-cases: errors
+             number-of-errors: (length errors)
+             simplest-error: (check/find-simplest errors)})
+        (begin
+;;          (format #t "~A~%" (car val))
+          (loop (-1+ n)
+                (gen/call-through prop)
+                (if (cadr val)
+                    errors
+                    (cons (car val) errors))
+                (and (cadr val) result))))))
+
+
