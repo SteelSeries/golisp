@@ -125,7 +125,7 @@
 
 (define (gen/tuple . generators)
   "Generate a tuple with one element from each generator."
-  (map (lambda (g) (g)) generators))
+  (map (lambda (g) (gen/call-through g)) generators))
 
 (define (gen/weighted m)
   "Given a map of generators and weights, return a value from one of the generators, selecting generator based on weights."
@@ -218,23 +218,50 @@
 ;;; ----------------------------------------------------------------------------
 ;;; Property support
 
+(define (apply-gen function)
+  (lambda (args)
+    (let ((result (apply function args)))
+      {result: result function: function args: args})))
+
+(define (prop/for-all* args function)
+  ((apply-gen function) (apply gen/tuple (if (vector? args)
+                                             (map eval (vector->list args))
+                                             args))))
+
 (define-macro (prop/for-all variable generator . declaration)
   `(let* ((,variable (gen/call-through ,generator))
           (result (begin ,@declaration)))
-     (list ,variable result))))
+     (list ,variable result)))
+
 
 ;;; ----------------------------------------------------------------------------
 ;;; Checking
 
 
-(define (check/find-simplest-list values)
+(define (check/list-with-lesser-values a b)
+  (cond ((nil? a)
+         a)
+        (else
+         (if (negative? (reduce + 0 (map (lambda (x y)
+                                           (let ((absx (abs x))
+                                                 (absy (abs y)))
+                                             (cond ((< absx absy) -1)
+                                                   ((> absx absy) 1)
+                                                   (else 0))))
+                                         a b)))
+             a
+             b))))
+
+(define (check/find-simplest-list lists)
   (reduce (lambda (a b)
-            (if (< (length a)
-                   (length b))
-                a
-                b))
+            (cond ((< (length a) (length b))
+                    a)
+                  ((> (length a) (length b))
+                   b)
+                  (else                 ; (eqv? (length a) (length b))
+                   (check/list-with-lesser-values a b))))
           ()
-          values))
+          lists))
 
 (define (check/find-simplest-integer values)
   (reduce (lambda (a b)
@@ -302,7 +329,7 @@
 
 (define (check/run count prop)
   (let loop ((n count)
-             (val '(#t #t))
+             (val {result: #t})
              (errors '())
              (result #t))
     (if (< n 0)
@@ -318,9 +345,9 @@
 ;;          (format #t "~A~%" (car val))
           (loop (-1+ n)
                 (gen/call-through prop)
-                (if (cadr val)
+                (if (result: val)
                     errors
-                    (cons (car val) errors))
-                (and (cadr val) result))))))
+                    (cons (args: val) errors))
+                (and (result: val) result))))))
 
 
