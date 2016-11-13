@@ -80,13 +80,29 @@
 ;;; ----------------------------------------------------------------------------
 ;;; Generators
 
+(define (gen/short)
+  "Returns a int in the 16 bit int range."
+  ((gen/uniform -32767 32767)))
+
+(define (gen/ushort)
+  "Returns a int in the 16 bit int range."
+  ((gen/uniform 0 65535)))
+
 (define (gen/int)
   "Returns a int in the 32 bit int range."
-  (* ((gen/uniform)) (if (gen/boolean) 1 -1)))
+  ((gen/uniform -65535 65535)))
 
 (define (gen/uint)
   "Returns a int in the 32 bit positive int range."
   ((gen/uniform)))
+
+(define (gen/long)
+  "Returns a int in the 64 bit int range."
+  ((gen/uniform -2305843009213693952 2305843009213693952)))
+
+(define (gen/ulong)
+  "Returns a int in the 64 bit int range."
+  ((gen/uniform 0 4611686018427387904)))
 
 (define (gen/byte)
   "Returns an int in the byte range."
