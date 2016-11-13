@@ -1107,14 +1107,14 @@ func escapeQuotes(str string) string {
 
 func String(d *Data) string {
 	if d == nil {
-		return "()"
+		return "nil"
 	}
 
 	switch d.Type {
 	case ConsCellType:
 		{
 			if NilP(d) {
-				return "()"
+				return "nil"
 			}
 
 			if ListWithLoopP(d) {
