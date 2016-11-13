@@ -39,6 +39,7 @@ func RegisterVectorPrimitives() {
 	MakePrimitiveFunction("vector-eighth", "1", VectorEighthImpl)   // also called by eighth
 	MakePrimitiveFunction("vector-ninth", "1", VectorNinthImpl)     // also called by ninth
 	MakePrimitiveFunction("vector-tenth", "1", VectorTenthImpl)     // also called by tenth
+	MakePrimitiveFunction("vector-last", "1", VectorLastImpl)       // also called by last
 	MakePrimitiveFunction("vector-binary-search", "4", VectorBinarySearchImpl)
 	MakePrimitiveFunction("vector-find", "2", VectorFindImpl) // also called by find
 	MakePrimitiveFunction("subvector", "3", SubVectorImpl)
@@ -605,6 +606,23 @@ func VectorTenthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 	} else {
 		err = ProcessError(fmt.Sprintf("vector-tenth needs a vector with length of at least 10, but got %d.", len(values)), env)
 		return
+	}
+
+	return
+}
+
+func VectorLastImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	v := First(args)
+	if !VectorP(v) {
+		err = ProcessError(fmt.Sprintf("vector-last needs a vector as its argument, but got %s.", String(v)), env)
+		return
+	}
+
+	values := VectorValue(v)
+	if len(values) > 0 {
+		result = values[len(values)-1]
+	} else {
+		err = ProcessError(fmt.Sprintf("vector-last needs a vector that isn't empty, but got %d.", len(values)), env)
 	}
 
 	return
