@@ -385,7 +385,7 @@ func IntegerWithValue(n int64) *Data {
 	return &Data{Type: IntegerType, Value: unsafe.Pointer(&n)}
 }
 
-func FloatWithValue(n float32) *Data {
+func FloatWithValue(n float64) *Data {
 	return &Data{Type: FloatType, Value: unsafe.Pointer(&n)}
 }
 
@@ -521,23 +521,23 @@ func IntegerValue(d *Data) int64 {
 	}
 
 	if FloatP(d) {
-		return int64(*((*float32)(d.Value)))
+		return int64(*((*float64)(d.Value)))
 	}
 
 	return 0
 }
 
-func FloatValue(d *Data) float32 {
+func FloatValue(d *Data) float64 {
 	if d == nil {
 		return 0
 	}
 
 	if FloatP(d) {
-		return *((*float32)(d.Value))
+		return *((*float64)(d.Value))
 	}
 
 	if IntegerP(d) {
-		return float32(*((*int64)(d.Value)))
+		return float64(*((*int64)(d.Value)))
 	}
 
 	return 0

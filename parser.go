@@ -48,7 +48,7 @@ func makeHexInteger(str string) (n *Data, err error) {
 }
 
 func makeFloat(str string) (n *Data, err error) {
-	var i float32
+	var i float64
 	_, err = fmt.Sscanf(str, "%f", &i)
 	if err != nil {
 		return

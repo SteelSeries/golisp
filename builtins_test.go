@@ -106,7 +106,7 @@ func (s *BuiltinsSuite) TestUnaryQuotient(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(result, NotNil)
 	c.Assert(int(TypeOf(result)), Equals, FloatType)
-	c.Assert(FloatValue(result), Equals, float32(0.25))
+	c.Assert(FloatValue(result), Equals, float64(0.25))
 }
 
 func (s *BuiltinsSuite) TestBinaryQuotient(c *C) {

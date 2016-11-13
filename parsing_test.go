@@ -73,7 +73,7 @@ func (s *ParsingSuite) TestFloat(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(sexpr, NotNil)
 	c.Assert(int(TypeOf(sexpr)), Equals, FloatType)
-	c.Assert(FloatValue(sexpr), Equals, float32(12.345))
+	c.Assert(FloatValue(sexpr), Equals, float64(12.345))
 }
 
 func (s *ParsingSuite) TestNegativeFloat(c *C) {
@@ -81,7 +81,7 @@ func (s *ParsingSuite) TestNegativeFloat(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(sexpr, NotNil)
 	c.Assert(int(TypeOf(sexpr)), Equals, FloatType)
-	c.Assert(FloatValue(sexpr), Equals, float32(-12.345))
+	c.Assert(FloatValue(sexpr), Equals, float64(-12.345))
 }
 
 func (s *ParsingSuite) TestUppercaseHexInteger(c *C) {

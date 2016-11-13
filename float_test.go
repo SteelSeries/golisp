@@ -26,19 +26,19 @@ func (s *FloatAtomSuite) SetUpTest(c *C) {
 }
 
 func (s *FloatAtomSuite) TestFloatValue(c *C) {
-	c.Assert(FloatValue(s.n), Equals, float32(5.3))
+	c.Assert(FloatValue(s.n), Equals, float64(5.3))
 }
 
 func (s *FloatAtomSuite) TestFloatValueOfNil(c *C) {
-	c.Assert(FloatValue(nil), Equals, float32(0.0))
+	c.Assert(FloatValue(nil), Equals, float64(0.0))
 }
 
 func (s *FloatAtomSuite) TestFloatValueOfNonFloat(c *C) {
-	c.Assert(FloatValue(StringWithValue("3.2")), Equals, float32(0.0))
+	c.Assert(FloatValue(StringWithValue("3.2")), Equals, float64(0.0))
 }
 
 func (s *FloatAtomSuite) TestNegativeFloatValue(c *C) {
-	c.Assert(FloatValue(s.neg), Equals, float32(-12.345))
+	c.Assert(FloatValue(s.neg), Equals, float64(-12.345))
 }
 
 func (s *FloatAtomSuite) TestString(c *C) {

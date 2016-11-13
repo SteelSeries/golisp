@@ -47,7 +47,7 @@ func RegisterMathPrimitives() {
 	MakePrimitiveFunction("log", "1", LogImpl)
 }
 
-func sgn(a float32) int64 {
+func sgn(a float64) int64 {
 	switch {
 	case a < 0:
 		return -1
@@ -58,7 +58,7 @@ func sgn(a float32) int64 {
 }
 
 func intSgn(a int64) int64 {
-	return sgn(float32(a))
+	return sgn(float64(a))
 }
 
 func IncrementImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -82,7 +82,7 @@ func DecrementImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 }
 
 func addFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var acc float32 = 0
+	var acc float64 = 0
 	for c := args; NotNilP(c); c = Cdr(c) {
 		acc += FloatValue(Car(c))
 	}
@@ -167,7 +167,7 @@ func multiplyInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func multiplyFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var acc float32 = 1.0
+	var acc float64 = 1.0
 	for c := args; NotNilP(c); c = Cdr(c) {
 		acc *= FloatValue(Car(c))
 	}
@@ -188,7 +188,7 @@ func MultiplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 // TODO roll this into DivideImpl
 func divideFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var acc float32
+	var acc float64
 	if Length(args) == 1 {
 		v := FloatValue(First(args))
 		if v == 0.0 {
@@ -218,7 +218,7 @@ func DivideImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	qval := FloatValue(q)
-	if qval == float32(math.Trunc(float64(qval))) {
+	if qval == math.Trunc(float64(qval)) {
 		result = IntegerWithValue(int64(qval))
 	} else {
 		result = q
@@ -331,7 +331,7 @@ func RandomImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 				err = ProcessError(fmt.Sprintf("random only accepts floating point modulus of 1.0, received %s", String(modulus)), env)
 				return
 			}
-			result = FloatWithValue(rand.Float32())
+			result = FloatWithValue(rand.Float64())
 		} else {
 			err = ProcessError(fmt.Sprintf("random expected an integer or float modulus, received %s", String(modulus)), env)
 			return
@@ -500,7 +500,7 @@ func minFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		err = ProcessError(fmt.Sprintf("min requires numbers, received %s", String(n)), env)
 		return
 	}
-	var acc float32 = FloatValue(n)
+	var acc float64 = FloatValue(n)
 
 	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
 		n = Car(c)
@@ -565,7 +565,7 @@ func maxFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		err = ProcessError(fmt.Sprintf("max requires numbers, received %s", String(n)), env)
 		return
 	}
-	var acc float32 = FloatValue(n)
+	var acc float64 = FloatValue(n)
 
 	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
 		n = Car(c)
@@ -613,7 +613,7 @@ func FloorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	return FloatWithValue(float32(math.Floor(float64(FloatValue(val))))), nil
+	return FloatWithValue(math.Floor(float64(FloatValue(val)))), nil
 }
 
 func CeilingImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -624,7 +624,7 @@ func CeilingImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	return FloatWithValue(float32(math.Ceil(float64(FloatValue(val))))), nil
+	return FloatWithValue(math.Ceil(float64(FloatValue(val)))), nil
 }
 
 func AbsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -633,11 +633,11 @@ func AbsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		err = ProcessError(fmt.Sprintf("abs expected a number, received %s", String(Car(args))), env)
 		return
 	}
-	absval := math.Abs(float64(FloatValue(val)))
+	absval := math.Abs(FloatValue(val))
 	if IntegerP(val) {
 		result = IntegerWithValue(int64(absval))
 	} else {
-		result = FloatWithValue(float32(absval))
+		result = FloatWithValue(absval)
 	}
 	return
 }
@@ -695,17 +695,20 @@ func SignImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	if FloatP(val) {
-		return IntegerWithValue(sgn(float32(FloatValue(val)))), nil
+		return IntegerWithValue(sgn(FloatValue(val))), nil
 	} else {
 		return IntegerWithValue(intSgn(IntegerValue(val))), nil
 	}
 }
 
 func LogImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if IntegerP(First(args)) || FloatP(First(args)) {
-		result = FloatWithValue(float32(math.Log(float64(FloatValue(First(args))))))
+	if NumberP(First(args)) {
+		result = FloatWithValue(math.Log(FloatValue(First(args))))
 	} else {
-		err = ProcessError(fmt.Sprintf("log expects a float argument, received %s", String(First(args))), env)
+		err = ProcessError(fmt.Sprintf("log expects a numeric argument, received %s", String(First(args))), env)
+	}
+	return
+}
 	}
 	return
 }
