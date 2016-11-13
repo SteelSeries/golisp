@@ -45,6 +45,7 @@ func RegisterMathPrimitives() {
 	MakePrimitiveFunction("odd?", "1", OddImpl)
 	MakePrimitiveFunction("sign", "1", SignImpl)
 	MakePrimitiveFunction("log", "1", LogImpl)
+	MakePrimitiveFunction("expt", "2", ExptImpl)
 }
 
 func sgn(a float64) int64 {
@@ -709,6 +710,22 @@ func LogImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 	return
 }
+
+func ExptImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	baseObj := First(args)
+	expObj := Second(args)
+	if NumberP(baseObj) && NumberP(expObj) {
+		floating := FloatP(baseObj) || FloatP(expObj)
+		base := FloatValue(baseObj)
+		exp := FloatValue(expObj)
+		val := math.Pow(base, exp)
+		if floating {
+			result = FloatWithValue(val)
+		} else {
+			result = IntegerWithValue(int64(val))
+		}
+	} else {
+		err = ProcessError(fmt.Sprintf("expt expects a numeric arguments, received %s, %s", String(First(args)), String(Second(args))), env)
 	}
 	return
 }
