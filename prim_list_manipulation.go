@@ -24,7 +24,7 @@ func RegisterListManipulationPrimitives() {
 	MakePrimitiveFunction("append", "*", AppendImpl)
 	MakePrimitiveFunction("append!", "*", AppendBangImpl)
 	MakePrimitiveFunction("copy", "1", CopyImpl)
-	MakePrimitiveFunction("partition", "2", PartitionImpl)
+	MakePrimitiveFunction("partition", "2|3", PartitionImpl)
 	MakePrimitiveFunction("sublist", "3", SublistImpl)
 	MakePrimitiveFunction("sort", "2", SortImpl)
 }
@@ -163,27 +163,27 @@ func CopyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return Copy(Car(args)), nil
 }
 
-func partitionBySize(determiner *Data, l *Data, env *SymbolTableFrame) (result *Data, err error) {
-	size := int(IntegerValue(determiner))
-	if size < 1 {
-		err = ProcessError("partition requires a non negative clump size.", env)
+func partitionBySize(size int64, step int64, l *Data, env *SymbolTableFrame) (result *Data, err error) {
+	elements := ToArray(l)
+
+	if size < 1 || size > int64(len(elements)) {
+		err = ProcessError("partition requires a clump size that fits in the list.", env)
+		return
+	}
+	if step < 1 || step > int64(len(elements))-size {
+		err = ProcessError("partition requires a step size that fits in the list.", env)
 		return
 	}
 
-	var pieces []*Data = make([]*Data, 0, 5)
-	var chunk []*Data = make([]*Data, 0, 5)
-	for c := l; NotNilP(c); c = Cdr(c) {
-		if len(chunk) < size {
-			chunk = append(chunk, Car(c))
-		} else {
-			pieces = append(pieces, ArrayToList(chunk))
-			chunk = make([]*Data, 0, 5)
-			chunk = append(chunk, Car(c))
-		}
+	pieces := make([]*Data, 0, 5)
+	var start int64 = 0
+	var end int64 = size
+	for end < int64(len(elements)) {
+		pieces = append(pieces, ArrayToList(elements[start:end]))
+		start = start + step
+		end = start + size
 	}
-	if len(chunk) > 0 {
-		pieces = append(pieces, ArrayToList(chunk))
-	}
+
 	return ArrayToList(pieces), nil
 }
 
@@ -217,14 +217,26 @@ func PartitionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 		return
 	}
 
-	l := Second(args)
+	var l *Data
+	var step int64
+
+	if IntegerP(determiner) {
+		if IntegerP(Second(args)) {
+			step = IntegerValue(Second(args))
+			l = Third(args)
+		} else {
+			step = IntegerValue(determiner)
+			l = Second(args)
+		}
+	}
+
 	if !ListP(l) {
 		err = ProcessError("partition requires a list as it's second argument.", env)
 		return
 	}
 
 	if IntegerP(determiner) {
-		return partitionBySize(determiner, l, env)
+		return partitionBySize(IntegerValue(determiner), step, l, env)
 	} else {
 		return partitionByPredicate(determiner, l, env)
 	}
