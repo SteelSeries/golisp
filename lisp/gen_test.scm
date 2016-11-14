@@ -230,6 +230,11 @@
   (lambda ()
     (f (gen/call-through generator)))))
 
+(define (gen/bind generator function)
+  (lambda ()
+    (let ((val (gen/call-through generator)))
+      (function val))))
+
 (define (gen/sample generator . maybe-size)
   (if (nil? maybe-size)
       (gen/sample generator 10)
@@ -238,20 +243,27 @@
 ;;; ----------------------------------------------------------------------------
 ;;; Property support
 
-(define (apply-gen function)
+(define (prop/apply-gen function)
   (lambda (args)
     (let ((result (apply function args)))
       {result: result function: function args: args})))
 
 (define (prop/for-all* args function)
-  ((apply-gen function) (apply gen/tuple (if (vector? args)
-                                             (map eval (vector->list args))
-                                             args))))
+  (lambda ()
+    ((prop/apply-gen function) (gen/call-through (apply gen/tuple (if (vector? args)
+                                                                      (map eval (vector->list args))
+                                                                      args))))))
 
-(define-macro (prop/for-all variable generator . declaration)
-  `(let* ((,variable (gen/call-through ,generator))
-          (result (begin ,@declaration)))
-     (list ,variable result)))
+(define (prop/binding-vars bindings)
+  (map first (partition 2 bindings)))
+
+(define (prop/binding-gens bindings)
+  (map second (partition 2 bindings)))
+
+(define-macro (prop/for-all bindings . body)
+  `(prop/for-all* ,(list->vector (prop/binding-gens bindings))
+             (lambda (,@(prop/binding-vars bindings))
+               ,@body)))
 
 
 ;;; ----------------------------------------------------------------------------
@@ -381,6 +393,7 @@
              (val {result: #t})
              (errors '())
              (result #t))
+;    (format #t "~A~%" val)
     (if (< n 0)
         (if result
             {result: #t
