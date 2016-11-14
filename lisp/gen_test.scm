@@ -269,10 +269,23 @@
 ;;; ----------------------------------------------------------------------------
 ;;; Checking
 
+(define type-ranks '((boolean . 1)
+                    (integer . 2)
+                    (float . 3)
+                    (character . 4)
+                    (string . 5)
+                    (symbol . 6)
+                    (list . 7)
+                    (vector . 8)
+                    (frame . 9)))
 
 (define (check/compare-element a b)
   (cond ((neqv? (type-of a) (type-of b))
-         (compare-types (type-of a) (type-of b)))
+         (let ((ranka (cdr (assoc ta type-ranks)))
+               (rankb (cdr (assoc tb type-ranks))))
+           (cond ((< ranka rankb) -1)
+                 ((> ranka rankb) 1)
+                 (else 0))))
         ((number? a)
          (let ((absx (abs x))
                (absy (abs y)))
@@ -306,7 +319,7 @@
   (cond ((nil? a)
          a)
         (else
-         (if (negative? (reduce + 0 (map compare-element a b)))
+         (if (negative? (reduce + 0 (map check/compare-element a b)))
              a
              b))
         ))
