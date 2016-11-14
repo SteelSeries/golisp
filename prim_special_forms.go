@@ -482,7 +482,7 @@ func ApplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 			argList = ary[0]
 		}
 	} else {
-		err = ProcessError("The last argument to apply must be a list", env)
+		err = ProcessError(fmt.Sprintf("apply requires the last arg to be a list, but got %s", String(ary[len(ary)-1])), env)
 		return
 	}
 
