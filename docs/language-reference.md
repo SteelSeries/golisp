@@ -2443,7 +2443,7 @@ Like `filter`, except that the returned list contains only those elements
 
 ### (partition _predicate_ _list_) ###
 
-### (partition _k_ _list_) ###
+### (partition _size_ _step_ _list_) ###
 
 The first form partitions the elements of _list_ with _predicate_, and returns a
 list of two elements: the list of in-elements and the list of out-elements. The
@@ -2455,14 +2455,20 @@ lists may share a common tail with the argument _list_.
     (partition symbol? '(one 2 3 four five 6)) ⇒
         ((one four five) (2 3 6))
 
-The second form partitions the elements of _list_ into lists of length _k_,
-returnign a list of those lists. The final one may have a length of less than
-_k_, depending on the length of _list_. As with the first form, elements occur
-in the result lists in the same order as they occur in the argument _list_.
+The second form partitions the elements of _list_ into lists of length
+_size_, returning a list of those lists. Only lists of _size_ are
+returned; any at the end that don't fit are discarded. As with the
+first form, elements occur in the result lists in the same order as
+they occur in the argument _list_. If the optional _step_ argument is ommitted it defaults to size. Each sublist starts at _step_ elements from the start of the previous. If _step_ > _size_ elements will be skipped between sublists. If _step_ < _size_ the sublists will overlap.
 
     (partition 2 '(one 2 3 four five 6))    ⇒ ((one 2) (3 four) (five 6))
     
     (partition 2 '(one 2 3 four five 6 7))  ⇒ ((one 2) (3 four) (five 6) (7))
+
+    (partition 2 1 '(1 2 3 4 5 6 7 8 9 0)) ⇒ ((1 2) (2 3) (3 4) (4 5) (5 6) (6 7) (7 8) (8 9))
+    
+    (partition 2 3 '(1 2 3 4 5 6 7 8 9 0)) ⇒ ((1 2) (4 5) (7 8))
+
 
 ### (delq element list) ###
 <p class="annotation">lists.scm</p>
