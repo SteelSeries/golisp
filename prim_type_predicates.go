@@ -38,7 +38,7 @@ func RegisterTypePredicatePrimitives() {
 
 func TypeofImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	val := Car(args)
-	result = SymbolWithName(strings.ToLower(TypeName(TypeOf(val))))
+	result = Intern(strings.ToLower(TypeName(TypeOf(val))))
 	return
 }
 
