@@ -10,6 +10,8 @@
 
 (define _ascii-alpha_ (string->list "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"))
 
+(define _ascii-alphanum_ (string->list "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"))
+
 (define _symbol-chars_ (string->list "!$%&*+-/.:<=>?@\\^_|~abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"))
 
 
@@ -22,6 +24,7 @@
       (lambda () (random))
       (let ((lo (car bounds))
             (hi (cadr bounds)))
+        (format #t "uniform (~A, ~A)~%" lo hi)
         (lambda () (integer (floor (+ lo (* (random 1.0) (- hi lo)))))))))
 
 (define (gen/geometric p)
@@ -30,6 +33,21 @@
     (integer (ceiling (/ (log (random 1.0))
                          (log (- 1.0 p)))))))
 
+(define (**gen/default-sizer**)
+  (gen/geometric 0.02))
+
+(define **gen/scale** nil)
+
+(define (gen/square x) (* x x))
+
+(define (gen/scale-function s)
+  (-> s log gen/square (* 2) ceiling integer))
+
+(define (gen/get-default-sizer)
+  (format #t "scale: ~A~%" **gen/scale**)
+  (if (nil? **gen/scale**)
+      **gen/default-sizer**
+      (lambda () (gen/uniform **gen/scale**  (* 2 **gen/scale**)))))
 
 ;;; ----------------------------------------------------------------------------
 ;;; Support functions
@@ -43,11 +61,15 @@
 
 (define (gen/repeatedly count f)
   "Make a list of count invocations of f."
-  (let loop ((n count)
-             (result '()))
-    (if (zero? n)
-        result
-        (loop (-1+ n) (cons (gen/call-through f) result)))))
+  (let ((old-scale **gen/scale**)
+        (vals (reverse (let loop ((n 1)
+                                  (result '()))
+                         (set! **gen/scale** (scale-function n))
+                         (if (> n count)
+                             result
+                             (loop (1+ n) (cons (gen/call-through f) result)))))))
+    (set! **gen/scale** old-scale)
+    vals))
 
 (define (gen/repeat count x)
   "make a list of count copies of f."
@@ -56,6 +78,8 @@
 (define (gen/reps sizer f)
   "Returns sizer repetitions of f (or (f) if f is a fn)."
   (let ((count (gen/call-through sizer)))
+    (format #t "reps sizer: ~A~%" (if (function? sizer) (definition-of sizer) sizer))
+    (format #t "reps count: ~A~%" count)
     (if (function? f)
         (gen/repeatedly count f)
         (gen/repeat count f))))
@@ -74,39 +98,25 @@
 (define (gen/keys alist)
   (map car alist))
 
-(define (gen/default-sizer)
-  (gen/geometric 0.02))
-
-
 ;;; ----------------------------------------------------------------------------
 ;;; Generators
 
-(define (gen/short)
-  "Returns a int in the 16 bit int range."
-  (lambda () (gen/uniform -32767 32767)))
-
-(define (gen/ushort)
-  "Returns a int in the 16 bit int range."
-  (lambda () (gen/uniform 0 65535)))
-
 (define (gen/int)
-  "Returns a int in the 32 bit int range."
-  (gen/uniform -65535 65535))
+  "Returns a int between -scale and scale."
+  (if (nil? **gen/scale**)
+      (lambda () (gen/uniform -2305843009213693952 2305843009213693952))
+      (lambda ()
+        (let ((bound (* 10 **gen/scale**)))
+          (gen/uniform (- bound) bound)))))
 
 (define (gen/uint)
-  "Returns a int in the 32 bit positive int range."
-  (gen/uniform))
-
-(define (gen/long)
-  "Returns a int in the 64 bit int range."
-  (gen/uniform -2305843009213693952 2305843009213693952))
-
-(define (gen/ulong)
-  "Returns a int in the 64 bit int range."
-  (gen/uniform 0 4611686018427387904))
+  "Returns a int between 0 and scale."
+  (if (nil? **gen/scale**)
+      (lambda () (gen/uniform 0 2305843009213693952))
+      (lambda () (gen/uniform 0 (* 10 **gen/scale**)))))
 
 (define (gen/byte)
-  "Returns an int in the byte range."
+  "Returns an int in the byte range. Useful enough that it's a separate generator."
   (gen/uniform 0 255))
 
 (define (gen/float)
@@ -132,6 +142,12 @@
 (define (gen/char)
   (gen/elements _list-of-chars_))
 
+(define (gen/alpha-char)
+  (gen/elements _ascii-alpha_))
+
+(define (gen/alphanum-char)
+  (gen/elements _ascii-alphanum_))
+
 (define (gen/tuple . generators)
   "Generate a tuple with one element from each generator."
   (lambda ()
@@ -148,9 +164,9 @@
           (let ((c (cdar weighted-choices))
                 (w (caar weighted-choices)))
             (when w
-              (if (< choice w)
-                  (gen/call-through (eval c))
-                  (loop (cdr weighted-choices)))))))))))))
+                  (if (< choice w)
+                      (gen/call-through (eval c))
+                      (loop (cdr weighted-choices))))))))))
 
 (define (gen/one-of . specs)
   "Generates one of the specs passed in, with equal probability."
@@ -159,10 +175,12 @@
 (define (gen/list f . maybe-sizer)
   "Create a list with elements from f and sized from sizer."
   (if (nil? maybe-sizer)
-      (gen/list f gen/default-sizer)
+      (gen/list f (lambda () (gen/get-default-sizer)))
       (let ((sizer (car maybe-sizer)))
+        (format #t "gen/list sizer: ~A~%" (if (function? sizer) (definition-of sizer) sizer))
+
         (lambda ()
-          (gen/reps sizer f)))))
+          (gen/reps sizer f))))))
 
 (define (gen/vector . args)
   "Create a vector with elements from f and sized from sizer."
@@ -173,7 +191,7 @@
 (define (gen/alist fk fv . maybe-sizer)
   "Create an association list with keys from fk, vals from fv, and sized from sizer."
   (if (nil? maybe-sizer)
-      (gen/alist fk fv gen/default-sizer)
+      (gen/alist fk fv (lambda () (gen/get-default-sizer)))
       (lambda ()
         (let ((count (gen/call-through (car maybe-sizer))))
           (pairlis (gen/reps count fk)
@@ -181,7 +199,7 @@
 
 (define (gen/bytearray . maybe-sizer)
   (if (nil? maybe-sizer)
-      (gen/bytearray gen/default-sizer)
+      (gen/bytearray  (lambda () (gen/get-default-sizer)))
       (lambda ()
         (list->bytearray ((gen/list gen/byte (car maybe-sizer)))))))
 
@@ -190,7 +208,7 @@
   (cond ((nil? args)
          (gen/string gen/char))
         ((nil? (cdr args))
-         (gen/string (car args) gen/default-sizer))
+         (gen/string (car args) (gen/get-default-sizer)))
         (else
          (list->string (gen/reps (cadr args) (car args))))))
 
@@ -200,16 +218,20 @@
 (define (gen/symbol . maybe-sizer)
   "Create a symbol sized from sizer."
   (if (nil? maybe-sizer)
-      (gen/symbol gen/default-sizer)
+      (gen/symbol (lambda () (gen/get-default-sizer)))
       (lambda ()
-        (intern (list->string (gen/reps (car maybe-sizer) gen/**name**))))))
+        (let ((sym-name (cons (gen/call-through (gen/elements _ascii-alpha_))
+                              (gen/reps (car maybe-sizer) gen/**name**))))
+          (intern (list->string sym-name))))))
 
 (define (gen/slotname . maybe-sizer)
   "Create a slotname sized from sizer."
   (if (nil? maybe-sizer)
-      (gen/slotname gen/default-sizer)
+      (gen/slotname (lambda () (gen/get-default-sizer)))
       (lambda ()
-        (intern (str (list->string (gen/reps (car maybe-sizer) **gen/name**)) ":")))))
+        (let ((sym-name (cons (gen/call-through (gen/elements _ascii-alpha_))
+                              (gen/reps (car maybe-sizer) gen/**name**))))
+          (intern (str (list->string sym-name) ":"))))))
 
 (define (gen/return x)
   (lambda ()
@@ -228,7 +250,7 @@
 
 (define (gen/fmap f generator)
   (lambda ()
-    (f (gen/call-through generator)))))
+    (f (gen/call-through generator))))
 
 (define (gen/bind generator function)
   (lambda ()
@@ -238,7 +260,11 @@
 (define (gen/sample generator . maybe-size)
   (if (nil? maybe-size)
       (gen/sample generator 10)
-      ((gen/list generator (car maybe-size)))))
+      (let ((size (car maybe-size)))
+        (set! **gen/scale** size)
+        (let ((values ((gen/list generator size))))
+          (set! **gen/scale** nil)
+          values))))
 
 ;;; ----------------------------------------------------------------------------
 ;;; Property support
