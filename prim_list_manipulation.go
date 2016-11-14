@@ -170,15 +170,15 @@ func partitionBySize(size int64, step int64, l *Data, env *SymbolTableFrame) (re
 		err = ProcessError("partition requires a clump size that fits in the list.", env)
 		return
 	}
-	if step < 1 || step > int64(len(elements))-size {
-		err = ProcessError("partition requires a step size that fits in the list.", env)
+	if step < 1 {
+		err = ProcessError("partition requires a positive step size.", env)
 		return
 	}
 
 	pieces := make([]*Data, 0, 5)
 	var start int64 = 0
 	var end int64 = size
-	for end < int64(len(elements)) {
+	for end <= int64(len(elements)) {
 		pieces = append(pieces, ArrayToList(elements[start:end]))
 		start = start + step
 		end = start + size
@@ -231,7 +231,7 @@ func PartitionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 	}
 
 	if !ListP(l) {
-		err = ProcessError("partition requires a list as it's second argument.", env)
+		err = ProcessError("partition requires a list as it's final argument.", env)
 		return
 	}
 
