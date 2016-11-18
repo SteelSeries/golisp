@@ -21,10 +21,10 @@
 (define (gen/uniform . bounds)
   "Uniform distribution from lo (inclusive) to hi (exclusive). Defaults to range of 32 bit positive integers."
   (if (nil? bounds)
-      (lambda () (random))
-      (let ((lo (car bounds))
-            (hi (cadr bounds)))
-        (lambda () (integer (floor (+ lo (* (random 1.0) (- hi lo)))))))))
+    (lambda () (random))
+    (let ((lo (car bounds))
+          (hi (cadr bounds)))
+      (lambda () (integer (floor (+ lo (* (random 1.0) (- hi lo)))))))))
 
 (define (gen/geometric p)
   "Geometric distribution with mean 1/p."
@@ -44,8 +44,8 @@
 
 (define (gen/get-default-sizer)
   (if (nil? **gen/scale**)
-      **gen/default-sizer**
-      (lambda () (gen/uniform **gen/scale**  (* 2 **gen/scale**)))))
+    **gen/default-sizer**
+    (lambda () (gen/uniform **gen/scale**  (* 2 **gen/scale**)))))
 
 ;;; ----------------------------------------------------------------------------
 ;;; Support functions
@@ -54,8 +54,8 @@
   "Recursively call x until it doesn't return a function."
   (let recur ((f maybe-func))
     (if (function? f)
-        (recur (f))
-        f)))
+      (recur (f))
+      f)))
 
 (define (gen/repeatedly count f)
   "Make a list of count invocations of f."
@@ -64,8 +64,8 @@
                                   (result '()))
                          (set! **gen/scale** (gen/scale-function n))
                          (if (> n count)
-                             result
-                             (loop (1+ n) (cons (gen/call-through f) result)))))))
+                           result
+                           (loop (1+ n) (cons (gen/call-through f) result)))))))
     (set! **gen/scale** old-scale)
     vals))
 
@@ -77,8 +77,8 @@
   "Returns sizer repetitions of f (or (f) if f is a fn)."
   (let ((count (gen/call-through sizer)))
     (if (function? f)
-        (gen/repeatedly count f)
-        (gen/repeat count f))))
+      (gen/repeatedly count f)
+      (gen/repeat count f))))
 
 (define (gen/reductions f initial coll)
   "Returns a list of the intermediate values of the reduction (as per reduce) of coll by f, starting with initial."
@@ -100,16 +100,16 @@
 (define (gen/int)
   "Returns a int between -scale and scale."
   (if (nil? **gen/scale**)
-      (lambda () (gen/uniform -2305843009213693952 2305843009213693952))
-      (lambda ()
-        (let ((bound (* 10 **gen/scale**)))
-          (gen/uniform (- bound) bound)))))
+    (lambda () (gen/uniform -2305843009213693952 2305843009213693952))
+    (lambda ()
+      (let ((bound (* 10 **gen/scale**)))
+        (gen/uniform (- bound) bound)))))
 
 (define (gen/uint)
   "Returns a int between 0 and scale."
   (if (nil? **gen/scale**)
-      (lambda () (gen/uniform 0 2305843009213693952))
-      (lambda () (gen/uniform 0 (* 10 **gen/scale**)))))
+    (lambda () (gen/uniform 0 2305843009213693952))
+    (lambda () (gen/uniform 0 (* 10 **gen/scale**)))))
 
 (define (gen/byte)
   "Returns an int in the byte range. Useful enough that it's a separate generator."
@@ -160,9 +160,9 @@
           (let ((c (cdar weighted-choices))
                 (w (caar weighted-choices)))
             (when w
-                  (if (< choice w)
-                      (gen/call-through (eval c))
-                      (loop (cdr weighted-choices))))))))))
+              (if (< choice w)
+                (gen/call-through (eval c))
+                (loop (cdr weighted-choices))))))))))
 
 (define (gen/one-of . specs)
   "Generates one of the specs passed in, with equal probability."
@@ -171,10 +171,10 @@
 (define (gen/list f . maybe-sizer)
   "Create a list with elements from f and sized from sizer."
   (if (nil? maybe-sizer)
-      (gen/list f (lambda () (gen/get-default-sizer)))
-      (let ((sizer (car maybe-sizer)))
-        (lambda ()
-          (gen/reps sizer f))))))
+    (gen/list f (lambda () (gen/get-default-sizer)))
+    (let ((sizer (car maybe-sizer)))
+      (lambda ()
+        (gen/reps sizer f)))))
 
 (define (gen/vector . args)
   "Create a vector with elements from f and sized from sizer."
@@ -185,17 +185,17 @@
 (define (gen/alist fk fv . maybe-sizer)
   "Create an association list with keys from fk, vals from fv, and sized from sizer."
   (if (nil? maybe-sizer)
-      (gen/alist fk fv (lambda () (gen/get-default-sizer)))
-      (lambda ()
-        (let ((count (gen/call-through (car maybe-sizer))))
-          (pairlis (gen/reps count fk)
-                   (gen/reps count fv))))))
+    (gen/alist fk fv (lambda () (gen/get-default-sizer)))
+    (lambda ()
+      (let ((count (gen/call-through (car maybe-sizer))))
+        (pairlis (gen/reps count fk)
+                 (gen/reps count fv))))))
 
 (define (gen/bytearray . maybe-sizer)
   (if (nil? maybe-sizer)
-      (gen/bytearray  (lambda () (gen/get-default-sizer)))
-      (lambda ()
-        (list->bytearray ((gen/list gen/byte (car maybe-sizer)))))))
+    (gen/bytearray  (lambda () (gen/get-default-sizer)))
+    (lambda ()
+      (list->bytearray ((gen/list gen/byte (car maybe-sizer)))))))
 
 (define (gen/string . args)
   "Create a string with chars from f and sized from sizer."
@@ -212,35 +212,39 @@
 (define (gen/symbol . maybe-sizer)
   "Create a symbol sized from sizer."
   (if (nil? maybe-sizer)
-      (gen/symbol (lambda () (gen/get-default-sizer)))
-      (lambda ()
-        (let ((sym-name (cons (gen/call-through (gen/elements _ascii-alpha_))
-                              (gen/reps (car maybe-sizer) gen/**name**))))
-          (intern (list->string sym-name))))))
+    (gen/symbol (lambda () (gen/get-default-sizer)))
+    (lambda ()
+      (let ((sym-name (cons (gen/call-through (gen/elements _ascii-alpha_))
+                            (gen/reps (car maybe-sizer) gen/**name**))))
+        (intern (list->string sym-name))))))
 
 (define (gen/slotname . maybe-sizer)
   "Create a slotname sized from sizer."
   (if (nil? maybe-sizer)
-      (gen/slotname (lambda () (gen/get-default-sizer)))
-      (lambda ()
-        (let ((sym-name (cons (gen/call-through (gen/elements _ascii-alpha_))
-                              (gen/reps (car maybe-sizer) gen/**name**))))
-          (intern (str (list->string sym-name) ":"))))))
+    (gen/slotname (lambda () (gen/get-default-sizer)))
+    (lambda ()
+      (let ((sym-name (cons (gen/call-through (gen/elements _ascii-alpha_))
+                            (gen/reps (car maybe-sizer) gen/**name**))))
+        (intern (str (list->string sym-name) ":"))))))
 
 (define (gen/return x)
   (lambda ()
     x))
 
+(define **gen/failure-limit** 5)
+
 (define (gen/such-that f generator)
   (lambda ()
-    (let loop ((val (gen/call-through generator)))
-      (if (f val)
-          val
-          (loop (gen/call-through generator))))))
-
-(define (gen/not-empty generator)
-  (gen/such-that (lambda (x) (> (length x) 0))
-                 generator))
+    (let loop ((val (gen/call-through generator))
+               (failure-count 0))
+      (format #t "such-that looping: ~A 2~A -> ~A~%" failure-count val (f val))
+      (cond ((>= failure-count **gen/failure-limit**)
+             (set! **gen/scale** (1+ **gen/scale**))
+             (loop (gen/call-through generator) 0))
+            (else
+             (if (f val)
+               val
+               (loop (gen/call-through generator) (1+ failure-count))))))))
 
 (define (gen/fmap f generator)
   (lambda ()
@@ -253,12 +257,12 @@
 
 (define (gen/sample generator . maybe-size)
   (if (nil? maybe-size)
-      (gen/sample generator 10)
-      (let ((size (car maybe-size)))
-        (set! **gen/scale** size)
-        (let ((values ((gen/list generator size))))
-          (set! **gen/scale** nil)
-          values))))
+    (gen/sample generator 10)
+    (let ((size (car maybe-size)))
+      (set! **gen/scale** size)
+      (let ((values ((gen/list generator size))))
+        (set! **gen/scale** nil)
+        values))))
 
 ;;; ----------------------------------------------------------------------------
 ;;; Property support
@@ -272,8 +276,8 @@
   (lambda ()
     ((prop/apply-gen function) (gen/call-through (apply gen/tuple
                                                         (if (vector? args)
-                                                            (map eval (vector->list args))
-                                                            args))))))
+                                                          (map eval (vector->list args))
+                                                          args))))))
 
 (define (prop/binding-vars bindings)
   (map first (partition 2 bindings)))
@@ -283,22 +287,22 @@
 
 (define-macro (prop/for-all bindings . body)
   `(prop/for-all* ,(list->vector (prop/binding-gens bindings))
-             (lambda (,@(prop/binding-vars bindings))
-               ,@body)))
+                  (lambda (,@(prop/binding-vars bindings))
+                    ,@body)))
 
 
 ;;; ----------------------------------------------------------------------------
 ;;; Checking
 
 (define type-ranks '((boolean . 1)
-                    (integer . 2)
-                    (float . 3)
-                    (character . 4)
-                    (string . 5)
-                    (symbol . 6)
-                    (list . 7)
-                    (vector . 8)
-                    (frame . 9)))
+                     (integer . 2)
+                     (float . 3)
+                     (character . 4)
+                     (string . 5)
+                     (symbol . 6)
+                     (list . 7)
+                     (vector . 8)
+                     (frame . 9)))
 
 (define (check/compare-element a b)
   (cond ((neqv? (type-of a) (type-of b))
@@ -341,8 +345,8 @@
          a)
         (else
          (if (negative? (reduce + 0 (map check/compare-element a b)))
-             a
-             b))
+           a
+           b))
         ))
 
 (define (check/find-simplest-list lists)
@@ -370,16 +374,16 @@
 (define (check/find-simplest-integer values)
   (reduce (lambda (a b)
             (if (< a b)
-                a
-                b))
+              a
+              b))
           0
           values))
 
 (define (check/find-simplest-float values)
   (reduce (lambda (a b)
             (if (< a b)
-                a
-                b))
+              a
+              b))
           0.0
           values))
 
@@ -389,8 +393,8 @@
 (define (check/find-simplest-string values)
   (reduce (lambda (a b)
             (if (string<? a b)
-                a
-                b))
+              a
+              b))
           ""
           values))
 
@@ -398,8 +402,8 @@
   (reduce (lambda (a b)
             (if (string<? (str a)
                           (str b))
-                a
-                b))
+              a
+              b))
           ""
           values))
 
@@ -407,8 +411,8 @@
   (reduce (lambda (a b)
             (if (< (length a)
                    (length b))
-                a
-                b))
+              a
+              b))
           {}
           values))
 
@@ -418,8 +422,8 @@
          (f (eval (intern check-function-name)))
          )
     (if (function? f)
-        (f values)
-        (error (format #f "Unsupported comparison requested: ~A" comparison-type)))))
+      (f values)
+      (error (format #f "Unsupported comparison requested: ~A" comparison-type)))))
 
 
 (define (check/run count prop)
@@ -427,22 +431,22 @@
              (val {result: #t})
              (errors '())
              (result #t))
-;    (format #t "~A~%" val)
+                                        ;    (format #t "~A~%" val)
     (if (< n 0)
-        (if result
-            {result: #t
-             num-tests: count}
-            {result: #f
-             num-tests: count
-;;             error-cases: errors
-             number-of-errors: (length errors)
-             simplest-error: (check/find-simplest errors)})
-        (begin
-          (loop (-1+ n)
-                (gen/call-through prop)
-                (if (result: val)
-                    errors
-                    (cons (args: val) errors))
-                (and (result: val) result))))))
+      (if result
+        {result: #t
+                 num-tests: count}
+        {result: #f
+                 num-tests: count
+                 ;;             error-cases: errors
+                 number-of-errors: (length errors)
+                 simplest-error: (check/find-simplest errors)})
+      (begin
+        (loop (-1+ n)
+              (gen/call-through prop)
+              (if (result: val)
+                errors
+                (cons (args: val) errors))
+              (and (result: val) result))))))
 
 
