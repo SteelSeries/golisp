@@ -24,7 +24,6 @@
       (lambda () (random))
       (let ((lo (car bounds))
             (hi (cadr bounds)))
-        (format #t "uniform (~A, ~A)~%" lo hi)
         (lambda () (integer (floor (+ lo (* (random 1.0) (- hi lo)))))))))
 
 (define (gen/geometric p)
@@ -44,7 +43,6 @@
   (-> s log gen/square (* 2) ceiling integer))
 
 (define (gen/get-default-sizer)
-  (format #t "scale: ~A~%" **gen/scale**)
   (if (nil? **gen/scale**)
       **gen/default-sizer**
       (lambda () (gen/uniform **gen/scale**  (* 2 **gen/scale**)))))
@@ -64,7 +62,7 @@
   (let ((old-scale **gen/scale**)
         (vals (reverse (let loop ((n 1)
                                   (result '()))
-                         (set! **gen/scale** (scale-function n))
+                         (set! **gen/scale** (gen/scale-function n))
                          (if (> n count)
                              result
                              (loop (1+ n) (cons (gen/call-through f) result)))))))
@@ -78,8 +76,6 @@
 (define (gen/reps sizer f)
   "Returns sizer repetitions of f (or (f) if f is a fn)."
   (let ((count (gen/call-through sizer)))
-    (format #t "reps sizer: ~A~%" (if (function? sizer) (definition-of sizer) sizer))
-    (format #t "reps count: ~A~%" count)
     (if (function? f)
         (gen/repeatedly count f)
         (gen/repeat count f))))
@@ -177,8 +173,6 @@
   (if (nil? maybe-sizer)
       (gen/list f (lambda () (gen/get-default-sizer)))
       (let ((sizer (car maybe-sizer)))
-        (format #t "gen/list sizer: ~A~%" (if (function? sizer) (definition-of sizer) sizer))
-
         (lambda ()
           (gen/reps sizer f))))))
 
@@ -276,9 +270,10 @@
 
 (define (prop/for-all* args function)
   (lambda ()
-    ((prop/apply-gen function) (gen/call-through (apply gen/tuple (if (vector? args)
-                                                                      (map eval (vector->list args))
-                                                                      args))))))
+    ((prop/apply-gen function) (gen/call-through (apply gen/tuple
+                                                        (if (vector? args)
+                                                            (map eval (vector->list args))
+                                                            args))))))
 
 (define (prop/binding-vars bindings)
   (map first (partition 2 bindings)))
