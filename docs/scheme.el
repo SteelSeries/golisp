@@ -523,6 +523,7 @@ indentation."
 ;; like defun if the first form is placed on the next line, otherwise
 ;; it is indented like any other form (i.e. forms line up under first).
 
+(put 'if 'scheme-indent-function 1)
 (put 'when 'scheme-indent-function 1)
 (put 'unless 'scheme-indent-function 1)
 (put 'begin 'scheme-indent-function 0)
