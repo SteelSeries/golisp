@@ -63,7 +63,7 @@ values, and only increase the size as the test continues to pass.
 Some generators take other generators as arguments. For example the `vector`
 and `list` generator:
 
-    (gen/sample (gen/vector gen/nat))
+    (gen/sample (gen/vector gen/uint))
     ==> (#() #() #(1) #(1) #() #() #(5 6 6 2 0 1) #(3 7 5) #(2 0 0 6 2 5 8) #(9 1 9 3 8 3 5))
 
     (gen/sample (gen/list gen/boolean))
@@ -101,8 +101,9 @@ create a vector of natural numbers (using the `nat` generator), and then use
 wanted to generate non-empty lists, we can use `such-that` to filter out empty
 lists:
 
-(gen/sample (gen/such-that not-empty (gen/list gen/boolean)))
-;; => ((#t) (#t) (#f) (#t #f) (#f) (#t) (#f #f #t #t) (#f) (#t) (#f))
+    (define (not-empty x) (> (length x) 0))
+    (gen/sample (gen/such-that not-empty (gen/list gen/boolean)))
+    ==> ((#t) (#t) (#f) (#t #f) (#f) (#t) (#f #f #t #t) (#f) (#t) (#f))
 
 #### bind
 
@@ -112,15 +113,13 @@ and then choose a random element from it, and return both the vector and the
 random element. `bind` takes a generator, and a function that takes a value
 from that generator, and creates a new generator.
 
-```clojure
-(def keyword-vector (gen/such-that not-empty (gen/vector gen/keyword)))
-(def vec-and-elem
-  (gen/bind keyword-vector
-            (fn [v] (gen/tuple (gen/elements v) (gen/return v)))))
-
-(gen/sample vec-and-elem 4)
-;; => ([:va [:va :b4]] [:Zu1 [:w :Zu1]] [:2 [:2]] [:27X [:27X :KW]])
-```
+    (def keyword-vector (gen/such-that not-empty (gen/vector gen/keyword)))
+    (def vec-and-elem
+      (gen/bind keyword-vector
+                (fn [v] (gen/tuple (gen/elements v) (gen/return v)))))
+    
+    (gen/sample vec-and-elem 4)
+    ==> (#(va: #(va: b4:)) #(Zu1: #(w: Zu1:)) #(2: #(2)) #(27X: #(27X: KW:)))
 
 This allows us to build quite sophisticated generators.
 
