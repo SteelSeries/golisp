@@ -128,98 +128,90 @@ This allows us to build quite sophisticated generators.
 Let's go through an example of generating random values of our own
 `defrecord`s. Let's create a simple user record:
 
-```clojure
-(defrecord User [user-name user-id email active?])
+    (define-record User user-name: user-id: email: active?:)
+    
+    (new:> User new: '("reiddraper" 15 "reid@example.com" #t))
+    ==> {proto*: User
+         user-name: "reiddraper"
+         user-id: 15
+         email: "reid@example.com"
+         active?: #t}
 
-;; recall that a helper function is automatically generated
-;; for us
-
-(->User "reiddraper" 15 "reid@example.com" #t)
-;; #user.User{:user-name "reiddraper",
-;;            :user-id 15,
-;;            :email "reid@example.com",
-;;            :active? #t}
-```
-
-We can use the `->User` helper function to construct our user. First, let's
+We can use the `User.new` helper function to construct our user. First, let's
 look at the generators we'll use for the arguments. For the user-name, we can
 just use an alphanumeric string, user IDs will be natural numbers, we'll
 construct our own simple email generator, and we'll use booleans to denote
 whether the user account is active. Let's write a simple email address
 generator:
 
-```clojure
-(def domain (gen/elements ["gmail.com" "hotmail.com" "computer.org"]))
-(def email-gen
-  (gen/fmap (fn [[name domain-name]]
-              (str name "@" domain-name))
-            (gen/tuple (gen/not-empty gen/string-alphanumeric) domain)))
+    (define domain (gen/elements '("gmail.com" "hotmail.com" "computer.org")))
 
-(last (gen/sample email-gen))
-;; => "CW6161Q6@hotmail.com"
-```
+    (define email-gen
+      (gen/fmap (lambda (name-and-domain-name)
+                  (let ((name (car name-and-domain-name))
+                        (domain-name (cadr name-and-domain-name)))
+                    (str name "@" domain-name)))
+                (gen/tuple (gen/string gen/alphanum-char 10) domain)))
+    
+    (last (gen/sample email-gen))
+    ==> "CW6161Q6@hotmail.com"
 
 To put it all together, we'll use `fmap` to call our record constructor, and
 `tuple` to create a vector of the arguments:
 
-```clojure
-(def user-gen
-  (gen/fmap (partial apply ->User)
-            (gen/tuple (gen/not-empty gen/string-alphanumeric)
-                       gen/nat
-                       email-gen
-                       gen/boolean)))
+    (define user-gen
+      (gen/fmap (lambda (args) (new:> User args))
+                (gen/tuple (gen/string gen/alphanum-char 10)
+                           gen/uint
+                           email-gen
+                           gen/boolean)))
+    
+    (last (gen/sample user-gen))
+    ==> {active?: #t email: "YL7hLn4YUK@computer.org" proto*: User user-id: 102 user-name: "rfjDoMRACR"}
 
-(last (gen/sample user-gen))
-;; => #user.User{:user-name "kWodcsE2",
-;;               :user-id 1,
-;;               :email "r2ed3VE@computer.org",
-;;               :active? #t}
-```
+<!-- ### Recursive generators -->
 
-### Recursive generators
+<!-- --- -->
+<!-- NOTE: Writing recursive generators was significantly simplified in version -->
+<!-- 0.5.9. For the old way, see the [0.5.8 -->
+<!-- documentation](https://github.com/clojure/test.check/blob/v0.5.8/doc/intro.md#recursive-generators). -->
 
----
-NOTE: Writing recursive generators was significantly simplified in version
-0.5.9. For the old way, see the [0.5.8
-documentation](https://github.com/clojure/test.check/blob/v0.5.8/doc/intro.md#recursive-generators).
+<!-- --- -->
 
----
+<!-- Writing recursive, or tree-shaped generators is easy using `gen/recursive-gen`. -->
+<!-- `recursive-gen` takes two arguments, a compound generator, and a scalar -->
+<!-- generator. We'll start with a simple example, and then move into something more -->
+<!-- complex. First, let's generate a nested vector of booleans. So our compound -->
+<!-- generator will be `gen/vector` and our scalar will be `gen/boolean`: -->
 
-Writing recursive, or tree-shaped generators is easy using `gen/recursive-gen`.
-`recursive-gen` takes two arguments, a compound generator, and a scalar
-generator. We'll start with a simple example, and then move into something more
-complex. First, let's generate a nested vector of booleans. So our compound
-generator will be `gen/vector` and our scalar will be `gen/boolean`:
+<!-- ```clojure -->
+<!-- (def nested-vector-of-boolean (gen/recursive-gen gen/vector gen/boolean)) -->
+<!-- (last (gen/sample nested-vector-of-boolean 20)) -->
+<!-- ;; => [[#t] [#f #t #t] [#f]] -->
+<!-- ``` -->
 
-```clojure
-(def nested-vector-of-boolean (gen/recursive-gen gen/vector gen/boolean))
-(last (gen/sample nested-vector-of-boolean 20))
-;; => [[#t] [#f #t #t] [#f]]
-```
+<!-- Now, let's make our own, JSON-like generator. We'll allow `gen/list` and -->
+<!-- `gen/map` as our compound types and `gen/int` and `gen/boolean` as our scalar -->
+<!-- types. Since `recursive-gen` only accepts one of each type of generator, we'll -->
+<!-- combine our compound types with a simple function, and the two scalars with -->
+<!-- `gen/one-of`. -->
 
-Now, let's make our own, JSON-like generator. We'll allow `gen/list` and
-`gen/map` as our compound types and `gen/int` and `gen/boolean` as our scalar
-types. Since `recursive-gen` only accepts one of each type of generator, we'll
-combine our compound types with a simple function, and the two scalars with
-`gen/one-of`.
+<!-- ```clojure -->
+<!-- (def compound (fn [inner-gen] -->
+<!--                   (gen/one-of [(gen/list inner-gen) -->
+<!--                                (gen/map inner-gen inner-gen)]))) -->
+<!-- (def scalars (gen/one-of [gen/int gen/boolean])) -->
+<!-- (def my-json-like-thing (gen/recursive-gen compound scalars)) -->
+<!-- (last (gen/sample my-json-like-thing 20)) -->
+<!-- ;; => -->
+<!-- ;; (() -->
+<!-- ;;  {{4 -11, 1 -19} (#f), -->
+<!-- ;;  {} {1 6}, -->
+<!-- ;;  (#f #f) {#t -3, #f #f, -7 1}}) -->
+<!-- ``` -->
 
-```clojure
-(def compound (fn [inner-gen]
-                  (gen/one-of [(gen/list inner-gen)
-                               (gen/map inner-gen inner-gen)])))
-(def scalars (gen/one-of [gen/int gen/boolean]))
-(def my-json-like-thing (gen/recursive-gen compound scalars))
-(last (gen/sample my-json-like-thing 20))
-;; =>
-;; (()
-;;  {{4 -11, 1 -19} (#f),
-;;  {} {1 6},
-;;  (#f #f) {#t -3, #f #f, -7 1}})
-```
-
-And we see we got a list whose first element is the empty the list. The second
-element is a map with int keys and values. Etc.
+<!-- And we see we got a list whose first element is the empty the list. The second -->
+<!-- element is a map with int keys and values. Etc. -->
 
 ## Integers 5 through 9, inclusive
 
