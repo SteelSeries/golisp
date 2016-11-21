@@ -94,6 +94,13 @@
 (define (gen/keys alist)
   (map car alist))
 
+(define (gen/not-empty x)
+  (> (cond ((string? x)
+            (string-length x))
+           (else
+            (length x)))
+     0))
+
 ;;; ----------------------------------------------------------------------------
 ;;; Generators
 
@@ -237,7 +244,7 @@
   (lambda ()
     (let loop ((val (gen/call-through generator))
                (failure-count 0))
-      (format #t "such-that looping: ~A 2~A -> ~A~%" failure-count val (f val))
+      (format #t "such-that looping: ~A ~A -> ~A~%" failure-count val (f val))
       (cond ((>= failure-count **gen/failure-limit**)
              (set! **gen/scale** (1+ **gen/scale**))
              (loop (gen/call-through generator) 0))
@@ -254,6 +261,10 @@
   (lambda ()
     (let ((val (gen/call-through generator)))
       (function val))))
+
+;; (define (gen/recursive container-generator scalar-generator)
+
+;;   )
 
 (define (gen/sample generator . maybe-size)
   (if (nil? maybe-size)
