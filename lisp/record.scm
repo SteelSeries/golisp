@@ -12,10 +12,10 @@
 
 (define-macro (define-record record-name . slot-names)
   `(define ,record-name (make-frame
-                         new: (lambda (first-val . rest-vals)
+                         new: (lambda (vals)
                                 (let ((f (make-frame proto*: ,record-name)))
                                   (map (lambda (name val)
                                          (set-slot! f name val))
                                        ',slot-names
-                                       (flatten (list first-val rest-vals)))
+                                       vals)
                                   f)))))
