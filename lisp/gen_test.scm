@@ -244,7 +244,7 @@
   (lambda ()
     (let loop ((val (gen/call-through generator))
                (failure-count 0))
-      (format #t "such-that looping: ~A ~A -> ~A~%" failure-count val (f val))
+      ; (format #t "such-that looping: ~A ~A -> ~A~%" failure-count val (f val))
       (cond ((>= failure-count **gen/failure-limit**)
              (set! **gen/scale** (1+ **gen/scale**))
              (loop (gen/call-through generator) 0))
@@ -437,7 +437,7 @@
       (error (format #f "Unsupported comparison requested: ~A" comparison-type)))))
 
 
-(define (check/run count prop)
+(define (check/run-one count prop)
   (let loop ((n count)
              (val {result: #t})
              (errors '())
@@ -451,7 +451,7 @@
                  num-tests: count
                  ;;             error-cases: errors
                  number-of-errors: (length errors)
-                 simplest-error: (check/find-simplest errors)})
+                 simplest-error: (cr (check/find-simplest errors))})
       (begin
         (loop (-1+ n)
               (gen/call-through prop)
@@ -461,3 +461,24 @@
               (and (result: val) result))))))
 
 
+(define (check/run-all count props)
+  (map (lambda (prop-name)
+         (let ((result (check/run-one count (eval prop-name))))
+           (property:! result prop-name)
+           result))
+       props))
+
+(define (check/report results)
+  
+  
+  (let* ((prop-header (format #f "Property (~A reps ea)" (num-tests: (car results))))
+         (prop-column-length (max (list (+ 2 (string-length prop-header))
+                                        (fold-left (lambda (max-len result) (max (list max-len (string-length (symbol->string (property: result))))))
+                                                   0
+                                                   results))))
+        (sorted (sort results  (lambda (a b) (< (property: a) (property: b))))))
+    (format #t "~VA | # errors | Simplest error data~%" (1+ prop-column-length) prop-header)
+    (format #t "~V~+~10~+~30~~%" (+ 2 prop-column-length))
+    (for-each (lambda (r)
+                (format #t "~VA   ~9A  ~A~%" (1+ prop-column-length) (property: r) (if (result: r) "0" (number-of-errors: r)) (if (result: r) "" (simplest-error: r))))
+              sorted)))
