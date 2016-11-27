@@ -20,13 +20,12 @@ const (
 )
 
 type SymbolTableFrame struct {
-	Name         string
-	Parent       *SymbolTableFrame
-	Previous     *SymbolTableFrame
-	Frame        *FrameMap
-	Bindings     map[string]*Binding
-	CurrentCode  *list.List
-	IsRestricted bool
+	Name        string
+	Parent      *SymbolTableFrame
+	Previous    *SymbolTableFrame
+	Frame       *FrameMap
+	Bindings    map[string]*Binding
+	CurrentCode *list.List
 }
 
 type symbolsTable struct {
@@ -137,8 +136,7 @@ func NewSymbolTableFrameBelow(p *SymbolTableFrame, name string) *SymbolTableFram
 	if p != nil {
 		f = p.Frame
 	}
-	restricted := p != nil && p.IsRestricted
-	env := &SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding), Frame: f, CurrentCode: list.New(), IsRestricted: restricted}
+	env := &SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding), Frame: f, CurrentCode: list.New()}
 	if p == nil || p == Global {
 		TopLevelEnvironments.Mutex.Lock()
 		defer TopLevelEnvironments.Mutex.Unlock()
@@ -152,8 +150,7 @@ func NewSymbolTableFrameBelowWithFrame(p *SymbolTableFrame, f *FrameMap, name st
 	if f == nil {
 		f = p.Frame
 	}
-	restricted := p != nil && p.IsRestricted
-	env := &SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding, 10), Frame: f, CurrentCode: list.New(), IsRestricted: restricted}
+	env := &SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding, 10), Frame: f, CurrentCode: list.New()}
 	if p == nil || p == Global {
 		TopLevelEnvironments.Mutex.Lock()
 		defer TopLevelEnvironments.Mutex.Unlock()

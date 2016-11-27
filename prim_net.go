@@ -16,9 +16,9 @@ import (
 )
 
 func RegisterNetPrimitives() {
-	MakeRestrictedPrimitiveFunction("net-get", "1", NetGetImpl)
-	MakeRestrictedPrimitiveFunction("net-post", "3", NetPostImpl)
-	MakeRestrictedPrimitiveFunction("net-request", "2|3|4", NetRequestImpl)
+	MakePrimitiveFunction("net/get", "1", NetGetImpl)
+	MakePrimitiveFunction("net/post", "3", NetPostImpl)
+	MakePrimitiveFunction("net/request", "2|3|4", NetRequestImpl)
 }
 
 func NetGetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

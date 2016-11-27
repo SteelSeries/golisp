@@ -17,10 +17,10 @@ import (
 )
 
 func RegisterIOPrimitives() {
-	MakeRestrictedPrimitiveFunction("open-input-file", "1", OpenInputFileImpl)
-	MakeRestrictedPrimitiveFunction("open-output-file", "1|2", OpenOutputFileImpl)
-	MakeRestrictedPrimitiveFunction("close-port", "1", ClosePortImpl)
-	MakeRestrictedPrimitiveFunction("write-bytes", "2", WriteBytesImpl)
+	MakePrimitiveFunction("open-input-file", "1", OpenInputFileImpl)
+	MakePrimitiveFunction("open-output-file", "1|2", OpenOutputFileImpl)
+	MakePrimitiveFunction("close-port", "1", ClosePortImpl)
+	MakePrimitiveFunction("write-bytes", "2", WriteBytesImpl)
 
 	MakePrimitiveFunction("write-string", "1|2", WriteStringImpl)
 	MakePrimitiveFunction("newline", "0|1", NewlineImpl)

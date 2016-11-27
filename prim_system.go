@@ -33,16 +33,16 @@ func RegisterSystemPrimitives() {
 	MakePrimitiveFunction("gensym", "0|1", GensymImpl)
 	MakePrimitiveFunction("eval", "1|2", EvalImpl)
 
-	MakeRestrictedPrimitiveFunction("load", "1", LoadFileImpl)
-	MakeRestrictedPrimitiveFunction("global-eval", "1", GlobalEvalImpl)
-	MakeRestrictedPrimitiveFunction("panic!", "1", PanicImpl)
+	MakePrimitiveFunction("load", "1", LoadFileImpl)
+	MakePrimitiveFunction("global-eval", "1", GlobalEvalImpl)
+	MakePrimitiveFunction("panic!", "1", PanicImpl)
 	MakePrimitiveFunction("error", "1", ErrorImpl)
 	MakeSpecialForm("on-error", "2|3", OnErrorImpl)
 
 	MakeSpecialForm("time", "1", TimeImpl)
 	MakeSpecialForm("profile", "1|2", ProfileImpl)
 
-	MakeRestrictedPrimitiveFunction("exec", ">=1", ExecImpl)
+	MakePrimitiveFunction("exec", ">=1", ExecImpl)
 }
 
 func LoadFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

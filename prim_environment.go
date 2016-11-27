@@ -27,11 +27,10 @@ func RegisterEnvironmentPrimitives() {
 	MakePrimitiveFunction("the-environment", "0", TheEnvironmentImpl)
 	MakePrimitiveFunction("procedure-environment", "1", ProcedureEnvironmentImpl)
 
-	MakePrimitiveFunction("restrict-environment", "0", RestrictEnvironmentImpl)
-	MakeRestrictedPrimitiveFunction("environment-parent", "1", EnvironmentParentImpl)
-	MakeRestrictedPrimitiveFunction("system-global-environment", "0", SystemGlobalEnvironmentImpl)
-	MakeRestrictedPrimitiveFunction("make-top-level-environment", "1|2|3", MakeTopLevelEnvironmentImpl)
-	MakeRestrictedPrimitiveFunction("find-top-level-environment", "1", FindTopLevelEnvironmentImpl)
+	MakePrimitiveFunction("environment-parent", "1", EnvironmentParentImpl)
+	MakePrimitiveFunction("system-global-environment", "0", SystemGlobalEnvironmentImpl)
+	MakePrimitiveFunction("make-top-level-environment", "1|2|3", MakeTopLevelEnvironmentImpl)
+	MakePrimitiveFunction("find-top-level-environment", "1", FindTopLevelEnvironmentImpl)
 }
 
 func EnvironmentPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -362,9 +361,4 @@ func ProcedureEnvironmentImpl(args *Data, env *SymbolTableFrame) (result *Data, 
 	}
 
 	return EnvironmentWithValue(FunctionValue(Car(args)).Env), nil
-}
-
-func RestrictEnvironmentImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	env.IsRestricted = true
-	return StringWithValue("OK"), nil
 }
