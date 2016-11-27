@@ -176,16 +176,15 @@ func ReadStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 	// 	}
 	// }
 
-	readBuffer := make([]byte, 1024)
-
-	n, err := port.Read(readBuffer)
-	if n < 1024 {
-		result = StringWithValue(string(readBuffer[:n]))
-		err = nil
-		return
-	} else if err != nil {
+	info, err := port.Stat()
+	if err != nil {
 		return
 	}
+
+	readBuffer := make([]byte, info.Size())
+
+	n, err := port.Read(readBuffer)
+	result = StringWithValue(string(readBuffer[:n]))
 	return
 }
 
