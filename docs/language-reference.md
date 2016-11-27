@@ -4302,6 +4302,14 @@ enclosed in doublequotes, and within those strings backslash and doublequote are
 escaped by backslashes. `write` performs discretionary output flushing and
 returns an unspecified value.
 
+### (read-string [_input-port_]) ###
+
+Reads characters from _input-port_ until it finds a terminating character or
+encounters end of line. The port is updated to point to the terminating
+character, or to end of line if no terminating character was found.
+`read-string` returns the characters, up to but excluding the terminating
+character, as a newly allocated string.
+
 ### (read [_input-port_]) ###
 
 Converts external representations of Scheme objects into the objects themselves.
