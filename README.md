@@ -41,5 +41,5 @@ A sample application is also available at [https://github.com/SteelSeries/golisp
 GoLisp has the following dependencies:
 
 go get gopkg.in/fatih/set.v0
-go get github.com/jimsmart/bufrr
+go get github.com/SteelSeries/bufrr
 go get gopkg.in/check.v1

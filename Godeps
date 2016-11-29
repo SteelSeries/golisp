@@ -12,7 +12,7 @@
             "ImportPath": "gopkg.in/check.v1"
         },
         {
-            "ImportPath": "github.com/jimsmart/bufrr"
+            "ImportPath": "github.com/SteelSeries/bufrr"
         }
 	]
 }

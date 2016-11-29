@@ -9,7 +9,7 @@ package golisp
 
 import (
 	"fmt"
-	"github.com/jimsmart/bufrr"
+	"github.com/SteelSeries/bufrr"
 	"io"
 	"os"
 	"strings"
