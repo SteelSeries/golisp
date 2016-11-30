@@ -14,6 +14,7 @@ import (
 
 func RegisterTimerPrimitives() {
 	MakePrimitiveFunction("timer", "2", TimerImpl)
+	MakePrimitiveFunction("stop-timer", "1", StopTimerImpl)
 	MakePrimitiveFunction("ticker", "2", TickerImpl)
 	MakePrimitiveFunction("stop-ticker", "1", StopTickerImpl)
 }
@@ -42,6 +43,18 @@ func TimerImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}()
 
 	result = ObjectWithTypeAndValue("Timer", unsafe.Pointer(&t))
+	return
+}
+
+func StopTimerImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	timerObj := First(args)
+	if !ObjectP(timerObj) || ObjectType(timerObj) != "Timer" {
+		err = ProcessError("stop-timer expects its argument to be an timer object", env)
+		return
+	}
+
+	t := (*time.Timer)(ObjectValue(timerObj))
+	t.Stop()
 	return
 }
 

@@ -4254,6 +4254,24 @@ close a channel twice results in an error.
     > (<-c) ⇒ (() #f) ; repeats on subsequent calls
     > (channel-try-read c) ⇒ (#t () #f)
 
+# Timers #
+
+### (timer _millis_ _func_) ###
+
+Schedules _func_ (a function of zero arguments) to be evaluated after _millis_ milliseconds. Returns a timer object.
+
+### (stop-timer _timer_)###
+
+Stop and cancel the timer _timer_.
+
+### (ticker _millis_ _func_) ###
+
+Schedules _func_ (a function of zero arguments) to be evaluated after _millis_ milliseconds and every _millis_ milliseconds thereafter until stopped. Returns a ticker object.
+
+### (stop-ticker _ticker_)###
+
+Stop and cancel the ticker _ticker_.
+
 # Input/Output #
 
 ### (open-input-file _filename_) ###
