@@ -19,24 +19,24 @@ func RegisterTimePrimitives() {
 }
 
 func ClockImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	h, m, s := time.Now().Clock()
+	h, m, s := time.Now().Local().Clock()
 	result = InternalMakeList(IntegerWithValue(int64(h)), IntegerWithValue(int64(m)), IntegerWithValue(int64(s)))
 	return
 }
 
 func SecondsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	h, m, s := time.Now().Clock()
+	h, m, s := time.Now().Local().Clock()
 	result = IntegerWithValue(int64((h * 3600) + (m * 60) + s))
 	return
 }
 
 func DateImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	y, m, d := time.Now().Date()
+	y, m, d := time.Now().Local().Date()
 	result = InternalMakeList(IntegerWithValue(int64(y)), IntegerWithValue(int64(m)), IntegerWithValue(int64(d)))
 	return
 }
 
 func WeekdayImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	result = IntegerWithValue(int64(time.Now().Weekday()))
+	result = IntegerWithValue(int64(time.Now().Local().Weekday()))
 	return
 }
