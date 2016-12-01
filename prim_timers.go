@@ -49,7 +49,7 @@ func TimerImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 func StopTimerImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	timerObj := First(args)
 	if !ObjectP(timerObj) || ObjectType(timerObj) != "Timer" {
-		err = ProcessError("stop-timer expects its argument to be an timer object", env)
+		err = ProcessError("stop-timer expects its argument to be a timer object", env)
 		return
 	}
 
@@ -86,7 +86,7 @@ func TickerImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 func StopTickerImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	tickerObj := First(args)
 	if !ObjectP(tickerObj) || ObjectType(tickerObj) != "Ticker" {
-		err = ProcessError("stop-ticker expects its argument to be an ticker object", env)
+		err = ProcessError("stop-ticker expects its argument to be a ticker object", env)
 		return
 	}
 
