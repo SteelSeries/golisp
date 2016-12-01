@@ -51,5 +51,6 @@ func InitBuiltins() {
 	RegisterChannelPrimitives()
 	RegisterVectorPrimitives()
 	RegisterTimerPrimitives()
+	RegisterTimePrimitives()
 	RegisterRegexPrimitives()
 }
