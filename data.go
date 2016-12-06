@@ -145,8 +145,12 @@ func DottedPairP(d *Data) bool {
 }
 
 func hasVisited(cell *Data, visitedCells []*Data) bool {
-	found := sort.Search(len(visitedCells), func(i int) bool { return visitedCells[i] == cell })
-	return found < len(visitedCells)
+	for _, c := range visitedCells {
+		if c == cell {
+			return true
+		}
+	}
+	return false
 }
 
 func ListP(d *Data) bool {
@@ -502,11 +506,8 @@ func Cdr(d *Data) *Data {
 }
 
 func LastPair(l *Data) *Data {
-	if !ListP(l) {
-		return nil
-	}
 	var c *Data
-	for c = l; NotNilP(Cdr(c)); c = Cdr(c) {
+	for c = l; PairP(Cdr(c)); c = Cdr(c) {
 	}
 	return c
 }
@@ -705,13 +706,18 @@ func Length(d *Data) int {
 		return 0
 	}
 
+	if PairP(d) {
+		l := 0
+		for cell := d; PairP(cell); cell = Cdr(cell) {
+			l = l + 1
+		}
+		return l
+	}
+
 	if VectorP(d) {
 		return len(VectorValue(d))
 	}
 
-	if ListP(d) {
-		return 1 + Length(Cdr(d))
-	}
 	if FrameP(d) {
 		return len(*FrameValue(d))
 	}

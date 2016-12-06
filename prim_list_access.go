@@ -280,8 +280,13 @@ func TenthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func LastPairImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if !ListP(Car(args)) || ListWithLoopP(Car(args)) {
+	if !(ListP(Car(args)) || DottedListP(Car(args))) {
 		err = ProcessError(fmt.Sprintf("last-pair requires a non-circular list but received %s.", String(Car(args))), env)
+		return
+	}
+
+	if Length(Car(args)) == 0 {
+		err = ProcessError("last-pair requires a non-empty list but received nil.", env)
 		return
 	}
 
