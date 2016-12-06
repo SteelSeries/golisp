@@ -11,8 +11,7 @@
              (assert-true (vector? v)))
 
          (it "has the right length"
-             (assert-eq (vector-length v) 5)
-             (assert-eq (length v) 5))
+             (assert-eq (vector-length v) 5))
 
          (it "has converts to a list of nils"
              (assert-eq (vector->list v) '(() () () () ())))
