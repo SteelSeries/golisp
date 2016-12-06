@@ -22,70 +22,70 @@
              (assert-eq (length l) 10))
 
          (it "first"
-             (assert-eq (first 'a) nil)
+             (assert-error (first 'a))
              (assert-eq (first nil) nil)
              (assert-eq (first '()) nil)
              (assert-eq (first '(1)) 1)
              (assert-eq (first l) 1))
 
          (it "second"
-             (assert-eq (second 'a) nil)
+             (assert-error (second 'a))
              (assert-eq (second nil) nil)
              (assert-eq (second '()) nil)
              (assert-eq (second '(1 2)) 2)
              (assert-eq (second l) 2))
 
          (it "third"
-             (assert-eq (third 'a) nil)
+             (assert-error (third 'a))
              (assert-eq (third nil) nil)
              (assert-eq (third '()) nil)
              (assert-eq (third '(1 2 3)) 3)
              (assert-eq (third l) 3))
 
          (it "fourth"
-             (assert-eq (fourth 'a) nil)
+             (assert-error (fourth 'a))
              (assert-eq (fourth nil) nil)
              (assert-eq (fourth '()) nil)
              (assert-eq (fourth '(1 2 3 4)) 4)
              (assert-eq (fourth l) 4))
 
          (it "fifth"
-             (assert-eq (fifth 'a) nil)
+             (assert-error (fifth 'a))
              (assert-eq (fifth nil) nil)
              (assert-eq (fifth '()) nil)
              (assert-eq (fifth '(1 2 3 4 5)) 5)
              (assert-eq (fifth l) 5))
 
          (it "sixth"
-             (assert-eq (sixth 'a) nil)
+             (assert-error (sixth 'a))
              (assert-eq (sixth nil) nil)
              (assert-eq (sixth '()) nil)
              (assert-eq (sixth '(1 2 3 4 5 6)) 6)
              (assert-eq (sixth l) 6))
 
          (it "seventh"
-             (assert-eq (seventh 'a) nil)
+             (assert-error (seventh 'a))
              (assert-eq (seventh nil) nil)
              (assert-eq (seventh '()) nil)
              (assert-eq (seventh '(1 2 3 4 5 6 7)) 7)
              (assert-eq (seventh l) 7))
 
          (it "eighth"
-             (assert-eq (eighth 'a) nil)
+             (assert-error (eighth 'a))
              (assert-eq (eighth nil) nil)
              (assert-eq (eighth '()) nil)
              (assert-eq (eighth '(1 2 3 4 5 6 7 8)) 8)
              (assert-eq (eighth l) 8))
 
          (it "ninth"
-             (assert-eq (ninth 'a) nil)
+             (assert-error (ninth 'a))
              (assert-eq (ninth nil) nil)
              (assert-eq (ninth '()) nil)
              (assert-eq (ninth '(1 2 3 4 5 6 7 8 9)) 9)
              (assert-eq (ninth l) 9))
 
          (it "tenth"
-             (assert-eq (tenth 'a) nil)
+             (assert-error (tenth 'a))
              (assert-eq (tenth nil) nil)
              (assert-eq (tenth '()) nil)
              (assert-eq (tenth '(1 2 3 4 5 6 7 8 9 10)) 10)
@@ -126,79 +126,79 @@
              (assert-error (list-ref '() 'a))) ;2nd arg must be a number
 
          (it "car"
-             (assert-eq (car 'a) nil)
+             (assert-error (car 'a))
              (assert-eq (car nil) nil)
              (assert-eq (car '(1)) 1)
              (assert-eq (car l) 1))
 
          (it "cdr"
-             (assert-eq (cdr 'a) nil)
+             (assert-error (cdr 'a))
              (assert-eq (cdr nil) nil)
              (assert-eq (cdr '(1)) nil)
              (assert-eq (length (cdr l)) 9))
 
          (it "caar"
-             (assert-eq (caar 'a) nil)
+             (assert-error (caar 'a))
              (assert-eq (caar nil) nil)
              (assert-eq (caar '((1))) 1))
 
          (it "cadr"
-             (assert-eq (cadr 'a) nil)
+             (assert-error (cadr 'a))
              (assert-eq (cadr nil) nil)
              (assert-eq (cadr '(1 2)) 2))
 
          (it "cdar"
-             (assert-eq (cdar 'a) nil)
+             (assert-error (cdar 'a))
              (assert-eq (cdar nil) nil)
              (assert-eq (cdar '(1)) nil)
              (assert-eq (cdar '((1 2) 3)) '(2)))
 
          (it "cddr"
-             (assert-eq (cddr 'a) nil)
+             (assert-error (cddr 'a))
              (assert-eq (cddr nil) nil)
              (assert-eq (cddr '(1)) nil)
              (assert-eq (cddr '(1 2 3)) '(3)))
 
          (it "caaar"
-             (assert-eq (caaar 'a) nil)
+             (assert-error (caaar 'a))
              (assert-eq (caaar nil) nil)
              (assert-eq (caaar '(((1)))) 1))
 
          (it "caadr"
-             (assert-eq (caadr 'a) nil)
+             (assert-error (caadr 'a))
              (assert-eq (caadr nil) nil)
              (assert-eq (caadr '(1 (2))) 2))
 
          (it "cadar"
-             (assert-eq (cadar 'a) nil)
+             (assert-error (cadar 'a))
              (assert-eq (cadar nil) nil)
              (assert-eq (cadar '(1)) nil)
              (assert-eq (cadar '((1 2) 3)) 2))
 
          (it "caddr"
-             (assert-eq (caddr 'a) nil)
+             (assert-error (caddr 'a))
              (assert-eq (caddr nil) nil)
              (assert-eq (caddr '(1)) nil)
              (assert-eq (caddr '(1 2 3)) 3))
 
          (it "cdaar"
-             (assert-eq (cdaar 'a) nil)
+             (assert-error (cdaar 'a))
              (assert-eq (cdaar nil) nil)
              (assert-eq (cdaar '(((1 2)))) '(2)))
 
          (it "cdadr"
-             (assert-eq (cdadr 'a) nil)
+             (assert-error (cdadr 'a))
              (assert-eq (cdadr nil) nil)
              (assert-eq (cdadr '(1 (1 2))) '(2)))
 
          (it "cddar"
-             (assert-nil (cddar 'a))
+             (assert-error (cddar 'a))
              (assert-nil (cddar nil))
              (assert-nil (cddar '(1)))
              (assert-eq (cddar '((1 2 4) 3)) '(4)))
 
          (it "cdddr"
-             (assert-nil (cdddr 'a))
+             (assert-error (cdddr 'a))
              (assert-nil (cdddr nil))
              (assert-nil (cdddr '(1)))
              (assert-eq (cdddr '(1 2 3 4)) '(4)))
