@@ -9,7 +9,7 @@
          
          (it "str"
              (assert-eq (str '())
-                        "()")
+                        "nil")
              (assert-eq (str 0)
                         "0")
              (assert-eq (str 1.4)

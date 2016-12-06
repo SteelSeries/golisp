@@ -66,10 +66,10 @@
              (assert-eq (lint:analyze-if just-true-clause) '("Single clause IF: (if #t 1)")))
 
          (it "finds one with a nil true clause"
-             (assert-eq (lint:analyze-if nil-true-clause) '("Nil true clause IF: (if #t () 1)")))
+             (assert-eq (lint:analyze-if nil-true-clause) '("Nil true clause IF: (if #t nil 1)")))
 
          (it "finds one with a nil false clause"
-             (assert-eq (lint:analyze-if nil-false-clause) '("Nil false clause IF: (if #t 1 ())")))
+             (assert-eq (lint:analyze-if nil-false-clause) '("Nil false clause IF: (if #t 1 nil)")))
 
          (it "finds problems in nested true clause"
              (assert-eq (lint:analyze-if nested-if-true-code) '("Single clause IF: (if #t 1)")))
