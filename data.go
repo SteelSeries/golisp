@@ -18,22 +18,23 @@ import (
 )
 
 const (
-	NilType = iota
-	ConsCellType
-	IntegerType
-	FloatType
-	BooleanType
-	StringType
-	CharacterType
-	SymbolType
-	FunctionType
-	MacroType
-	PrimitiveType
-	BoxedObjectType
-	FrameType
-	EnvironmentType
-	PortType
-	VectorType
+	NilType         = 0x00000001
+	ConsCellType    = 0x00000002
+	VectorType      = 0x00000004
+	IntegerType     = 0x00000008
+	FloatType       = 0x00000010
+	BooleanType     = 0x00000020
+	StringType      = 0x00000040
+	CharacterType   = 0x00000080
+	SymbolType      = 0x00000100
+	FunctionType    = 0x00000200
+	MacroType       = 0x00000400
+	PrimitiveType   = 0x00000800
+	BoxedObjectType = 0x00001000
+	FrameType       = 0x00002000
+	EnvironmentType = 0x00004000
+	PortType        = 0x00008000
+	AnyType         = 0xFFFFFFFF
 )
 
 type ConsCell struct {
@@ -47,7 +48,7 @@ type BoxedObject struct {
 }
 
 type Data struct {
-	Type  uint8
+	Type  uint32
 	Value unsafe.Pointer
 }
 
@@ -75,7 +76,7 @@ var IsInteractive bool = false
 var DebugReturnValue *Data = nil
 var DebugOnEntry *set.Set = set.New()
 
-func TypeOf(d *Data) uint8 {
+func TypeOf(d *Data) uint32 {
 	if d == nil {
 		return NilType
 	} else {
@@ -83,7 +84,7 @@ func TypeOf(d *Data) uint8 {
 	}
 }
 
-func TypeName(t uint8) string {
+func TypeName(t uint32) string {
 	switch t {
 	case NilType:
 		return "Nil"
