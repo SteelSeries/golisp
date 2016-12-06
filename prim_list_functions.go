@@ -13,23 +13,23 @@ import (
 )
 
 func RegisterListFunctionsPrimitives() {
-	MakePrimitiveFunction("map", ">=2", MapImpl)
-	MakePrimitiveFunction("for-each", ">=2", ForEachImpl)
-	MakePrimitiveFunction("any", ">=2", AnyImpl)
-	MakePrimitiveFunction("every", ">=2", EveryImpl)
-	MakePrimitiveFunction("reduce", "3", ReduceLeftImpl)
-	MakePrimitiveFunction("reduce-left", "3", ReduceLeftImpl)
-	MakePrimitiveFunction("fold-left", "3", FoldLeftImpl)
-	MakePrimitiveFunction("reduce-right", "3", ReduceRightImpl)
-	MakePrimitiveFunction("fold-right", "3", FoldRightImpl)
-	MakePrimitiveFunction("filter", "2", FilterImpl)
-	MakePrimitiveFunction("remove", "2", RemoveImpl)
-	MakePrimitiveFunction("memq", "2", MemqImpl)
-	MakePrimitiveFunction("memv", "2", MemvImpl)
-	MakePrimitiveFunction("member", "2", MemberImpl)
-	MakePrimitiveFunction("memp", "2", FindTailImpl)
-	MakePrimitiveFunction("find-tail", "2", FindTailImpl)
-	MakePrimitiveFunction("find", "2", FindImpl)
+	MakeTypedPrimitiveFunction("map", ">=2", MapImpl, []uint32{FunctionType | PrimitiveType, ConsCellType, ConsCellType, ConsCellType, ConsCellType})
+	MakeTypedPrimitiveFunction("for-each", ">=2", ForEachImpl, []uint32{FunctionType | PrimitiveType, ConsCellType, ConsCellType, ConsCellType, ConsCellType})
+	MakeTypedPrimitiveFunction("any", ">=2", AnyImpl, []uint32{FunctionType | PrimitiveType, ConsCellType, ConsCellType, ConsCellType, ConsCellType})
+	MakeTypedPrimitiveFunction("every", ">=2", EveryImpl, []uint32{FunctionType | PrimitiveType, ConsCellType, ConsCellType, ConsCellType, ConsCellType})
+	MakeTypedPrimitiveFunction("reduce", "3", ReduceLeftImpl, []uint32{FunctionType | PrimitiveType, AnyType, ConsCellType})
+	MakeTypedPrimitiveFunction("reduce-left", "3", ReduceLeftImpl, []uint32{FunctionType | PrimitiveType, AnyType, ConsCellType})
+	MakeTypedPrimitiveFunction("fold-left", "3", FoldLeftImpl, []uint32{FunctionType | PrimitiveType, AnyType, ConsCellType})
+	MakeTypedPrimitiveFunction("reduce-right", "3", ReduceRightImpl, []uint32{FunctionType | PrimitiveType, AnyType, ConsCellType})
+	MakeTypedPrimitiveFunction("fold-right", "3", FoldRightImpl, []uint32{FunctionType | PrimitiveType, AnyType, ConsCellType})
+	MakeTypedPrimitiveFunction("filter", "2", FilterImpl, []uint32{FunctionType | PrimitiveType, ConsCellType})
+	MakeTypedPrimitiveFunction("remove", "2", RemoveImpl, []uint32{FunctionType | PrimitiveType, ConsCellType})
+	MakeTypedPrimitiveFunction("memq", "2", MemqImpl, []uint32{AnyType, ConsCellType})
+	MakeTypedPrimitiveFunction("memv", "2", MemvImpl, []uint32{AnyType, ConsCellType})
+	MakeTypedPrimitiveFunction("member", "2", MemberImpl, []uint32{AnyType, ConsCellType})
+	MakeTypedPrimitiveFunction("memp", "2", FindTailImpl, []uint32{FunctionType | PrimitiveType, ConsCellType})
+	MakeTypedPrimitiveFunction("find-tail", "2", FindTailImpl, []uint32{FunctionType | PrimitiveType, ConsCellType})
+	MakeTypedPrimitiveFunction("find", "2", FindImpl, []uint32{FunctionType | PrimitiveType, ConsCellType})
 }
 
 func intMin(x, y int64) int64 {
@@ -42,24 +42,11 @@ func intMin(x, y int64) int64 {
 
 func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
-	if !FunctionOrPrimitiveP(f) {
-		err = ProcessError(fmt.Sprintf("map needs a function as its first argument, but got %s.", String(f)), env)
-		return
-	}
-
-	if VectorP(Second(args)) {
-		return VectorMapImpl(args, env)
-	}
-
 	var collections []*Data = make([]*Data, 0, Length(args)-1)
 	var loopCount int64 = math.MaxInt64
 	var col *Data
 	for a := Cdr(args); NotNilP(a); a = Cdr(a) {
 		col = Car(a)
-		if !ListP(col) {
-			err = ProcessError(fmt.Sprintf("map needs lists as its other arguments, but got %s.", String(col)), env)
-			return
-		}
 		if NilP(col) || col == nil {
 			return
 		}
@@ -92,24 +79,11 @@ func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func ForEachImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
-	if !FunctionOrPrimitiveP(f) {
-		err = ProcessError(fmt.Sprintf("for-each needs a function as its first argument, but got %s.", String(f)), env)
-		return
-	}
-
-	if VectorP(Second(args)) {
-		return VectorForEachImpl(args, env)
-	}
-
 	var collections []*Data = make([]*Data, 0, Length(args)-1)
 	var loopCount int64 = math.MaxInt64
 	var col *Data
 	for a := Cdr(args); NotNilP(a); a = Cdr(a) {
 		col = Car(a)
-		if !ListP(col) {
-			err = ProcessError(fmt.Sprintf("for-each needs lists as its other arguments, but got %s.", String(col)), env)
-			return
-		}
 		collections = append(collections, col)
 		loopCount = intMin(loopCount, int64(Length(col)))
 	}
@@ -136,20 +110,11 @@ func ForEachImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func AnyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
-	if !FunctionOrPrimitiveP(f) {
-		err = ProcessError(fmt.Sprintf("any needs a function as its first argument, but got %s.", String(f)), env)
-		return
-	}
-
 	var collections []*Data = make([]*Data, 0, Length(args)-1)
 	var loopCount int64 = math.MaxInt64
 	var col *Data
 	for a := Cdr(args); NotNilP(a); a = Cdr(a) {
 		col = Car(a)
-		if !ListP(col) {
-			err = ProcessError(fmt.Sprintf("any needs lists as its other arguments, but got %s.", String(col)), env)
-			return
-		}
 		collections = append(collections, col)
 		loopCount = intMin(loopCount, int64(Length(col)))
 	}
@@ -181,20 +146,11 @@ func AnyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func EveryImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
-	if !FunctionOrPrimitiveP(f) {
-		err = ProcessError(fmt.Sprintf("every needs a function as its first argument, but got %s.", String(f)), env)
-		return
-	}
-
 	var collections []*Data = make([]*Data, 0, Length(args)-1)
 	var loopCount int64 = math.MaxInt64
 	var col *Data
 	for a := Cdr(args); NotNilP(a); a = Cdr(a) {
 		col = Car(a)
-		if !ListP(col) {
-			err = ProcessError(fmt.Sprintf("every needs lists as its other arguments, but got %s.", String(col)), env)
-			return
-		}
 		collections = append(collections, col)
 		loopCount = intMin(loopCount, int64(Length(col)))
 	}
@@ -226,15 +182,6 @@ func EveryImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func ReduceLeftImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
-	if !FunctionOrPrimitiveP(f) {
-		err = ProcessError(fmt.Sprintf("reduce-left requires a function as its first argument but received %s.", String(f)), env)
-		return
-	}
-
-	if VectorP(Third(args)) {
-		return VectorReduceImpl(args, env)
-	}
-
 	initial := Second(args)
 	col := Third(args)
 
@@ -264,15 +211,6 @@ func ReduceLeftImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 
 func ReduceRightImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
-	if !FunctionOrPrimitiveP(f) {
-		err = ProcessError(fmt.Sprintf("reduce-right requires a function as its first argument but received %s.", String(f)), env)
-		return
-	}
-
-	if VectorP(Third(args)) {
-		return VectorReduceImpl(args, env)
-	}
-
 	initial := Second(args)
 	col := Third(args)
 
@@ -304,11 +242,6 @@ func ReduceRightImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 
 func FoldLeftImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
-	if !FunctionOrPrimitiveP(f) {
-		err = ProcessError(fmt.Sprintf("fold-left requires a function as its first argument but received %s.", String(f)), env)
-		return
-	}
-
 	initial := Second(args)
 	col := Third(args)
 
@@ -330,11 +263,6 @@ func FoldLeftImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func FoldRightImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
-	if !FunctionOrPrimitiveP(f) {
-		err = ProcessError(fmt.Sprintf("fold-right requires a function as its first argument but received %s.", String(f)), env)
-		return
-	}
-
 	initial := Second(args)
 	col := Third(args)
 
@@ -365,19 +293,10 @@ func FoldRightImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 
 func FilterImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
-	if !FunctionOrPrimitiveP(f) {
-		err = ProcessError(fmt.Sprintf("filter needs a function as its first argument, but got %s.", String(f)), env)
-		return
-	}
-
 	col := Second(args)
-	if !ListP(col) && !VectorP(col) {
-		err = ProcessError(fmt.Sprintf("filter needs a list or vector as its second argument, but got %s.", String(col)), env)
+	if !ListP(col) {
+		err = ProcessError(fmt.Sprintf("filter needs a proper list as its second argument, but got %s.", String(col)), env)
 		return
-	}
-
-	if VectorP(col) {
-		return VectorFilterImpl(args, env)
 	}
 
 	var d []*Data = make([]*Data, 0, Length(col))
@@ -402,19 +321,10 @@ func FilterImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func RemoveImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
-	if !FunctionOrPrimitiveP(f) {
-		err = ProcessError(fmt.Sprintf("remove needs a function as its first argument, but got %s.", String(f)), env)
-		return
-	}
-
 	col := Second(args)
-	if !ListP(col) && !VectorP(col) {
-		err = ProcessError(fmt.Sprintf("remove needs a list as its second argument, but got %s.", String(col)), env)
+	if !ListP(col) {
+		err = ProcessError(fmt.Sprintf("remove needs a proper list as its second argument, but got %s.", String(col)), env)
 		return
-	}
-
-	if VectorP(col) {
-		return VectorRemoveImpl(args, env)
 	}
 
 	var d []*Data = make([]*Data, 0, Length(col))
@@ -442,7 +352,7 @@ func MemqImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	l := Second(args)
 	if !ListP(l) {
-		err = ProcessError(fmt.Sprintf("memq needs a list as its second argument, but got %s.", String(l)), env)
+		err = ProcessError(fmt.Sprintf("memq needs a proper list as its second argument, but got %s.", String(l)), env)
 		return
 	}
 	for c := l; NotNilP(c); c = Cdr(c) {
@@ -459,7 +369,7 @@ func MemvImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	l := Second(args)
 	if !ListP(l) {
-		err = ProcessError(fmt.Sprintf("memv needs a list as its second argument, but got %s.", String(l)), env)
+		err = ProcessError(fmt.Sprintf("memv needs a proper list as its second argument, but got %s.", String(l)), env)
 		return
 	}
 	for c := l; NotNilP(c); c = Cdr(c) {
@@ -476,7 +386,7 @@ func MemberImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	l := Second(args)
 	if !ListP(l) {
-		err = ProcessError(fmt.Sprintf("member needs a list as its second argument, but got %s.", String(l)), env)
+		err = ProcessError(fmt.Sprintf("member needs a proper list as its second argument, but got %s.", String(l)), env)
 		return
 	}
 	for c := l; NotNilP(c); c = Cdr(c) {
@@ -490,14 +400,9 @@ func MemberImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func FindTailImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
-	if !FunctionOrPrimitiveP(f) {
-		err = ProcessError("find-tail/memp needs a function as its first argument", env)
-		return
-	}
-
 	l := Second(args)
 	if !ListP(l) {
-		err = ProcessError(fmt.Sprintf("find-tail needs a list as its second argument, but got %s.", String(l)), env)
+		err = ProcessError(fmt.Sprintf("find-tail needs a proper list as its second argument, but got %s.", String(l)), env)
 		return
 	}
 
@@ -519,14 +424,9 @@ func FindTailImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func FindImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
-	if !FunctionOrPrimitiveP(f) {
-		err = ProcessError("find needs a function as its first argument", env)
-		return
-	}
-
 	col := Second(args)
 	if !ListP(col) && !VectorP(col) {
-		err = ProcessError(fmt.Sprintf("find needs a list or vector as its second argument, but got %s.", String(col)), env)
+		err = ProcessError(fmt.Sprintf("find needs a proper list as its second argument, but got %s.", String(col)), env)
 		return
 	}
 
