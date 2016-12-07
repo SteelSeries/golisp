@@ -66,11 +66,22 @@ func (self *PrimitiveFunction) checkArgumentCount(argCount int) bool {
 	return false
 }
 
+func nextTypeIndex(typeIndex int, limit int) int {
+	if typeIndex < limit {
+		return typeIndex + 1
+	} else {
+		return typeIndex
+	}
+}
+
 func (self *PrimitiveFunction) checkArgumentTypes(args []*Data) int {
-	for i := 0; i < len(self.ArgTypes) && i < len(args); i = i + 1 {
-		arg := args[i]
-		if (TypeOf(arg) & self.ArgTypes[i]) == 0 {
-			return i
+	if len(self.ArgTypes) > 0 {
+		numberOfArgs := len(args)
+		numberOfTypesLimit := len(self.ArgTypes) - 1
+		for argIndex, typeIndex := 0, 0; argIndex < numberOfArgs; argIndex, typeIndex = argIndex+1, nextTypeIndex(typeIndex, numberOfTypesLimit) {
+			if (TypeOf(args[argIndex]) & self.ArgTypes[typeIndex]) == 0 {
+				return argIndex
+			}
 		}
 	}
 	return -1
@@ -84,6 +95,14 @@ func (self *PrimitiveFunction) typesToString(types uint32) string {
 		}
 	}
 	return strings.Join(typeNames, " or ")
+}
+
+func (self *PrimitiveFunction) argTypesFor(argIndex int) uint32 {
+	if argIndex >= len(self.ArgTypes) {
+		return self.ArgTypes[len(self.ArgTypes)-1]
+	} else {
+		return self.ArgTypes[argIndex]
+	}
 }
 
 func (self *PrimitiveFunction) Apply(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -109,7 +128,7 @@ func (self *PrimitiveFunction) Apply(args *Data, env *SymbolTableFrame) (result 
 
 	argCheckResult := self.checkArgumentTypes(argArray)
 	if argCheckResult != -1 {
-		err = fmt.Errorf("Wrong argument type for argument %d; expected %s but got the %s: %s", argCheckResult, self.typesToString(self.ArgTypes[argCheckResult]), TypeName(TypeOf(argArray[argCheckResult])), String(argArray[argCheckResult]))
+		err = fmt.Errorf("Wrong argument type for argument %d; expected %s but got the %s: %s", argCheckResult, self.typesToString(self.argTypesFor(argCheckResult)), TypeName(TypeOf(argArray[argCheckResult])), String(argArray[argCheckResult]))
 		return
 	}
 
