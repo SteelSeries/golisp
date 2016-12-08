@@ -17,6 +17,7 @@ func RegisterSpecialFormPrimitives() {
 	MakeSpecialForm("lambda", ">=1", LambdaImpl)
 	MakeSpecialForm("named-lambda", ">=1", NamedLambdaImpl)
 	MakeSpecialForm("define", ">=1", DefineImpl)
+	//	MakeSpecialForm("typedef", "*", TypeDefImpl)
 	MakeSpecialForm("defmacro", ">=1", DefmacroImpl)
 	MakeSpecialForm("define-macro", ">=1", DefmacroImpl)
 	MakeSpecialForm("let", ">=1", LetImpl)
@@ -169,6 +170,15 @@ func DefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	env.BindLocallyTo(thing, value)
 	return value, nil
 }
+
+// func TypeDefImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+// 	thing := First(args)
+// 	if SymbolP(thing) {
+// 		// single var
+// 	} else if ListP(thing) {
+// 		// function
+// 	}
+// }
 
 func DefmacroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var value *Data
