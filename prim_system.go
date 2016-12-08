@@ -66,6 +66,7 @@ var goodbyes []string = []string{
 	"do svidan'ya",
 	"farvel",
 	"namárië",
+	"later dude",
 }
 
 func PanicImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
