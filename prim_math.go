@@ -14,38 +14,38 @@ import (
 )
 
 func RegisterMathPrimitives() {
-	MakePrimitiveFunction("+", "*", AddImpl)
-	MakePrimitiveFunction("-", "*", SubtractImpl)
-	MakePrimitiveFunction("*", "*", MultiplyImpl)
-	MakePrimitiveFunction("/", "*", DivideImpl)
-	MakePrimitiveFunction("succ", "1", IncrementImpl)
-	MakePrimitiveFunction("1+", "1", IncrementImpl)
-	MakePrimitiveFunction("pred", "1", DecrementImpl)
-	MakePrimitiveFunction("-1+", "1", DecrementImpl)
-	MakePrimitiveFunction("quotient", "2", QuotientImpl)
-	MakePrimitiveFunction("modulo", "2", ModuloImpl)
-	MakePrimitiveFunction("remainder", "2", RemainderImpl)
-	MakePrimitiveFunction("%", "2", RemainderImpl)
+	MakeTypedPrimitiveFunction("+", "*", AddImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("-", "*", SubtractImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("*", "*", MultiplyImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("/", "*", DivideImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("succ", "1", IncrementImpl, []uint32{IntegerType})
+	MakeTypedPrimitiveFunction("1+", "1", IncrementImpl, []uint32{IntegerType})
+	MakeTypedPrimitiveFunction("pred", "1", DecrementImpl, []uint32{IntegerType})
+	MakeTypedPrimitiveFunction("-1+", "1", DecrementImpl, []uint32{IntegerType})
+	MakeTypedPrimitiveFunction("quotient", "2", QuotientImpl, []uint32{IntegerType, IntegerType})
+	MakeTypedPrimitiveFunction("modulo", "2", ModuloImpl, []uint32{IntegerType, IntegerType})
+	MakeTypedPrimitiveFunction("remainder", "2", RemainderImpl, []uint32{IntegerType, IntegerType})
+	MakeTypedPrimitiveFunction("%", "2", RemainderImpl, []uint32{IntegerType, IntegerType})
 	MakePrimitiveFunction("random-byte", "0", RandomByteImpl)
-	MakePrimitiveFunction("random", "0|1", RandomImpl)
-	MakePrimitiveFunction("interval", "1|2|3", IntervalImpl)
-	MakePrimitiveFunction("integer", "1", ToIntImpl)
-	MakePrimitiveFunction("float", "1", ToFloatImpl)
-	MakePrimitiveFunction("number->string", "1|2", NumberToStringImpl)
-	MakePrimitiveFunction("string->number", "1|2", StringToNumberImpl)
-	MakePrimitiveFunction("min", "1", MinImpl)
-	MakePrimitiveFunction("max", "1", MaxImpl)
-	MakePrimitiveFunction("floor", "1", FloorImpl)
-	MakePrimitiveFunction("ceiling", "1", CeilingImpl)
-	MakePrimitiveFunction("abs", "1", AbsImpl)
-	MakePrimitiveFunction("zero?", "1", ZeroImpl)
-	MakePrimitiveFunction("positive?", "1", PositiveImpl)
-	MakePrimitiveFunction("negative?", "1", NegativeImpl)
-	MakePrimitiveFunction("even?", "1", EvenImpl)
-	MakePrimitiveFunction("odd?", "1", OddImpl)
-	MakePrimitiveFunction("sign", "1", SignImpl)
-	MakePrimitiveFunction("log", "1", LogImpl)
-	MakePrimitiveFunction("expt", "2", ExptImpl)
+	MakeTypedPrimitiveFunction("random", "0|1", RandomImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("interval", "1|2|3", IntervalImpl, []uint32{IntegerType, IntegerType, IntegerType})
+	MakeTypedPrimitiveFunction("integer", "1", ToIntImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("float", "1", ToFloatImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("number->string", "1|2", NumberToStringImpl, []uint32{IntegerType, IntegerType})
+	MakeTypedPrimitiveFunction("string->number", "1|2", StringToNumberImpl, []uint32{StringType, IntegerType})
+	MakeTypedPrimitiveFunction("min", "1", MinImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("max", "1", MaxImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("floor", "1", FloorImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("ceiling", "1", CeilingImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("abs", "1", AbsImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("zero?", "1", ZeroImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("positive?", "1", PositiveImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("negative?", "1", NegativeImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("even?", "1", EvenImpl, []uint32{IntegerType})
+	MakeTypedPrimitiveFunction("odd?", "1", OddImpl, []uint32{IntegerType})
+	MakeTypedPrimitiveFunction("sign", "1", SignImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("log", "1", LogImpl, []uint32{IntegerType, FloatType})
+	MakeTypedPrimitiveFunction("expt", "2", ExptImpl, []uint32{IntegerType, FloatType})
 }
 
 func sgn(a float64) int64 {
@@ -63,22 +63,12 @@ func intSgn(a int64) int64 {
 }
 
 func IncrementImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if !IntegerP(Car(args)) {
-		err = ProcessError("1+ requires an integer argument", env)
-		return
-	}
-
-	val := IntegerValue(Car(args))
+	val := IntegerValue(First(args))
 	return IntegerWithValue(val + 1), nil
 }
 
 func DecrementImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if !IntegerP(Car(args)) {
-		err = ProcessError("1- requires an integer argument", env)
-		return
-	}
-
-	val := IntegerValue(Car(args))
+	val := IntegerValue(First(args))
 	return IntegerWithValue(val - 1), nil
 }
 
@@ -100,10 +90,6 @@ func addInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func anyFloats(args *Data, env *SymbolTableFrame) (result bool, err error) {
 	for c := args; NotNilP(c); c = Cdr(c) {
-		if !NumberP(Car(c)) {
-			err = ProcessError(fmt.Sprintf("Number expected, received %s", String(Car(c))), env)
-			return
-		}
 		if FloatP(Car(c)) {
 			return true, nil
 		}
@@ -198,7 +184,7 @@ func divideFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		}
 		acc = 1.0 / v
 	} else {
-		acc = FloatValue(Car(args))
+		acc = FloatValue(First(args))
 		for c := Cdr(args); NotNilP(c); c = Cdr(c) {
 			v := FloatValue(Car(c))
 			if v == 0.0 {
@@ -229,17 +215,9 @@ func DivideImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func QuotientImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	dividendObj := First(args)
-	if !IntegerP(dividendObj) {
-		err = ProcessError(fmt.Sprintf("quotient expected an integer dividend, received %s", String(dividendObj)), env)
-		return
-	}
 	dividend := IntegerValue(dividendObj)
 
 	divisorObj := Second(args)
-	if !IntegerP(dividendObj) {
-		err = ProcessError(fmt.Sprintf("quotient expected an integer divisor, received %s", String(divisorObj)), env)
-		return
-	}
 	divisor := IntegerValue(divisorObj)
 
 	if divisor == 0 {
@@ -258,17 +236,9 @@ func QuotientImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func ModuloImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	dividendObj := First(args)
-	if !IntegerP(dividendObj) {
-		err = ProcessError(fmt.Sprintf("modulo expected an integer dividend, received %s", String(dividendObj)), env)
-		return
-	}
 	dividend := IntegerValue(dividendObj)
 
 	divisorObj := Second(args)
-	if !IntegerP(dividendObj) {
-		err = ProcessError(fmt.Sprintf("modulo expected an integer divisor, received %s", String(divisorObj)), env)
-		return
-	}
 	divisor := IntegerValue(divisorObj)
 
 	if divisor == 0 {
@@ -286,17 +256,9 @@ func ModuloImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func RemainderImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	dividendObj := First(args)
-	if !IntegerP(dividendObj) {
-		err = ProcessError(fmt.Sprintf("remainder expected an integer dividend, received %s", String(dividendObj)), env)
-		return
-	}
 	dividend := IntegerValue(dividendObj)
 
 	divisorObj := Second(args)
-	if !IntegerP(dividendObj) {
-		err = ProcessError(fmt.Sprintf("remainder expected an integer divisor, received %s", String(divisorObj)), env)
-		return
-	}
 	divisor := IntegerValue(divisorObj)
 
 	if divisor == 0 {
@@ -346,8 +308,7 @@ func IntervalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var step int64
 	var end int64
 
-	startObj := Car(args)
-	start := IntegerValue(startObj)
+	start := IntegerValue(First(args))
 
 	if Length(args) == 1 {
 		direction = 1
@@ -355,20 +316,14 @@ func IntervalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		end = start
 		start = 1
 	} else {
-
-		endObj := Cadr(args)
-		end = IntegerValue(endObj)
+		end = IntegerValue(Second(args))
 
 		if start > end {
 			direction = -1
 		}
 
 		if Length(args) == 3 {
-			if !IntegerP(Caddr(args)) {
-				err = ProcessError(fmt.Sprintf("interval step must be an integer, received %s", String(Caddr(args))), env)
-				return
-			}
-			step = IntegerValue(Caddr(args))
+			step = IntegerValue(Third(args))
 			if intSgn(step) != direction {
 				return nil, ProcessError("The sign of step has to match the direction of the interval", env)
 			}
@@ -393,32 +348,18 @@ func IntervalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func ToIntImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	n := Car(args)
-	if !NumberP(n) {
-		err = ProcessError(fmt.Sprintf("integer expected an number, received %s", String(n)), env)
-		return
-	}
-
-	return IntegerWithValue(IntegerValue(n)), nil
+	return IntegerWithValue(IntegerValue(First(args))), nil
 }
 
 func ToFloatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	n := Car(args)
-	if !NumberP(n) {
-		err = ProcessError(fmt.Sprintf("float expected a number, received %s", String(n)), env)
-		return
-	}
-
-	return FloatWithValue(FloatValue(n)), nil
+	return FloatWithValue(FloatValue(First(args))), nil
 }
 
 func NumberToStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	valObj := First(args)
-	val := IntegerValue(valObj)
+	val := IntegerValue(First(args))
 	var base int64
 	if Length(args) == 2 {
-		baseObj := Second(args)
-		base = IntegerValue(baseObj)
+		base = IntegerValue(Second(args))
 	} else {
 		base = 10
 	}
@@ -441,12 +382,10 @@ func NumberToStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err er
 }
 
 func StringToNumberImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	strObj := First(args)
-	str := StringValue(strObj)
+	str := StringValue(First(args))
 	var base int64
 	if Length(args) == 2 {
-		baseObj := Second(args)
-		base = IntegerValue(baseObj)
+		base = IntegerValue(Second(args))
 	} else {
 		base = 10
 	}
@@ -518,9 +457,9 @@ func minFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func MinImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	numbers := Car(args)
+	numbers := First(args)
 	if !ListP(numbers) {
-		err = ProcessError(fmt.Sprintf("min requires a list of numbers, received %s", String(numbers)), env)
+		err = ProcessError(fmt.Sprintf("min requires a proper list of numbers, received %s", String(numbers)), env)
 		return
 	}
 	if Length(numbers) == 0 {
@@ -583,12 +522,10 @@ func maxFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func MaxImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var numbers *Data
-
-	if ListP(First(args)) {
-		numbers = First(args)
-	} else {
-		numbers = args
+	numbers := First(args)
+	if !ListP(numbers) {
+		err = ProcessError(fmt.Sprintf("max requires a proper list of numbers, received %s", String(numbers)), env)
+		return
 	}
 
 	if Length(numbers) == 0 {
@@ -607,33 +544,15 @@ func MaxImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func FloorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	val := Car(args)
-
-	if !NumberP(val) {
-		err = ProcessError(fmt.Sprintf("floor expected an number, received %s", String(Car(args))), env)
-		return
-	}
-
-	return FloatWithValue(math.Floor(float64(FloatValue(val)))), nil
+	return FloatWithValue(math.Floor(float64(FloatValue(First(args))))), nil
 }
 
 func CeilingImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	val := Car(args)
-
-	if !NumberP(val) {
-		err = ProcessError(fmt.Sprintf("ceiling expected a number, received %s", String(Car(args))), env)
-		return
-	}
-
-	return FloatWithValue(math.Ceil(float64(FloatValue(val)))), nil
+	return FloatWithValue(math.Ceil(float64(FloatValue(First(args))))), nil
 }
 
 func AbsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	val := Car(args)
-	if !NumberP(val) {
-		err = ProcessError(fmt.Sprintf("abs expected a number, received %s", String(Car(args))), env)
-		return
-	}
+	val := First(args)
 	absval := math.Abs(FloatValue(val))
 	if IntegerP(val) {
 		result = IntegerWithValue(int64(absval))
@@ -645,56 +564,31 @@ func AbsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func ZeroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	val := Car(args)
-	if !NumberP(val) {
-		err = ProcessError(fmt.Sprintf("zero? expected a number, received %s", String(Car(args))), env)
-		return
-	}
 	return BooleanWithValue(FloatValue(val) == 0.0), nil
 }
 
 func PositiveImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	val := Car(args)
-	if !NumberP(val) {
-		err = ProcessError(fmt.Sprintf("positive? expected a number, received %s", String(Car(args))), env)
-		return
-	}
 	return BooleanWithValue(FloatValue(val) > 0.0), nil
 }
 
 func NegativeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	val := Car(args)
-	if !NumberP(val) {
-		err = ProcessError(fmt.Sprintf("negative expected a number, received %s", String(Car(args))), env)
-		return
-	}
 	return BooleanWithValue(FloatValue(val) < 0.0), nil
 }
 
 func EvenImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	val := Car(args)
-	if !IntegerP(val) {
-		err = ProcessError(fmt.Sprintf("even? expected an integer, received %s", String(Car(args))), env)
-		return
-	}
 	return BooleanWithValue(IntegerValue(val)%2 == 0), nil
 }
 
 func OddImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	val := Car(args)
-	if !IntegerP(val) {
-		err = ProcessError(fmt.Sprintf("odd? expected an integer, received %s", String(Car(args))), env)
-		return
-	}
 	return BooleanWithValue(IntegerValue(val)%2 != 0), nil
 }
 
 func SignImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	val := Car(args)
-	if !NumberP(val) {
-		err = ProcessError(fmt.Sprintf("sign expected a nunber, received %s", String(Car(args))), env)
-		return
-	}
-
 	if FloatP(val) {
 		return IntegerWithValue(sgn(FloatValue(val))), nil
 	} else {
@@ -703,11 +597,7 @@ func SignImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func LogImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if NumberP(First(args)) {
-		result = FloatWithValue(math.Log(FloatValue(First(args))))
-	} else {
-		err = ProcessError(fmt.Sprintf("log expects a numeric argument, received %s", String(First(args))), env)
-	}
+	result = FloatWithValue(math.Log(FloatValue(First(args))))
 	return
 }
 
