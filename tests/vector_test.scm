@@ -85,10 +85,6 @@
              (vector-set! v 1 "test")
              (assert-eq (vector-ref v 1) "test"))
 
-         (it "support element mutation using generic set-nth!"
-             (set-nth! 1 v "test")
-             (assert-eq (vector-ref v 1) "test"))
-
          (it "raises an error when given a non vector"
              (assert-error (vector-set! '(a b) 1 0)))
 
