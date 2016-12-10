@@ -12,20 +12,11 @@ import (
 )
 
 func RegisterRegexPrimitives() {
-	MakePrimitiveFunction("re-string-match-go", "2", ReStringMatchImpl)
+	MakeTypedPrimitiveFunction("re-string-match-go", "2", ReStringMatchImpl, []uint32{StringType, StringType})
 }
 
 func ReStringMatchImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if !StringP(First(args)) {
-		err = ProcessError("re-string-match requires a string regex as its first argument", env)
-		return
-	}
 	regexPattern := StringValue(First(args))
-
-	if !StringP(Second(args)) {
-		err = ProcessError("re-string-match requires a string as its second argument", env)
-		return
-	}
 	stringToMatch := StringValue(Second(args))
 
 	re := regexp.MustCompile(regexPattern)

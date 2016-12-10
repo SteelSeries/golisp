@@ -22,27 +22,24 @@ var symbolCounts map[string]int = make(map[string]int)
 func RegisterSystemPrimitives() {
 	Global.BindTo(Intern("__OS__"), Intern(runtime.GOOS))
 
-	MakePrimitiveFunction("sleep", "1", SleepImpl)
+	MakeTypedPrimitiveFunction("sleep", "1", SleepImpl, []uint32{IntegerType})
 	MakePrimitiveFunction("millis", "0", MillisImpl)
 	MakePrimitiveFunction("write-line", "*", WriteLineImpl)
 	MakePrimitiveFunction("write-log", "*", WriteLogImpl)
 	MakePrimitiveFunction("str", "*", MakeStringImpl)
 	MakePrimitiveFunction("quit", "0", QuitImpl)
-	MakePrimitiveFunction("intern", "1", InternImpl)
-	MakePrimitiveFunction("symbol->string", "1", SymbolToStringImpl)
-	MakePrimitiveFunction("gensym", "0|1", GensymImpl)
-	MakePrimitiveFunction("eval", "1|2", EvalImpl)
-
+	MakeTypedPrimitiveFunction("intern", "1", InternImpl, []uint32{StringType})
+	MakeTypedPrimitiveFunction("symbol->string", "1", SymbolToStringImpl, []uint32{SymbolType})
+	MakeTypedPrimitiveFunction("gensym", "0|1", GensymImpl, []uint32{StringType | SymbolType})
+	MakeTypedPrimitiveFunction("eval", "1|2", EvalImpl, []uint32{AnyType, EnvironmentType})
 	MakePrimitiveFunction("load", "1", LoadFileImpl)
 	MakePrimitiveFunction("global-eval", "1", GlobalEvalImpl)
 	MakePrimitiveFunction("panic!", "1", PanicImpl)
 	MakePrimitiveFunction("error", "1", ErrorImpl)
+	MakeTypedPrimitiveFunction("exec", ">=1", ExecImpl, []uint32{StringType, AnyType})
 	MakeSpecialForm("on-error", "2|3", OnErrorImpl)
-
 	MakeSpecialForm("time", "1", TimeImpl)
 	MakeSpecialForm("profile", "1|2", ProfileImpl)
-
-	MakePrimitiveFunction("exec", ">=1", ExecImpl)
 }
 
 func LoadFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -69,21 +66,22 @@ var goodbyes []string = []string{
 	"do svidan'ya",
 	"farvel",
 	"namárië",
+	"later dude",
 }
 
 func PanicImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	panic(String(Car(args)))
+	panic(String(First(args)))
 }
 
 func ErrorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return nil, ProcessError(PrintString(Car(args)), env)
+	return nil, ProcessError(PrintString(First(args)), env)
 }
 
 func OnErrorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	result, errThrown := Eval(Car(args), env)
+	result, errThrown := Eval(First(args), env)
 	if errThrown == nil {
 		if Length(args) == 3 {
-			f, err := Eval(Caddr(args), env)
+			f, err := Eval(Third(args), env)
 			if err != nil {
 				return nil, err
 			}
@@ -98,7 +96,7 @@ func OnErrorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		}
 	}
 
-	f, err := Eval(Cadr(args), env)
+	f, err := Eval(Second(args), env)
 	if err != nil {
 		return
 	}
@@ -123,12 +121,7 @@ func QuitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func SleepImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	n := Car(args)
-	if !IntegerP(n) {
-		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(n)), env)
-		return
-	}
-	millis := IntegerValue(n)
+	millis := IntegerValue(First(args))
 	time.Sleep(time.Duration(millis) * time.Millisecond)
 	return
 }
@@ -185,23 +178,11 @@ func TimeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func InternImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	sym := Car(args)
-	if !StringP(sym) {
-		err = ProcessError(fmt.Sprintf("intern expects a string, but received %s.", String(sym)), env)
-		return
-	}
-
-	return Intern(StringValue(sym)), nil
+	return Intern(StringValue(First(args))), nil
 }
 
 func SymbolToStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	sym := First(args)
-	if !SymbolP(sym) {
-		err = ProcessError(fmt.Sprintf("symbol->string expects a symbol, but received %s.", String(sym)), env)
-		return
-	}
-
-	return StringWithValue(StringValue(sym)), nil
+	return StringWithValue(StringValue(First(args))), nil
 }
 
 func GensymImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -235,13 +216,9 @@ func GensymImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func EvalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var evalEnv *SymbolTableFrame
-	sexpr := Car(args)
+	sexpr := First(args)
 	if Length(args) == 2 {
-		if !EnvironmentP(Cadr(args)) {
-			err = ProcessError(fmt.Sprintf("eval expects an environment as it's second argument, but recieved %s.", String(Cadr(args))), env)
-			return
-		}
-		evalEnv = EnvironmentValue(Cadr(args))
+		evalEnv = EnvironmentValue(Second(args))
 	} else {
 		evalEnv = env
 	}
@@ -249,7 +226,7 @@ func EvalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func GlobalEvalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return Eval(Car(args), Global)
+	return Eval(First(args), Global)
 }
 
 func ProfileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -270,11 +247,7 @@ func ProfileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func ExecImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if !StringP(First(args)) {
-		err = ProcessError(fmt.Sprintf("exec requires a string command, but received %s.", String(First(args))), env)
-	}
 	cmdString := StringValue(First(args))
-
 	cmdArgs := make([]string, 0, Length(args)-1)
 
 	var cmd *exec.Cmd

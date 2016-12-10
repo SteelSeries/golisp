@@ -14,19 +14,19 @@ import (
 func RegisterListManipulationPrimitives() {
 	MakePrimitiveFunction("list", "*", ListImpl)
 	MakePrimitiveFunction("circular-list", "*", CircularListImpl)
-	MakePrimitiveFunction("make-list", "1|2", MakeListImpl)
-	MakePrimitiveFunction("length", "1", ListLengthImpl)
+	MakeTypedPrimitiveFunction("make-list", "1|2", MakeListImpl, []uint32{IntegerType, AnyType})
+	MakeTypedPrimitiveFunction("length", "1", ListLengthImpl, []uint32{ConsCellType})
 	MakePrimitiveFunction("cons", "2", ConsImpl)
 	MakePrimitiveFunction("cons*", ">=1", ConsStarImpl)
-	MakePrimitiveFunction("reverse", "1", ReverseImpl)
-	MakePrimitiveFunction("flatten", "1", FlattenImpl)
-	MakePrimitiveFunction("flatten*", "1", RecursiveFlattenImpl)
+	MakeTypedPrimitiveFunction("reverse", "1", ReverseImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("flatten", "1", FlattenImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("flatten*", "1", RecursiveFlattenImpl, []uint32{ConsCellType})
 	MakePrimitiveFunction("append", "*", AppendImpl)
 	MakePrimitiveFunction("append!", "*", AppendBangImpl)
-	MakePrimitiveFunction("copy", "1", CopyImpl)
+	MakeTypedPrimitiveFunction("copy", "1", CopyImpl, []uint32{ConsCellType})
 	MakePrimitiveFunction("partition", "2|3", PartitionImpl)
-	MakePrimitiveFunction("sublist", "3", SublistImpl)
-	MakePrimitiveFunction("sort", "2", SortImpl)
+	MakeTypedPrimitiveFunction("sublist", "3", SublistImpl, []uint32{ConsCellType, IntegerType, IntegerType})
+	MakeTypedPrimitiveFunction("sort", "2", SortImpl, []uint32{ConsCellType, FunctionType | PrimitiveType})
 }
 
 func ListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -39,12 +39,7 @@ func CircularListImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 }
 
 func MakeListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	kVal := Car(args)
-	if !IntegerP(kVal) {
-		err = ProcessError("make-list requires a integer as it's first argument.", env)
-		return
-	}
-
+	kVal := First(args)
 	k := IntegerValue(kVal)
 	var element *Data
 
@@ -56,7 +51,7 @@ func MakeListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if Length(args) == 1 {
 		element = nil
 	} else {
-		element = Cadr(args)
+		element = Second(args)
 	}
 
 	var items []*Data
@@ -67,46 +62,38 @@ func MakeListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return ArrayToList(items), nil
 }
 
-func ConsStarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	ary := ToArray(args)
-	l := Length(args) - 1
-	return ArrayToListWithTail(ary[0:l], ary[l]), nil
-}
-
 func ListLengthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	col := First(args)
-	if !ListP(col) && !VectorP(col) && !FrameP(col) {
-		err = ProcessError(fmt.Sprintf("length requires a list or vector but was given %s.", String(col)), env)
+	if !ListP(col) {
+		err = ProcessError(fmt.Sprintf("length requires a proper list but was given %s.", String(col)), env)
 		return
-	}
-
-	if VectorP(col) {
-		return VectorLengthImpl(args, env)
-	}
-
-	if FrameP(col) {
-		return FrameLengthImpl(args, env)
 	}
 
 	return IntegerWithValue(int64(Length(col))), nil
 }
 
 func ConsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	car := Car(args)
-	cdr := Cadr(args)
+	car := First(args)
+	cdr := Second(args)
 	return Cons(car, cdr), nil
 }
 
+func ConsStarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	ary := ToArray(args)
+	l := Length(args) - 1
+	return ArrayToListWithTail(ary[0:l], ary[l]), nil
+}
+
 func ReverseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return Reverse(Car(args)), nil
+	return Reverse(First(args)), nil
 }
 
 func FlattenImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return Flatten(Car(args))
+	return Flatten(First(args))
 }
 
 func RecursiveFlattenImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return RecursiveFlatten(Car(args))
+	return RecursiveFlatten(First(args))
 }
 
 func AppendBangImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -160,7 +147,7 @@ func AppendImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func CopyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return Copy(Car(args)), nil
+	return Copy(First(args)), nil
 }
 
 func partitionBySize(size int64, step int64, l *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -228,6 +215,8 @@ func PartitionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 			step = IntegerValue(determiner)
 			l = Second(args)
 		}
+	} else {
+		l = Second(args)
 	}
 
 	if !ListP(l) {
@@ -243,17 +232,13 @@ func PartitionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 }
 
 func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l := Car(args)
+	l := First(args)
 	if !ListP(l) {
-		err = ProcessError("sublist requires a list as it's first argument.", env)
+		err = ProcessError("sublist requires a proper list as it's first argument.", env)
 		return
 	}
 
-	n := Cadr(args)
-	if !IntegerP(n) {
-		err = ProcessError("sublist requires a number as it's second argument (start).", env)
-		return
-	}
+	n := Second(args)
 	first := int(IntegerValue(n))
 
 	if first < 0 {
@@ -261,11 +246,7 @@ func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	n = Caddr(args)
-	if !IntegerP(n) {
-		err = ProcessError("sublist requires a number as it's third argument (end).", env)
-		return
-	}
+	n = Third(args)
 	last := int(IntegerValue(n))
 
 	if last < 0 {
@@ -359,21 +340,11 @@ func MergeSort(items []*Data, proc *Data, env *SymbolTableFrame) (result []*Data
 
 func SortImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	coll := First(args)
-	if !ListP(coll) && !VectorP(coll) {
-		err = ProcessError("sort requires a list or vector as it's first argument.", env)
+	if !ListP(coll) {
+		err = ProcessError("sort requires a proper list as it's first argument.", env)
 		return
 	}
-
 	proc := Second(args)
-	if !FunctionOrPrimitiveP(proc) {
-		err = ProcessError("sort requires a function or primitive as it's second argument.", env)
-		return
-	}
-
-	if VectorP(First(args)) {
-		return VectorSortImpl(args, env)
-	}
-
 	sorted, err := MergeSort(ToArray(coll), proc, env)
 	if err != nil {
 		return

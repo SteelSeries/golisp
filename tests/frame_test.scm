@@ -210,7 +210,7 @@
                (assert-false (has-slot? g foo:))
                (assert-false (remove-slot! g a:))
                (assert-true (has-slot? e a:))
-               (assert-false (remove-slot! nil a:))
+               (assert-error (remove-slot! nil a:))
                (assert-error (remove-slot! '(1 2) a:)) ;1st arg must be a frame
                (assert-error (remove-slot! f 'a)) ;2nd arg must be a naked symbol
                (assert-error (remove-slot! f "a")))) ;2nd arg must be a naked symbol

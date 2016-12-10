@@ -13,9 +13,9 @@ import (
 
 func RegisterMutatorPrimitives() {
 	MakeSpecialForm("set!", "2", SetVarImpl)
-	MakePrimitiveFunction("set-car!", "2", SetCarImpl)
-	MakePrimitiveFunction("set-cdr!", "2", SetCdrImpl)
-	MakePrimitiveFunction("set-nth!", "3", SetNthImpl)
+	MakeTypedPrimitiveFunction("set-car!", "2", SetCarImpl, []uint32{ConsCellType, AnyType})
+	MakeTypedPrimitiveFunction("set-cdr!", "2", SetCdrImpl, []uint32{ConsCellType, AnyType})
+	MakeTypedPrimitiveFunction("set-nth!", "3", SetNthImpl, []uint32{IntegerType, ConsCellType, AnyType})
 }
 
 func SetVarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -32,9 +32,6 @@ func SetVarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func SetCarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	pair := First(args)
-	if !PairP(pair) {
-		err = ProcessError(fmt.Sprintf("set-car! requires a pair as it's first argument, but got %s.", String(pair)), env)
-	}
 	value := Second(args)
 	ConsValue(pair).Car = value
 	return value, nil
@@ -42,9 +39,6 @@ func SetCarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func SetCdrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	pair := First(args)
-	if !PairP(pair) {
-		err = ProcessError(fmt.Sprintf("set-cdr! requires a pair as it's first argument, but got %s.", String(pair)), env)
-	}
 	value := Second(args)
 	ConsValue(pair).Cdr = value
 	return value, nil
@@ -52,22 +46,7 @@ func SetCdrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func SetNthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	index := First(args)
-	if !IntegerP(index) {
-		err = ProcessError(fmt.Sprintf("set-nth! requires an integer index as it's first argument, but got %s.", String(index)), env)
-		return
-	}
-
 	col := Second(args)
-	if !ListP(col) && !VectorP(col) {
-		err = ProcessError(fmt.Sprintf("set-nth! requires a list or vector as it's second argument, but got %s.", String(col)), env)
-		return
-	}
-
 	value := Third(args)
-
-	if VectorP(col) {
-		return VectorSetImpl(InternalMakeList(col, index, value), env)
-	}
-
 	return SetNth(col, int(IntegerValue(index)), value), nil
 }

@@ -24,14 +24,14 @@
              (assert-eq (reverse '(a b)) '(b a))
              (assert-eq (reverse '(a b c d)) '(d c b a))
              (assert-eq (reverse (list)) '())
-             (assert-eq (reverse 42) 42))
+             (assert-error (reverse 42)))
          
          (it "flatten"
              (assert-eq (flatten '(1 2 3 4)) '(1 2 3 4))
              (assert-eq (flatten '(1 (2 3) 4)) '(1 2 3 4))
              (assert-eq (flatten '(1 (2 (3 4) 5) 6)) '(1 2 (3 4) 5 6))
              (assert-eq (flatten (list)) '())
-             (assert-eq (flatten 42) 42))
+             (assert-error (flatten 42)))
 
          (it "flatten*"
              (assert-eq (flatten* '(1 2 3 4)) '(1 2 3 4))
@@ -39,7 +39,7 @@
              (assert-eq (flatten* '(1 (2 (3 4) 5) 6)) '(1 2 3 4 5 6))
              (assert-eq (flatten* '(1 (2 (3 (7 8) 4) 5) 6)) '(1 2 3 7 8 4 5 6))
              (assert-eq (flatten* (list)) '())
-             (assert-eq (flatten* 42) 42))
+             (assert-error (flatten* 42)))
 
          (it "partition-by-size"
              (assert-eq (partition 2 '(1 2 3 4 5 6 7 8)) '((1 2) (3 4) (5 6) (7 8)))

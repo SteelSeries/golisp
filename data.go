@@ -18,22 +18,23 @@ import (
 )
 
 const (
-	NilType = iota
-	ConsCellType
-	IntegerType
-	FloatType
-	BooleanType
-	StringType
-	CharacterType
-	SymbolType
-	FunctionType
-	MacroType
-	PrimitiveType
-	BoxedObjectType
-	FrameType
-	EnvironmentType
-	PortType
-	VectorType
+	NilType         = 0x00000001
+	ConsCellType    = 0x00000002
+	VectorType      = 0x00000004
+	IntegerType     = 0x00000008
+	FloatType       = 0x00000010
+	BooleanType     = 0x00000020
+	StringType      = 0x00000040
+	CharacterType   = 0x00000080
+	SymbolType      = 0x00000100
+	FunctionType    = 0x00000200
+	MacroType       = 0x00000400
+	PrimitiveType   = 0x00000800
+	BoxedObjectType = 0x00001000
+	FrameType       = 0x00002000
+	EnvironmentType = 0x00004000
+	PortType        = 0x00008000
+	AnyType         = 0xFFFFFFFF
 )
 
 type ConsCell struct {
@@ -47,7 +48,7 @@ type BoxedObject struct {
 }
 
 type Data struct {
-	Type  uint8
+	Type  uint32
 	Value unsafe.Pointer
 }
 
@@ -75,7 +76,7 @@ var IsInteractive bool = false
 var DebugReturnValue *Data = nil
 var DebugOnEntry *set.Set = set.New()
 
-func TypeOf(d *Data) uint8 {
+func TypeOf(d *Data) uint32 {
 	if d == nil {
 		return NilType
 	} else {
@@ -83,7 +84,7 @@ func TypeOf(d *Data) uint8 {
 	}
 }
 
-func TypeName(t uint8) string {
+func TypeName(t uint32) string {
 	switch t {
 	case NilType:
 		return "Nil"
@@ -145,8 +146,12 @@ func DottedPairP(d *Data) bool {
 }
 
 func hasVisited(cell *Data, visitedCells []*Data) bool {
-	found := sort.Search(len(visitedCells), func(i int) bool { return visitedCells[i] == cell })
-	return found < len(visitedCells)
+	for _, c := range visitedCells {
+		if c == cell {
+			return true
+		}
+	}
+	return false
 }
 
 func ListP(d *Data) bool {
@@ -502,11 +507,8 @@ func Cdr(d *Data) *Data {
 }
 
 func LastPair(l *Data) *Data {
-	if !ListP(l) {
-		return nil
-	}
 	var c *Data
-	for c = l; NotNilP(Cdr(c)); c = Cdr(c) {
+	for c = l; PairP(Cdr(c)); c = Cdr(c) {
 	}
 	return c
 }
@@ -705,13 +707,18 @@ func Length(d *Data) int {
 		return 0
 	}
 
+	if PairP(d) {
+		l := 0
+		for cell := d; PairP(cell); cell = Cdr(cell) {
+			l = l + 1
+		}
+		return l
+	}
+
 	if VectorP(d) {
 		return len(VectorValue(d))
 	}
 
-	if ListP(d) {
-		return 1 + Length(Cdr(d))
-	}
 	if FrameP(d) {
 		return len(*FrameValue(d))
 	}

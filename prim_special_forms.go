@@ -14,12 +14,10 @@ import (
 func RegisterSpecialFormPrimitives() {
 	MakeSpecialForm("cond", "*", CondImpl)
 	MakeSpecialForm("case", ">=1", CaseImpl)
-	MakeSpecialForm("if", "2|3", IfImpl)
-	MakeSpecialForm("when", ">=2", WhenImpl)
-	MakeSpecialForm("unless", ">=2", UnlessImpl)
 	MakeSpecialForm("lambda", ">=1", LambdaImpl)
 	MakeSpecialForm("named-lambda", ">=1", NamedLambdaImpl)
 	MakeSpecialForm("define", ">=1", DefineImpl)
+	//	MakeSpecialForm("typedef", "*", TypeDefImpl)
 	MakeSpecialForm("defmacro", ">=1", DefmacroImpl)
 	MakeSpecialForm("define-macro", ">=1", DefmacroImpl)
 	MakeSpecialForm("let", ">=1", LetImpl)
@@ -111,55 +109,6 @@ func CaseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return
 }
 
-func IfImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	c, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-
-	if BooleanValue(c) {
-		return Eval(Second(args), env)
-	} else {
-		return Eval(Third(args), env)
-	}
-}
-
-func WhenImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	c, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-
-	if BooleanValue(c) {
-		for cell := Cdr(args); NotNilP(cell); cell = Cdr(cell) {
-			sexpr := Car(cell)
-			result, err = Eval(sexpr, env)
-			if err != nil {
-				return
-			}
-		}
-	}
-	return
-}
-
-func UnlessImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	c, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-
-	if !BooleanValue(c) {
-		for cell := Cdr(args); NotNilP(cell); cell = Cdr(cell) {
-			sexpr := Car(cell)
-			result, err = Eval(sexpr, env)
-			if err != nil {
-				return
-			}
-		}
-	}
-	return
-}
-
 func LambdaImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	formals := First(args)
 	if !ListP(formals) && !DottedListP(formals) {
@@ -221,6 +170,15 @@ func DefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	env.BindLocallyTo(thing, value)
 	return value, nil
 }
+
+// func TypeDefImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+// 	thing := First(args)
+// 	if SymbolP(thing) {
+// 		// single var
+// 	} else if ListP(thing) {
+// 		// function
+// 	}
+// }
 
 func DefmacroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var value *Data

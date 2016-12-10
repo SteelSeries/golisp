@@ -17,13 +17,18 @@ type PrimitiveFunction struct {
 	Name         string
 	Special      bool
 	NumberOfArgs string
+	ArgTypes     []uint32
 	Body         func(d *Data, env *SymbolTableFrame) (*Data, error)
 }
 
-func MakePrimitiveFunction(name string, argCount string, function func(*Data, *SymbolTableFrame) (*Data, error)) {
-	f := &PrimitiveFunction{Name: name, Special: false, NumberOfArgs: argCount, Body: function}
+func MakeTypedPrimitiveFunction(name string, argCount string, function func(*Data, *SymbolTableFrame) (*Data, error), types []uint32) {
+	f := &PrimitiveFunction{Name: name, Special: false, NumberOfArgs: argCount, ArgTypes: types, Body: function}
 	sym := Global.Intern(name)
 	Global.BindTo(sym, PrimitiveWithNameAndFunc(name, f))
+}
+
+func MakePrimitiveFunction(name string, argCount string, function func(*Data, *SymbolTableFrame) (*Data, error)) {
+	MakeTypedPrimitiveFunction(name, argCount, function, make([]uint32, 0, 0))
 }
 
 func MakeSpecialForm(name string, argCount string, function func(*Data, *SymbolTableFrame) (*Data, error)) {
@@ -61,6 +66,45 @@ func (self *PrimitiveFunction) checkArgumentCount(argCount int) bool {
 	return false
 }
 
+func nextTypeIndex(typeIndex int, limit int) int {
+	if typeIndex < limit {
+		return typeIndex + 1
+	} else {
+		return typeIndex
+	}
+}
+
+func (self *PrimitiveFunction) checkArgumentTypes(args []*Data) int {
+	if len(self.ArgTypes) > 0 {
+		numberOfArgs := len(args)
+		numberOfTypesLimit := len(self.ArgTypes) - 1
+		for argIndex, typeIndex := 0, 0; argIndex < numberOfArgs; argIndex, typeIndex = argIndex+1, nextTypeIndex(typeIndex, numberOfTypesLimit) {
+			if (TypeOf(args[argIndex]) & self.ArgTypes[typeIndex]) == 0 {
+				return argIndex
+			}
+		}
+	}
+	return -1
+}
+
+func (self *PrimitiveFunction) typesToString(types uint32) string {
+	typeNames := make([]string, 0, 8)
+	for mask := uint32(0x00000001); mask != 0x80000000; mask <<= 1 {
+		if (types & mask) != 0 {
+			typeNames = append(typeNames, TypeName(mask))
+		}
+	}
+	return strings.Join(typeNames, " or ")
+}
+
+func (self *PrimitiveFunction) argTypesFor(argIndex int) uint32 {
+	if argIndex >= len(self.ArgTypes) {
+		return self.ArgTypes[len(self.ArgTypes)-1]
+	} else {
+		return self.ArgTypes[argIndex]
+	}
+}
+
 func (self *PrimitiveFunction) Apply(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if !self.checkArgumentCount(Length(args)) {
 		err = fmt.Errorf("Wrong number of args to %s, expected %s but got %d.", self.Name, self.NumberOfArgs, Length(args))
@@ -80,6 +124,12 @@ func (self *PrimitiveFunction) Apply(args *Data, env *SymbolTableFrame) (result 
 		}
 
 		argArray = append(argArray, argValue)
+	}
+
+	argCheckResult := self.checkArgumentTypes(argArray)
+	if argCheckResult != -1 {
+		err = fmt.Errorf("Wrong argument type for argument %d; expected %s but got the %s: %s", argCheckResult, self.typesToString(self.argTypesFor(argCheckResult)), TypeName(TypeOf(argArray[argCheckResult])), String(argArray[argCheckResult]))
+		return
 	}
 
 	localGuid := atomic.AddInt64(&ProfileGUID, 1) - 1

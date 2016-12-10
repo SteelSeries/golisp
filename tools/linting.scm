@@ -1,10 +1,14 @@
 ;;; -*- mode: Scheme -*-
 
-;;; Copyright 2015 SteelSeries ApS. All rights reserved.
+;;; Copyright 2015 SteelSeries ApS.
+;;; Copyright 2016 Dave Astels
+;;; All rights reserved.
 ;;; Use of this source code is governed by a BSD-style
-;;; license that can be found in the LICENSE file.
+;;; license that can be found in the LICENSE file in the top level directory.
 
 ;;; Linter
+
+;;; --------------------------------------------------------------------------------
 
 (define (expression-crawler expression car-test analyzer extract-for-recursion extract-for-analysis report)
   (cond ((nil? expression) report)
@@ -25,7 +29,7 @@
 ;;; Analysis functions
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; --------------------------------------------------------------------------------
 ;;; Look for mutator use
 
 (define (lint:analyze-set expressions)
@@ -44,7 +48,7 @@
                                 (crawl-looking-for-set ex '()))
                               expressions))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; --------------------------------------------------------------------------------
 ;;; Look for cascading initial bindings in a let or named let
 
 (define (lint:analyze-let expressions)
@@ -76,7 +80,7 @@
                                                     '()))
                               expressions))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; --------------------------------------------------------------------------------
 ;;; Look for cascading initial bindings in a do
 
 (define (lint:analyze-do expressions)
@@ -108,7 +112,7 @@
                                                     '()))
                               expressions))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; --------------------------------------------------------------------------------
 ;;; Look for single clause ifs
 
 (define (lint:analyze-if expressions)
@@ -128,6 +132,7 @@
                                                     '()))
                               expressions))))
 
+;;; --------------------------------------------------------------------------------
 ;;; File processing
 
 (define (lint filename)

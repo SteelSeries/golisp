@@ -20,36 +20,36 @@ func RegisterVectorPrimitives() {
 	MakePrimitiveFunction("vector->list", "1", VectorToListImpl)
 	MakePrimitiveFunction("make-initialized-vector", "2", MakeInitializedVectorImpl)
 	MakePrimitiveFunction("vector-grow", "2", VectorGrowImpl)
-	MakePrimitiveFunction("vector-map", ">=2", VectorMapImpl)          // also called by map
-	MakePrimitiveFunction("vector-for-each", ">=2", VectorForEachImpl) // also called by for-each
-	MakePrimitiveFunction("vector-reduce", "3", VectorReduceImpl)      // also called by reduce
-	MakePrimitiveFunction("vector-filter", "2", VectorFilterImpl)      // also called by filter
-	MakePrimitiveFunction("vector-remove", "2", VectorRemoveImpl)      // also clled by remove
+	MakePrimitiveFunction("vector-map", ">=2", VectorMapImpl)
+	MakePrimitiveFunction("vector-for-each", ">=2", VectorForEachImpl)
+	MakePrimitiveFunction("vector-reduce", "3", VectorReduceImpl)
+	MakePrimitiveFunction("vector-filter", "2", VectorFilterImpl)
+	MakePrimitiveFunction("vector-remove", "2", VectorRemoveImpl)
 	MakePrimitiveFunction("vector?", "1", VectorPImpl)
-	MakePrimitiveFunction("vector-length", "1", VectorLengthImpl)   // also called by length
-	MakePrimitiveFunction("vector-ref", "2", VectorRefImpl)         // also called by nth
-	MakePrimitiveFunction("vector-set!", "3", VectorSetImpl)        // also called by set-nth!
-	MakePrimitiveFunction("vector-first", "1", VectorFirstImpl)     // also called by first
-	MakePrimitiveFunction("vector-second", "1", VectorSecondImpl)   // also called by second
-	MakePrimitiveFunction("vector-third", "1", VectorThirdImpl)     // also called by third
-	MakePrimitiveFunction("vector-fourth", "1", VectorFourthImpl)   // also called by fourth
-	MakePrimitiveFunction("vector-fifth", "1", VectorFifthImpl)     // also called by fifth
-	MakePrimitiveFunction("vector-sixth", "1", VectorSixthImpl)     // also called by sixth
-	MakePrimitiveFunction("vector-seventh", "1", VectorSeventhImpl) // also called by seventh
-	MakePrimitiveFunction("vector-eighth", "1", VectorEighthImpl)   // also called by eighth
-	MakePrimitiveFunction("vector-ninth", "1", VectorNinthImpl)     // also called by ninth
-	MakePrimitiveFunction("vector-tenth", "1", VectorTenthImpl)     // also called by tenth
-	MakePrimitiveFunction("vector-last", "1", VectorLastImpl)       // also called by last
+	MakePrimitiveFunction("vector-length", "1", VectorLengthImpl)
+	MakePrimitiveFunction("vector-ref", "2", VectorRefImpl)
+	MakePrimitiveFunction("vector-set!", "3", VectorSetImpl)
+	MakePrimitiveFunction("vector-first", "1", VectorFirstImpl)
+	MakePrimitiveFunction("vector-second", "1", VectorSecondImpl)
+	MakePrimitiveFunction("vector-third", "1", VectorThirdImpl)
+	MakePrimitiveFunction("vector-fourth", "1", VectorFourthImpl)
+	MakePrimitiveFunction("vector-fifth", "1", VectorFifthImpl)
+	MakePrimitiveFunction("vector-sixth", "1", VectorSixthImpl)
+	MakePrimitiveFunction("vector-seventh", "1", VectorSeventhImpl)
+	MakePrimitiveFunction("vector-eighth", "1", VectorEighthImpl)
+	MakePrimitiveFunction("vector-ninth", "1", VectorNinthImpl)
+	MakePrimitiveFunction("vector-tenth", "1", VectorTenthImpl)
+	MakePrimitiveFunction("vector-last", "1", VectorLastImpl)
 	MakePrimitiveFunction("vector-binary-search", "4", VectorBinarySearchImpl)
-	MakePrimitiveFunction("vector-find", "2", VectorFindImpl) // also called by find
+	MakePrimitiveFunction("vector-find", "2", VectorFindImpl)
 	MakePrimitiveFunction("subvector", "3", SubVectorImpl)
-	MakePrimitiveFunction("vector-head", "2", VectorHeadImpl) // also called by take
-	MakePrimitiveFunction("vector-tail", "2", VectorTailImpl) // also called by drop
+	MakePrimitiveFunction("vector-head", "2", VectorHeadImpl)
+	MakePrimitiveFunction("vector-tail", "2", VectorTailImpl)
 	MakePrimitiveFunction("vector-fill!", "2", VectorFillImpl)
 	MakePrimitiveFunction("subvector-fill!", "4", SubVectorFillImpl)
 	MakePrimitiveFunction("subvector-move-left!", "5", SubVectorMoveLeftImpl)
 	MakePrimitiveFunction("subvector-move-right!", "5", SubVectorMoveRightImpl)
-	MakePrimitiveFunction("vector-sort", "2", VectorSortImpl) // also called by sort
+	MakePrimitiveFunction("vector-sort", "2", VectorSortImpl)
 	MakePrimitiveFunction("vector-sort!", "2", VectorSortInPlaceImpl)
 }
 

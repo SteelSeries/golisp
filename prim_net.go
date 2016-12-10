@@ -16,18 +16,13 @@ import (
 )
 
 func RegisterNetPrimitives() {
-	MakePrimitiveFunction("net/get", "1", NetGetImpl)
-	MakePrimitiveFunction("net/post", "3", NetPostImpl)
-	MakePrimitiveFunction("net/request", "2|3|4", NetRequestImpl)
+	MakeTypedPrimitiveFunction("net/get", "1", NetGetImpl, []uint32{StringType})
+	MakeTypedPrimitiveFunction("net/post", "3", NetPostImpl, []uint32{StringType, StringType, StringType | FrameType})
+	MakeTypedPrimitiveFunction("net/request", "2|3|4", NetRequestImpl, []uint32{StringType | SymbolType, StringType, FrameType, StringType | FrameType})
 }
 
 func NetGetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	url := First(args)
-	if !StringP(url) {
-		err = ProcessError(fmt.Sprintf("net/get expects its argument (a URL) to be a string, but received %s", String(url)), env)
-		return
-	}
-
 	var resp *http.Response
 	resp, err = http.Get(StringValue(url))
 	if err != nil {
@@ -48,22 +43,8 @@ func NetGetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func NetPostImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	url := First(args)
-	if !StringP(url) {
-		err = ProcessError(fmt.Sprintf("net/post expects its first argument (a URL) to be a string, but received %s", String(url)), env)
-		return
-	}
-
 	contentType := Second(args)
-	if !StringP(contentType) {
-		err = ProcessError(fmt.Sprintf("net/post expects its second argument (a content type) to be a string, but received %s", String(contentType)), env)
-		return
-	}
 	content := Third(args)
-	if !StringP(content) && !FrameP(content) {
-		err = ProcessError(fmt.Sprintf("net/post expects its fourth argument (content) to be a string or frame, but received %s", String(content)), env)
-		return
-	}
-
 	var stringContent string
 	if StringP(content) {
 		stringContent = StringValue(content)
@@ -93,36 +74,16 @@ func NetPostImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func NetRequestImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	verb := First(args)
-	if !StringP(verb) && !SymbolP(verb) {
-		err = ProcessError(fmt.Sprintf("net/request expects its first argument (an HTTP verb) to be a string or symbol, but received %s", String(verb)), env)
-		return
-	}
-
 	url := Second(args)
-	if !StringP(url) {
-		err = ProcessError(fmt.Sprintf("net/request expects its second argument (a URL) to be a string, but received %s", String(url)), env)
-		return
-	}
-
 	var headerMap *FrameMap = nil
 	var buf io.Reader
 
 	if Length(args) >= 3 {
 		headers := Third(args)
-		if !FrameP(headers) {
-			err = ProcessError(fmt.Sprintf("net/request expects its third argument (headers) to be a frame, but received %s", String(headers)), env)
-			return
-		}
-
 		headerMap = FrameValue(headers)
 
 		if Length(args) == 4 {
 			content := Fourth(args)
-			if !StringP(content) && !FrameP(content) {
-				err = ProcessError(fmt.Sprintf("net/request expects its fourth argument (content) to be a string or frame, but received %s", String(content)), env)
-				return
-			}
-
 			var stringContent string
 			if StringP(content) {
 				stringContent = StringValue(content)

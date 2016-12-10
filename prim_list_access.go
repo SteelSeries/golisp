@@ -14,60 +14,60 @@ import (
 )
 
 func RegisterListAccessPrimitives() {
-	MakePrimitiveFunction("car", "1", CarImpl)
-	MakePrimitiveFunction("head", "1", CarImpl)
-	MakePrimitiveFunction("cdr", "1", CdrImpl)
-	MakePrimitiveFunction("rest", "1", CdrImpl)
-	MakePrimitiveFunction("tail", "1", CdrImpl)
+	MakeTypedPrimitiveFunction("car", "1", CarImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("head", "1", CarImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("cdr", "1", CdrImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("rest", "1", CdrImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("tail", "1", CdrImpl, []uint32{ConsCellType})
 
-	MakePrimitiveFunction("caar", "1", CaarImpl)
-	MakePrimitiveFunction("cadr", "1", CadrImpl)
-	MakePrimitiveFunction("cdar", "1", CdarImpl)
-	MakePrimitiveFunction("cddr", "1", CddrImpl)
+	MakeTypedPrimitiveFunction("caar", "1", CaarImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("cadr", "1", CadrImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("cdar", "1", CdarImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("cddr", "1", CddrImpl, []uint32{ConsCellType})
 
-	MakePrimitiveFunction("caaar", "1", CaaarImpl)
-	MakePrimitiveFunction("caadr", "1", CaadrImpl)
-	MakePrimitiveFunction("cadar", "1", CadarImpl)
-	MakePrimitiveFunction("caddr", "1", CaddrImpl)
-	MakePrimitiveFunction("cdaar", "1", CdaarImpl)
-	MakePrimitiveFunction("cdadr", "1", CdadrImpl)
-	MakePrimitiveFunction("cddar", "1", CddarImpl)
-	MakePrimitiveFunction("cdddr", "1", CdddrImpl)
+	MakeTypedPrimitiveFunction("caaar", "1", CaaarImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("caadr", "1", CaadrImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("cadar", "1", CadarImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("caddr", "1", CaddrImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("cdaar", "1", CdaarImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("cdadr", "1", CdadrImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("cddar", "1", CddarImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("cdddr", "1", CdddrImpl, []uint32{ConsCellType})
 
-	MakePrimitiveFunction("caaaar", "1", CaaaarImpl)
-	MakePrimitiveFunction("caaadr", "1", CaaadrImpl)
-	MakePrimitiveFunction("caadar", "1", CaadarImpl)
-	MakePrimitiveFunction("caaddr", "1", CaaddrImpl)
-	MakePrimitiveFunction("cadaar", "1", CadaarImpl)
-	MakePrimitiveFunction("cadadr", "1", CadadrImpl)
-	MakePrimitiveFunction("caddar", "1", CaddarImpl)
-	MakePrimitiveFunction("cadddr", "1", CadddrImpl)
-	MakePrimitiveFunction("cdaaar", "1", CdaaarImpl)
-	MakePrimitiveFunction("cdaadr", "1", CdaadrImpl)
-	MakePrimitiveFunction("cdadar", "1", CdadarImpl)
-	MakePrimitiveFunction("cdaddr", "1", CdaddrImpl)
-	MakePrimitiveFunction("cddaar", "1", CddaarImpl)
-	MakePrimitiveFunction("cddadr", "1", CddadrImpl)
-	MakePrimitiveFunction("cdddar", "1", CdddarImpl)
-	MakePrimitiveFunction("cddddr", "1", CddddrImpl)
-	MakePrimitiveFunction("general-car-cdr", "2", GeneralCarCdrImpl)
+	MakeTypedPrimitiveFunction("caaaar", "1", CaaaarImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("caaadr", "1", CaaadrImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("caadar", "1", CaadarImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("caaddr", "1", CaaddrImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("cadaar", "1", CadaarImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("cadadr", "1", CadadrImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("caddar", "1", CaddarImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("cadddr", "1", CadddrImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("cdaaar", "1", CdaaarImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("cdaadr", "1", CdaadrImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("cdadar", "1", CdadarImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("cdaddr", "1", CdaddrImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("cddaar", "1", CddaarImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("cddadr", "1", CddadrImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("cdddar", "1", CdddarImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("cddddr", "1", CddddrImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("general-car-cdr", "2", GeneralCarCdrImpl, []uint32{ConsCellType, IntegerType})
 
-	MakePrimitiveFunction("first", "1", FirstImpl)
-	MakePrimitiveFunction("second", "1", SecondImpl)
-	MakePrimitiveFunction("third", "1", ThirdImpl)
-	MakePrimitiveFunction("fourth", "1", FourthImpl)
-	MakePrimitiveFunction("fifth", "1", FifthImpl)
-	MakePrimitiveFunction("sixth", "1", SixthImpl)
-	MakePrimitiveFunction("seventh", "1", SeventhImpl)
-	MakePrimitiveFunction("eighth", "1", EighthImpl)
-	MakePrimitiveFunction("ninth", "1", NinthImpl)
-	MakePrimitiveFunction("tenth", "1", TenthImpl)
-	MakePrimitiveFunction("last-pair", "1", LastPairImpl)
-	MakePrimitiveFunction("last", "1", LastImpl)
+	MakeTypedPrimitiveFunction("first", "1", FirstImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("second", "1", SecondImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("third", "1", ThirdImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("fourth", "1", FourthImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("fifth", "1", FifthImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("sixth", "1", SixthImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("seventh", "1", SeventhImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("eighth", "1", EighthImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("ninth", "1", NinthImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("tenth", "1", TenthImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("last-pair", "1", LastPairImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("last", "1", LastImpl, []uint32{ConsCellType})
 
-	MakePrimitiveFunction("nth", "2", NthImpl)
-	MakePrimitiveFunction("take", "2", TakeImpl)
-	MakePrimitiveFunction("drop", "2", DropImpl)
+	MakeTypedPrimitiveFunction("nth", "2", NthImpl, []uint32{IntegerType, ConsCellType})
+	MakeTypedPrimitiveFunction("take", "2", TakeImpl, []uint32{IntegerType, ConsCellType | BoxedObjectType})
+	MakeTypedPrimitiveFunction("drop", "2", DropImpl, []uint32{IntegerType, ConsCellType | BoxedObjectType})
 }
 
 func CarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -210,78 +210,53 @@ func GeneralCarCdrImpl(args *Data, env *SymbolTableFrame) (result *Data, err err
 }
 
 func FirstImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if VectorP(Car(args)) {
-		return VectorFirstImpl(args, env)
-	}
 	return First(Car(args)), nil
 }
 
 func SecondImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if VectorP(Car(args)) {
-		return VectorSecondImpl(args, env)
-	}
 	return Second(Car(args)), nil
 }
 
 func ThirdImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if VectorP(Car(args)) {
-		return VectorThirdImpl(args, env)
-	}
 	return Third(Car(args)), nil
 }
 
 func FourthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if VectorP(Car(args)) {
-		return VectorFourthImpl(args, env)
-	}
 	return Fourth(Car(args)), nil
 }
 
 func FifthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if VectorP(Car(args)) {
-		return VectorFifthImpl(args, env)
-	}
 	return Fifth(Car(args)), nil
 }
 
 func SixthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if VectorP(Car(args)) {
-		return VectorSixthImpl(args, env)
-	}
 	return Sixth(Car(args)), nil
 }
 
 func SeventhImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if VectorP(Car(args)) {
-		return VectorSeventhImpl(args, env)
-	}
 	return Seventh(Car(args)), nil
 }
 
 func EighthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if VectorP(Car(args)) {
-		return VectorEighthImpl(args, env)
-	}
 	return Eighth(Car(args)), nil
 }
 
 func NinthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if VectorP(Car(args)) {
-		return VectorNinthImpl(args, env)
-	}
 	return Ninth(Car(args)), nil
 }
 
 func TenthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if VectorP(Car(args)) {
-		return VectorTenthImpl(args, env)
-	}
 	return Tenth(Car(args)), nil
 }
 
 func LastPairImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if !ListP(Car(args)) || ListWithLoopP(Car(args)) {
+	if !(ListP(Car(args)) || DottedListP(Car(args))) {
 		err = ProcessError(fmt.Sprintf("last-pair requires a non-circular list but received %s.", String(Car(args))), env)
+		return
+	}
+
+	if Length(Car(args)) == 0 {
+		err = ProcessError("last-pair requires a non-empty list but received nil.", env)
 		return
 	}
 
@@ -289,9 +264,6 @@ func LastPairImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func LastImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if VectorP(Car(args)) {
-		return VectorLastImpl(args, env)
-	}
 	if !ListP(Car(args)) || ListWithLoopP(Car(args)) {
 		err = ProcessError(fmt.Sprintf("last requires a non-circular list but received %s.", String(Car(args))), env)
 		return
@@ -301,19 +273,10 @@ func LastImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func NthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	index := First(args)
-	if !IntegerP(index) {
-		err = ProcessError(fmt.Sprintf("nth requires integer index but received %s.", String(index)), env)
-		return
-	}
-
 	col := Second(args)
-	if !ListP(col) && !VectorP(col) {
-		err = ProcessError(fmt.Sprintf("nth required a list or vector but received %s.", String(col)), env)
+	if !ListP(col) {
+		err = ProcessError(fmt.Sprintf("nth required a proper list but received %s.", String(col)), env)
 		return
-	}
-
-	if VectorP(col) {
-		return VectorRefImpl(InternalMakeList(col, index), env)
 	}
 
 	indexVal := int(IntegerValue(index))
@@ -326,16 +289,7 @@ func NthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func TakeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	n := Car(args)
-	if !IntegerP(n) {
-		err = ProcessError("take requires a number as its first argument.", env)
-	}
-	size := int(IntegerValue(n))
-
-	if VectorP(Second(args)) {
-		return VectorHeadImpl(InternalMakeList(Second(args), First(args)), env)
-	}
-
+	size := int(IntegerValue(Car(args)))
 	l := Cadr(args)
 	if ListP(l) {
 		var items []*Data = make([]*Data, 0, Length(args))
@@ -357,22 +311,13 @@ func TakeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		}
 		result = ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&newBytes))
 	} else {
-		err = ProcessError("take requires a list, vector, or bytearray as its second argument.", env)
+		err = ProcessError("take requires a proper list or bytearray as its second argument.", env)
 	}
 	return
 }
 
 func DropImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	n := Car(args)
-	if !IntegerP(n) {
-		err = ProcessError("drop requires a number as its first argument.", env)
-	}
-	size := int(IntegerValue(n))
-
-	if VectorP(Second(args)) {
-		return VectorTailImpl(InternalMakeList(Second(args), First(args)), env)
-	}
-
+	size := int(IntegerValue(Car(args)))
 	l := Cadr(args)
 
 	if ListP(l) {
@@ -394,7 +339,7 @@ func DropImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 			result = ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&newBytes))
 		}
 	} else {
-		err = ProcessError("drop requires a list, vector, or bytearray as its second argument.", env)
+		err = ProcessError("drop requires a proper list or bytearray as its second argument.", env)
 	}
 	return
 }
