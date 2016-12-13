@@ -177,7 +177,7 @@ func DefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		}
 		existingValueOrNil := env.ValueOf(name)
 		if PrimitiveP(existingValueOrNil) {
-			err = ProcessError(fmt.Sprintf("Primitive function %s can not be redefined.", StringValue(name)), env)
+			err = ProcessError(fmt.Sprintf("Primitive function %s can not be redefined", StringValue(name)), env)
 			return
 		}
 		var body *Data = Cdr(args)
@@ -188,7 +188,7 @@ func DefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		}
 		value = FunctionWithNameParamsDocBodyAndParent(StringValue(name), params, StringValue(doc), body, env)
 	} else {
-		err = ProcessError(fmt.Sprintf("define expected a symbol or formals list as its first argument but received %s.", String(thing)), env)
+		err = ProcessError(fmt.Sprintf("define expected a symbol or formals list as its first argument but received %s", String(thing)), env)
 		return
 	}
 	env.BindLocallyTo(thing, value)
