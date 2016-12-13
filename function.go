@@ -10,15 +10,22 @@ package golisp
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"sync/atomic"
 	"unsafe"
 )
+
+type FunctonTypeSignature struct {
+	ArgumentTypes []uint32
+	ReturnType    uint32
+}
 
 type Function struct {
 	Name             string
 	Params           *Data
 	VarArgs          bool
 	RequiredArgCount int
+	TypeSignature    *FunctonTypeSignature
 	DocString        string
 	Body             *Data
 	Env              *SymbolTableFrame
@@ -26,6 +33,8 @@ type Function struct {
 	SlotFunction     bool
 	ParentProcess    *Process
 }
+
+var functionTypeSignatures map[string]*FunctonTypeSignature = make(map[string]*FunctonTypeSignature, 20)
 
 func computeRequiredArgumentCount(args *Data) (requiredArgumentCount int, varArgs bool) {
 	requiredArgumentCount = 0
@@ -41,13 +50,29 @@ func computeRequiredArgumentCount(args *Data) (requiredArgumentCount int, varArg
 	return
 }
 
+func AddTypesForFunction(name string, argTypes []uint32, retType uint32) {
+	functionTypeSignatures[name] = &FunctonTypeSignature{ArgumentTypes: argTypes, ReturnType: retType}
+}
+
 func MakeFunction(name string, params *Data, doc string, body *Data, parentEnv *SymbolTableFrame) *Function {
 	requiredArgs, varArgs := computeRequiredArgumentCount(params)
-	return &Function{Name: name, Params: params, VarArgs: varArgs, RequiredArgCount: requiredArgs, DocString: doc, Body: body, Env: parentEnv, SlotFunction: false}
+	f := &Function{Name: name, Params: params, VarArgs: varArgs, RequiredArgCount: requiredArgs, TypeSignature: functionTypeSignatures[name], DocString: doc, Body: body, Env: parentEnv, SlotFunction: false}
+	functionTypeSignatures[name] = nil
+	return f
 }
 
 func (self *Function) String() string {
 	return fmt.Sprintf("<func: %s>", self.Name)
+}
+
+func typeNameFor(value uint32) string {
+	types := make([]string, 0, 3)
+	for name, mask := range TypeMap {
+		if mask&value != 0 {
+			types = append(types, name)
+		}
+	}
+	return strings.Join(types, " or ")
 }
 
 func (self *Function) makeLocalBindings(args *Data, argEnv *SymbolTableFrame, localEnv *SymbolTableFrame, eval bool) (err error) {
@@ -64,7 +89,7 @@ func (self *Function) makeLocalBindings(args *Data, argEnv *SymbolTableFrame, lo
 	var argValue *Data
 	var accumulatingParam *Data = nil
 	accumulatedArgs := make([]*Data, 0)
-	for p, a := self.Params, args; NotNilP(a); a = Cdr(a) {
+	for i, p, a := 0, self.Params, args; NotNilP(a); i, a = i+1, Cdr(a) {
 		if eval {
 			argValue, err = Eval(Car(a), argEnv)
 			if err != nil {
@@ -72,6 +97,10 @@ func (self *Function) makeLocalBindings(args *Data, argEnv *SymbolTableFrame, lo
 			}
 		} else {
 			argValue = Car(a)
+		}
+
+		if self.TypeSignature != nil && self.TypeSignature.ArgumentTypes[i]&TypeOf(argValue) == 0 {
+			return errors.New(fmt.Sprintf("%s argument %d has the wrong type, expected %s but was given %s", self.Name, i, typeNameFor(self.TypeSignature.ArgumentTypes[i]), typeNameFor(TypeOf(argValue))))
 		}
 
 		if SymbolP(p) {
@@ -125,6 +154,12 @@ func (self *Function) internalApply(args *Data, argEnv *SymbolTableFrame, frame 
 		if err != nil {
 			result, err = nil, errors.New(fmt.Sprintf("In '%s': %s", self.Name, err))
 			break
+		}
+	}
+
+	if err == nil {
+		if self.TypeSignature != nil && self.TypeSignature.ReturnType&TypeOf(result) == 0 {
+			result, err = nil, errors.New(fmt.Sprintf("%s returns the wrong type, expected %s but was given %s", self.Name, typeNameFor(self.TypeSignature.ReturnType), typeNameFor(TypeOf(result))))
 		}
 	}
 
