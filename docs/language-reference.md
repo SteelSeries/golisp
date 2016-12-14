@@ -318,6 +318,62 @@ Using this form of define, a function that accepts a completely option set of ar
 
 Please note: You can not currently define a lambda with completely optional arguments.
 
+## Type Signatures ##
+
+GoLisp provides basic, and optional, type checking for the arguments and return values of user defined functions. Additionally, primtive functions also have type checking on arguments and return values, as appropriate.
+
+### (typedef (_fname_ _arg-types_...) [-> _return-type_]) ###
+
+This is similar to defining a function: _fname_ is the name of a function that will be defined later (typicaly the next form) and _arg-types_ correspond to its arguments). But with `typedef` these are argument type specification, not argument names.
+
+Argunment type specifications can take two forms: _type_ which can be a string or symbol, or a set of types separated by a pipe (i.e. |) with no spaces. The latter must be a string.
+
+When a function is passed a type that does not match its specified type(s) an error is raised, similar to:
+
+```
+> (typedef (lessthan "number" "number"))
+> (define (lessthan x y) (+ x y))
+> (lessthan 1 4.3)
+==> 5.3
+> (lessthan 1 'a)
+Error in evaluation: 
+Evaling (lessthan 1 'a). lessthan argument 1 has the wrong type, expected float or integer but was given symbol
+```
+```
+A type specification can also include a type specification of the result of the function. Note that the `->` is required.
+
+> (typedef (lessthan "number" "number") -> boolean)
+==> nil
+> (define (lessthan x y) (+ x y))
+==> <function: lessthan>
+> (lessthan 1 4.3)
+Error in evaluation: 
+Evaling (lessthan 1 4.3). lessthan returns the wrong type, expected boolean but was given float
+```
+
+The following types are supported:
+
+* list
+* vector
+* sequence _(equivalent to list|vector)_
+* integer
+* float
+* number _(equivalent to integer|float)_
+* boolean
+* string
+* character
+* symbol
+* function
+* macro
+* primitive
+* procedure _(equivalent to function|primitive)_
+* boxedobject
+* frame
+* environment
+* port
+
+Note that the _list_ type just requires a ConsCell; if a proper list or other specific type is required, then either [pre-conditions](http://daveastels.typed.com/blog/code-contracts-in-golisp) or explicit tests will be needed.
+
 ## Top-Level Definitions ##
 
 A top-level definition,
@@ -610,24 +666,6 @@ true" when the conditional expressions treat it as true, and we say that an
 object has "a false value" or "is false" when the conditional expressions treat
 it as false.
 
-### (if _predicate_ _consequent_ [_alternative_]) ###
-
-_predicate_, _consequent_, and _alternative_ are expressions. An `if` expression is
-evaluated as follows: first, _predicate_ is evaluated. If it yields a true value,
-then _consequent_ is evaluated and its value is returned. Otherwise _alternative_ is
-evaluated and its value is returned. If _predicate_ yields a false value and no
-_alternative_ is specified, then the result of the expression is unspecified.
-
-An `if` expression evaluates either _consequent_ or _alternative_, never both.
-Programs should not depend on the value of an `if` expression that has no
-_alternative_.
-
-    (if (> 3 2) 'yes 'no)                   ⇒  yes
-    (if (> 2 3) 'yes 'no)                   ⇒  no
-    (if (> 3 2)
-        (- 3 2)
-        (+ 3 2))                            ⇒  1
-
 ### (cond _clause_...) ###
 
 Each _clause_ has this form:
@@ -745,7 +783,31 @@ last _expression_ is returned. If there are no _expressions_ then `#f` is return
     (or #f #f #f)                   ⇒  #f
     (or (memq 'b '(a b c)) (/ 3 0)) ⇒  (b c)
 
+### (if _predicate_ _consequent_ [_alternative_]) ###
+<p class="annotation">conditional.scm</p>
+
+`if` is a macro based on `cond`.
+
+_predicate_, _consequent_, and _alternative_ are expressions. An `if` expression is
+evaluated as follows: first, _predicate_ is evaluated. If it yields a true value,
+then _consequent_ is evaluated and its value is returned. Otherwise _alternative_ is
+evaluated and its value is returned. If _predicate_ yields a false value and no
+_alternative_ is specified, then the result of the expression is unspecified.
+
+An `if` expression evaluates either _consequent_ or _alternative_, never both.
+Programs should not depend on the value of an `if` expression that has no
+_alternative_.
+
+    (if (> 3 2) 'yes 'no)                   ⇒  yes
+    (if (> 2 3) 'yes 'no)                   ⇒  no
+    (if (> 3 2)
+        (- 3 2)
+        (+ 3 2))                            ⇒  1
+
 ### (when _predicate_ _expression_...) ###
+<p class="annotation">conditional.scm</p>
+
+`when` is a macro based on `cond`.
 
 If _predicate_ evaluates to logically `true`, the sequence of _expresions_ is
 evaluated and the result of the last one is the result of the `when` form,
@@ -762,6 +824,9 @@ The above is equivalent to the following, but is simpler and clearer.
                (+ x 2)))
 
 ### (unless _predicate_ _expression_...) ###
+<p class="annotation">conditional.scm</p>
+
+`unless` is a macro based on `cond`.
 
 If _predicate_ evaluates to logically `false`, the sequence of _expresions_ is
 evaluated and the result of the last one is the result of the `unless` form,
@@ -4641,6 +4706,18 @@ You can extend the goLisp runtime without changing any of it's code. You simply
 import the golisp package (typically aliased to `.` to make the code less noisy)
 and place calls to `MakePrimitiveFunction` in your package's `init` block.
 
+## Defining primitives with argument type checking ##
+
+There is also the `MakeTypedPrimitiveFunction` function that takes an additional argument which is an array of `uint32`s, one element for each argument. If the defined function accepts an arbitrary number of arguments, the final type specification is used for the remainder. For example, if there are 3 argument type specifications and the function is passed 5 arguments, the final specification is used for the 3rd, 4th, and 5th arguments.
+
+```
+MakeTypedPrimitiveFunction("mqtt/publish", "3", mqttPublishImpl, []uint32{StringType, IntegerType, StringType})
+```
+
+There is not currently a way to provide a type specification for a primitive's return value.
+
+## Defining special forms ##
+
 There is another, very similar function that you will typically not need unless
 you are hacking on the language itself (as opposed to adding builting
 functions):
@@ -4670,7 +4747,6 @@ example:
             return Eval(Third(args), env)
         }
     }
-
 
 ## Data ##
 

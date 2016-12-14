@@ -4,7 +4,7 @@
 
          ()
          
-         (it simple-let
+         (it "simple-let"
              (assert-nil (let ()))
              (assert-eq (let ()
                           42)
@@ -13,13 +13,13 @@
              (assert-error (let ((5 1)) 42)) ;non-symbol binding name
              (assert-error (let (5 3) 42))) ;non-pair binding
 
-         (it let-with-multiple-expr-body
+         (it "let-with-multiple-expr-body"
              (assert-eq (let ()
                           1
                           2)
                         2))
 
-         (it let-let*-scope
+         (it "let-let*-scope"
              (assert-eq (let* ((x 1)
                                (y 2))
                           (+ x y))
@@ -31,11 +31,11 @@
                           3)))
 
 
-         (it let-binding-scope
+         (it "let-binding-scope"
              (assert-nil (begin (let ((zz 2)) zz)
                                 zz)))
 
-         (it named-let
+         (it "named-let"
              (assert-eq (let loop
                             ((numbers '(3 -2 1 6 -5))
                              (nonneg '())

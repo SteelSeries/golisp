@@ -9,7 +9,32 @@ package golisp
 
 import (
 	"fmt"
+	"strings"
 )
+
+var TypeMap map[string]uint32
+
+func initTypeMap() {
+	TypeMap = make(map[string]uint32, 20)
+	TypeMap["list"] = 0x00000002
+	TypeMap["vector"] = 0x00000004
+	TypeMap["sequence"] = 0x00000006
+	TypeMap["integer"] = 0x00000008
+	TypeMap["float"] = 0x00000010
+	TypeMap["number"] = 0x00000018
+	TypeMap["boolean"] = 0x00000020
+	TypeMap["string"] = 0x00000040
+	TypeMap["character"] = 0x00000080
+	TypeMap["symbol"] = 0x00000100
+	TypeMap["function"] = 0x00000200
+	TypeMap["macro"] = 0x00000400
+	TypeMap["primitive"] = 0x00000800
+	TypeMap["proc"] = 0x00000A00
+	TypeMap["boxedobject"] = 0x00001000
+	TypeMap["frame"] = 0x00002000
+	TypeMap["environment"] = 0x00004000
+	TypeMap["port"] = 0x00008000
+}
 
 func RegisterSpecialFormPrimitives() {
 	MakeSpecialForm("cond", "*", CondImpl)
@@ -17,7 +42,7 @@ func RegisterSpecialFormPrimitives() {
 	MakeSpecialForm("lambda", ">=1", LambdaImpl)
 	MakeSpecialForm("named-lambda", ">=1", NamedLambdaImpl)
 	MakeSpecialForm("define", ">=1", DefineImpl)
-	//	MakeSpecialForm("typedef", "*", TypeDefImpl)
+	MakeSpecialForm("typedef", ">=1", TypeDefImpl)
 	MakeSpecialForm("defmacro", ">=1", DefmacroImpl)
 	MakeSpecialForm("define-macro", ">=1", DefmacroImpl)
 	MakeSpecialForm("let", ">=1", LetImpl)
@@ -30,6 +55,8 @@ func RegisterSpecialFormPrimitives() {
 	MakeSpecialForm("=>", ">=1", TapImpl)
 	MakeSpecialForm("definition-of", "1", DefinitionOfImpl)
 	MakeSpecialForm("doc", "1", DocImpl)
+
+	initTypeMap()
 }
 
 func evaluateBody(value *Data, sexprs *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -153,7 +180,7 @@ func DefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		}
 		existingValueOrNil := env.ValueOf(name)
 		if PrimitiveP(existingValueOrNil) {
-			err = ProcessError(fmt.Sprintf("Primitive function %s can not be redefined.", StringValue(name)), env)
+			err = ProcessError(fmt.Sprintf("Primitive function %s can not be redefined", StringValue(name)), env)
 			return
 		}
 		var body *Data = Cdr(args)
@@ -164,21 +191,58 @@ func DefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		}
 		value = FunctionWithNameParamsDocBodyAndParent(StringValue(name), params, StringValue(doc), body, env)
 	} else {
-		err = ProcessError(fmt.Sprintf("define expected a symbol or formals list as its first argument but received %s.", String(thing)), env)
+		err = ProcessError(fmt.Sprintf("define expected a symbol or formals list as its first argument but received %s", String(thing)), env)
 		return
 	}
 	env.BindLocallyTo(thing, value)
 	return value, nil
 }
 
-// func TypeDefImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-// 	thing := First(args)
-// 	if SymbolP(thing) {
-// 		// single var
-// 	} else if ListP(thing) {
-// 		// function
-// 	}
-// }
+func typeSpecToTypeMask(typeSpec string, env *SymbolTableFrame) (mask uint32, err error) {
+	mask = uint32(0)
+	for _, spec := range strings.Split(typeSpec, "|") {
+		t := TypeMap[spec]
+		if t == 0 {
+			err = ProcessError(fmt.Sprintf("typedef specified an invalid type: '%s'", spec), env)
+			return
+		} else {
+			mask = mask | t
+		}
+	}
+	return
+}
+
+func TypeDefImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	thing := First(args)
+	if SymbolP(thing) {
+		// simple var .. may not need this unless I add static type checking/inference
+	} else if ListP(thing) {
+		// function
+		if !SymbolP(Car(thing)) {
+			err = ProcessError(fmt.Sprintf("typeDef expected a symbol function name but received %s", String(Car(thing))), env)
+			return
+		}
+		functionName := StringValue(Car(thing))
+		argTypes := make([]uint32, 0, Length(Cdr(thing)))
+		var argType uint32
+		for cell := Cdr(thing); NotNilP(cell); cell = Cdr(cell) {
+			argType, err = typeSpecToTypeMask(StringValue(Car(cell)), env)
+			if err != nil {
+				return
+			}
+			argTypes = append(argTypes, argType)
+		}
+		var returnType uint32 = AnyType
+		if StringValue(Second(args)) == "->" {
+			returnType, err = typeSpecToTypeMask(StringValue(Third(args)), env)
+			if err != nil {
+				return
+			}
+		}
+		AddTypesForFunction(functionName, argTypes, returnType)
+	}
+	return
+}
 
 func DefmacroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var value *Data

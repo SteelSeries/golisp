@@ -37,7 +37,7 @@ func test() {
 	}
 
 	testCommand := fmt.Sprintf("(%s \"%s\"%s)", testFunction, testName, verboseFlag)
-	ProcessFile("lisp/testing.scm")
+	ProcessFile(os.ExpandEnv("$GOLISPHOME/tools/testing.scm"))
 	ParseAndEval(testCommand)
 }
 
@@ -86,7 +86,7 @@ func main() {
 	}
 
 	fmt.Printf("Loading the lisp directory\n")
-	walkErr := filepath.Walk("lisp", walkFunc)
+	walkErr := filepath.Walk(os.ExpandEnv("$GOLISPHOME/lisp"), walkFunc)
 	if walkErr != nil {
 		fmt.Printf("Error loading code\n")
 		return

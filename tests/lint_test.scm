@@ -4,7 +4,7 @@
 ;;; Use of this source code is governed by a BSD-style
 ;;; license that can be found in the LICENSE file.
 
-(load "lisp/linting.scm")
+(load "tools/linting.scm")
 
 (context "Checking for mutators"
 
