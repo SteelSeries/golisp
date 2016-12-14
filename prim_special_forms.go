@@ -15,11 +15,13 @@ import (
 var TypeMap map[string]uint32
 
 func initTypeMap() {
-	TypeMap = make(map[string]uint32, 15)
+	TypeMap = make(map[string]uint32, 20)
 	TypeMap["list"] = 0x00000002
 	TypeMap["vector"] = 0x00000004
+	TypeMap["sequence"] = 0x00000006
 	TypeMap["integer"] = 0x00000008
 	TypeMap["float"] = 0x00000010
+	TypeMap["number"] = 0x00000018
 	TypeMap["boolean"] = 0x00000020
 	TypeMap["string"] = 0x00000040
 	TypeMap["character"] = 0x00000080
@@ -27,6 +29,7 @@ func initTypeMap() {
 	TypeMap["function"] = 0x00000200
 	TypeMap["macro"] = 0x00000400
 	TypeMap["primitive"] = 0x00000800
+	TypeMap["proc"] = 0x00000A00
 	TypeMap["boxedobject"] = 0x00001000
 	TypeMap["frame"] = 0x00002000
 	TypeMap["environment"] = 0x00004000
