@@ -320,7 +320,7 @@ Please note: You can not currently define a lambda with completely optional argu
 
 ## Type Signatures ##
 
-GoLisp provides basic, and optional, type checking for the arguments and return values of user defined functions. Additionally, primtive functions also have type checking on arguments and return values, as appropriate.
+GoLisp provides basic, and optional, type checking for the arguments and return values of user defined functions. Additionally, primtive functions also have type checking on arguments, as appropriate.
 
 ### (typedef (_fname_ _arg-types_...) [-> _return-type_]) ###
 
@@ -331,24 +331,25 @@ Argunment type specifications can take two forms: _type_ which can be a string o
 When a function is passed a type that does not match its specified type(s) an error is raised, similar to:
 
 ```
-> (typedef (lessthan "number" "number"))
-> (define (lessthan x y) (+ x y))
-> (lessthan 1 4.3)
-==> 5.3
-> (lessthan 1 'a)
+> (typedef (less-than number number))
+> (define (less-than x y) (< x y))
+> (less-than 1 4.3)
+==> #t
+> (less-than 1 'a)
 Error in evaluation: 
-Evaling (lessthan 1 'a). lessthan argument 1 has the wrong type, expected float or integer but was given symbol
+Evaling (less-than 1 'a). less-than argument 1 has the wrong type, expected float or integer but was given symbol
 ```
-```
+
 A type specification can also include a type specification of the result of the function. Note that the `->` is required.
 
-> (typedef (lessthan "number" "number") -> boolean)
+```
+> (typedef (less-than number number) -> boolean)
 ==> nil
-> (define (lessthan x y) (+ x y))
-==> <function: lessthan>
-> (lessthan 1 4.3)
+> (define (less-than x y) (if (< x y) 'yes 'no))
+==> <function: less-than>
+> (less-than 1 4.3)
 Error in evaluation: 
-Evaling (lessthan 1 4.3). lessthan returns the wrong type, expected boolean but was given float
+Evaling (less-than 1 4.3). less-than returns the wrong type, expected boolean but returned float
 ```
 
 The following types are supported:
