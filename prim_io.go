@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"unicode"
@@ -199,7 +200,8 @@ func FormatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	arguments := Cddr(args)
 
-	numberOfSubstitutions := strings.Count(controlString, "~")
+	re := regexp.MustCompile("~[0-9]*@?[aAsS]")
+	numberOfSubstitutions := len(re.FindAllString(controlString, -1))
 	if numberOfSubstitutions != Length(arguments) {
 		err = ProcessError("number of replacements in the control string and number of arguments must be equal", env)
 		return
