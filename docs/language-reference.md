@@ -344,12 +344,10 @@ A type specification can also include a type specification of the result of the 
 
 ```
 > (typedef (less-than number number) -> boolean)
-==> nil
 > (define (less-than x y) (if (< x y) 'yes 'no))
-==> <function: less-than>
 > (less-than 1 4.3)
 Error in evaluation: 
-Evaling (less-than 1 4.3). less-than returns the wrong type, expected boolean but returned float
+Evaling (less-than 1 4.3). less-than returns the wrong type, expected boolean but returned symbol
 ```
 
 The following types are supported:
