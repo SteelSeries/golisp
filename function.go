@@ -159,7 +159,7 @@ func (self *Function) internalApply(args *Data, argEnv *SymbolTableFrame, frame 
 
 	if err == nil {
 		if self.TypeSignature != nil && self.TypeSignature.ReturnType&TypeOf(result) == 0 {
-			result, err = nil, errors.New(fmt.Sprintf("%s returns the wrong type, expected %s but was given %s", self.Name, typeNameFor(self.TypeSignature.ReturnType), typeNameFor(TypeOf(result))))
+			result, err = nil, errors.New(fmt.Sprintf("%s returns the wrong type, expected %s but returned %s", self.Name, typeNameFor(self.TypeSignature.ReturnType), typeNameFor(TypeOf(result))))
 		}
 	}
 
