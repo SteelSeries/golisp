@@ -65,14 +65,79 @@ func (self *Function) String() string {
 	return fmt.Sprintf("<func: %s>", self.Name)
 }
 
-func typeNameFor(value uint32) string {
-	types := make([]string, 0, 3)
-	for name, mask := range TypeMap {
-		if mask&value != 0 {
-			types = append(types, name)
+func countOnes(num uint32) (count int) {
+	count = 0
+	for i := 0; i < 32; i += 1 {
+		if (num & 1) != 0 {
+			count += 1
+		}
+		num >>= 1
+	}
+	return
+}
+
+func findBiggestType(types []string) (biggestCount int, biggestType string) {
+	for _, name := range types {
+		count := countOnes(TypeMap[name])
+		if count > biggestCount {
+			biggestCount = count
+			biggestType = name
 		}
 	}
-	return strings.Join(types, " or ")
+	return
+}
+
+func reduceTypes(types []string, biggestCount int, biggestType string) []string {
+	minimalTypes := make([]string, 0, 3)
+	minimalTypes = append(minimalTypes, biggestType)
+	biggestBits := TypeMap[biggestType]
+	for _, t := range types {
+		if (biggestBits & TypeMap[t]) == 0 {
+			minimalTypes = append(minimalTypes, t)
+		}
+	}
+	return minimalTypes
+}
+
+func typeNameFor(value uint32, sep string) string {
+	if value == 0xFFFFFFFF {
+		return "anytype"
+	}
+	potentialTypes := make([]string, 0, 3)
+	for name, mask := range TypeMap {
+		if name != "anytype" && mask&value != 0 {
+			potentialTypes = append(potentialTypes, name)
+		}
+	}
+
+	biggestCount, biggestType := findBiggestType(potentialTypes)
+	types := reduceTypes(potentialTypes, biggestCount, biggestType)
+	return strings.Join(types, sep)
+}
+
+func (self *Function) MakeTypeSpec() *Data {
+	// (arg1type ... argNtype -> returntype)
+	argTypes := make([]*Data, 0, len(self.TypeSignature.ArgumentTypes))
+	for _, argType := range self.TypeSignature.ArgumentTypes {
+		t := typeNameFor(argType, "|")
+		var typeObj *Data
+		if strings.Contains(t, "|") {
+			typeObj = StringWithValue(t)
+		} else {
+			typeObj = SymbolWithName(t)
+		}
+		argTypes = append(argTypes, typeObj)
+	}
+	formalsTypes := ArrayToList(argTypes)
+	var returnTypeObj *Data
+	returnTypeString := typeNameFor(self.TypeSignature.ReturnType, "|")
+	if strings.Contains(returnTypeString, "|") {
+		returnTypeObj = StringWithValue(returnTypeString)
+	} else {
+		returnTypeObj = SymbolWithName(returnTypeString)
+	}
+	result, _ := Flatten(InternalMakeList(formalsTypes, Intern("->"), returnTypeObj))
+	return result
 }
 
 func (self *Function) makeLocalBindings(args *Data, argEnv *SymbolTableFrame, localEnv *SymbolTableFrame, eval bool) (err error) {
@@ -100,7 +165,7 @@ func (self *Function) makeLocalBindings(args *Data, argEnv *SymbolTableFrame, lo
 		}
 
 		if self.TypeSignature != nil && self.TypeSignature.ArgumentTypes[i]&TypeOf(argValue) == 0 {
-			return errors.New(fmt.Sprintf("%s argument %d has the wrong type, expected %s but was given %s", self.Name, i, typeNameFor(self.TypeSignature.ArgumentTypes[i]), typeNameFor(TypeOf(argValue))))
+			return errors.New(fmt.Sprintf("%s argument %d has the wrong type, expected %s but was given %s", self.Name, i, typeNameFor(self.TypeSignature.ArgumentTypes[i], " or "), typeNameFor(TypeOf(argValue), " or ")))
 		}
 
 		if SymbolP(p) {
@@ -159,7 +224,7 @@ func (self *Function) internalApply(args *Data, argEnv *SymbolTableFrame, frame 
 
 	if err == nil {
 		if self.TypeSignature != nil && self.TypeSignature.ReturnType&TypeOf(result) == 0 {
-			result, err = nil, errors.New(fmt.Sprintf("%s returns the wrong type, expected %s but returned %s", self.Name, typeNameFor(self.TypeSignature.ReturnType), typeNameFor(TypeOf(result))))
+			result, err = nil, errors.New(fmt.Sprintf("%s returns the wrong type, expected %s but returned %s", self.Name, typeNameFor(self.TypeSignature.ReturnType, " or "), typeNameFor(TypeOf(result), " or ")))
 		}
 	}
 

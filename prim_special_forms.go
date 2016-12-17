@@ -26,14 +26,16 @@ func initTypeMap() {
 	TypeMap["string"] = 0x00000040
 	TypeMap["character"] = 0x00000080
 	TypeMap["symbol"] = 0x00000100
+	TypeMap["stringy"] = 0x00000140
 	TypeMap["function"] = 0x00000200
 	TypeMap["macro"] = 0x00000400
 	TypeMap["primitive"] = 0x00000800
-	TypeMap["proc"] = 0x00000A00
+	TypeMap["procedure"] = 0x00000A00
 	TypeMap["boxedobject"] = 0x00001000
 	TypeMap["frame"] = 0x00002000
 	TypeMap["environment"] = 0x00004000
 	TypeMap["port"] = 0x00008000
+	TypeMap["anytype"] = 0xFFFFFFFF
 }
 
 func RegisterSpecialFormPrimitives() {
@@ -55,6 +57,7 @@ func RegisterSpecialFormPrimitives() {
 	MakeSpecialForm("=>", ">=1", TapImpl)
 	MakeSpecialForm("definition-of", "1", DefinitionOfImpl)
 	MakeSpecialForm("doc", "1", DocImpl)
+	MakeSpecialForm("type", "1", TypeImpl)
 
 	initTypeMap()
 }
@@ -214,30 +217,32 @@ func typeSpecToTypeMask(typeSpec string, env *SymbolTableFrame) (mask uint32, er
 
 func TypeDefImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	thing := First(args)
-	if SymbolP(thing) {
-		// simple var .. may not need this unless I add static type checking/inference
-	} else if ListP(thing) {
+	if !SymbolP(thing) {
+		err = ProcessError(fmt.Sprintf("typeDef expected a symbol name but received %s", String(Car(thing))), env)
+		return
+	} else {
 		// function
-		if !SymbolP(Car(thing)) {
-			err = ProcessError(fmt.Sprintf("typeDef expected a symbol function name but received %s", String(Car(thing))), env)
-			return
-		}
-		functionName := StringValue(Car(thing))
+		functionName := StringValue(thing)
 		argTypes := make([]uint32, 0, Length(Cdr(thing)))
 		var argType uint32
-		for cell := Cdr(thing); NotNilP(cell); cell = Cdr(cell) {
+		var returnType uint32 = AnyType
+		for cell := Cdr(args); NotNilP(cell); cell = Cdr(cell) {
+			if SymbolP(Car(cell)) && StringValue(Car(cell)) == "->" {
+				if NilP(Cdr(cell)) {
+					err = ProcessError("typeDef expected a symbol name to follow ->", env)
+					return
+				}
+				returnType, err = typeSpecToTypeMask(StringValue(Cadr(cell)), env)
+				if err != nil {
+					return
+				}
+				break
+			}
 			argType, err = typeSpecToTypeMask(StringValue(Car(cell)), env)
 			if err != nil {
 				return
 			}
 			argTypes = append(argTypes, argType)
-		}
-		var returnType uint32 = AnyType
-		if StringValue(Second(args)) == "->" {
-			returnType, err = typeSpecToTypeMask(StringValue(Third(args)), env)
-			if err != nil {
-				return
-			}
 		}
 		AddTypesForFunction(functionName, argTypes, returnType)
 	}
@@ -587,19 +592,18 @@ func DefinitionOfImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 }
 
 func DocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var name *Data = nil
-	if SymbolP(Car(args)) {
-		name = Car(args)
-	} else {
-		name = Intern("anonymous")
+	var name *Data = First(args)
+	if !SymbolP(name) {
+		err = ProcessError(fmt.Sprintf("doc requires a symbol naming a function, but received %s.", String(name)), env)
+		return
 	}
 
-	f, err := Eval(Car(args), env)
+	f, err := Eval(name, env)
 	if err != nil {
 		return
 	}
 	if !FunctionP(f) {
-		err = ProcessError(fmt.Sprintf("doc requires a function argument, but received a %s.", TypeName(TypeOf(f))), env)
+		err = ProcessError(fmt.Sprintf("doc requires a function argument, but received %s.", String(f)), env)
 		return
 	}
 
@@ -609,4 +613,27 @@ func DocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	} else {
 		return StringWithValue(function.DocString), nil
 	}
+}
+
+func TypeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	var name *Data = First(args)
+	if !SymbolP(name) {
+		err = ProcessError(fmt.Sprintf("type requires a symbol naming a function, but received %s.", String(name)), env)
+		return
+	}
+
+	f, err := Eval(name, env)
+	if err != nil {
+		return
+	}
+	if !FunctionP(f) {
+		err = ProcessError(fmt.Sprintf("type requires a function argument, but received %s.", String(f)), env)
+		return
+	}
+
+	function := FunctionValue(f)
+	if function.TypeSignature != nil {
+		result = function.MakeTypeSpec()
+	}
+	return
 }
