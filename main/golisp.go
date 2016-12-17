@@ -7,9 +7,9 @@
 package main
 
 import (
+	. "bitbucket.org/dastels/golisp"
 	"flag"
 	"fmt"
-	. "github.com/dastels/golisp"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,6 +20,7 @@ var (
 	verboseTests bool   = false
 	runRepl      bool   = false
 	definition   string = ""
+	codeToEval   string = ""
 )
 
 func test() {
@@ -30,7 +31,7 @@ func test() {
 	}
 	testName := flag.Arg(0)
 
-	if strings.HasSuffix(testName, ".scm") || strings.HasSuffix(testName, ".lsp") {
+	if strings.HasSuffix(testName, ".scm") {
 		testFunction = "run-test"
 	} else {
 		testFunction = "run-all-tests"
@@ -71,7 +72,8 @@ func main() {
 	flag.BoolVar(&runRepl, "r", false, "Whether to run the repl after loading golisp code.  Defaults to false.")
 	flag.BoolVar(&runTests, "t", false, "Whether to run tests and exit.  Defaults to false.")
 	flag.BoolVar(&verboseTests, "v", false, "Whether tests should be verbose.  Defaults to false.")
-	flag.StringVar(&definition, "d", "", "symbol=value, where value is a lisp value. Adds thos binding to the global environment before loading any code.")
+	flag.StringVar(&definition, "d", "", "symbol=value, where value is a lisp value. Adds this binding to the global environment before loading any code.")
+	flag.StringVar(&codeToEval, "e", "", "Code that should be evaluated after all files are loaded. This will be done instead of using a main, if any. It will also be done before entering the REPL.")
 	flag.Parse()
 
 	if definition != "" {
@@ -85,7 +87,6 @@ func main() {
 		Global.BindTo(sym, val)
 	}
 
-	fmt.Printf("Loading the lisp directory\n")
 	walkErr := filepath.Walk(os.ExpandEnv("$GOLISPHOME/lisp"), walkFunc)
 	if walkErr != nil {
 		fmt.Printf("Error loading code\n")
@@ -97,7 +98,7 @@ func main() {
 	} else {
 		var programArgs []string
 		for i := 0; i < flag.NArg(); i = i + 1 {
-			if flag.Arg(i) == "--" {
+			if flag.Arg(i) == "-" {
 				programArgs = flag.Args()[i+1:]
 				break
 			} else {
@@ -133,11 +134,20 @@ func main() {
 			}
 		}
 
+		if codeToEval != "" {
+			result, err := ParseAndEval(codeToEval)
+			if err != nil {
+				fmt.Printf("Error: %s\n", err)
+			} else {
+				fmt.Printf("==> %s\n", String(result))
+			}
+		}
+
 		mainValue := Global.ValueOf(Intern("main"))
 
-		if runRepl || !FunctionP(mainValue) {
+		if runRepl || !(FunctionP(mainValue) || codeToEval != "") {
 			Repl()
-		} else {
+		} else if codeToEval == "" {
 			println("Calling main")
 			args := make([]*Data, 0, len(flag.Args()))
 			for _, arg := range programArgs {
