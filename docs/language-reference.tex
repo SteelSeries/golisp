@@ -400,7 +400,7 @@ similar to:
 
 
 \begin{verbatim}
-> (typedef (less-than number number))
+> (typedef less-than number number)
 > (define (less-than x y) (\textless{} x y))
 > (less-than 1 4.3)
 ==> #t
@@ -414,7 +414,7 @@ A type specification can also include a type specification of the result of the 
 that the \verb|->| is required. If a return type is not provided, \verb|anytype| is the default.
 
 \begin{verbatim}
-> (typedef (less-than number number) -> boolean)
+> (typedef less-than number number -> boolean)
 > (define (less-than x y) (if (< x y) 'yes 'no))
 > (less-than 1 4.3)
 Error in evaluation: 
@@ -451,18 +451,23 @@ Note that the \emph{list} type just requires a ConsCell; if a proper list or oth
 type is required, then either \verb|http://daveastels.typed.com/blog/code-contracts-in-golisp|
 pre-conditions or explicit tests will be needed.
 
-\subsubsection{( \emph{func})}
- 
-This retrieves the type signature for the function \emph{func}.
-
-
 Putting all this together, a complete definition of a function would look like:
 
 \begin{verbatim}
-(typedef (inc number) -> number)
+(typedef inc number -> number)
 (define (inc x) 
   "Increment the argument." 
   (+ x 1))
+\end{verbatim}
+
+\subsubsection{(type \emph{func})}
+ 
+This retrieves the type signature for the function \emph{func}.
+
+\begin{verbatim}
+(type inc)
+==> (number -> number)
+
 \end{verbatim}
 
 \subsection{Top-Level Definitions}\label{sec:top-level-definitions}
