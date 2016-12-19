@@ -5,13 +5,13 @@
 
          ()
 
-         (it "frame-rendering"
-             (assert-eq (str (make-frame a: 1))
-                        "{a: 1}")
-             (assert-error (make-frame a: 1 b:)) ;must have an even number of args
-             (assert-error (make-frame a: 1 'a 2)) ;keys must be naked symbols
-             (assert-error (make-frame a: 1 "b" 2)) ;keys must be naked symbols
-             (assert-error (make-frame a: 1 3 2))) ;keys must be naked symbols
+         ;; (it "frame-rendering"
+         ;;     (assert-eq (str (make-frame a: 1))
+         ;;                "{a: 1}")
+         ;;     (assert-error (make-frame a: 1 b:)) ;must have an even number of args
+         ;;     (assert-error (make-frame a: 1 'a 2)) ;keys must be naked symbols
+         ;;     (assert-error (make-frame a: 1 "b" 2)) ;keys must be naked symbols
+         ;;     (assert-error (make-frame a: 1 3 2))) ;keys must be naked symbols
 
          (it "naked-symbols"
              (assert-eq a:

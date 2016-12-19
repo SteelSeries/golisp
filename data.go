@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"gopkg.in/fatih/set.v0"
 	"os"
-	"sort"
+	//	"sort"
 	"strings"
 	"unsafe"
 )
@@ -1208,19 +1208,20 @@ func String(d *Data) string {
 			return fmt.Sprintf("<opaque Go object of type %s : 0x%x>", ObjectType(d), (*uint64)(ObjectValue(d)))
 		}
 	case FrameType:
-		keys := make([]string, 0, len(*FrameValue(d)))
-		for key, _ := range *FrameValue(d) {
-			keys = append(keys, key)
-		}
-		sort.Strings(keys)
+		return LispWithFramesToJsonString(d)
+		// keys := make([]string, 0, len(*FrameValue(d)))
+		// for key, _ := range *FrameValue(d) {
+		// 	keys = append(keys, key)
+		// }
+		// sort.Strings(keys)
 
-		pairs := make([]string, 0, len(*FrameValue(d)))
-		for _, key := range keys {
-			val := (*FrameValue(d))[key]
-			var valString string = String(val)
-			pairs = append(pairs, fmt.Sprintf("%s %s", key, valString))
-		}
-		return fmt.Sprintf("{%s}", strings.Join(pairs, " "))
+		// pairs := make([]string, 0, len(*FrameValue(d)))
+		// for _, key := range keys {
+		// 	val := (*FrameValue(d))[key]
+		// 	var valString string = String(val)
+		// 	pairs = append(pairs, fmt.Sprintf("%s %s", key, valString))
+		// }
+		// return fmt.Sprintf("{%s}", strings.Join(pairs, " "))
 	case EnvironmentType:
 		return fmt.Sprintf("<environment: %s>", EnvironmentValue(d).Name)
 	case PortType:
