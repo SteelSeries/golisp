@@ -125,13 +125,20 @@ func TypeName(t uint8) string {
 	}
 }
 
+// Function has heavy traffic, try to keep it fast
 func NilP(d *Data) bool {
 	if d == nil {
 		return true
 	}
-	if (PairP(d) || AlistP(d) || DottedPairP(d)) && Car(d) == nil && Cdr(d) == nil {
-		return true
+
+	if d.Type == ConsCellType || d.Type == AlistType || d.Type == AlistCellType {
+		cell := (*ConsCell)(d.Value)
+
+		if cell == nil || (cell.Car == nil && cell.Cdr == nil) {
+			return true
+		}
 	}
+
 	return false
 }
 
@@ -415,13 +422,15 @@ func ConsValue(d *Data) *ConsCell {
 	return nil
 }
 
+// Function has heavy traffic, try to keep it fast
 func Car(d *Data) *Data {
 	if d == nil {
 		return nil
 	}
 
-	if PairP(d) || AlistP(d) || DottedPairP(d) {
-		cell := ConsValue(d)
+	if d.Type == ConsCellType || d.Type == AlistType || d.Type == AlistCellType {
+		cell := (*ConsCell)(d.Value)
+
 		if cell != nil {
 			return cell.Car
 		}
@@ -430,13 +439,15 @@ func Car(d *Data) *Data {
 	return nil
 }
 
+// Function has heavy traffic, try to keep it fast
 func Cdr(d *Data) *Data {
 	if d == nil {
 		return nil
 	}
 
-	if PairP(d) || AlistP(d) || DottedPairP(d) {
-		cell := ConsValue(d)
+	if d.Type == ConsCellType || d.Type == AlistType || d.Type == AlistCellType {
+		cell := (*ConsCell)(d.Value)
+
 		if cell != nil {
 			return cell.Cdr
 		}
@@ -609,13 +620,23 @@ func PortValue(d *Data) *os.File {
 	return nil
 }
 
+// Function has heavy traffic, try to keep it fast, at least for the list/bytearray cases
 func Length(d *Data) int {
-	if NilP(d) {
+	if d == nil {
 		return 0
 	}
 
-	if ListP(d) || AlistP(d) {
-		return 1 + Length(Cdr(d))
+	if d.Type == ConsCellType || d.Type == AlistType {
+		l := 0
+		for c := d; NotNilP(c); c = Cdr(c) {
+			l += 1
+		}
+		return l
+	}
+
+	if d.Type == BoxedObjectType && ((*BoxedObject)(d.Value)).ObjType == "[]byte" {
+		dBytes := *(*[]byte)(((*BoxedObject)(d.Value)).Obj)
+		return len(dBytes)
 	}
 
 	if FrameP(d) {
@@ -624,11 +645,6 @@ func Length(d *Data) int {
 		length := len(frame.Data)
 		frame.Mutex.RUnlock()
 		return length
-	}
-
-	if ObjectP(d) && ObjectType(d) == "[]byte" {
-		dBytes := *(*[]byte)(ObjectValue(d))
-		return len(dBytes)
 	}
 
 	return 0
