@@ -12,31 +12,38 @@ import (
 )
 
 func RegisterTimePrimitives() {
-	MakePrimitiveFunction("clock", "0", ClockImpl)
-	MakePrimitiveFunction("seconds", "0", SecondsImpl)
-	MakePrimitiveFunction("date", "0", DateImpl)
-	MakePrimitiveFunction("weekday", "0", WeekdayImpl)
+	MakePrimitiveFunction("time-now", "0", timeNowImpl)
+	MakePrimitiveFunction("seconds", "0", secondsImpl)
+	MakePrimitiveFunction("date-today", "0", dateTodayImpl)
+	MakeTypedPrimitiveFunction("date-in-days", "1", dateInDaysImpl, []uint32{IntegerType})
+	MakePrimitiveFunction("day-of-week", "0", dayOfWeekImpl)
 }
 
-func ClockImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func timeNowImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	h, m, s := time.Now().Local().Clock()
 	result = InternalMakeList(IntegerWithValue(int64(h)), IntegerWithValue(int64(m)), IntegerWithValue(int64(s)))
 	return
 }
 
-func SecondsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func secondsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	h, m, s := time.Now().Local().Clock()
 	result = IntegerWithValue(int64((h * 3600) + (m * 60) + s))
 	return
 }
 
-func DateImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func dateTodayImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	y, m, d := time.Now().Local().Date()
 	result = InternalMakeList(IntegerWithValue(int64(y)), IntegerWithValue(int64(m)), IntegerWithValue(int64(d)))
 	return
 }
 
-func WeekdayImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func dateInDaysImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	y, m, d := time.Now().AddDate(0, 0, int(IntegerValue(First(args)))).Local().Date()
+	result = InternalMakeList(IntegerWithValue(int64(y)), IntegerWithValue(int64(m)), IntegerWithValue(int64(d)))
+	return
+}
+
+func dayOfWeekImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	result = IntegerWithValue(int64(time.Now().Local().Weekday()))
 	return
 }
