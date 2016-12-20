@@ -19,6 +19,8 @@ func RegisterTimePrimitives() {
 	MakePrimitiveFunction("day-of-week", "0", dayOfWeekImpl)
 }
 
+var weekdays = [7]string{"sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"}
+
 func timeNowImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	h, m, s := time.Now().Local().Clock()
 	result = InternalMakeList(IntegerWithValue(int64(h)), IntegerWithValue(int64(m)), IntegerWithValue(int64(s)))
@@ -44,6 +46,7 @@ func dateInDaysImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 }
 
 func dayOfWeekImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	result = IntegerWithValue(int64(time.Now().Local().Weekday()))
+	d := time.Now().Local().Weekday()
+	result = Intern(weekdays[d])
 	return
 }

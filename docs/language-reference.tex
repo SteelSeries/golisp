@@ -4821,6 +4821,65 @@ Trying to write to a closed channel or trying to close a channel twice results i
 > (channel-try-read c) ⇒ (#t () #f)
 \end{verbatim}
 
+\section{Time and Date}
+\label{sec:time-date}
+
+All of these date and time function use the local time.
+
+\subsubsection{(time-now)}
+\label{sec:time-now}
+
+Return the current local time as a list of the form \verb|(hour minute second)|.
+
+\begin{verbatim}
+(time-now) ⇒ (19 53 50)
+\end{verbatim}
+
+\subsubsection{(seconds)}
+\label{sec:seconds}
+
+Returns the number of seconds since midnight on the current day.
+
+\begin{verbatim}
+(seconds) ⇒ 71644
+\end{verbatim}
+
+\subsubsection{(millis)}
+\label{sec:seconds}
+
+Returns the number of milliseconds since midnight on the current day.
+
+\begin{verbatim}
+(millis) ⇒ 71646935
+\end{verbatim}
+
+\subsubsection{(date-today)}
+\label{sec:date-today}
+
+Return today's date as a list of the form \verb|(year month day)|.
+
+\begin{verbatim}
+(date-today) ⇒ (2016 12 19)
+\end{verbatim}
+
+\subsubsection{(date-in-days _days_)}
+\label{sec:date-in-days}
+
+Return the date in _days_ days from today as a list of the form \verb|(year month day)|.
+
+\begin{verbatim}
+(date-in-days 3) ⇒ (2016 12 22)
+\end{verbatim}
+
+\subsubsection{(day-of-week)}
+\label{sec:day-of-week}
+
+Returns a symbol representing the current day of the week.
+
+\begin{verbatim}
+(day-of-week) ⇒ monday
+\end{verbatim}
+
 \section{Timers}\label{sec:timers}
 
 \subsubsection{(timer \emph{millis} \emph{func})}
