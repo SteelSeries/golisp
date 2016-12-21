@@ -31,8 +31,6 @@ src/gopkg.in/fatih/set.v0/
 
 *.log
 
-*.pdf
-
 *.toc
 
 *.bbl
