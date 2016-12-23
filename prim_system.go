@@ -37,6 +37,9 @@ func RegisterSystemPrimitives() {
 	MakePrimitiveFunction("panic!", "1", PanicImpl)
 	MakePrimitiveFunction("error", "1", ErrorImpl)
 	MakeTypedPrimitiveFunction("exec", ">=1", ExecImpl, []uint32{StringType, AnyType})
+	MakeTypedPrimitiveFunction("get-env", "1", getEnvImpl, []uint32{StringType | SymbolType})
+	MakeTypedPrimitiveFunction("set-env", "2", setEnvImpl, []uint32{StringType | SymbolType, StringType | SymbolType})
+	MakeTypedPrimitiveFunction("unset-env", "1", setEnvImpl, []uint32{StringType | SymbolType})
 	MakeSpecialForm("on-error", "2|3", OnErrorImpl)
 	MakeSpecialForm("time", "1", TimeImpl)
 	MakeSpecialForm("profile", "1|2", ProfileImpl)
@@ -266,5 +269,20 @@ func ExecImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		cmd = exec.Command(cmdString)
 	}
 	err = cmd.Start()
+	return
+}
+
+func getEnvImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	result = StringWithValue(os.Getenv(StringValue(First(args))))
+	return
+}
+
+func setEnvImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	err = os.Setenv(StringValue(First(args)), StringValue(Second(args)))
+	return
+}
+
+func unsetEnvImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	err = os.Unsetenv(StringValue(First(args)))
 	return
 }
