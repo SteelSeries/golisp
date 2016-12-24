@@ -164,7 +164,7 @@ func (self *Function) makeLocalBindings(args *Data, argEnv *SymbolTableFrame, lo
 			argValue = Car(a)
 		}
 
-		if self.TypeSignature != nil && self.TypeSignature.ArgumentTypes[i]&TypeOf(argValue) == 0 {
+		if self.TypeSignature != nil && NotNilP(argValue) && self.TypeSignature.ArgumentTypes[i]&TypeOf(argValue) == 0 {
 			return errors.New(fmt.Sprintf("%s argument %d has the wrong type, expected %s but was given %s", self.Name, i, typeNameFor(self.TypeSignature.ArgumentTypes[i], " or "), typeNameFor(TypeOf(argValue), " or ")))
 		}
 
