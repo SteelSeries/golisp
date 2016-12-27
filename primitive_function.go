@@ -79,7 +79,7 @@ func (self *PrimitiveFunction) checkArgumentTypes(args []*Data) int {
 		numberOfArgs := len(args)
 		numberOfTypesLimit := len(self.ArgTypes) - 1
 		for argIndex, typeIndex := 0, 0; argIndex < numberOfArgs; argIndex, typeIndex = argIndex+1, nextTypeIndex(typeIndex, numberOfTypesLimit) {
-			if (TypeOf(args[argIndex]) & self.ArgTypes[typeIndex]) == 0 {
+			if args[argIndex] != nil && (TypeOf(args[argIndex])&self.ArgTypes[typeIndex]) == 0 {
 				return argIndex
 			}
 		}
