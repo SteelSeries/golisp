@@ -826,6 +826,7 @@ func doAssoc(comparator func(d *Data, o *Data) bool, key *Data, alist *Data) (re
 			return
 		}
 	}
+	result = LispFalse
 	return
 }
 
