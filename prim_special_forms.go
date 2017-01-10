@@ -342,7 +342,7 @@ func namedLetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		err = ProcessError("A named let requires a list of bindings as it's second argument", env)
 		return
 	}
-	body := Third(args)
+	body := Cddr(args)
 
 	vars := make([]*Data, 0, Length(bindings))
 	initials := make([]*Data, 0, Length(bindings))
