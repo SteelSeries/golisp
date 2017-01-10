@@ -336,18 +336,14 @@ func LetCommon(args *Data, env *SymbolTableFrame, star bool, rec bool) (result *
 }
 
 func namedLetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	name := Car(args)
-	if !SymbolP(name) {
-		err = ProcessError("A named let requires a symbol name as its first argument", env)
-		return
-	}
-
-	bindings := Cadr(args)
+	name := First(args)
+	bindings := Second(args)
 	if !ListP(bindings) {
 		err = ProcessError("A named let requires a list of bindings as it's second argument", env)
 		return
 	}
-	body := Cddr(args)
+	body := Third(args)
+
 	vars := make([]*Data, 0, Length(bindings))
 	initials := make([]*Data, 0, Length(bindings))
 	for remainingBindings := bindings; NotNilP(remainingBindings); remainingBindings = Cdr(remainingBindings) {
