@@ -25,7 +25,7 @@ func RegisterFramePrimitives() {
 	MakeTypedPrimitiveFunction("apply-slot-super", ">=2", ApplySlotSuperImpl, []uint32{SymbolType, AnyType})
 	MakeTypedPrimitiveFunction("clone", "1", CloneImpl, []uint32{FrameType})
 	MakeTypedPrimitiveFunction("json->lisp", "1", JsonToLispImpl, []uint32{StringType})
-	MakeTypedPrimitiveFunction("lisp->json", "1", LispToJsonImpl, []uint32{FrameType})
+	MakeTypedPrimitiveFunction("lisp->json", "1", LispToJsonImpl, []uint32{NilType | FrameType | ConsCellType | IntegerType | FloatType | StringType | SymbolType | BooleanType})
 	MakeTypedPrimitiveFunction("frame-keys", "1", FrameKeysImpl, []uint32{FrameType})
 	MakeTypedPrimitiveFunction("frame-values", "1", FrameValuesImpl, []uint32{FrameType})
 	MakeTypedPrimitiveFunction("frame-length", "1", FrameLengthImpl, []uint32{FrameType})
