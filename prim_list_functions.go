@@ -402,7 +402,7 @@ func FindTailImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
 	l := Second(args)
 	if !ListP(l) {
-		err = ProcessError(fmt.Sprintf("find-tail needs a proper list as its second argument, but got %s.", String(l)), env)
+		err = ProcessError(fmt.Sprintf("memp/find-tail needs a proper list as its second argument, but got %s.", String(l)), env)
 		return
 	}
 
@@ -411,7 +411,7 @@ func FindTailImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		found, err = ApplyWithoutEval(f, InternalMakeList(Car(c)), env)
 
 		if !BooleanP(found) {
-			err = ProcessError("find-tail needs a predicate function as its first argument.", env)
+			err = ProcessError("memp/find-tail needs a predicate function as its first argument.", env)
 			return
 		}
 		if BooleanValue(found) {
