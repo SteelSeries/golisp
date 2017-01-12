@@ -10,14 +10,14 @@ package golisp
 import ()
 
 func RegisterAListPrimitives() {
-	MakeTypedPrimitiveFunction("acons", "2|3", AconsImpl, []uint32{AnyType &^ ConsCellType, AnyType, ConsCellType})
+	MakeTypedPrimitiveFunction("acons", "2|3", AconsImpl, []uint32{AnyType, AnyType, ConsCellType})
 	MakeTypedPrimitiveFunction("pairlis", "2|3", PairlisImpl, []uint32{ConsCellType, ConsCellType, ConsCellType})
-	MakeTypedPrimitiveFunction("assq", "2", AssqImpl, []uint32{AnyType &^ ConsCellType, ConsCellType})
-	MakeTypedPrimitiveFunction("assv", "2", AssvImpl, []uint32{AnyType &^ ConsCellType, ConsCellType})
-	MakeTypedPrimitiveFunction("assoc", "2", AssocImpl, []uint32{AnyType &^ ConsCellType, ConsCellType})
-	MakeTypedPrimitiveFunction("dissq", "2", DissqImpl, []uint32{AnyType &^ ConsCellType, ConsCellType})
-	MakeTypedPrimitiveFunction("dissv", "2", DissvImpl, []uint32{AnyType &^ ConsCellType, ConsCellType})
-	MakeTypedPrimitiveFunction("dissoc", "2", DissocImpl, []uint32{AnyType &^ ConsCellType, ConsCellType})
+	MakeTypedPrimitiveFunction("assq", "2", AssqImpl, []uint32{AnyType, ConsCellType})
+	MakeTypedPrimitiveFunction("assv", "2", AssvImpl, []uint32{AnyType, ConsCellType})
+	MakeTypedPrimitiveFunction("assoc", "2", AssocImpl, []uint32{AnyType, ConsCellType})
+	MakeTypedPrimitiveFunction("dissq", "2", DissqImpl, []uint32{AnyType, ConsCellType})
+	MakeTypedPrimitiveFunction("dissv", "2", DissvImpl, []uint32{AnyType, ConsCellType})
+	MakeTypedPrimitiveFunction("dissoc", "2", DissocImpl, []uint32{AnyType, ConsCellType})
 	MakeTypedPrimitiveFunction("rassoc", "2", RassocImpl, []uint32{AnyType, ConsCellType})
 }
 
