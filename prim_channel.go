@@ -34,7 +34,7 @@ func MakeChannelImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 	if Length(args) == 1 {
 		lengthObj := Car(args)
 		if !IntegerP(lengthObj) {
-			err = ProcessError(fmt.Sprintf("make-channel expects an Integer as its second argument but received %s.", TypeName(TypeOf(lengthObj))), env)
+			err = ProcessError(fmt.Sprintf("make-channel expects an integer size as its argument but received %s.", TypeName(TypeOf(lengthObj))), env)
 			return
 		}
 
