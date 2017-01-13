@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"gopkg.in/fatih/set.v0"
 	"os"
-	//	"sort"
+	"math"
 	"strings"
 	"unsafe"
 )
@@ -992,7 +992,7 @@ func IsEq(d *Data, o *Data) bool {
 }
 
 func IsEqual(d *Data, o *Data) bool {
-	if d == o {
+	if d == o && !FloatP(d) {
 		return true
 	}
 
@@ -1155,6 +1155,17 @@ func String(d *Data) string {
 		return fmt.Sprintf("%d", IntegerValue(d))
 	case FloatType:
 		{
+			v := FloatValue(d)
+			if math.IsInf(float64(v), 0) {
+				sign := "+"
+				if math.Signbit(float64(v)) {
+					sign = "-"
+				}
+				return fmt.Sprintf("%sinf", sign)
+			}
+			if math.IsNaN(float64(v)) {
+				return "nan"
+			}
 			raw := fmt.Sprintf("%g", FloatValue(d))
 			if strings.ContainsRune(raw, '.') {
 				return raw
