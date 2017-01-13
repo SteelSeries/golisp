@@ -25,6 +25,7 @@ type SymbolTableFrame struct {
 	Previous    *SymbolTableFrame
 	Frame       *FrameMap
 	Bindings    map[string]*Binding
+	Mutex        sync.RWMutex
 	CurrentCode *list.List
 }
 
@@ -83,12 +84,14 @@ func (self *SymbolTableFrame) CurrentCodeString() string {
 
 func (self *SymbolTableFrame) InternalDump(frameNumber int) {
 	fmt.Printf("Frame %d: %s\n", frameNumber, self.CurrentCodeString())
+	self.Mutex.RLock()
+	defer self.Mutex.RUnlock()
 	for _, b := range self.Bindings {
 		if b.Val == nil || TypeOf(b.Val) != PrimitiveType {
 			b.Dump()
 		}
 	}
-	fmt.Printf("\n")
+	println("")
 	if self.Previous != nil {
 		self.Previous.InternalDump(frameNumber + 1)
 	}
@@ -102,16 +105,18 @@ func (self *SymbolTableFrame) Dump() {
 func (self *SymbolTableFrame) DumpSingleFrame(frameNumber int) {
 	if frameNumber == 0 {
 		fmt.Printf("%s\n", self.CurrentCodeString())
+		self.Mutex.RLock()
+		defer self.Mutex.RUnlock()
 		for _, b := range self.Bindings {
 			if b.Val == nil || TypeOf(b.Val) != PrimitiveType {
 				b.Dump()
 			}
 		}
-		fmt.Printf("\n")
+		println("")
 	} else if self.Previous != nil {
 		self.Previous.DumpSingleFrame(frameNumber - 1)
 	} else {
-		fmt.Printf("Invalid frame selected.\n")
+		println("Invalid frame selected.")
 	}
 }
 
@@ -165,11 +170,15 @@ func (self *SymbolTableFrame) HasFrame() bool {
 }
 
 func (self *SymbolTableFrame) BindingNamed(name string) (b *Binding, present bool) {
+	self.Mutex.RLock()
+	defer self.Mutex.RUnlock()
 	b, present = self.Bindings[name]
 	return
 }
 
 func (self *SymbolTableFrame) SetBindingAt(name string, b *Binding) {
+	self.Mutex.Lock()
+	defer self.Mutex.Unlock()
 	self.Bindings[name] = b
 }
 
