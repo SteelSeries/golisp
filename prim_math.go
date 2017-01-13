@@ -46,6 +46,79 @@ func RegisterMathPrimitives() {
 	MakeTypedPrimitiveFunction("sign", "1", SignImpl, []uint32{IntegerType | FloatType})
 	MakeTypedPrimitiveFunction("log", "1", LogImpl, []uint32{IntegerType, FloatType})
 	MakeTypedPrimitiveFunction("expt", "2", ExptImpl, []uint32{IntegerType, FloatType})
+
+	makeUnaryFloatFunction("acos", math.Acos)
+	makeUnaryFloatFunction("acosh", math.Acosh)
+	makeUnaryFloatFunction("asin", math.Asin)
+	makeUnaryFloatFunction("asinh", math.Asinh)
+	makeUnaryFloatFunction("atan", math.Atan)
+	makeUnaryFloatFunction("atanh", math.Atanh)
+	makeUnaryFloatFunction("cbrt", math.Cbrt)
+	makeUnaryFloatFunction("cos", math.Cos)
+	makeUnaryFloatFunction("cosh", math.Cosh)
+	makeUnaryFloatFunction("sin", math.Sin)
+	makeUnaryFloatFunction("sinh", math.Sinh)
+	makeUnaryFloatFunction("sqrt", math.Sqrt)
+	makeUnaryFloatFunction("tan", math.Tan)
+	makeUnaryFloatFunction("tanh", math.Tanh)
+
+	MakePrimitiveFunction("inf?", "1", IsInfImpl)
+	MakePrimitiveFunction("nan?", "1", IsNaNImpl)
+
+	Global.BindTo(Intern("pi"), FloatWithValue(math.Pi))
+	Global.BindTo(Intern("e"), FloatWithValue(math.E))
+	Global.BindTo(Intern("phi"), FloatWithValue(math.Phi))
+	Global.BindTo(Intern("sqrt2"), FloatWithValue(math.Sqrt2))
+	Global.BindTo(Intern("sqrte"), FloatWithValue(math.SqrtE))
+	Global.BindTo(Intern("sqrtpi"), FloatWithValue(math.SqrtPi))
+	Global.BindTo(Intern("sqrtphi"), FloatWithValue(math.SqrtPhi))
+	Global.BindTo(Intern("ln2"), FloatWithValue(math.Ln2))
+	Global.BindTo(Intern("log2e"), FloatWithValue(math.Log2E))
+	Global.BindTo(Intern("ln10"), FloatWithValue(math.Ln10))
+	Global.BindTo(Intern("log10e"), FloatWithValue(math.Log10E))
+	Global.BindTo(Intern("nan"), FloatWithValue(math.NaN()))
+	Global.BindTo(Intern("+inf"), FloatWithValue(math.Inf(1)))
+	Global.BindTo(Intern("-inf"), FloatWithValue(math.Inf(-1)))
+}
+
+func makeUnaryFloatFunction(name string, f func(float64) float64) {
+	primFunc := func(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+		valObj := Car(args)
+		if !NumberP(valObj) {
+			err = ProcessError(fmt.Sprintf("%s expects a number as a parameter, got %s", name, String(valObj)), env)
+			return
+		}
+		val := FloatValue(valObj)
+		ret := f(float64(val))
+		return FloatWithValue(ret), nil
+	}
+	MakeTypedPrimitiveFunction(name, "1", primFunc, []uint32{IntegerType | FloatType})
+}
+
+func IsInfImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	val := Car(args)
+	if !NumberP(val) {
+			err = ProcessError(fmt.Sprintf("inf? expected a nunber, received %s", String(val)), env)
+			return
+	}
+	if FloatP(val) {
+		return BooleanWithValue(math.IsInf(float64(FloatValue(val)), 0)), nil
+	} else {
+		return BooleanWithValue(false), nil
+	}
+}
+
+func IsNaNImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	val := Car(args)
+	if !NumberP(val) {
+		err = ProcessError(fmt.Sprintf("nan? expected a nunber, received %s", String(val)), env)
+		return
+	}
+	if FloatP(val) {
+		return BooleanWithValue(math.IsNaN(float64(FloatValue(val)))), nil
+	} else {
+		return BooleanWithValue(false), nil
+	}
 }
 
 func sgn(a float64) int64 {
