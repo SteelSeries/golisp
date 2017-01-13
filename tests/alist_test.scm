@@ -18,10 +18,7 @@
          
          (it "prepends the new pair"
              (assert-eq (acons 'a 5 '((a . 1) (b . 2) (c . 3)))
-                        '((a . 5) (a . 1) (b . 2) (c . 3))))
-
-         (it "raises an error if the key is a list"
-             (assert-error (acons '(1 2) 1 '()))))
+                        '((a . 5) (a . 1) (b . 2) (c . 3)))))
 
 (context "pairlis"
 
@@ -66,9 +63,9 @@
              (assert-eq (assoc 'b '((a . 1) (b . 2) (b . 3)))
                         '(b . 2)))
          
-         (it "returns an empty pair if given a key that isn't in the alist"
+         (it "returns #f if given a key that isn't in the alist"
              (assert-eq (assoc 'c '((a . 1) (b . 2)))
-                        '()))
+                        #f))
 
          (it "raises an error if given a non-alist to search"
              (assert-error (assoc 'a '(a (b . 2))))))
