@@ -482,7 +482,7 @@ func Car(d *Data) *Data {
 	}
 
 	if TypeOf(d) == ConsCellType {
-		cell := ConsValue(d)
+		cell := (*ConsCell)(d.Value)
 		if cell != nil {
 			return cell.Car
 		}
@@ -497,7 +497,7 @@ func Cdr(d *Data) *Data {
 	}
 
 	if TypeOf(d) == ConsCellType {
-		cell := ConsValue(d)
+		cell := (*ConsCell)(d.Value)
 		if cell != nil {
 			return cell.Cdr
 		}
@@ -715,11 +715,12 @@ func Length(d *Data) int {
 		return l
 	}
 
-	if VectorP(d) {
+
+	if d.Type == VectorType {
 		return len(VectorValue(d))
 	}
 
-	if FrameP(d) {
+	if d.Type == FrameType {
 		return len(*FrameValue(d))
 	}
 
@@ -1139,7 +1140,7 @@ func String(d *Data) string {
 			if NilP(c) {
 				if SymbolP(Car(d)) && StringValue(Car(d)) == "quote" {
 					if len(contents) == 1 {
-						return fmt.Sprintf("'()")
+						return "'()"
 					} else {
 						return fmt.Sprintf("'%s", contents[1])
 					}
