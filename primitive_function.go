@@ -105,7 +105,7 @@ func (self *PrimitiveFunction) argTypesFor(argIndex int) uint32 {
 	}
 }
 
-func (self *PrimitiveFunction) Apply(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func (self *PrimitiveFunction) internalApply(args *Data, env *SymbolTableFrame, shouldEval bool) (result *Data, err error) {
 	if !self.checkArgumentCount(Length(args)) {
 		err = fmt.Errorf("Wrong number of args to %s, expected %s but got %d.", self.Name, self.NumberOfArgs, Length(args))
 		return
@@ -114,7 +114,7 @@ func (self *PrimitiveFunction) Apply(args *Data, env *SymbolTableFrame) (result 
 	argArray := make([]*Data, 0)
 	var argValue *Data
 	for a := args; NotNilP(a); a = Cdr(a) {
-		if self.Special {
+		if self.Special || !shouldEval {
 			argValue = Car(a)
 		} else {
 			argValue, err = Eval(Car(a), env)
@@ -148,10 +148,10 @@ func (self *PrimitiveFunction) Apply(args *Data, env *SymbolTableFrame) (result 
 	return
 }
 
+func (self *PrimitiveFunction) Apply(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return self.internalApply(args, env, true)
+}
+
 func (self *PrimitiveFunction) ApplyWithoutEval(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if self.Special {
-		return self.Apply(args, env)
-	} else {
-		return self.Apply(QuoteAll(args), env)
-	}
+	return self.internalApply(args, env, false)
 }
