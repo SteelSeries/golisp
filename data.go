@@ -11,8 +11,8 @@ import (
 	"errors"
 	"fmt"
 	"gopkg.in/fatih/set.v0"
-	"os"
 	"math"
+	"os"
 	"strings"
 	"unsafe"
 )
@@ -135,6 +135,13 @@ func NilP(d *Data) bool {
 
 func NotNilP(d *Data) bool {
 	return !NilP(d)
+}
+
+func AtomP(d *Data) bool {
+	if d == nil {
+		return true
+	}
+	return (d.Type & (IntegerType | FloatType | BooleanType | StringType | CharacterType | VectorType | BoxedObjectType | FrameType | EnvironmentType | PortType)) != 0
 }
 
 func PairP(d *Data) bool {
@@ -714,7 +721,6 @@ func Length(d *Data) int {
 		}
 		return l
 	}
-
 
 	if d.Type == VectorType {
 		return len(VectorValue(d))
@@ -1387,9 +1393,9 @@ func evalHelper(d *Data, env *SymbolTableFrame, needFunction bool) (result *Data
 	return result, nil
 }
 
-func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return evalHelper(d, env, false)
-}
+// func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
+// 	return evalHelper(d, env, false)
+// }
 
 func formatApply(function *Data, args *Data) string {
 	var fname string
