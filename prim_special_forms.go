@@ -39,8 +39,8 @@ func initTypeMap() {
 }
 
 func RegisterSpecialFormPrimitives() {
-	MakeSpecialForm("cond", "*", CondImpl)
-	MakeSpecialForm("case", ">=1", CaseImpl)
+	//	MakeSpecialForm("cond", "*", CondImpl)
+	//  MakeSpecialForm("case", ">=1", CaseImpl)
 	MakeSpecialForm("lambda", ">=1", LambdaImpl)
 	MakeSpecialForm("named-lambda", ">=1", NamedLambdaImpl)
 	MakeSpecialForm("define", ">=1", DefineImpl)

@@ -24,8 +24,8 @@ func RegisterRelativePrimitives() {
 	MakePrimitiveFunction("/=", "2", NotEqualImpl)
 	MakePrimitiveFunction("!", "1", BooleanNotImpl)
 	MakePrimitiveFunction("not", "1", BooleanNotImpl)
-	MakeSpecialForm("and", "*", BooleanAndImpl)
-	MakeSpecialForm("or", "*", BooleanOrImpl)
+	//	MakeSpecialForm("and", "*", BooleanAndImpl)
+	//	MakeSpecialForm("or", "*", BooleanOrImpl)
 }
 
 func LessThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
