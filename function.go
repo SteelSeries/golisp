@@ -272,3 +272,27 @@ func (self *Function) ApplyOveriddingEnvironment(args *Data, argEnv *SymbolTable
 
 	return
 }
+
+func (self *Function) ExtendEnv(args *Data, argEnv *SymbolTableFrame, frame *FrameMap) (localEnv *SymbolTableFrame, err error) {
+	localEnv = NewSymbolTableFrameBelowWithFrame(self.Env, frame, self.Name)
+	//localEnv.Previous = argEnv
+	selfSym := Intern("self")
+	if frame != nil {
+		localEnv.BindLocallyTo(selfSym, FrameWithValue(frame))
+	} else if self.SlotFunction {
+		selfBinding, found := argEnv.findBindingInLocalFrameFor(selfSym)
+		if found {
+			localEnv.BindLocallyTo(selfSym, selfBinding.Val)
+		}
+	}
+
+	parentProcSym := Intern("parentProcess")
+	if self.ParentProcess != nil {
+		procObj := ObjectWithTypeAndValue("Process", unsafe.Pointer(self.ParentProcess))
+		localEnv.BindLocallyTo(parentProcSym, procObj)
+	}
+
+	err = self.makeLocalBindings(args, argEnv, localEnv, false)
+
+	return
+}

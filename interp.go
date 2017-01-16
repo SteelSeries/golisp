@@ -12,7 +12,11 @@ import (
 )
 
 func Eval(x *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if SymbolP(x) {
+	fmt.Printf("############ ENTERING EVAL ###########\n")
+INTERP:
+	if NilP(x) {
+		result = nil
+	} else if SymbolP(x) {
 		fmt.Printf("Symbol: %s\n", String(x))
 		result = env.ValueOf(x)
 	} else if AtomP(x) {
@@ -25,13 +29,15 @@ func Eval(x *Data, env *SymbolTableFrame) (result *Data, err error) {
 			result = Cadr(x)
 		} else if IsEqv(head, Intern("begin")) {
 			fmt.Printf("begin\n")
-			for cell := Cdr(x); NotNilP(cell); cell = Cdr(cell) {
+			var cell *Data
+			for cell = Cdr(x); NotNilP(Cdr(cell)); cell = Cdr(cell) {
 				result, err = Eval(Car(cell), env)
 				if err != nil {
 					return
 				}
 			}
-			return
+			x = Car(cell)
+			goto INTERP
 		} else if IsEqv(head, Intern("set!")) {
 			fmt.Printf("set!: %s\n", String(Cadr(x)))
 			v, err := Eval(Caddr(x), env)
@@ -46,10 +52,11 @@ func Eval(x *Data, env *SymbolTableFrame) (result *Data, err error) {
 				return nil, err
 			}
 			if BooleanValue(c) {
-				result, err = Eval(Third(x), env)
+				x = Third(x)
 			} else {
-				result, err = Eval(Fourth(x), env)
+				x = Fourth(x)
 			}
+			goto INTERP
 		} else if IsEqv(head, Intern("lambda")) {
 			fmt.Printf("lambda\n")
 			formals := Second(x)
@@ -67,7 +74,6 @@ func Eval(x *Data, env *SymbolTableFrame) (result *Data, err error) {
 			if err != nil {
 				return nil, err
 			}
-			fmt.Printf("%s: %s\n", TypeName(TypeOf(proc)), String(Car(x)))
 			var argList *Data
 			if FunctionP(proc) || (PrimitiveP(proc) && !PrimitiveValue(proc).Special) {
 				args := make([]*Data, 0, Length(x))
@@ -83,12 +89,27 @@ func Eval(x *Data, env *SymbolTableFrame) (result *Data, err error) {
 				argList = Cdr(x)
 			}
 			if MacroP(proc) {
-				expandedMacro, err := MacroValue(proc).Expand(Cdr(x), env)
+				fmt.Printf("macro: %s\n", String(proc))
+				x, err = MacroValue(proc).Expand(Cdr(x), env)
 				if err != nil {
 					return nil, err
 				}
-				result, err = Eval(expandedMacro, env)
+				goto INTERP
+			} else if FunctionP(proc) {
+				fmt.Printf("function: %s\n", String(proc))
+				f := FunctionValue(proc)
+				var fr *FrameMap
+				if f.SlotFunction && env.HasFrame() {
+					fr = env.Frame
+				}
+				env, err = f.ExtendEnv(argList, env, fr)
+				if err != nil {
+					return nil, err
+				}
+				x = Cons(Intern("begin"), f.Body)
+				goto INTERP
 			} else {
+				fmt.Printf("primitive: %s\n", String(proc))
 				result, err = ApplyWithoutEval(proc, argList, env)
 			}
 		}
