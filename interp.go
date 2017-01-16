@@ -9,26 +9,64 @@ package golisp
 
 import (
 	"fmt"
+	"strings"
 )
 
-func Eval(x *Data, env *SymbolTableFrame) (result *Data, err error) {
-	fmt.Printf("############ ENTERING EVAL ###########\n")
+func postProcessShortcuts(d *Data) *Data {
+	symbolObj := Car(d)
+
+	if !SymbolP(symbolObj) {
+		return d
+	}
+
+	pseudoFunction := StringValue(symbolObj)
+
+	switch {
+	// channel shortcuts
+	case strings.HasPrefix(pseudoFunction, "<-"):
+		return AppendBangList(InternalMakeList(Intern("channel-read"), Intern(strings.TrimPrefix(pseudoFunction, "<-"))), Cdr(d))
+	case strings.HasSuffix(pseudoFunction, "<-"):
+		return AppendBangList(InternalMakeList(Intern("channel-write"), Intern(strings.TrimSuffix(pseudoFunction, "<-"))), Cdr(d))
+
+		// frame shortcuts
+	case strings.HasSuffix(pseudoFunction, ":"):
+		return AppendBangList(InternalMakeList(Intern("get-slot"), Cadr(d), Car(d)), Cddr(d))
+	case strings.HasSuffix(pseudoFunction, ":!"):
+		return AppendBangList(InternalMakeList(Intern("set-slot!"), Cadr(d), Intern(strings.TrimSuffix(pseudoFunction, "!")), Caddr(d)), Cdddr(d))
+	case strings.HasSuffix(pseudoFunction, ":?"):
+		return AppendBangList(InternalMakeList(Intern("has-slot?"), Cadr(d), Intern(strings.TrimSuffix(pseudoFunction, "?"))), Cddr(d))
+	case strings.HasSuffix(pseudoFunction, ":>"):
+		return AppendBangList(InternalMakeList(Intern("send"), Cadr(d), Intern(strings.TrimSuffix(pseudoFunction, ">"))), Cddr(d))
+	case strings.HasSuffix(pseudoFunction, ":^"):
+		return AppendBangList(InternalMakeList(Intern("send-super"), Intern(strings.TrimSuffix(pseudoFunction, "^"))), Cdr(d))
+	default:
+		return d
+	}
+}
+
+func evalHelper(x *Data, env *SymbolTableFrame, needFunction bool) (result *Data, err error) {
+	//	fmt.Printf("############ ENTERING EVAL ###########\n")
 INTERP:
 	if NilP(x) {
 		result = nil
 	} else if SymbolP(x) {
-		fmt.Printf("Symbol: %s\n", String(x))
-		result = env.ValueOf(x)
+		//		fmt.Printf("Symbol: %s\n", String(x))
+		if NakedP(x) {
+			result = x
+		} else {
+			result = env.ValueOfWithFunctionSlotCheck(x, needFunction)
+		}
 	} else if AtomP(x) {
-		fmt.Printf("Atom: %s\n", String(x))
+		//		fmt.Printf("Atom: %s\n", String(x))
 		result = x
 	} else {
+		x = postProcessShortcuts(x)
 		head := Car(x)
 		if IsEqv(head, Intern("quote")) {
-			fmt.Printf("quote: %s\n", String(Cadr(x)))
+			//			fmt.Printf("quote: %s\n", String(Cadr(x)))
 			result = Cadr(x)
 		} else if IsEqv(head, Intern("begin")) {
-			fmt.Printf("begin\n")
+			//			fmt.Printf("begin\n")
 			var cell *Data
 			for cell = Cdr(x); NotNilP(Cdr(cell)); cell = Cdr(cell) {
 				result, err = Eval(Car(cell), env)
@@ -39,14 +77,14 @@ INTERP:
 			x = Car(cell)
 			goto INTERP
 		} else if IsEqv(head, Intern("set!")) {
-			fmt.Printf("set!: %s\n", String(Cadr(x)))
+			//			fmt.Printf("set!: %s\n", String(Cadr(x)))
 			v, err := Eval(Caddr(x), env)
 			if err != nil {
 				return nil, err
 			}
 			result = env.BindTo(Cadr(x), v)
 		} else if IsEqv(head, Intern("if")) {
-			fmt.Printf("if\n")
+			//			fmt.Printf("if\n")
 			c, err := Eval(Second(x), env)
 			if err != nil {
 				return nil, err
@@ -58,19 +96,19 @@ INTERP:
 			}
 			goto INTERP
 		} else if IsEqv(head, Intern("lambda")) {
-			fmt.Printf("lambda\n")
-			formals := Second(x)
+			//			fmt.Printf("lambda\n")
+			formals := Cadr(x)
 			if !ListP(formals) && !DottedListP(formals) {
 				err = ProcessError(fmt.Sprintf("lambda requires a parameter list but recieved %s.", String(formals)), env)
 				return
 			}
 			params := formals
-			body := Cdr(x)
+			body := Cddr(x)
 			return FunctionWithNameParamsDocBodyAndParent("unnamed", params, "", body, env), nil
 		} else {
-			fmt.Printf("expression: %s\n", String(x))
+			//			fmt.Printf("expression: %s\n", String(x))
 
-			proc, err := Eval(First(x), env)
+			proc, err := evalHelper(Car(x), env, true)
 			if err != nil {
 				return nil, err
 			}
@@ -89,14 +127,14 @@ INTERP:
 				argList = Cdr(x)
 			}
 			if MacroP(proc) {
-				fmt.Printf("macro: %s\n", String(proc))
+				//				fmt.Printf("macro: %s\n", String(proc))
 				x, err = MacroValue(proc).Expand(Cdr(x), env)
 				if err != nil {
 					return nil, err
 				}
 				goto INTERP
 			} else if FunctionP(proc) {
-				fmt.Printf("function: %s\n", String(proc))
+				//				fmt.Printf("function: %s\n", String(proc))
 				f := FunctionValue(proc)
 				var fr *FrameMap
 				if f.SlotFunction && env.HasFrame() {
@@ -109,20 +147,17 @@ INTERP:
 				x = Cons(Intern("begin"), f.Body)
 				goto INTERP
 			} else {
-				fmt.Printf("primitive: %s\n", String(proc))
+				//				fmt.Printf("primitive: %s\n", String(proc))
 				result, err = ApplyWithoutEval(proc, argList, env)
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 	}
 	return
 }
 
-//func maybeAdd(s string, exps *Data, ifNil *Data) *Data {
-//	if NilP(exps) {
-//		return ifNil
-//	} else if Length(exps) == 1 {
-//		return Car(exps)
-//	} else {
-//		return Cons(Intern(s), exps)
-//	}
-//}
+func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return evalHelper(d, env, false)
+}
