@@ -70,7 +70,7 @@
 
 (defmacro (assert-true sexpr)
   `(let ((actual ,sexpr)
-         (msg (format #f "(assert-true ~A)" ',sexpr)))
+         (msg (format #f "(assert-true ~S)" ',sexpr)))
      (if actual
          (log-pass msg)
          (log-failure msg "expected true, but was false"))))
@@ -78,7 +78,7 @@
 
 (defmacro (assert-false sexpr)
   `(let ((actual ,sexpr)
-         (msg (format #f "(assert-false ~A)" ',sexpr)))
+         (msg (format #f "(assert-false ~S)" ',sexpr)))
      (if (not actual)
          (log-pass msg)
          (log-failure msg "expected false, but was true"))))
@@ -86,7 +86,7 @@
 
 (defmacro (assert-nil sexpr)
   `(let ((actual ,sexpr)
-         (msg (format #f "(assert-null ~A)" ',sexpr)))
+         (msg (format #f "(assert-null ~S)" ',sexpr)))
      (if (nil? actual)
          (log-pass msg)
          (log-failure msg "expected nil, but wasn't"))))
@@ -94,7 +94,7 @@
 
 (defmacro (assert-not-nil sexpr)
   `(let ((actual ,sexpr)
-         (msg (format #f "(assert-not-null ~A)" ',sexpr)))
+         (msg (format #f "(assert-not-null ~S)" ',sexpr)))
      (if (not (nil? actual))
          (log-pass msg)
          (log-failure msg "expected not nil, but was"))))
@@ -103,22 +103,22 @@
 (defmacro (assert-eq sexpr expected-sexpr)
   `(let* ((actual ,sexpr)
           (expected ,expected-sexpr)
-          (msg (format #f "(assert-eq ~A ~A)" ',sexpr ',expected-sexpr)))
+          (msg (format #f "(assert-eq ~S ~S)" ',sexpr ',expected-sexpr)))
      (if (equal? actual expected)
          (log-pass msg)
-         (log-failure msg (format #f "expected ~A, but was ~A" expected actual)))))
+         (log-failure msg (format #f "expected ~S, but was ~S" expected actual)))))
 
 
 (defmacro (assert-neq sexpr expected-sexpr)
   `(let* ((actual ,sexpr)
           (expected ,expected-sexpr)
-          (msg (format #f "(assert-neq ~A ~A)" ',sexpr ',expected-sexpr)))
+          (msg (format #f "(assert-neq ~S ~S)" ',sexpr ',expected-sexpr)))
      (if (not (equal? actual expected))
          (log-pass msg)
-         (log-failure msg (format #f "did not expect ~A, but it was" expected)))))
+         (log-failure msg (format #f "did not expect ~S, but it was" expected)))))
 
 (defmacro (assert-error **sexpr**)
-  `(let ((msg (format #f "(assert-error ~A)" ',**sexpr**)))
+  `(let ((msg (format #f "(assert-error ~S)" ',**sexpr**)))
      (on-error ,**sexpr**
                (lambda (err)
                  (log-pass msg))
@@ -126,7 +126,7 @@
                  (log-failure msg "expected an error, but there wasn't")))))
 
 (defmacro (assert-nerror **sexpr**)
-  `(let ((msg (format #f "(assert-nerror ~A)" ',**sexpr**)))
+  `(let ((msg (format #f "(assert-nerror ~S)" ',**sexpr**)))
      (on-error ,**sexpr**
                (lambda (err)
                  (log-failure msg (format #f "expected no error, but error was ~A" err)))
@@ -136,10 +136,10 @@
 (defmacro (assert-memq sexpr object)
   `(let* ((searched-for ,object)
           (result (memq ,object ,sexpr))
-          (msg (format #f "(assert-memq ~A ~S)" ',sexpr ',object)))
+          (msg (format #f "(assert-memq ~S ~S)" ',sexpr ',object)))
      (if result
          (log-pass msg)
-         (log-failure msg (format #f "expected ~A to contain ~S, but it didn't" ',sexpr searched-for)))))
+         (log-failure msg (format #f "expected ~S to contain ~S, but it didn't" ',sexpr searched-for)))))
 
 (define (dump-summary duration)
   (format #t "~%Ran ~A tests in ~A seconds~%"
@@ -163,7 +163,7 @@
   (reset-testing)
   (set! verbose-tests (not (nil? optionals)))
   (let ((t (time (for-each (lambda (filename)
-                             (when verbose-tests (format #t "Loading: ~A~%" filename))
+                             (when verbose-tests (format #t "~%------~%Loading: ~A~%" filename))
                              (load filename))
                            (list-directory test-dir "*_test.scm")))))
     (dump-summary t)))
