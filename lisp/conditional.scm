@@ -14,7 +14,7 @@
 
 
 (define-macro (unless condition-expr . body)
-  `(if condition-expr
+  `(if ,condition-expr
      nil
      (begin ,@body)))
 
@@ -22,11 +22,13 @@
 (define-macro (cond . clauses)
   (if (nil? clauses)
     nil
-    (if (eqv? (caar clauses) 'else)
-      `(begin ,@(cdar clauses))
-      `(if ,(caar clauses)
-         (begin ,@(cdar clauses))
-         (cond ,@(cdr clauses))))))
+    (if (pair? (car clauses))
+      (if (eqv? (caar clauses) 'else)
+        `(begin ,@(cdar clauses))
+        `(if ,(caar clauses)
+           (begin ,@(cdar clauses))
+           (cond ,@(cdr clauses))))
+      (error "cond clauses must be lists"))))
 
 
 (define-macro (case key . clauses)
