@@ -56,9 +56,9 @@
                (assert-eq (send f foo: 1)
                           6))
              (let ((f {a: 5
-                          b: 2
-                          foo: (lambda (x)
-                                 (set! b (+ x a)))}))
+                             b: 2
+                             foo: (lambda (x)
+                                    (set-slot! self b: (+ x a)))}))
                (assert-eq (send f foo: 1)
                           6)
                (assert-eq (get-slot f b:)
@@ -165,7 +165,7 @@
              (let* ((f {foo: (lambda (x y) (+ x y 3))})
                     (g {parent*: f  foo: (lambda () (+ 1 (apply-slot-super foo: '(1 2))))}))
                (assert-eq (send g foo:) 7))
-             (assert-error (apply-slot-super foo:)))) ;only usable in a frame
+             (assert-error (apply-slot-super foo:))) ;only usable in a frame
 
          (it "calling-super-sugar"
              (let* ((f {foo: (lambda () 42)})
