@@ -50,7 +50,7 @@ func RegisterSpecialFormPrimitives() {
 	MakeSpecialForm("let", ">=1", LetImpl)
 	MakeSpecialForm("let*", ">=1", LetStarImpl)
 	MakeSpecialForm("letrec", ">=1", LetRecImpl)
-	MakeSpecialForm("begin", "*", BeginImpl)
+	//	MakeSpecialForm("begin", "*", BeginImpl)
 	MakeSpecialForm("do", ">=2", DoImpl)
 	MakeSpecialForm("apply", ">=1", ApplyImpl)
 	MakeSpecialForm("->", ">=1", ChainImpl)
