@@ -1265,37 +1265,37 @@ func PrintString(d *Data) string {
 	}
 }
 
-func postProcessShortcuts(d *Data) *Data {
-	symbolObj := Car(d)
+// func postProcessShortcuts(d *Data) *Data {
+// 	symbolObj := Car(d)
 
-	if !SymbolP(symbolObj) {
-		return d
-	}
+// 	if !SymbolP(symbolObj) {
+// 		return d
+// 	}
 
-	pseudoFunction := StringValue(symbolObj)
+// 	pseudoFunction := StringValue(symbolObj)
 
-	switch {
-	// channel shortcuts
-	case strings.HasPrefix(pseudoFunction, "<-"):
-		return AppendBangList(InternalMakeList(Intern("channel-read"), Intern(strings.TrimPrefix(pseudoFunction, "<-"))), Cdr(d))
-	case strings.HasSuffix(pseudoFunction, "<-"):
-		return AppendBangList(InternalMakeList(Intern("channel-write"), Intern(strings.TrimSuffix(pseudoFunction, "<-"))), Cdr(d))
+// 	switch {
+// 	// channel shortcuts
+// 	case strings.HasPrefix(pseudoFunction, "<-"):
+// 		return AppendBangList(InternalMakeList(Intern("channel-read"), Intern(strings.TrimPrefix(pseudoFunction, "<-"))), Cdr(d))
+// 	case strings.HasSuffix(pseudoFunction, "<-"):
+// 		return AppendBangList(InternalMakeList(Intern("channel-write"), Intern(strings.TrimSuffix(pseudoFunction, "<-"))), Cdr(d))
 
-		// frame shortcuts
-	case strings.HasSuffix(pseudoFunction, ":"):
-		return AppendBangList(InternalMakeList(Intern("get-slot"), Cadr(d), Car(d)), Cddr(d))
-	case strings.HasSuffix(pseudoFunction, ":!"):
-		return AppendBangList(InternalMakeList(Intern("set-slot!"), Cadr(d), Intern(strings.TrimSuffix(pseudoFunction, "!")), Caddr(d)), Cdddr(d))
-	case strings.HasSuffix(pseudoFunction, ":?"):
-		return AppendBangList(InternalMakeList(Intern("has-slot?"), Cadr(d), Intern(strings.TrimSuffix(pseudoFunction, "?"))), Cddr(d))
-	case strings.HasSuffix(pseudoFunction, ":>"):
-		return AppendBangList(InternalMakeList(Intern("send"), Cadr(d), Intern(strings.TrimSuffix(pseudoFunction, ">"))), Cddr(d))
-	case strings.HasSuffix(pseudoFunction, ":^"):
-		return AppendBangList(InternalMakeList(Intern("send-super"), Intern(strings.TrimSuffix(pseudoFunction, "^"))), Cdr(d))
-	default:
-		return d
-	}
-}
+// 		// frame shortcuts
+// 	case strings.HasSuffix(pseudoFunction, ":"):
+// 		return AppendBangList(InternalMakeList(Intern("get-slot"), Cadr(d), Car(d)), Cddr(d))
+// 	case strings.HasSuffix(pseudoFunction, ":!"):
+// 		return AppendBangList(InternalMakeList(Intern("set-slot!"), Cadr(d), Intern(strings.TrimSuffix(pseudoFunction, "!")), Caddr(d)), Cdddr(d))
+// 	case strings.HasSuffix(pseudoFunction, ":?"):
+// 		return AppendBangList(InternalMakeList(Intern("has-slot?"), Cadr(d), Intern(strings.TrimSuffix(pseudoFunction, "?"))), Cddr(d))
+// 	case strings.HasSuffix(pseudoFunction, ":>"):
+// 		return AppendBangList(InternalMakeList(Intern("send"), Cadr(d), Intern(strings.TrimSuffix(pseudoFunction, ">"))), Cddr(d))
+// 	case strings.HasSuffix(pseudoFunction, ":^"):
+// 		return AppendBangList(InternalMakeList(Intern("send-super"), Intern(strings.TrimSuffix(pseudoFunction, "^"))), Cdr(d))
+// 	default:
+// 		return d
+// 	}
+// }
 
 func printDashes(indent int) {
 	for i := indent; i > 0; i -= 1 {
@@ -1322,76 +1322,76 @@ func logResult(result *Data, env *SymbolTableFrame) {
 	}
 }
 
-func evalHelper(d *Data, env *SymbolTableFrame, needFunction bool) (result *Data, err error) {
-	if IsInteractive && !DebugEvalInDebugRepl {
-		env.CurrentCode.PushFront(fmt.Sprintf("Eval %s", String(d)))
-	}
+// func evalHelper(d *Data, env *SymbolTableFrame, needFunction bool) (result *Data, err error) {
+// 	if IsInteractive && !DebugEvalInDebugRepl {
+// 		env.CurrentCode.PushFront(fmt.Sprintf("Eval %s", String(d)))
+// 	}
 
-	logEval(d, env)
+// 	logEval(d, env)
 
-	if DebugSingleStep {
-		DebugSingleStep = false
-		DebugRepl(env)
-	}
+// 	if DebugSingleStep {
+// 		DebugSingleStep = false
+// 		DebugRepl(env)
+// 	}
 
-	if DebugCurrentFrame != nil && env == DebugCurrentFrame.Previous {
-		DebugCurrentFrame = nil
-		DebugRepl(env)
-	}
+// 	if DebugCurrentFrame != nil && env == DebugCurrentFrame.Previous {
+// 		DebugCurrentFrame = nil
+// 		DebugRepl(env)
+// 	}
 
-	if d != nil {
-		switch d.Type {
-		case ConsCellType:
-			{
-				d = postProcessShortcuts(d)
+// 	if d != nil {
+// 		switch d.Type {
+// 		case ConsCellType:
+// 			{
+// 				d = postProcessShortcuts(d)
 
-				// catch empty cons cell
-				if NilP(d) {
-					return EmptyCons(), nil
-				}
+// 				// catch empty cons cell
+// 				if NilP(d) {
+// 					return EmptyCons(), nil
+// 				}
 
-				var function *Data
-				function, err = evalHelper(Car(d), env, true)
+// 				var function *Data
+// 				function, err = evalHelper(Car(d), env, true)
 
-				if err != nil {
-					return
-				}
-				if NilP(function) {
-					err = errors.New(fmt.Sprintf("Nil when function or macro expected for %s.", String(Car(d))))
-					return
-				}
+// 				if err != nil {
+// 					return
+// 				}
+// 				if NilP(function) {
+// 					err = errors.New(fmt.Sprintf("Nil when function or macro expected for %s.", String(Car(d))))
+// 					return
+// 				}
 
-				if !DebugSingleStep && TypeOf(function) == FunctionType && DebugOnEntry.Has(FunctionValue(function).Name) {
-					DebugRepl(env)
-				}
+// 				if !DebugSingleStep && TypeOf(function) == FunctionType && DebugOnEntry.Has(FunctionValue(function).Name) {
+// 					DebugRepl(env)
+// 				}
 
-				args := Cdr(d)
+// 				args := Cdr(d)
 
-				result, err = Apply(function, args, env)
-				if err != nil {
-					err = errors.New(fmt.Sprintf("\nEvaling %s. %s", String(d), err))
-					return
-				} else if DebugReturnValue != nil {
-					result = DebugReturnValue
-					DebugReturnValue = nil
-				}
-			}
-		case SymbolType:
-			if NakedP(d) {
-				result = d
-			} else {
-				result = env.ValueOfWithFunctionSlotCheck(d, needFunction)
-			}
-		default:
-			result = d
-		}
-	}
-	logResult(result, env)
-	if IsInteractive && !DebugEvalInDebugRepl && env.CurrentCode.Len() > 0 {
-		env.CurrentCode.Remove(env.CurrentCode.Front())
-	}
-	return result, nil
-}
+// 				result, err = Apply(function, args, env)
+// 				if err != nil {
+// 					err = errors.New(fmt.Sprintf("\nEvaling %s. %s", String(d), err))
+// 					return
+// 				} else if DebugReturnValue != nil {
+// 					result = DebugReturnValue
+// 					DebugReturnValue = nil
+// 				}
+// 			}
+// 		case SymbolType:
+// 			if NakedP(d) {
+// 				result = d
+// 			} else {
+// 				result = env.ValueOfWithFunctionSlotCheck(d, needFunction)
+// 			}
+// 		default:
+// 			result = d
+// 		}
+// 	}
+// 	logResult(result, env)
+// 	if IsInteractive && !DebugEvalInDebugRepl && env.CurrentCode.Len() > 0 {
+// 		env.CurrentCode.Remove(env.CurrentCode.Front())
+// 	}
+// 	return result, nil
+// }
 
 // func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
 // 	return evalHelper(d, env, false)
