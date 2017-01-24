@@ -41,8 +41,6 @@ func initTypeMap() {
 func RegisterSpecialFormPrimitives() {
 	//	MakeSpecialForm("cond", "*", CondImpl)
 	//  MakeSpecialForm("case", ">=1", CaseImpl)
-	MakeSpecialForm("lambda", ">=1", LambdaImpl)
-	MakeSpecialForm("named-lambda", ">=1", NamedLambdaImpl)
 	MakeSpecialForm("define", ">=1", DefineImpl)
 	MakeSpecialForm("typedef", ">=1", TypeDefImpl)
 	MakeSpecialForm("defmacro", ">=1", DefmacroImpl)
@@ -50,7 +48,6 @@ func RegisterSpecialFormPrimitives() {
 	MakeSpecialForm("let", ">=1", LetImpl)
 	MakeSpecialForm("let*", ">=1", LetStarImpl)
 	MakeSpecialForm("letrec", ">=1", LetRecImpl)
-	//	MakeSpecialForm("begin", "*", BeginImpl)
 	MakeSpecialForm("do", ">=2", DoImpl)
 	MakeSpecialForm("apply", ">=1", ApplyImpl)
 	MakeSpecialForm("->", ">=1", ChainImpl)
@@ -137,32 +134,6 @@ func CaseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	return
-}
-
-func LambdaImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	formals := First(args)
-	if !ListP(formals) && !DottedListP(formals) {
-		err = ProcessError(fmt.Sprintf("lambda requires a parameter list but recieved %s.", String(formals)), env)
-		return
-	}
-	params := formals
-	body := Cdr(args)
-	return FunctionWithNameParamsDocBodyAndParent("unnamed", params, "", body, env), nil
-}
-
-func NamedLambdaImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if !ListP(Car(args)) {
-		err = ProcessError("A lambda requires a name/parameter list", env)
-		return
-	}
-	name := Caar(args)
-	if !SymbolP(name) {
-		err = ProcessError("A named lambda requires a name that is a symbol", env)
-		return
-	}
-	params := Cdar(args)
-	body := Cdr(args)
-	return FunctionWithNameParamsDocBodyAndParent(StringValue(name), params, "", body, env), nil
 }
 
 func DefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -379,17 +350,6 @@ func LetStarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func LetRecImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return LetCommon(args, env, false, true)
-}
-
-func BeginImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	for cell := args; NotNilP(cell); cell = Cdr(cell) {
-		sexpr := Car(cell)
-		result, err = Eval(sexpr, env)
-		if err != nil {
-			return
-		}
-	}
-	return
 }
 
 func rebindDoLocals(bindingForms *Data, env *SymbolTableFrame) (err error) {
