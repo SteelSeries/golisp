@@ -112,3 +112,126 @@
 (define del-assq dissq)
 (define del-assv dissv)
 (define del-assoc dissoc)
+
+(define (head l)
+  (car l))
+
+(define (rest l)
+  (cdr l))
+
+(define (tail l)
+  (cdr l))
+
+(define (caar l)
+  (general-car-cdr l #b111))
+
+(define (cadr l)
+  (general-car-cdr l #b110))
+
+(define (cdar l)
+  (general-car-cdr l #b101))
+
+(define (cddr l)
+  (general-car-cdr l #b100))
+
+(define (caaar l)
+  (general-car-cdr l #b1111))
+
+(define (caadr l)
+  (general-car-cdr l #b1110))
+
+(define (cadar l)
+  (general-car-cdr l #b1101))
+
+(define (caddr l)
+  (general-car-cdr l #b1100))
+
+(define (cdaar l)
+  (general-car-cdr l #b1011))
+
+(define (cdadr l)
+  (general-car-cdr l #b1010))
+
+(define (cddar l)
+  (general-car-cdr l #b1001))
+
+(define (cdddr l)
+  (general-car-cdr l #b1000))
+
+(define (caaaar l)
+  (general-car-cdr l #b11111))
+
+(define (caaadr l)
+  (general-car-cdr l #b11110))
+
+(define (caadar l)
+  (general-car-cdr l #b11101))
+
+(define (caaddr l)
+  (general-car-cdr l #b11100))
+
+(define (cadaar l)
+  (general-car-cdr l #b11011))
+
+(define (cadadr l)
+  (general-car-cdr l #b11010))
+
+(define (caddar l)
+  (general-car-cdr l #b11001))
+
+(define (cadddr l)
+  (general-car-cdr l #b11000))
+
+(define (cdaaar l)
+  (general-car-cdr l #b10111))
+
+(define (cdaadr l)
+  (general-car-cdr l #b10110))
+
+(define (cdadar l)
+  (general-car-cdr l #b10101))
+
+(define (cdaddr l)
+  (general-car-cdr l #b10100))
+
+(define (cddaar l)
+  (general-car-cdr l #b10011))
+
+(define (cddadr l)
+  (general-car-cdr l #b10010))
+
+(define (cdddar l)
+  (general-car-cdr l #b10001))
+
+(define (cddddr l)
+  (general-car-cdr l #b10000))
+
+(define (first l)
+  (general-car-cdr l #b11))
+
+(define (second l)
+  (general-car-cdr l #b110))
+
+(define (third l)
+  (general-car-cdr l #b1100))
+
+(define (fourth l)
+  (general-car-cdr l #b11000))
+
+(define (fifth l)
+  (general-car-cdr l #b110000))
+
+(define (sixth l)
+  (general-car-cdr l #b1100000))
+
+(define (seventh l)
+  (general-car-cdr l #b11000000))
+
+(define (eighth l)
+  (general-car-cdr l #b110000000))
+
+(define (ninth l)
+  (general-car-cdr l #b1100000000))
+
+(define (tenth l)
+  (general-car-cdr l #b11000000000))
