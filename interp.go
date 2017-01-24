@@ -105,6 +105,21 @@ INTERP:
 			params := formals
 			body := Cddr(x)
 			return FunctionWithNameParamsDocBodyAndParent("unnamed", params, "", body, env), nil
+		} else if IsEqv(head, Intern("named-lambda")) {
+			//			fmt.Printf("named-lambda\n")
+			formals := Cadr(x)
+			if !ListP(formals) && !DottedListP(formals) {
+				err = ProcessError(fmt.Sprintf("named-lambda requires a formals list but recieved %s.", String(formals)), env)
+				return
+			}
+			name := Car(formals)
+			if !SymbolP(name) {
+				err = ProcessError(fmt.Sprintf("named-lambda requires a Symbol name but recieved %s.", String(name)), env)
+				return
+			}
+			params := Cdr(formals)
+			body := Cddr(x)
+			return FunctionWithNameParamsDocBodyAndParent(StringValue(name), params, "", body, env), nil
 		} else {
 			//			fmt.Printf("expression: %s\n", String(x))
 
