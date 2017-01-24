@@ -19,6 +19,8 @@ func RegisterBytearrayPrimitives() {
 	MakeTypedPrimitiveFunction("replace-byte", "3", ReplaceByteImpl, []uint32{BoxedObjectType, IntegerType, IntegerType})
 	MakeTypedPrimitiveFunction("replace-byte!", "3", ReplaceByteBangImpl, []uint32{BoxedObjectType, IntegerType, IntegerType})
 	MakeTypedPrimitiveFunction("extract-byte", "2", ExtractByteImpl, []uint32{BoxedObjectType, IntegerType})
+	MakeTypedPrimitiveFunction("take-bytes", "2", TakeBytesImpl, []uint32{IntegerType, BoxedObjectType})
+	MakeTypedPrimitiveFunction("drop-bytes", "2", DropBytesImpl, []uint32{IntegerType, BoxedObjectType})
 	MakePrimitiveFunction("append-bytes", "*", AppendBytesImpl)
 	MakePrimitiveFunction("append-bytes!", "*", AppendBytesBangImpl)
 	MakeTypedPrimitiveFunction("extract-bytes", "3", ExtractBytesImpl, []uint32{BoxedObjectType, IntegerType, IntegerType})
@@ -163,6 +165,49 @@ func ExtractByteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 	return
 }
 
+func TakeBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	size := int(IntegerValue(Car(args)))
+	ba := Cadr(args)
+	if ObjectP(ba) && ObjectType(ba) == "[]byte" {
+		dataBytes := (*[]byte)(ObjectValue(ba))
+		var bytesToCopy []byte
+		if size >= len(*dataBytes) {
+			bytesToCopy = *dataBytes
+		} else {
+			bytesToCopy = (*dataBytes)[:size]
+		}
+		newBytes := make([]byte, len(bytesToCopy))
+		for i, v := range bytesToCopy {
+			newBytes[i] = v
+		}
+		result = ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&newBytes))
+	} else {
+		err = ProcessError("take-bytes requires a bytearray as its second argument.", env)
+	}
+	return
+}
+
+func DropBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	size := int(IntegerValue(Car(args)))
+	ba := Cadr(args)
+	if ObjectP(ba) && ObjectType(ba) == "[]byte" {
+		dataBytes := (*[]byte)(ObjectValue(ba))
+		if size >= len(*dataBytes) {
+			newBytes := make([]byte, 0)
+			result = ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&newBytes))
+		} else {
+			newBytes := make([]byte, len(*dataBytes)-size)
+			for i, v := range (*dataBytes)[size:] {
+				newBytes[i] = v
+			}
+			result = ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&newBytes))
+		}
+	} else {
+		err = ProcessError("drop-bytes requires a bytearray as its second argument.", env)
+	}
+	return
+}
+
 func internalAppendBytes(args *Data, env *SymbolTableFrame) (newBytes *[]byte, err error) {
 	dataByteObject := First(args)
 	if !BytearrayP(dataByteObject) {
@@ -246,10 +291,10 @@ func ExtractBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 		return
 	}
 
-	result, err = DropImpl(InternalMakeList(Second(args), dataByteObject), Global)
+	result, err = DropBytesImpl(InternalMakeList(Second(args), dataByteObject), Global)
 	if err != nil {
 		return
 	}
-	result, err = TakeImpl(InternalMakeList(Third(args), result), Global)
+	result, err = TakeBytesImpl(InternalMakeList(Third(args), result), Global)
 	return
 }
