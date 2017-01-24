@@ -84,6 +84,18 @@
         (else
          '())))
 
+(define (take n l)
+  (define (take-iter acc n l)
+    (if (zero? n)
+        acc
+        (take-iter (cons (car l) acc) (-1+ n) (cdr l))))
+  (reverse (take-iter nil n l)))
+
+(define (drop n l)
+  (if (zero? n)
+      l
+      (drop (-1+ n) (cdr l))))
+
 (define (delq element l)
   (remove (lambda (x) (eq? x element)) l))
 
