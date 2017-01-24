@@ -66,8 +66,6 @@ func RegisterListAccessPrimitives() {
 	MakeTypedPrimitiveFunction("last", "1", LastImpl, []uint32{ConsCellType})
 
 	MakeTypedPrimitiveFunction("nth", "2", NthImpl, []uint32{IntegerType, ConsCellType})
-	MakeTypedPrimitiveFunction("take", "2", TakeImpl, []uint32{IntegerType, ConsCellType | BoxedObjectType})
-	MakeTypedPrimitiveFunction("drop", "2", DropImpl, []uint32{IntegerType, ConsCellType | BoxedObjectType})
 }
 
 func CarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -286,60 +284,4 @@ func NthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	return Nth(col, indexVal), nil
-}
-
-func TakeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	size := int(IntegerValue(Car(args)))
-	l := Cadr(args)
-	if ListP(l) {
-		var items []*Data = make([]*Data, 0, Length(args))
-		for i, cell := 0, l; i < size && NotNilP(cell); i, cell = i+1, Cdr(cell) {
-			items = append(items, Car(cell))
-		}
-		result = ArrayToList(items)
-	} else if ObjectP(l) && ObjectType(l) == "[]byte" {
-		dataBytes := (*[]byte)(ObjectValue(l))
-		var bytesToCopy []byte
-		if size >= len(*dataBytes) {
-			bytesToCopy = *dataBytes
-		} else {
-			bytesToCopy = (*dataBytes)[:size]
-		}
-		newBytes := make([]byte, len(bytesToCopy))
-		for i, v := range bytesToCopy {
-			newBytes[i] = v
-		}
-		result = ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&newBytes))
-	} else {
-		err = ProcessError("take requires a proper list or bytearray as its second argument.", env)
-	}
-	return
-}
-
-func DropImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	size := int(IntegerValue(Car(args)))
-	l := Cadr(args)
-
-	if ListP(l) {
-		var cell *Data
-		var i int
-		for i, cell = 0, l; i < size && NotNilP(cell); i, cell = i+1, Cdr(cell) {
-		}
-		result = cell
-	} else if ObjectP(l) && ObjectType(l) == "[]byte" {
-		dataBytes := (*[]byte)(ObjectValue(l))
-		if size >= len(*dataBytes) {
-			newBytes := make([]byte, 0)
-			result = ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&newBytes))
-		} else {
-			newBytes := make([]byte, len(*dataBytes)-size)
-			for i, v := range (*dataBytes)[size:] {
-				newBytes[i] = v
-			}
-			result = ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&newBytes))
-		}
-	} else {
-		err = ProcessError("drop requires a proper list or bytearray as its second argument.", env)
-	}
-	return
 }
