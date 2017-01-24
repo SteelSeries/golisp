@@ -39,8 +39,6 @@ func initTypeMap() {
 }
 
 func RegisterSpecialFormPrimitives() {
-	//	MakeSpecialForm("cond", "*", CondImpl)
-	//  MakeSpecialForm("case", ">=1", CaseImpl)
 	MakeSpecialForm("define", ">=1", DefineImpl)
 	MakeSpecialForm("typedef", ">=1", TypeDefImpl)
 	MakeSpecialForm("defmacro", ">=1", DefmacroImpl)
@@ -79,60 +77,6 @@ func evaluateBody(value *Data, sexprs *Data, env *SymbolTableFrame) (result *Dat
 			}
 		}
 	}
-	return
-}
-
-func CondImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var condition *Data
-	for c := args; NotNilP(c); c = Cdr(c) {
-		clause := Car(c)
-		if !ListP(clause) {
-			err = ProcessError("Cond expect a sequence of clauses that are lists", env)
-			return
-		}
-		if IsEqual(Car(clause), Intern("else")) {
-			return evaluateBody(nil, Cdr(clause), env)
-		} else {
-			condition, err = Eval(Car(clause), env)
-			if err != nil {
-				return
-			}
-			if BooleanValue(condition) {
-				return evaluateBody(condition, Cdr(clause), env)
-			}
-		}
-	}
-	return
-}
-
-func CaseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var keyValue *Data
-
-	keyValue, err = Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-
-	for clauseCell := Cdr(args); NotNilP(clauseCell); clauseCell = Cdr(clauseCell) {
-		clause := Car(clauseCell)
-		if !ListP(clause) {
-			err = ProcessError("Case expectes a sequence of clauses that are lists", env)
-			return
-		}
-		if IsEqual(Car(clause), Intern("else")) {
-			return evaluateBody(nil, Cdr(clause), env)
-		} else if ListP(Car(clause)) {
-			for v := Car(clause); NotNilP(v); v = Cdr(v) {
-				if IsEqual(Car(v), keyValue) {
-					return evaluateBody(nil, Cdr(clause), env)
-				}
-			}
-		} else {
-			err = ProcessError("Case the condition part of clauses to be lists or 'else", env)
-			return
-		}
-	}
-
 	return
 }
 
