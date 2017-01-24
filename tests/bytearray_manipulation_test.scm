@@ -185,27 +185,27 @@
                    (assert-error (append-bytes! [1 2 3] '(-3)))) ;non-byte in list
 
          (it take
-                   (assert-eq (take 0 [1 2 3 4 5])
+                   (assert-eq (take-bytes 0 [1 2 3 4 5])
                               [])
-                   (assert-eq (take 1 [1 2 3 4 5])
+                   (assert-eq (take-bytes 1 [1 2 3 4 5])
                               [1])
-                   (assert-eq (take 3 [1 2 3 4 5])
+                   (assert-eq (take-bytes 3 [1 2 3 4 5])
                               [1 2 3])
-                   (assert-eq (take 5 [1 2 3 4 5])
+                   (assert-eq (take-bytes 5 [1 2 3 4 5])
                               [1 2 3 4 5])
-                   (assert-eq (take 7 [1 2 3 4 5])
+                   (assert-eq (take-bytes 7 [1 2 3 4 5])
                               [1 2 3 4 5]))
 
          (it "  drop"
-                   (assert-eq (drop 0 [1 2 3 4 5])
+                   (assert-eq (drop-bytes 0 [1 2 3 4 5])
                               [1 2 3 4 5])
-                   (assert-eq (drop 1 [1 2 3 4 5])
+                   (assert-eq (drop-bytes 1 [1 2 3 4 5])
                               [2 3 4 5])
-                   (assert-eq (drop 3 [1 2 3 4 5])
+                   (assert-eq (drop-bytes 3 [1 2 3 4 5])
                               [4 5])
-                   (assert-eq (drop 5 [1 2 3 4 5])
+                   (assert-eq (drop-bytes 5 [1 2 3 4 5])
                               [])
-                   (assert-eq (drop 7 [1 2 3 4 5])
+                   (assert-eq (drop-bytes 7 [1 2 3 4 5])
                               []))
 
          (it "extract-bytes"
