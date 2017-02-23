@@ -722,8 +722,8 @@ special forms are:
 
 \subsubsection{(-\textgreater{} \emph{value} \emph{sexpr}\textbar{}\emph{symbol}\ldots{})}
 
-This creates a function chain. \emph{value} (evaluated first) is used as the first argument to
-the first \emph{sexpr}. The result of each \emph{sexpr} is used as the first argument of the
+This creates a function chain. \emph{value} (evaluated first) is used as the last (or only) argument to
+the first \emph{sexpr}. The result of each \emph{sexpr} is used as the last/only argument of the
 next, and the result of the final \emph{sexpr} is the value of the \verb|->|
 form. If a \emph{sexpr} would take a single argument (which would be provided by the
 \emph{value} or the result of the previous \emph{sexpr}, just the function name can be used.
@@ -731,8 +731,8 @@ form. If a \emph{sexpr} would take a single argument (which would be provided by
 The form \verb|(-> 0 a b c)| is equivalent to \verb|(c (b (a 0)))|.
 
 \begin{verbatim}
-(-> 1 (+ 3) (- 2))     ⇒ 2     ; (- (+ 1 3) 2)
-(-> 1 (+ 3) (- 2) str) ⇒ "2"   ; (str (- (+ 1 3) 2))
+(-> 1 (+ 3) (- 6))     ⇒ 2     ; (- 6 (+ 3 1))
+(-> 1 (+ 3) (- 6) str) ⇒ "2"   ; (str (- 6 (+ 3 1)))
 \end{verbatim}
 
 The major advantage of this form is avoiding having to create a sequence on intermediate

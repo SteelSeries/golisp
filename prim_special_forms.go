@@ -428,9 +428,9 @@ func ChainImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		sexpr := Car(cell)
 		var newExpr *Data
 		if ListP(sexpr) {
-			newExpr = Cons(Car(sexpr), Cons(value, Cdr(sexpr)))
+			newExpr = Cons(Car(sexpr), Append(Cdr(sexpr), QuoteIt(value)))
 		} else {
-			newExpr = Cons(sexpr, Cons(value, nil))
+			newExpr = Cons(sexpr, Cons(QuoteIt(value), nil))
 		}
 		value, err = Eval(newExpr, env)
 		if err != nil {
@@ -454,9 +454,9 @@ func TapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		sexpr := Car(cell)
 		var newExpr *Data
 		if ListP(sexpr) {
-			newExpr = Cons(Car(sexpr), Cons(value, Cdr(sexpr)))
+			newExpr = Cons(Car(sexpr), Append(Cdr(sexpr), QuoteIt(value)))
 		} else {
-			newExpr = Cons(sexpr, Cons(value, nil))
+			newExpr = Cons(sexpr, Cons(QuoteIt(value), nil))
 		}
 		_, err = Eval(newExpr, env)
 		if err != nil {

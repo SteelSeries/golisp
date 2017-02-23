@@ -12,7 +12,8 @@
              (assert-eq (-> 1 (+ 2) (* 3))
                         9)
              (assert-eq (-> 1 (+ 2) str)
-                        "3")))
+                        "3")
+             (assert-eq (-> 1 (+ 3) (- 6)) 2)))
 
 (context "parallel chaining"
 
