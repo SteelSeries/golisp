@@ -68,8 +68,9 @@ func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var a *Data
 	for index := 1; index <= int(loopCount); index++ {
 		mapArgs := make([]*Data, 0, len(collections))
-		for _, mapArgCollection := range collections {
-			a = Nth(mapArgCollection, index)
+		for key, mapArgCollection := range collections {
+			a = Car(mapArgCollection)
+			collections[key] = Cdr(mapArgCollection)
 			mapArgs = append(mapArgs, a)
 		}
 		v, err = ApplyWithoutEval(f, ArrayToList(mapArgs), env)
@@ -109,8 +110,9 @@ func ForEachImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var a *Data
 	for index := 1; index <= int(loopCount); index++ {
 		mapArgs := make([]*Data, 0, len(collections))
-		for _, mapArgCollection := range collections {
-			a = Nth(mapArgCollection, index)
+		for key, mapArgCollection := range collections {
+			a = Car(mapArgCollection)
+			collections[key] = Cdr(mapArgCollection)
 			mapArgs = append(mapArgs, a)
 		}
 		_, err = ApplyWithoutEval(f, ArrayToList(mapArgs), env)
@@ -150,8 +152,9 @@ func AnyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var b *Data
 	for index := 0; index < int(loopCount); index++ {
 		mapArgs := make([]*Data, 0, len(collections))
-		for _, mapArgCollection := range collections {
-			a = Nth(mapArgCollection, index+1) // Remove the +1 upon merging in v1.1 branch
+		for key, mapArgCollection := range collections {
+			a = Car(mapArgCollection)
+			collections[key] = Cdr(mapArgCollection)
 			mapArgs = append(mapArgs, a)
 		}
 		b, err = ApplyWithoutEval(f, ArrayToList(mapArgs), env)
@@ -195,8 +198,9 @@ func EveryImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var b *Data
 	for index := 0; index < int(loopCount); index++ {
 		mapArgs := make([]*Data, 0, len(collections))
-		for _, mapArgCollection := range collections {
-			a = Nth(mapArgCollection, index+1) // Remove the +1 upon merging in the v1.1 branch
+		for key, mapArgCollection := range collections {
+			a = Car(mapArgCollection)
+			collections[key] = Cdr(mapArgCollection)
 			mapArgs = append(mapArgs, a)
 		}
 		b, err = ApplyWithoutEval(f, ArrayToList(mapArgs), env)
