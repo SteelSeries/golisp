@@ -1572,6 +1572,9 @@ also behave differently from \verb|eqv?| on empty vectors and empty strings.
   (eq? p p))                 ⇒  #t
 \end{verbatim}
 
+\verb|eq?| of two vectors compares the vector contents using \verb|eq?|, so two
+vectors are \verb|eq?| only when their contents are also \verb|eq?|.
+
 \subsubsection{(equal? \emph{obj1} \emph{obj2})}
 
 \verb|equal?| recursively compares the contents of pairs, vectors, and strings,
