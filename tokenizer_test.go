@@ -121,15 +121,8 @@ func (s *TokenizerSuite) TestProperHexInteger(c *C) {
 	c.Assert(lit, Equals, "1f")
 }
 
-func (s *TokenizerSuite) TestHexInteger(c *C) {
-	t := NewTokenizerFromString("0x1f a")
-	tok, lit := t.NextToken()
-	c.Assert(tok, Equals, HEXNUMBER)
-	c.Assert(lit, Equals, "1f")
-}
-
 func (s *TokenizerSuite) TestUppercaseHexInteger(c *C) {
-	t := NewTokenizerFromString("0x1F a")
+	t := NewTokenizerFromString("#x1F a")
 	tok, lit := t.NextToken()
 	c.Assert(tok, Equals, HEXNUMBER)
 	c.Assert(lit, Equals, "1F")

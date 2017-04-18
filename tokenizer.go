@@ -294,11 +294,7 @@ func (self *Tokenizer) readNextToken() (token int, lit string) {
 		}
 	}
 
-	if self.CurrentCh == '0' && self.NextCh == 'x' {
-		self.Advance()
-		self.Advance()
-		return self.readHexNumber()
-	} else if self.CurrentCh == '1' && self.NextCh == '+' {
+	if self.CurrentCh == '1' && self.NextCh == '+' {
 		self.Advance()
 		self.Advance()
 		return SYMBOL, "1+"

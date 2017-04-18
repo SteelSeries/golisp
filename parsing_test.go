@@ -44,14 +44,6 @@ func (s *ParsingSuite) TestNegaitveInteger(c *C) {
 	c.Assert(IntegerValue(sexpr), Equals, int64(-5))
 }
 
-func (s *ParsingSuite) TestHexInteger(c *C) {
-	sexpr, err := Parse("0xa5")
-	c.Assert(err, IsNil)
-	c.Assert(sexpr, NotNil)
-	c.Assert(int(TypeOf(sexpr)), Equals, IntegerType)
-	c.Assert(IntegerValue(sexpr), Equals, int64(165))
-}
-
 func (s *ParsingSuite) TestProperHexInteger(c *C) {
 	sexpr, err := Parse("#xa5")
 	c.Assert(err, IsNil)
@@ -85,7 +77,7 @@ func (s *ParsingSuite) TestNegativeFloat(c *C) {
 }
 
 func (s *ParsingSuite) TestUppercaseHexInteger(c *C) {
-	sexpr, err := Parse("0xA5")
+	sexpr, err := Parse("#xA5")
 	c.Assert(err, IsNil)
 	c.Assert(sexpr, NotNil)
 	c.Assert(int(TypeOf(sexpr)), Equals, IntegerType)
@@ -93,7 +85,7 @@ func (s *ParsingSuite) TestUppercaseHexInteger(c *C) {
 }
 
 func (s *ParsingSuite) TestMixedCaseHexInteger(c *C) {
-	sexpr, err := Parse("0xAf")
+	sexpr, err := Parse("#xAf")
 	c.Assert(err, IsNil)
 	c.Assert(sexpr, NotNil)
 	c.Assert(int(TypeOf(sexpr)), Equals, IntegerType)
