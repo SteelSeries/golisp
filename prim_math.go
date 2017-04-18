@@ -98,8 +98,8 @@ func makeUnaryFloatFunction(name string, f func(float64) float64) {
 func IsInfImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	val := Car(args)
 	if !NumberP(val) {
-			err = ProcessError(fmt.Sprintf("inf? expected a nunber, received %s", String(val)), env)
-			return
+		err = ProcessError(fmt.Sprintf("inf? expected a nunber, received %s", String(val)), env)
+		return
 	}
 	if FloatP(val) {
 		return BooleanWithValue(math.IsInf(float64(FloatValue(val)), 0)), nil
@@ -532,7 +532,7 @@ func minFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 func MinImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	numbers := First(args)
 	if !ListP(numbers) {
-		err = ProcessError(fmt.Sprintf("min requires a proper list of numbers, received %s", String(numbers)), env)
+		err = ProcessError(fmt.Sprintf("min requires a list of numbers, received %s", String(numbers)), env)
 		return
 	}
 	if Length(numbers) == 0 {

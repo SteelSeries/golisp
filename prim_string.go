@@ -75,7 +75,7 @@ func StringToListImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 func ListToStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	l := First(args)
 	if !ListP(l) {
-		err = ProcessError(fmt.Sprintf("list->string requires a proper list but was given %s.", String(l)), env)
+		err = ProcessError(fmt.Sprintf("list->string requires a list but was given %s.", String(l)), env)
 		return
 	}
 
@@ -154,7 +154,7 @@ func StringSplitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 func StringJoinImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	theStrings := First(args)
 	if !ListP(theStrings) {
-		err = ProcessError(fmt.Sprintf("string-join requires a proper list of strings to be joined but was given %s.", String(theStrings)), env)
+		err = ProcessError(fmt.Sprintf("string-join requires a list of strings to be joined but was given %s.", String(theStrings)), env)
 		return
 	}
 
@@ -354,7 +354,7 @@ func StringLengthImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 }
 
 func SubstringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	stringValue, startValue, endValue, err := checkAndExtractSubstringArgs("substring-capitalize!", args, env)
+	stringValue, startValue, endValue, err := checkAndExtractSubstringArgs("substring", args, env)
 	if err != nil {
 		return
 	}

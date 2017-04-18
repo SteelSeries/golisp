@@ -36,7 +36,7 @@ func ListToBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 		err = ProcessError("Argument to list->bytes can not be nil.", env)
 		return
 	}
-	if !ListP(list) {
+	if !ProperListP(list) {
 		err = ProcessError("Argument to list->bytes must be a proper list.", env)
 		return
 	}

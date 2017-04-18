@@ -48,12 +48,12 @@ func GeneralCarCdrImpl(args *Data, env *SymbolTableFrame) (result *Data, err err
 }
 
 func LastPairImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if !(ListP(Car(args)) || DottedListP(Car(args))) {
+	if !(ProperListP(Car(args)) || DottedListP(Car(args))) {
 		err = ProcessError(fmt.Sprintf("last-pair requires a non-circular list but received %s.", String(Car(args))), env)
 		return
 	}
 
-	if Length(Car(args)) == 0 {
+	if NilP(Car(args)) {
 		err = ProcessError("last-pair requires a non-empty list but received nil.", env)
 		return
 	}
@@ -62,7 +62,7 @@ func LastPairImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func LastImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if !ListP(Car(args)) || ListWithLoopP(Car(args)) {
+	if !ProperListP(Car(args)) || ListWithLoopP(Car(args)) {
 		err = ProcessError(fmt.Sprintf("last requires a non-circular list but received %s.", String(Car(args))), env)
 		return
 	}

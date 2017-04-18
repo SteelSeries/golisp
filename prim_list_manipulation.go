@@ -65,7 +65,7 @@ func MakeListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 func ListLengthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	col := First(args)
 	if !ListP(col) {
-		err = ProcessError(fmt.Sprintf("length requires a proper list but was given %s.", String(col)), env)
+		err = ProcessError(fmt.Sprintf("length requires a list but was given %s.", String(col)), env)
 		return
 	}
 
@@ -234,7 +234,7 @@ func PartitionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	l := First(args)
 	if !ListP(l) {
-		err = ProcessError("sublist requires a proper list as it's first argument.", env)
+		err = ProcessError("sublist requires a list as it's first argument.", env)
 		return
 	}
 
@@ -341,7 +341,7 @@ func MergeSort(items []*Data, proc *Data, env *SymbolTableFrame) (result []*Data
 func SortImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	coll := First(args)
 	if !ListP(coll) {
-		err = ProcessError("sort requires a proper list as it's first argument.", env)
+		err = ProcessError("sort requires a list as it's first argument.", env)
 		return
 	}
 	proc := Second(args)

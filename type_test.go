@@ -19,6 +19,7 @@ var _ = Suite(&TypeSuite{})
 func (s *TypeSuite) TestList(c *C) {
 	sexpr := Cons(IntegerWithValue(5), nil)
 	c.Assert(ListP(sexpr), Equals, true)
+	c.Assert(ProperListP(sexpr), Equals, true)
 	c.Assert(PairP(sexpr), Equals, true)
 	c.Assert(int(TypeOf(sexpr)), Equals, ConsCellType)
 	c.Assert(TypeName(ConsCellType), Equals, "List")

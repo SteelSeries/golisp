@@ -129,18 +129,25 @@ INTERP:
 			}
 			var argList *Data
 			if FunctionP(proc) || (PrimitiveP(proc) && !PrimitiveValue(proc).Special) {
-				args := make([]*Data, 0, Length(x))
+				args := make([]*Data, 0, Length(x)-1)
 				for cell := Cdr(x); NotNilP(cell); cell = Cdr(cell) {
 					v, err := Eval(Car(cell), env)
 					if err != nil {
 						return nil, err
 					}
+					// if PrimitiveP(proc) && PrimitiveValue(proc).Name == "+" {
+					// 	fmt.Printf("Adding arg %s from %s\n", String(v), String(Car(cell)))
+					// }
+
 					args = append(args, v)
 				}
 				argList = ArrayToList(args)
 			} else {
 				argList = Cdr(x)
 			}
+			// if PrimitiveP(proc) && PrimitiveValue(proc).Name == "+" {
+			// 	fmt.Printf("Args: %s\n", String(argList))
+			// }
 			if MacroP(proc) {
 				//				fmt.Printf("macro: %s\n", String(proc))
 				x, err = MacroValue(proc).Expand(Cdr(x), env)

@@ -190,11 +190,11 @@ func ReduceLeftImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 		return
 	}
 
-	if Length(col) == 0 {
+	l := Length(col)
+	if l == 0 {
 		return initial, nil
 	}
-
-	if Length(col) == 1 {
+	if l == 1 {
 		return Car(col), nil
 	}
 
@@ -425,13 +425,9 @@ func FindTailImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 func FindImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
 	col := Second(args)
-	if !ListP(col) && !VectorP(col) {
-		err = ProcessError(fmt.Sprintf("find needs a proper list as its second argument, but got %s.", String(col)), env)
+	if !ListP(col) {
+		err = ProcessError(fmt.Sprintf("find needs a list as its second argument, but got %s.", String(col)), env)
 		return
-	}
-
-	if VectorP(col) {
-		return VectorFindImpl(args, env)
 	}
 
 	var found *Data

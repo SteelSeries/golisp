@@ -219,11 +219,11 @@ func MakeTopLevelEnvironmentImpl(args *Data, env *SymbolTableFrame) (result *Dat
 		}
 	} else if Length(args) == 2 {
 		if !ListP(First(args)) {
-			err = ProcessError("make-top-level-environment expects binding names to be a proper list", env)
+			err = ProcessError("make-top-level-environment expects binding names to be a list", env)
 			return
 		}
 		if !ListP(Second(args)) {
-			err = ProcessError("make-top-level-environment expects binding values to be a proper list", env)
+			err = ProcessError("make-top-level-environment expects binding values to be a list", env)
 			return
 		}
 		if Length(First(args)) != Length(Second(args)) {
