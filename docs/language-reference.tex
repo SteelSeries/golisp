@@ -69,7 +69,7 @@ for true and false, respectively. The only thing that is considered to be logica
 \verb|#f|. Everything else is logically true, inluding 0 and the empty list, which may
 surprise some.
 
-\textbf{Integers} are sixtyfour bit signed integers. Both decimal ,hexadecimal, and binary
+\textbf{Integers} are sixtyfour bit signed integers. Both decimal, hexadecimal, and binary
 formats are supported. E.g. \verb|26|, \verb|#x1a|, \verb|#x1A|, \verb|#b00011001|.
 
 \textbf{Floats} are Go \verb|float32| numbers. Accordingly they are signed. All arithmetic
@@ -1359,7 +1359,7 @@ minimum number of characters so \texttt{5.0} will actually print as \texttt{5}.
 
 Converts \emph{number} (first converted to an integer) to a string, in the given \emph{base}.
 Allowed bases are 2, 8, 10, and 16. If the base is omitted, 10 is used. No base prefixes (e.g.
-\texttt{0x} for base 16) are added.
+\texttt{#x} for base 16) are added.
 
 \begin{verbatim}
 (number->string 42)    ⇒ "42"
@@ -1373,7 +1373,7 @@ Allowed bases are 2, 8, 10, and 16. If the base is omitted, 10 is used. No base 
 \subsubsection{(string-\textgreater{}number \emph{numeric-string} [\emph{base}])}
 
 Converts \emph{numeric-string} to an integer, in the given base. Allowed bases are 2,
-8, 10, and 16. If the base is omitted, 10 is used. No base prefixes (e.g. \verb|0x|
+8, 10, and 16. If the base is omitted, 10 is used. No base prefixes (e.g. \verb|#x|
 for base 16) are allowed. Specifying an unsupported base will result in \verb|0|.
 
 \begin{verbatim}
@@ -1635,8 +1635,8 @@ Returns the boolean negation of the argument.
 Performs a bitwise AND of \emph{int-1} and \emph{int-2}, returning the result.
 
 \begin{verbatim}
-(number->string (binary-and 0xaa 0x0f) 16) ⇒ "a"
-(number->string (binary-and 0xaa 0xf0) 16) ⇒ "a0"
+(number->string (binary-and #xaa #x0f) 16) ⇒ "a"
+(number->string (binary-and #xaa #xf0) 16) ⇒ "a0"
 \end{verbatim}
 
 \subsubsection{(binary-or \emph{int-1} \emph{int-2})}
@@ -1644,8 +1644,8 @@ Performs a bitwise AND of \emph{int-1} and \emph{int-2}, returning the result.
 Performs a bitwise OR of \emph{int-1} and \emph{int-2}, returning the result.
 
 \begin{verbatim}
-(number->string (binary-or 0xaa 0x0f) 16) ⇒ "af"
-(number->string (binary-or 0xaa 0xf0) 16) ⇒ "fa"
+(number->string (binary-or #xaa #x0f) 16) ⇒ "af"
+(number->string (binary-or #xaa #xf0) 16) ⇒ "fa"
 \end{verbatim}
 
 \subsubsection{(binary-not \emph{int})}
@@ -1653,7 +1653,7 @@ Performs a bitwise OR of \emph{int-1} and \emph{int-2}, returning the result.
 Performs a bitwise NOT of \emph{int}, returning the result.
 
 \begin{verbatim}
-(number->string (binary-not 0x000000aa) 16) ⇒ "ffffff55"
+(number->string (binary-not #x000000aa) 16) ⇒ "ffffff55"
 \end{verbatim}
 
 \subsubsection{(left-shift \emph{int} \emph{count})}
