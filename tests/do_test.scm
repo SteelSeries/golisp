@@ -1,6 +1,6 @@
 ;;; -*- mode: Scheme -*-
 
-(context do
+(context "do"
 
          ()
 

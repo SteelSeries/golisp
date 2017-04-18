@@ -184,7 +184,7 @@
                    (assert-error (append-bytes! [1 2 3] '(355))) ;non-byte in list
                    (assert-error (append-bytes! [1 2 3] '(-3)))) ;non-byte in list
 
-         (it take
+         (it "take"
                    (assert-eq (take-bytes 0 [1 2 3 4 5])
                               [])
                    (assert-eq (take-bytes 1 [1 2 3 4 5])
