@@ -9,8 +9,16 @@ package golisp
 
 import (
 	"fmt"
-	"strings"
 )
+
+// Interned symbols for interp branching
+
+var quoteSym = Intern("quote")
+var beginSym = Intern("begin")
+var setSym = Intern("set!")
+var ifSym = Intern("if")
+var lambdaSym = Intern("lambda")
+var namedLambdaSym = Intern("named-lambda")
 
 func postProcessShortcuts(d *Data) *Data {
 	symbolObj := Car(d)
@@ -21,27 +29,28 @@ func postProcessShortcuts(d *Data) *Data {
 
 	pseudoFunction := StringValue(symbolObj)
 
-	switch {
-	// channel shortcuts
-	case strings.HasPrefix(pseudoFunction, "<-"):
-		return AppendBangList(InternalMakeList(Intern("channel-read"), Intern(strings.TrimPrefix(pseudoFunction, "<-"))), Cdr(d))
-	case strings.HasSuffix(pseudoFunction, "<-"):
-		return AppendBangList(InternalMakeList(Intern("channel-write"), Intern(strings.TrimSuffix(pseudoFunction, "<-"))), Cdr(d))
+	stringLength := len(pseudoFunction)
 
-		// frame shortcuts
-	case strings.HasSuffix(pseudoFunction, ":"):
-		return AppendBangList(InternalMakeList(Intern("get-slot"), Cadr(d), Car(d)), Cddr(d))
-	case strings.HasSuffix(pseudoFunction, ":!"):
-		return AppendBangList(InternalMakeList(Intern("set-slot!"), Cadr(d), Intern(strings.TrimSuffix(pseudoFunction, "!")), Caddr(d)), Cdddr(d))
-	case strings.HasSuffix(pseudoFunction, ":?"):
-		return AppendBangList(InternalMakeList(Intern("has-slot?"), Cadr(d), Intern(strings.TrimSuffix(pseudoFunction, "?"))), Cddr(d))
-	case strings.HasSuffix(pseudoFunction, ":>"):
-		return AppendBangList(InternalMakeList(Intern("send"), Cadr(d), Intern(strings.TrimSuffix(pseudoFunction, ">"))), Cddr(d))
-	case strings.HasSuffix(pseudoFunction, ":^"):
-		return AppendBangList(InternalMakeList(Intern("send-super"), Intern(strings.TrimSuffix(pseudoFunction, "^"))), Cdr(d))
-	default:
+	if stringLength < 2 {
 		return d
+	} else if pseudoFunction[stringLength-1] == ':' {
+		return AppendBangList(InternalMakeList(Intern("get-slot"), Cadr(d), symbolObj), Cddr(d))
+	} else if pseudoFunction[stringLength-2] == ':' {
+		if pseudoFunction[stringLength-1] == '!' {
+			return AppendBangList(InternalMakeList(Intern("set-slot!"), Cadr(d), Intern(pseudoFunction[0:stringLength-1]), Caddr(d)), Cdddr(d))
+		} else if pseudoFunction[stringLength-1] == '?' {
+			return AppendBangList(InternalMakeList(Intern("has-slot?"), Cadr(d), Intern(pseudoFunction[0:stringLength-1])), Cddr(d))
+		} else if pseudoFunction[stringLength-1] == '>' {
+			return AppendBangList(InternalMakeList(Intern("send"), Cadr(d), Intern(pseudoFunction[0:stringLength-1])), Cddr(d))
+		} else if pseudoFunction[stringLength-1] == '^' {
+			return AppendBangList(InternalMakeList(Intern("send-super"), Intern(pseudoFunction[0:stringLength-1])), Cdr(d))
+		}
+	} else if pseudoFunction[0] == '<' && pseudoFunction[1] == '-' {
+		return AppendBangList(InternalMakeList(Intern("channel-read"), Intern(pseudoFunction[2:stringLength])), Cdr(d))
+	} else if pseudoFunction[stringLength-2] == '<' && pseudoFunction[stringLength-1] == '-' {
+		return AppendBangList(InternalMakeList(Intern("channel-write"), Intern(pseudoFunction[0:stringLength-2])), Cdr(d))
 	}
+	return d
 }
 
 func evalHelper(x *Data, env *SymbolTableFrame, needFunction bool) (result *Data, err error) {
@@ -49,23 +58,25 @@ func evalHelper(x *Data, env *SymbolTableFrame, needFunction bool) (result *Data
 INTERP:
 	if NilP(x) {
 		result = nil
-	} else if SymbolP(x) {
+	} else if x.Type == SymbolType {
 		//		fmt.Printf("Symbol: %s\n", String(x))
-		if NakedP(x) {
+		s := StringValue(x)
+		if s[len(s)-1] == ':' {
 			result = x
 		} else {
 			result = env.ValueOfWithFunctionSlotCheck(x, needFunction)
 		}
-	} else if AtomP(x) {
+	} else if (x.Type & AtomType) != 0 {
 		//		fmt.Printf("Atom: %s\n", String(x))
 		result = x
-	} else {
+	} else { // list
 		x = postProcessShortcuts(x)
 		head := Car(x)
-		if IsEqv(head, Intern("quote")) {
+
+		if head == quoteSym {
 			//			fmt.Printf("quote: %s\n", String(Cadr(x)))
 			result = Cadr(x)
-		} else if IsEqv(head, Intern("begin")) {
+		} else if head == beginSym {
 			//			fmt.Printf("begin\n")
 			var cell *Data
 			for cell = Cdr(x); NotNilP(Cdr(cell)); cell = Cdr(cell) {
@@ -76,14 +87,14 @@ INTERP:
 			}
 			x = Car(cell)
 			goto INTERP
-		} else if IsEqv(head, Intern("set!")) {
+		} else if head == setSym {
 			//			fmt.Printf("set!: %s\n", String(Cadr(x)))
 			v, err := Eval(Caddr(x), env)
 			if err != nil {
 				return nil, err
 			}
 			result = env.BindTo(Cadr(x), v)
-		} else if IsEqv(head, Intern("if")) {
+		} else if head == ifSym {
 			//			fmt.Printf("if\n")
 			c, err := Eval(Second(x), env)
 			if err != nil {
@@ -95,7 +106,7 @@ INTERP:
 				x = Fourth(x)
 			}
 			goto INTERP
-		} else if IsEqv(head, Intern("lambda")) {
+		} else if head == lambdaSym {
 			//			fmt.Printf("lambda\n")
 			formals := Cadr(x)
 			if !ListP(formals) && !DottedListP(formals) {
@@ -105,7 +116,7 @@ INTERP:
 			params := formals
 			body := Cddr(x)
 			return FunctionWithNameParamsDocBodyAndParent("unnamed", params, "", body, env), nil
-		} else if IsEqv(head, Intern("named-lambda")) {
+		} else if head == namedLambdaSym {
 			//			fmt.Printf("named-lambda\n")
 			formals := Cadr(x)
 			if !ListP(formals) && !DottedListP(formals) {
