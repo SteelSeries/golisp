@@ -160,7 +160,7 @@ func DottedPairP(d *Data) bool {
 }
 
 func ListP(d *Data) bool {
-	return NilP(d) || PairP(d)
+	return NilP(d) || (TypeOf(d) == ConsCellType)
 }
 
 func hasVisited(cell *Data, visitedCells []*Data) bool {

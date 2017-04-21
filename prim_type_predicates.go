@@ -14,7 +14,7 @@ import (
 func RegisterTypePredicatePrimitives() {
 	MakePrimitiveFunction("type-of", "1", TypeofImpl)
 	MakePrimitiveFunction("atom?", "1", IsAtomImpl)
-	MakePrimitiveFunction("list?", "1", IsPairImpl)
+	MakePrimitiveFunction("list?", "1", IsListImpl)
 	MakePrimitiveFunction("pair?", "1", IsPairImpl)
 	MakePrimitiveFunction("dotted-pair?", "1", IsDottedPairImpl)
 	MakePrimitiveFunction("circular-list?", "1", IsCircularListImpl)
@@ -51,6 +51,10 @@ func IsAtomImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 func IsProperListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	result = BooleanWithValue(ProperListP(First(args)))
 	return
+}
+
+func IsListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return BooleanWithValue(ListP(Car(args))), nil
 }
 
 func IsPairImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
