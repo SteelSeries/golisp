@@ -20,6 +20,16 @@ var ifSym = Intern("if")
 var lambdaSym = Intern("lambda")
 var namedLambdaSym = Intern("named-lambda")
 
+// interned symbols for use in desugaring
+
+var getslotSym = Intern("get-slot")
+var setslotSym = Intern("set-slot!")
+var hasslotSym = Intern("has-slot?")
+var sendSym = Intern("send")
+var sendsuperSym = Intern("send-super")
+var channelreadSym = Intern("channel-read")
+var channelwriteSym = Intern("channel-write")
+
 func postProcessShortcuts(d *Data) *Data {
 	symbolObj := Car(d)
 
@@ -34,21 +44,21 @@ func postProcessShortcuts(d *Data) *Data {
 	if stringLength < 2 {
 		return d
 	} else if pseudoFunction[stringLength-1] == ':' {
-		return AppendBangList(InternalMakeList(Intern("get-slot"), Cadr(d), symbolObj), Cddr(d))
+		return AppendBangList(InternalMakeList(getslotSym, Cadr(d), symbolObj), Cddr(d))
 	} else if pseudoFunction[stringLength-2] == ':' {
 		if pseudoFunction[stringLength-1] == '!' {
-			return AppendBangList(InternalMakeList(Intern("set-slot!"), Cadr(d), Intern(pseudoFunction[0:stringLength-1]), Caddr(d)), Cdddr(d))
+			return AppendBangList(InternalMakeList(setslotSym, Cadr(d), Intern(pseudoFunction[0:stringLength-1]), Caddr(d)), Cdddr(d))
 		} else if pseudoFunction[stringLength-1] == '?' {
-			return AppendBangList(InternalMakeList(Intern("has-slot?"), Cadr(d), Intern(pseudoFunction[0:stringLength-1])), Cddr(d))
+			return AppendBangList(InternalMakeList(hasslotSym, Cadr(d), Intern(pseudoFunction[0:stringLength-1])), Cddr(d))
 		} else if pseudoFunction[stringLength-1] == '>' {
-			return AppendBangList(InternalMakeList(Intern("send"), Cadr(d), Intern(pseudoFunction[0:stringLength-1])), Cddr(d))
+			return AppendBangList(InternalMakeList(sendSym, Cadr(d), Intern(pseudoFunction[0:stringLength-1])), Cddr(d))
 		} else if pseudoFunction[stringLength-1] == '^' {
-			return AppendBangList(InternalMakeList(Intern("send-super"), Intern(pseudoFunction[0:stringLength-1])), Cdr(d))
+			return AppendBangList(InternalMakeList(sendsuperSym, Intern(pseudoFunction[0:stringLength-1])), Cdr(d))
 		}
 	} else if pseudoFunction[0] == '<' && pseudoFunction[1] == '-' {
-		return AppendBangList(InternalMakeList(Intern("channel-read"), Intern(pseudoFunction[2:stringLength])), Cdr(d))
+		return AppendBangList(InternalMakeList(channelreadSym, Intern(pseudoFunction[2:stringLength])), Cdr(d))
 	} else if pseudoFunction[stringLength-2] == '<' && pseudoFunction[stringLength-1] == '-' {
-		return AppendBangList(InternalMakeList(Intern("channel-write"), Intern(pseudoFunction[0:stringLength-2])), Cdr(d))
+		return AppendBangList(InternalMakeList(channelwriteSym, Intern(pseudoFunction[0:stringLength-2])), Cdr(d))
 	}
 	return d
 }
