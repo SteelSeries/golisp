@@ -30,6 +30,9 @@ func RegisterIOPrimitives() {
 	MakePrimitiveFunction("eof-object?", "1", EofObjectImpl)
 	MakeTypedPrimitiveFunction("list-directory", "1|2", ListDirectoryImpl, []uint32{StringType, StringType})
 	MakeTypedPrimitiveFunction("format", ">=2", FormatImpl, []uint32{BooleanType | PortType, StringType, AnyType})
+
+	Global.BindTo(Intern("*standard-output*"), PortWithValue(os.Stdout))
+	Global.BindTo(Intern("*standard-input*"), PortWithValue(os.Stdin))
 }
 
 func OpenOutputFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
