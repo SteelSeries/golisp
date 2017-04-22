@@ -12,34 +12,51 @@
 ;;; Compile the expression x into a list of instructions.
 
 (define (comp x env)
-  (format #t "COMP exps: ~A~%     env: ~A~%" x env)
+;  (format #t "COMP exps: ~A~%     env: ~A~%" x env)
   (cond ((symbol? x)
+;		 (format #t "- symbol~%")
 		 (if (naked? x)
 			 (gen 'CONST x)
 			 (gen-var x env)))
-		((atom? x) (gen 'CONST x))
+		((atom? x)
+;		 (format #t "- atom~%")
+		 (gen 'CONST x))
 		((macro? (car x))
+;		 (format #t "- macro~%")
 		 (comp (expand x) env))
-		(case (car x)
-		  (quote (gen 'CONST (cadr x)))
-		  (begin (comp-begin (cdr x) env))
-		  (set! (seq (comp (caddr x) env) (gen-set (cadr x) env)))
-		  (if (comp-if (cadr x) (caddr x) (cadddr x) env))
-		  (lambda (gen 'FN (comp-lambda (cadr x) (cddr x) env)))
-		  ;; procedure application:
-		  ;; compile args, then fn, then the call
-		  (t (seq (apply append (map (lambda (y)
-									   (comp y env))
-									 (cdr x)))
-				  (comp (car x) env)
-				  (gen 'CALL (length (cdr x))))))))
+		(else
+		 (case (car x)
+		   ((quote)
+;			(format #t "- quote~%")
+			(gen 'CONST (cadr x)))
+		   ((begin)
+;			 (format #t "- begin~%")
+			 (comp-begin (cdr x) env))
+		   ((set!)
+;			   (format #t "- set!~%")
+			 (seq (comp (caddr x) env) (gen-set (cadr x) env)))
+		   ((if)
+;			(format #t "- if~%")
+			(comp-if (cadr x) (caddr x) (cadddr x) env))
+		   ((lambda)
+;			   (format #t "- lambda~%")
+			 (gen 'FN (comp-lambda (cadr x) (cddr x) env)))
+		   ;; procedure application:
+		   ;; compile args, then fn, then the call
+		   (else
+;			(format #t "- function application~%")
+			(seq (apply append (map (lambda (y)
+									  (comp y env))
+									(cdr x)))
+				 (comp (car x) env)
+				 (gen 'CALL (length (cdr x)))))))))
 
 
 ;;; Compile a sequence of expressions, popping all but the last.
 
 (define (comp-begin exps env)
-  (format #t "COMP-BEGIN exps: ~A~%           env: ~A~%" exps env)
-  (cond ((null exps)
+;  (format #t "COMP-BEGIN exps: ~A~%           env: ~A~%" exps env)
+  (cond ((nil? exps)
 		 (gen 'CONST nil))
 		((eqv? (length exps) 1)
 		 (comp (car exps) env))
@@ -51,7 +68,7 @@
 ;;; Compile a conditional expression.
 
 (define (comp-if pred then else env)
-  (format #t "COMP-IF pred: ~A~%        then: ~A~%        else: ~A~%        env: ~A~%" pred then else env)
+;  (format #t "COMP-IF pred: ~A~%        then: ~A~%        else: ~A~%        env: ~A~%" pred then else env)
   (let ((l1 (gen-label))
 		(l2 (gen-label)))
 	(seq (comp pred env)
@@ -66,7 +83,7 @@
 ;;; Compile a lambda form into a closure with compiled code.
 
 (define (comp-lambda args body env)
-  (format #t "COMP-LAMBDA args: ~A~%            body: ~A~%            env: ~A~%" args body env)
+;  (format #t "COMP-LAMBDA args: ~A~%            body: ~A~%            env: ~A~%" args body env)
   (unless (and (list? args)
 			   (every symbol? args))
 	(error (format #f "COMPILE: Lambda arglist must be a list of symbols, not ~A" args)))
@@ -81,7 +98,7 @@
 
 (define (compiler x)
   (set! *label-num* 0)
-  (format #t "COMPILER: ~A~%" x)
+;  (format #t "COMPILER: ~A~%" x)
   (comp-lambda '() (list x) nil))
 
 
@@ -95,12 +112,14 @@
 ;;; Return a one-element i s t of the specified instruction.
 
 (define (gen opcode . args)
+;  (format #t "GEN: ~A ~A~%" opcode args)
   (list (cons opcode args)))
 
 
 ;;; Return a sequence of instructions
 
 (define (seq . code)
+;  (format #t "SEQ: ~A~%" code)
   (apply append code))
 
 
@@ -125,7 +144,7 @@
 (define (gen-var var env)
   (let ((p (in-env? var env)))
 	(if p
-		(gen 'LVAR (car p) (cadr p) ":" var)
+		(gen 'LVAR (car p) (cadr p) ";" var)
 		(gen 'GVAR var))))
 
 
@@ -134,7 +153,7 @@
 (define (get-set var env)
   (let ((p (in-env? var env)))
 	(if p
-		(gen 'LSET (car p) (cadr p) ":" var)
+		(gen 'LSET (car p) (cadr p) ";" var)
 		(get 'GSET var))))
 
 
@@ -154,19 +173,27 @@
 ;;; but in a column at least 8 spaces wide.
 
 (define (show-fn fn . options)
-  (let ((stream (if (nil? options) *standard-output* (car options)))
-		(depth (if (or (nil? options) (eqv? (length options) 1)) 8 (cadr options))))
-	(if (not (function? fn))
+  (let ((stream (if (nil? options)
+					*standard-output*
+					(car options)))
+		(depth (if (or (nil? options)
+					   (eqv? (length options) 1))
+				   0
+				   (cadr options))))
+	(if (not (frame? fn))
 		(format stream "~8A" fn)
 		(begin
 		  (newline stream)
+		  (set! depth (+ depth 8))
 		  (for-each (lambda (instr)
 					  (if (label? instr)
 						  (format stream "~A:" instr)
-						  (for-each (lambda (arg)
-									  (format stream "~V@A" depth arg))
-									instr))
-					  (newline stream))
+						  (begin
+							(format stream "~VA" depth "")
+							(for-each (lambda (arg)
+										(show-fn (if (nil? arg) "" arg) stream depth))
+									  instr)
+							(newline stream))))
 					(code: fn))))))
 
 
@@ -183,10 +210,11 @@
 
 (define (in-env? symbol env)
   (let ((frame (find (lambda (f)
-					   (find (lambda (x)
-							   (eq? x symbol))
-							 f))
+					   (not (false? (find (lambda (x)
+											(eq? x symbol))
+										  f))))
 					 env)))
 	(if frame
 		(list (position frame env)
-			  (position symbol frame)))))
+			  (position symbol frame))
+		#f)))
