@@ -187,7 +187,7 @@
 		  (set! depth (+ depth 8))
 		  (for-each (lambda (instr)
 					  (if (label? instr)
-						  (format stream "~A:" instr)
+						  (format stream "~A:~%" instr)
 						  (begin
 							(format stream "~VA" depth "")
 							(for-each (lambda (arg)
