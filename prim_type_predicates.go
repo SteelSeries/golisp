@@ -25,6 +25,7 @@ func RegisterTypePredicatePrimitives() {
 	MakePrimitiveFunction("notnil?", "1", IsNotNilImpl)
 	MakePrimitiveFunction("notnull?", "1", IsNotNilImpl)
 	MakePrimitiveFunction("symbol?", "1", IsSymbolImpl)
+	MakePrimitiveFunction("naked?", "1", IsNakedImpl)
 	MakePrimitiveFunction("string?", "1", IsStringImpl)
 	MakePrimitiveFunction("boolean?", "1", IsBooleanImpl)
 	MakePrimitiveFunction("integer?", "1", IsIntegerImpl)
@@ -83,6 +84,10 @@ func IsNotNilImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func IsSymbolImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return BooleanWithValue(SymbolP(Car(args))), nil
+}
+
+func IsNakedImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return BooleanWithValue(NakedP(Car(args))), nil
 }
 
 func IsStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
