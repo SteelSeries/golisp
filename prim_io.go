@@ -204,9 +204,12 @@ func FormatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	arguments := Cddr(args)
 
 	re := regexp.MustCompile("~[0-9]*@?[aAsS]")
-	numberOfSubstitutions := len(re.FindAllString(controlString, -1))
+	varRe := regexp.MustCompile("~V@?[aAsS]")
+	numberOfFixedSubstitutions := len(re.FindAllString(controlString, -1))
+	numberOfVarSubstitutions := len(varRe.FindAllString(controlString, -1))
+	numberOfSubstitutions := (numberOfVarSubstitutions * 2) + numberOfFixedSubstitutions
 	if numberOfSubstitutions != Length(arguments) {
-		err = ProcessError("number of replacements in the control string and number of arguments must be equal", env)
+		err = ProcessError(fmt.Sprintf("number of replacements (%d) in the control string (%s) and number of arguments (%d) must be equal", numberOfSubstitutions, controlString, Length(arguments)), env)
 		return
 	}
 
