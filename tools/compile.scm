@@ -7,98 +7,358 @@
 ;;; GoLisp compiler
 
 
+;;;-----------------------------------------------------------------------------
+;;; Logging
+
+(define **LOGGING** #f)
+
+(define (logging on/off)
+  (set! **LOGGING** on/off))
+
+(define (log-it format-string . objects)
+
+  (when **LOGGING**
+	(apply format (if (nil? objects)
+					  (list #t format-string)
+					  (cons* #t format-string objects)))))
+
+;;;-----------------------------------------------------------------------------
+;;; The compiler
+
 (define *label-num* 0)
 
 ;;; Compile the expression x into a list of instructions.
 
-(define (comp x env)
-;  (format #t "COMP exps: ~A~%     env: ~A~%" x env)
-  (cond ((symbol? x)
-;		 (format #t "- symbol~%")
+(define (comp x env val? more?)
+  (log-it "COMP exps: ~A~%     env: ~A~%" x env)
+  (cond ((member x '(#t #f nil))
+		 (comp-const x val? more?))
+		((symbol? x)
+		 (log-it "- symbol~%")
 		 (if (naked? x)
-			 (gen 'CONST x)
-			 (gen-var x env)))
+			 (comp-const x val? more?)
+			 (comp-var x env val? more?)))
 		((atom? x)
-;		 (format #t "- atom~%")
-		 (gen 'CONST x))
-		((macro? (car x))
-;		 (format #t "- macro~%")
-		 (comp (expand x) env))
+		 (log-it "- atom~%")
+		 (comp-const x val? more?))
+		((macro? (first x))
+		 (log-it "- macro~%")
+		 (comp (expand x) env val? more?))
 		(else
 		 (case (car x)
 		   ((quote)
-;			(format #t "- quote~%")
-			(gen 'CONST (cadr x)))
+			(log-it "- quote~%")
+			(arg-count x 1)
+			(gen 'CONST (second x)))
 		   ((begin)
-;			 (format #t "- begin~%")
-			 (comp-begin (cdr x) env))
+			 (log-it "- begin~%")
+			 (comp-begin (rest x) env val? more?))
+		   ((define)
+			(log-it "- define~%")
+			(let ((formals (cadr x))
+				  (body (cddr x)))
+			  (if (symbol? formals)
+				  (comp (cons* 'set! formals body))
+				  (let ((name (first formals))
+						(params (rest formals)))
+					(comp (list 'name! (list 'set! name (cons* 'lambda params body)) (list 'quote name)) env val? more?)
+					))))
 		   ((set!)
-;			   (format #t "- set!~%")
-			 (seq (comp (caddr x) env) (gen-set (cadr x) env)))
+			(log-it "- set!~%")
+			(arg-count x 2)
+			(unless (symbol? (cadr x))
+			  (error (format #f "Only symbols can be set!, not ~A in ~A" (cadr x) x)))
+			(seq (comp (third x) env #t #t)
+				 (gen-set (second x) env)
+				 (unless val?
+				   (gen 'POP))
+				 (unless more?
+				   (gen 'RETURN))))
 		   ((if)
-;			(format #t "- if~%")
-			(comp-if (cadr x) (caddr x) (cadddr x) env))
+			(log-it "- if~%")
+			(arg-count x 2 3)
+			(comp-if (second x) (third x) (fourth x) env val? more?))
 		   ((lambda)
-;			   (format #t "- lambda~%")
-			 (gen 'FN (comp-lambda (cadr x) (cddr x) env)))
+			(log-it "- lambda~%")
+			(when val?
+			  (let ((f (comp-lambda (second x) (cddr x) env)))
+				(seq (gen 'FN f)
+					 (unless more?
+					   (gen 'RETURN))))))
 		   ;; procedure application:
 		   ;; compile args, then fn, then the call
 		   (else
-;			(format #t "- function application~%")
-			(seq (apply append (map (lambda (y)
-									  (comp y env))
-									(cdr x)))
-				 (comp (car x) env)
-				 (gen 'CALL (length (cdr x)))))))))
+			(log-it "- function application~%")
+			(comp-funcall (first x) (rest x) env val? more?))))))
+
+
+;;; Report an error if form has the wrong number of args
+
+(define (arg-count form . limits)
+  (let ((n-args (length (rest form)))
+		(min-args (if (nil? limits) 0 (first limits)))
+		(max-args (if (or (nil? limits) (nil? (cdr limits))) 100 (second limits))))
+	(unless (<= min-args n-args max-args)
+	  (error (format #f "Wrong number of arguments for ~A in ~A: ~A supplied, ~A to ~A expected"
+					 (first form) form n-args min-args max-args)))))
 
 
 ;;; Compile a sequence of expressions, popping all but the last.
 
-(define (comp-begin exps env)
-;  (format #t "COMP-BEGIN exps: ~A~%           env: ~A~%" exps env)
+(define (comp-begin exps env val? more?)
+  (log-it "COMP-BEGIN exps: ~A~%           env: ~A~%" exps env)
   (cond ((nil? exps)
-		 (gen 'CONST nil))
+		 (comp-const nil val? more?))
 		((eqv? (length exps) 1)
-		 (comp (car exps) env))
-		(t (seq (comp (car exps) env)
-				(gen 'POP)
-				(comp-begin (cdr exps) env)))))
+		 (comp (first exps) env val? more?))
+		(t (seq (comp (first exps) env #f #t)
+				(comp-begin (rest exps) env val? more?)))))
+
+
+;;; Compile a list, leaving them all on the stack
+
+(define (comp-list exps env)
+  (if (nil? exps)
+	  nil
+	  (seq (comp (first exps) env #t #t)
+		   (comp-list (rest exps) env))))
+
+
+;;; Compile a constant expression
+
+(define (comp-const x val? more?)
+  (when val?
+	(seq (if (member x '(#t #f nil -1 0 1 2))
+			 (gen x)
+			 (gen 'CONST x))
+		 (unless more?
+		   (gen 'RETURN)))))
+
+
+;;; Compile a variable reference
+
+(define (comp-var x env val? more?)
+  (when val?
+	(seq (gen-var x env)
+		 (unless more?
+		   (gen 'RETURN)))))
 
 
 ;;; Compile a conditional expression.
 
-(define (comp-if pred then else env)
-;  (format #t "COMP-IF pred: ~A~%        then: ~A~%        else: ~A~%        env: ~A~%" pred then else env)
-  (let ((l1 (gen-label))
-		(l2 (gen-label)))
-	(seq (comp pred env)
-		 (gen 'FJUMP l1)
-		 (comp then env)
-		 (gen 'JUMP l2)
-		 (list l1)
-		 (comp else env)
-		 (list l2))))
+(define (comp-if pred then else env val? more?)
+  (log-it "COMP-IF pred: ~A~%        then: ~A~%        else: ~A~%        env: ~A~%" pred then else env)
+  (cond ((false? pred)					; (if #f x y) ==> y
+		 (comp else env val? more?))
+		((atom? pred)				; (if #t x y) ==> x
+		 (comp then env val? more?))
+		((and (list? pred)				; (if (not p) x y) ==> (if p y x)
+			  (eqv? (length (rest pred)) 1)
+			  (primitive? (first pred) env 1)
+			  (eq? (prim-opcode (primitive? (first pred) env 1)) 'not))
+		 (comp-f (second pred) else then env val? more?))
+		(else
+		 (let ((pcode (comp pred env t t))
+			   (tcode (comp then env val? more?))
+			   (ecode (comp else env val? more?)))
+		   (cond ((equal? tcode ecode)	; (if p x x) ==> (begin p x)
+				  (seq (comp pred env #f #t) ecode))
+				 ((nil? tcode)			; (if p nil y) ==> p (TJUMP L2) y L2:
+				  (let ((l2 (gen-label)))
+					(seq pcode
+						 (gen 'TJUMP l2)
+						 ecode
+						 (list l2)
+						 (unless more?
+						   (gen 'RETURN)))))
+				 ((nil? ecode)			; (if p x) ==> p (FJUMP l1) x L1:
+				  (let ((l1 (gen-label)))
+					(seq pcode
+						 (gen 'FJUMP l1)
+						 tcode
+						 (list l1)
+						 (unless more?
+						   (gen 'RETURN)))))
+				 (else					; (if p x y) ==> p (FJUMP L1) x L1: y
+										;             or p (FJUMP L1) x (JUMP L2) L1: y L2:
+				  (let ((l1 (gen-label))
+						(l2 (if more? (gen-label))))
+					(seq pcode
+						 (gen 'FJUMP l1)
+						 tcode
+						 (when more?
+						   (gen 'JUMP l2))
+						 (list l1)
+						 ecode
+						 (when more?
+						   (list l2))))))))))
+
+
+(define (starts-with? l x)
+  (and (pair? l)
+	   (eq? (first l) x)))
+
+
+;;; Compile an application of a function to arguments
+
+(define (comp-funcall f args env val? more?)
+  (let ((prim (primitive? f env (length args))))
+	(cond (prim							; function compilable to a primitive instruction
+		   (if (and (false? val?)
+					(false? (prim-side-effects prim)))
+			   ;; side-effect free primitive when value unused
+			   (com-begin args env #f more?)
+			   ;; primitive with value or call needed
+			   (seq (comp-list args env)
+					(gen (prim-opcode prim))
+					(unless val?
+					  (gen 'POP))
+					(unless more?
+					  (gen 'RETURN)))))
+		  ((and (starts-with? f 'lambda)
+				(nil? (second f)))
+		   ;; ((lambda () coby) ==> (begin body)
+		   (unless (nil? args)
+			 (error "Too many arguments supplied"))
+		   (comp-begin (cddr f) env val? more?))
+		  (more?						; need to save the continuation point
+		   (let ((k (gen-label 'K)))
+			 (seq (gen 'SAVE k)
+				  (comp-list args env)
+				  (comp f env #t #t)
+				  (gen 'CALLJ (length args))
+				  (list k)
+				  (when (false? val?)
+					(gen 'POP)))))
+		  (else							; function call as rename plus goto
+		   (seq (comp-list args env)
+				(comp f env #t #t)
+				(gen 'CALLJ (length args)))))))
+
+
+(define *primitive-fns*
+  '((+ 2 + #t) (- 2 - #t) (* 2 * #t) (/ 2 / #t)
+	(< 2 <) (> 2 >) (<= 2 <=) (>= 2 >=)
+	(eq? 2 EQ?) (equal? 2 EQUAL?) (eqv? 2 EQV?)
+	(not 1 NOT) (nil? 1 NIL?)
+	(car 1 CAR) (cdr 1 CDR) (cadr 1 CADR) (cons 2 CONS #t)
+	(list 1 LIST #t) (list 2 LIST2 #t) (list 3 LIST3 #t)
+	(read 0 READ #f #t) (write 1 WRITE #f #t) (display 1 DISPLAY #f #t)
+	(newline 0 NEWLINE #f #t) (compiler 1 COMPILER #t)
+	(name! 2 NAME! #t) (random 1 RANDOM #t #f)))
+
+
+;;; F is a primitive is it is in the table, and is not shadowed
+;;; by somethign in the environment, and has the right number of args.
+
+(define (primitive? f env n-args)
+  (and (false? (in-env? f env))
+	   (find (lambda (prim)
+			   (and (equal? f (prim-symbol prim))
+					(eqv? n-args (prim-n-args prim))))
+			 *primitive-fns*)))
+
+
+(define (prim-symbol prim)
+  (first prim))
+
+(define (prim-n-args prim)
+  (second prim))
+
+(define (prim-opcode prim)
+  (third prim))
+
+(define (prim-always prim)
+  (fourth prim))
+
+(define (prim-side-effects prim)
+  (fifth prim))
+
+
+;;; Initialize the primitive functions.
+
+(define (init-scheme-comp)
+  (for-each (lambda (prim)
+			  (environment-define (system-global-environment)
+								  (prim-symbol prim)
+								  (new-fn env: nil
+										  name: (prim-symbol prim)
+										  code: (seq (gen 'PRIM (prim-symbol prim))
+													 (gen 'RETURN)))))
+			*primitive-fns*))
+
+
+(define (list1 x)
+  (list x))
+
+
+(define (list2 x y)
+  (list x y))
+
+
+(define (list3 x y z)
+  (list x y z))
 
 
 ;;; Compile a lambda form into a closure with compiled code.
 
 (define (comp-lambda args body env)
-;  (format #t "COMP-LAMBDA args: ~A~%            body: ~A~%            env: ~A~%" args body env)
-  (unless (and (list? args)
-			   (every symbol? args))
-	(error (format #f "COMPILE: Lambda arglist must be a list of symbols, not ~A" args)))
+  (log-it "COMP-LAMBDA args: ~A~%            body: ~A~%            env: ~A~%" args body env)
   (make-frame env: env
 			  args: args
-			  code: (seq (gen 'ARGS (length args))
-						 (comp-begin body (cons args env))
-						 (gen 'RETURN))))
+			  code: (seq (gen-args args 0)
+						 (comp-begin body (cons (make-true-list args) env) #t #f))))
+
+
+;;; Generate an instruction to load the arguments
+
+(define (gen-args args n-so-far)
+  (cond ((nil? args)
+		 (gen 'ARGS n-so-far))
+		((symbol? args)
+		 (gen 'ARGS. n-so-far))
+		((and (pair? args)
+			  (symbol? (first args)))
+		 (gen-args (rest args) (1+ n-so-far)))
+		(else
+		 (error "Illegal argument list"))))
+
+
+;;; Convert a possibly dotted list into a true, non-dotted list.
+
+(define (make-true-list dotted-list)
+  (cond ((nil? dotted-list)
+		 nil)
+		((atom? dotted-list)
+		 (list dotted-list))
+		(else
+		 (cons (first dotted-list)
+			   (make-true-list (rest dotted-list))))))
+
+
+;;; Build a new function.
+
+(define (new-fn . stuff)
+  (let ((f (apply make-frame stuff)))
+	(assemble (make-frame env: (env: f)
+						  name: (name: f)
+						  args: (if (args:? f) (args: f) '())
+						  code: (optimize (code: f))))))
+
+
+(define (optimize code)
+  code)
+
+
+(define (assemble fn)
+  fn)
 
 
 ;;; Compile an expression as if it were in a parameterless lambda.
 
 (define (compiler x)
   (set! *label-num* 0)
-;  (format #t "COMPILER: ~A~%" x)
+  (log-it "COMPILER: ~A~%" x)
   (comp-lambda '() (list x) nil))
 
 
@@ -112,14 +372,14 @@
 ;;; Return a one-element i s t of the specified instruction.
 
 (define (gen opcode . args)
-;  (format #t "GEN: ~A ~A~%" opcode args)
+  (log-it "GEN: ~A ~A~%" opcode args)
   (list (cons opcode args)))
 
 
 ;;; Return a sequence of instructions
 
 (define (seq . code)
-;  (format #t "SEQ: ~A~%" code)
+  (log-it "SEQ: ~A~%" code)
   (apply append code))
 
 
@@ -150,11 +410,13 @@
 
 ;;; Generate an instruction to set a variable to top-of-stack.
 
-(define (get-set var env)
+(define (gen-set var env)
   (let ((p (in-env? var env)))
 	(if p
 		(gen 'LSET (car p) (cadr p) ";" var)
-		(get 'GSET var))))
+		(if (assoc var *primitive-fns*)
+			(error (format #f "Can't alter the constant ~A" var))
+			(gen 'GSET var)))))
 
 
 (define (print-fn fn . options)
@@ -166,7 +428,7 @@
 ;;; Is x a label?
 
 (define (label? x)
-  (atom? x))
+  (symbol? x))
 
 ;;; Print all the instructions in a function.
 ;;; If the argument is not a function, just princ it,
@@ -218,3 +480,4 @@
 		(list (position frame env)
 			  (position symbol frame))
 		#f)))
+
