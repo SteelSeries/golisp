@@ -26,6 +26,14 @@
 ;;;-----------------------------------------------------------------------------
 ;;; The compiler
 
+(define opcode-symbols '(LVAR LSET GVAR GSET POP CONST JUMP FJUMP TJUMP SAVE RETURN CALLJ ARGS ARGSDOT FN PRIM SET_CC CC SCHEME_READ NEWLINE CAR CDR CADR NOT LIST1 COMPILER DISPLAY WRITE RANDOM PLUS MINUS TIMES DIVIDE LT GT LTEQ GTEQ NEQ EQ_SIGN CONS LIST2 NAME_BANG EQ EQUAL EQL LIST3 TRUE FALSE NIL MINUS_1 ZERO ONE TWO HALT))
+
+(define opcodes (do ((syms opcode-symbols (cdr syms))
+					 (index 0 (1+ index))
+					 (code-list '() (acons (car syms) index code-list)))
+					((nil? syms)
+					 code-list)))
+
 (define *label-num* 0)
 
 ;;; Compile the expression x into a list of instructions.
@@ -530,6 +538,16 @@
 			  code)
 	code-vector))
 
+
+;;; Convert the assembly code into bytecode vectors
+
+(define (convert-to-bytecode code)
+  (vector-map (lambda (instr)
+				(let ((bytecode (assoc (car instr) opcodes)))
+				  (if (false? bytecode)
+					  (error (format #f "Invalid opcode: ~A" (car instr)))					  
+					  (list->vector (cons (cdr bytecode) (cdr instr))))))
+			  code))
 
 ;;; True if instr's opcode is OP, or one of OP if OP is a list
 
