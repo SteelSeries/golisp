@@ -304,11 +304,11 @@
 ;;; Compile a lambda form into a closure with compiled code.
 
 (define (comp-lambda args body env)
-  (make-frame env: env
-			  args: args
-			  code: (seq (gen-args args 0)
-						 (comp-begin body (cons (make-true-list args) env) #t #f))))
   (log-it "COMP-LAMBDA args: ~A~%            body: ~A~%            env: ~A" args body env)
+  (new-fn env: env
+		  args: args
+		  code: (seq (gen-args args 0)
+					 (comp-begin body (cons (make-true-list args) env) #t #f))))
 
 
 ;;; Generate an instruction to load the arguments
@@ -342,7 +342,7 @@
 (define (new-fn . stuff)
   (let ((f (apply make-frame stuff)))
 	(assemble (make-frame env: (env: f)
-						  name: (name: f)
+						  name: (if (name:? f) (name: f))
 						  args: (if (args:? f) (args: f) '())
 						  code: (optimize (code: f))))))
 
