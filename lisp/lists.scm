@@ -8,9 +8,9 @@
 ;;; Adds the rich set of standard Scheme list functions.  Only the
 ;;; basic list functions are builtin
 
-(define (iota count . rest)
-    (let ((start (if (null? rest) 0 (car rest)))
-          (step (if (null? (cdr rest)) 1 (cadr rest))))
+(define (iota count . args)
+    (let ((start (if (null? args) 0 (car args)))
+          (step (if (null? (cdr args)) 1 (cadr args))))
       (map (lambda (i)
              (+ start (* i step)))
            (interval 0 (+ start count -1)))))
