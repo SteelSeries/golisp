@@ -46,7 +46,7 @@ func TypeofImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func IsAtomImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	val := Car(args)
-	return BooleanWithValue(NumberP(val) || SymbolP(val) || StringP(val) || BooleanP(val) || CharacterP(val)), nil
+	return BooleanWithValue(NumberP(val) || StringP(val) || BooleanP(val) || CharacterP(val)), nil
 }
 
 func IsProperListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
