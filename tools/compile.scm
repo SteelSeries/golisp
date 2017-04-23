@@ -427,33 +427,38 @@
 (define (label? x)
   (symbol? x))
 
+
+(define (format-code-index i)
+  (let ((prefix (cond ((< i 10) "  ")
+					  ((< i 100) " ")
+					  (else ""))))
+	(format #f "~A~A: " prefix i)))
+
+
 ;;; Print all the instructions in a function.
 ;;; If the argument is not a function, just princ it,
 ;;; but in a column at least 8 spaces wide.
 
 (define (show-fn fn . options)
+  (log-it "show-fn")
   (let ((stream (if (nil? options)
 					*standard-output*
 					(car options)))
-		(depth (if (or (nil? options)
-					   (eqv? (length options) 1))
-				   0
+		(indent (if (or (nil? options)
+						(nil? (cdr options)))
+				   2
 				   (cadr options))))
 	(if (not (frame? fn))
 		(format stream "~8A" fn)
 		(begin
 		  (newline stream)
-		  (set! depth (+ depth 8))
-		  (for-each (lambda (instr)
-					  (if (label? instr)
-						  (format stream "~A:~%" instr)
-						  (begin
-							(format stream "~VA" depth "")
-							(for-each (lambda (arg)
-										(show-fn (if (nil? arg) "" arg) stream depth))
-									  instr)
-							(newline stream))))
-					(code: fn))))))
+		  (for-each (lambda (i)
+					  (format stream (format-code-index i))
+					  (for-each (lambda (arg)
+								  (show-fn arg stream (+ indent 8)))
+								(vector-ref (code: fn) i))
+					  (newline stream))
+					(iota (vector-length (code: fn))))))))
 
 
 (define (position x coll)
@@ -478,3 +483,57 @@
 			  (position symbol frame))
 		#f)))
 
+;;;-----------------------------------------------------------------------------
+;;; Assembler
+
+;;; Turn a list of instructions into a vector
+
+(define (assemble fn)
+  (log-it "assemble ~A" fn)
+  (let* ((result (asm-first-pass (code: fn)))
+		 (len (first result))
+		 (labels (second result)))
+	(code:! fn (asm-second-pass (code: fn) len labels))
+	fn))
+
+
+;;; Return the labels and the total code length
+
+(define (asm-first-pass code)
+  (log-it "asm-first-pass")
+  (let ((len 0)
+		(labels nil))
+	(for-each (lambda (instr)
+				(if (label? instr)
+					(set! labels (acons instr len labels))
+					(set! len (1+ len))))
+			  code)
+	(list len labels)))
+
+
+;;; Put code into code-vector, adjusting for labels
+
+(define (asm-second-pass code len labels)
+  (log-it "asm-second-pass")
+  (let ((addr 0)
+		(code-vector (make-vector len)))
+	(for-each (lambda (instr)
+				(log-it "~A" instr)
+				(unless (label? instr)
+				  (when (is instr '(JUMP TJUMP FJUMP SAVE))
+					(log-it "label: ~A" (nth 1 instr))
+					(log-it "labels: ~A" labels)
+					(log-it "assoced: ~A" (assoc (nth 1 instr) labels))
+					(set-nth! 1 instr (cdr (assoc (nth 1 instr) labels))))
+				  (vector-set! code-vector addr instr)
+				  (set! addr (1+ addr))))
+			  code)
+	code-vector))
+
+
+;;; True if instr's opcode is OP, or one of OP if OP is a list
+
+(define (is instr op)
+  (if (list? op)
+	  (memv (car instr) op)
+	  (eqv? (car instr) op)))
