@@ -30,6 +30,31 @@ var sendsuperSym = Intern("send-super")
 var channelreadSym = Intern("channel-read")
 var channelwriteSym = Intern("channel-write")
 
+func printDashes(indent int) {
+	for i := indent; i > 0; i -= 1 {
+		fmt.Print("-")
+	}
+}
+
+func logEval(d *Data, env *SymbolTableFrame) {
+	if LispTrace && !DebugEvalInDebugRepl {
+		depth := env.Depth()
+		fmt.Printf("%3d: ", depth)
+		printDashes(depth)
+		fmt.Printf("> %s\n", String(d))
+		EvalDepth += 1
+	}
+}
+
+func logResult(result *Data, env *SymbolTableFrame) {
+	if LispTrace && !DebugEvalInDebugRepl {
+		depth := env.Depth()
+		fmt.Printf("%3d: <", depth)
+		printDashes(depth)
+		fmt.Printf(" %s\n", String(result))
+	}
+}
+
 func postProcessShortcuts(d *Data) *Data {
 	symbolObj := Car(d)
 
@@ -66,6 +91,8 @@ func postProcessShortcuts(d *Data) *Data {
 func evalHelper(x *Data, env *SymbolTableFrame, needFunction bool) (result *Data, err error) {
 	//	fmt.Printf("############ ENTERING EVAL ###########\n")
 INTERP:
+	logEval(x, env)
+
 	if NilP(x) {
 		result = nil
 	} else if x.Type == SymbolType {
@@ -198,6 +225,7 @@ INTERP:
 			}
 		}
 	}
+	logResult(result, env)
 	return
 }
 

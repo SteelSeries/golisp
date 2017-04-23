@@ -1254,31 +1254,6 @@ func PrintString(d *Data) string {
 	}
 }
 
-func printDashes(indent int) {
-	for i := indent; i > 0; i -= 1 {
-		fmt.Print("-")
-	}
-}
-
-func logEval(d *Data, env *SymbolTableFrame) {
-	if LispTrace && !DebugEvalInDebugRepl {
-		depth := env.Depth()
-		fmt.Printf("%3d: ", depth)
-		printDashes(depth)
-		fmt.Printf("> %s\n", String(d))
-		EvalDepth += 1
-	}
-}
-
-func logResult(result *Data, env *SymbolTableFrame) {
-	if LispTrace && !DebugEvalInDebugRepl {
-		depth := env.Depth()
-		fmt.Printf("%3d: <", depth)
-		printDashes(depth)
-		fmt.Printf(" %s\n", String(result))
-	}
-}
-
 func formatApply(function *Data, args *Data) string {
 	var fname string
 
