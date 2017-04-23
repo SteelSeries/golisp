@@ -20,7 +20,8 @@
   (when **LOGGING**
 	(apply format (if (nil? objects)
 					  (list #t format-string)
-					  (cons* #t format-string objects)))))
+					  (cons* #t format-string objects)))
+	(newline)))
 
 ;;;-----------------------------------------------------------------------------
 ;;; The compiler
@@ -30,31 +31,31 @@
 ;;; Compile the expression x into a list of instructions.
 
 (define (comp x env val? more?)
-  (log-it "COMP exps: ~A~%     env: ~A~%" x env)
+  (log-it "COMP exps: ~A~%     env: ~A" x env)
   (cond ((member x '(#t #f nil))
 		 (comp-const x val? more?))
 		((symbol? x)
-		 (log-it "- symbol~%")
+		 (log-it "- symbol")
 		 (if (naked? x)
 			 (comp-const x val? more?)
 			 (comp-var x env val? more?)))
 		((atom? x)
-		 (log-it "- atom~%")
+		 (log-it "- atom")
 		 (comp-const x val? more?))
 		((macro? (first x))
-		 (log-it "- macro~%")
+		 (log-it "- macro")
 		 (comp (expand x) env val? more?))
 		(else
 		 (case (car x)
 		   ((quote)
-			(log-it "- quote~%")
+			(log-it "- quote")
 			(arg-count x 1)
 			(gen 'CONST (second x)))
 		   ((begin)
-			 (log-it "- begin~%")
+			 (log-it "- begin")
 			 (comp-begin (rest x) env val? more?))
 		   ((define)
-			(log-it "- define~%")
+			(log-it "- define")
 			(let ((formals (cadr x))
 				  (body (cddr x)))
 			  (if (symbol? formals)
@@ -64,7 +65,7 @@
 					(comp (list 'name! (list 'set! name (cons* 'lambda params body)) (list 'quote name)) env val? more?)
 					))))
 		   ((set!)
-			(log-it "- set!~%")
+			(log-it "- set!")
 			(arg-count x 2)
 			(unless (symbol? (cadr x))
 			  (error (format #f "Only symbols can be set!, not ~A in ~A" (cadr x) x)))
@@ -75,11 +76,11 @@
 				 (unless more?
 				   (gen 'RETURN))))
 		   ((if)
-			(log-it "- if~%")
+			(log-it "- if")
 			(arg-count x 2 3)
 			(comp-if (second x) (third x) (fourth x) env val? more?))
 		   ((lambda)
-			(log-it "- lambda~%")
+			(log-it "- lambda")
 			(when val?
 			  (let ((f (comp-lambda (second x) (cddr x) env)))
 				(seq (gen 'FN f)
@@ -88,7 +89,7 @@
 		   ;; procedure application:
 		   ;; compile args, then fn, then the call
 		   (else
-			(log-it "- function application~%")
+			(log-it "- function application")
 			(comp-funcall (first x) (rest x) env val? more?))))))
 
 
@@ -106,7 +107,7 @@
 ;;; Compile a sequence of expressions, popping all but the last.
 
 (define (comp-begin exps env val? more?)
-  (log-it "COMP-BEGIN exps: ~A~%           env: ~A~%" exps env)
+  (log-it "COMP-BEGIN exps: ~A~%           env: ~A" exps env)
   (cond ((nil? exps)
 		 (comp-const nil val? more?))
 		((eqv? (length exps) 1)
@@ -147,7 +148,7 @@
 ;;; Compile a conditional expression.
 
 (define (comp-if pred then else env val? more?)
-  (log-it "COMP-IF pred: ~A~%        then: ~A~%        else: ~A~%        env: ~A~%" pred then else env)
+  (log-it "COMP-IF pred: ~A~%        then: ~A~%        else: ~A~%        env: ~A" pred then else env)
   (cond ((false? pred)					; (if #f x y) ==> y
 		 (comp else env val? more?))
 		((atom? pred)				; (if #t x y) ==> x
@@ -303,11 +304,11 @@
 ;;; Compile a lambda form into a closure with compiled code.
 
 (define (comp-lambda args body env)
-  (log-it "COMP-LAMBDA args: ~A~%            body: ~A~%            env: ~A~%" args body env)
   (make-frame env: env
 			  args: args
 			  code: (seq (gen-args args 0)
 						 (comp-begin body (cons (make-true-list args) env) #t #f))))
+  (log-it "COMP-LAMBDA args: ~A~%            body: ~A~%            env: ~A" args body env)
 
 
 ;;; Generate an instruction to load the arguments
@@ -350,15 +351,11 @@
   code)
 
 
-(define (assemble fn)
-  fn)
-
-
 ;;; Compile an expression as if it were in a parameterless lambda.
 
 (define (compiler x)
   (set! *label-num* 0)
-  (log-it "COMPILER: ~A~%" x)
+  (log-it "COMPILER: ~A" x)
   (comp-lambda '() (list x) nil))
 
 
@@ -372,14 +369,14 @@
 ;;; Return a one-element i s t of the specified instruction.
 
 (define (gen opcode . args)
-  (log-it "GEN: ~A ~A~%" opcode args)
+  (log-it "GEN: ~A ~A" opcode args)
   (list (cons opcode args)))
 
 
 ;;; Return a sequence of instructions
 
 (define (seq . code)
-  (log-it "SEQ: ~A~%" code)
+  (log-it "SEQ: ~A" code)
   (apply append code))
 
 
