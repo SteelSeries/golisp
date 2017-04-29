@@ -439,8 +439,8 @@ func executeBytecode(f *Data, env *SymbolTableFrame) (result *Data, err error) {
 			}
 
 			retAddr := (*ReturnAddress)(ObjectValue(retAddrObj))
-			fObj := retAddr.f
-			fMap = FrameValue(fObj)
+			f = retAddr.f
+			fMap = FrameValue(f)
 			code = VectorValue(fMap.Get("code:"))
 			localEnv = retAddr.env
 			pc = retAddr.pc
@@ -450,15 +450,14 @@ func executeBytecode(f *Data, env *SymbolTableFrame) (result *Data, err error) {
 				return
 			}
 		case CALLJ:
-			var fObj *Data
-			fObj, err = CompiledFunctionStack.Pop()
+			f, err = CompiledFunctionStack.Pop()
 			if err != nil {
 				return
 			}
 			nArgs = int(IntegerValue(instr[1]))
-			if FrameP(fObj) {
+			if FrameP(f) {
 				localEnv = localEnv.Next // discard the top frame
-				fMap = FrameValue(fObj)
+				fMap = FrameValue(f)
 				fmt.Printf("Calling compiled function: %s\n", (String(fMap.Get("name:"))))
 				code = VectorValue(fMap.Get("code:"))
 				localEnv.Values = ToArray(fMap.Get("env:"))
