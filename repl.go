@@ -10,13 +10,14 @@ package golisp
 import (
 	"container/list"
 	"fmt"
+	"runtime/debug"
 )
 
 func Repl() {
 	IsInteractive = true
 	fmt.Printf("Welcome to GoLisp 1.1\n")
 	fmt.Printf("Copyright 2013-2016 SteelSeries\n")
-	fmt.Printf("Copyright 2016 Dave Astels\n")
+	fmt.Printf("Copyright 2016-2017 Dave Astels\n")
 	fmt.Printf("Evaluate '(quit)' to exit.\n\n")
 	prompt := "> "
 	LoadHistoryFromFile(".golisp_history")
@@ -26,6 +27,7 @@ func Repl() {
 		defer func() {
 			if x := recover(); x != nil {
 				fmt.Printf("Don't Panic! %v\n", x)
+				debug.PrintStack()
 			}
 		}()
 		DebugCurrentFrame = nil
