@@ -287,7 +287,7 @@
 	(eq? 2 EQ) (neq? 2 NEQ) (equal? 2 EQUAL) (nequal? 2 NEQUAL) (eqv? 2 EQV) (neqv? 2 NEQV)
 	(not 1 NOT) (nil? 1 NILP)
 	(car 1 CAR) (cdr 1 CDR) (cadr 1 CADR) (cons 2 CONS #t)
-	(list 1 LIST #t) (list 2 LIST2 #t) (list 3 LIST3 #t)
+	(list 1 LIST1 #t) (list 2 LIST2 #t) (list 3 LIST3 #t)
 	(name! 2 NAMEBANG #t)))
 
 
