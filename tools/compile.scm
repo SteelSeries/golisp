@@ -26,7 +26,7 @@
 ;;;-----------------------------------------------------------------------------
 ;;; The compiler
 
-(define opcode-symbols '(LVAR LSET GVAR GSET POP CONST JUMP FJUMP TJUMP SAVE RETURN CALLJ ARGS ARGSDOT FN PRIM SET_CC CC SCHEME_READ NEWLINE CAR CDR CADR NOT LIST1 COMPILER DISPLAY WRITE RANDOM PLUS MINUS TIMES DIVIDE LT GT LTEQ GTEQ NEQ EQ_SIGN CONS LIST2 NAME_BANG EQ EQUAL EQL LIST3 TRUE FALSE NIL MINUS_1 ZERO ONE TWO HALT))
+(define opcode-symbols '(ZERO ONE TWO TRUE FALSE NIL LVAR LSET GVAR GSET POP CONST JUMP FJUMP TJUMP SAVE RETURN CALLJ ARGS ARGSDOT FN PRIM SET_CC CC CAR CDR CADR NOT NILP LIST1 RANDOM PLUS MINUS TIMES DIVIDE LT GT LTEQ GTEQ CONS LIST2 EQV NEQV EQ NEQ EQUAL NEQUAL LIST3 NAMEBANG HALT))
 
 (define opcodes (do ((syms opcode-symbols (cdr syms))
 					 (index 0 (1+ index))
@@ -40,7 +40,7 @@
 
 (define (comp x env val? more?)
   (log-it "COMP exps: ~A~%     env: ~A" x env)
-  (cond ((member x '(#t #f nil))
+  (cond ((member x '(#t #f nil 0 1 2))
 		 (comp-const x val? more?))
 		((symbol? x)
 		 (log-it "- symbol")
@@ -50,9 +50,9 @@
 		((atom? x)
 		 (log-it "- atom")
 		 (comp-const x val? more?))
-		((macro? (first x))
+		((macro? (eval (first x)))
 		 (log-it "- macro")
-		 (comp (expand x) env val? more?))
+		 (comp (apply expand x) env val? more?))
 		(else
 		 (case (car x)
 		   ((quote)
@@ -97,7 +97,7 @@
 		   ;; procedure application:
 		   ;; compile args, then fn, then the call
 		   (else
-			(log-it "- function application")
+			(log-it "- function application: ~A" x)
 			(comp-funcall (first x) (rest x) env val? more?))))))
 
 
@@ -136,10 +136,22 @@
 ;;; Compile a constant expression
 
 (define (comp-const x val? more?)
+  (log-it "comp-const: ~A" x)
   (when val?
-	(seq (if (member x '(#t #f nil -1 0 1 2))
-			 (gen x)
-			 (gen 'CONST x))
+	(seq (cond ((eqv? x #t)
+				(gen 'TRUE))
+			   ((eqv? x #f)
+				(gen 'FALSE))
+			   ((eqv? x nil)
+				(gen 'NIL))
+			   ((eqv? x 0)
+				(gen 'ZERO))
+			   ((eqv? x 1)
+				(gen 'ONE))
+			   ((eqv? x 2)
+				(gen 'TWO))
+			   (else
+				(gen 'CONST x)))
 		 (unless more?
 		   (gen 'RETURN)))))
 
@@ -156,18 +168,18 @@
 ;;; Compile a conditional expression.
 
 (define (comp-if pred then else env val? more?)
-  (log-it "COMP-IF pred: ~A~%        then: ~A~%        else: ~A~%        env: ~A" pred then else env)
+  (log-it "COMP-IF pred: ~A~%        then: ~A~%        else: ~A~%        env: ~A val?=~A more?=~A" pred then else env val? more?)
   (cond ((false? pred)					; (if #f x y) ==> y
 		 (comp else env val? more?))
 		((atom? pred)				; (if #t x y) ==> x
 		 (comp then env val? more?))
 		((and (list? pred)				; (if (not p) x y) ==> (if p y x)
 			  (eqv? (length (rest pred)) 1)
-			  (primitive? (first pred) env 1)
-			  (eq? (prim-opcode (primitive? (first pred) env 1)) 'not))
+			  (primitive-op? (first pred) env 1)
+			  (eq? (prim-opcode (primitive-op? (first pred) env 1)) 'not))
 		 (comp-f (second pred) else then env val? more?))
 		(else
-		 (let ((pcode (comp pred env t t))
+		 (let ((pcode (comp pred env #t #t))
 			   (tcode (comp then env val? more?))
 			   (ecode (comp else env val? more?)))
 		   (cond ((equal? tcode ecode)	; (if p x x) ==> (begin p x)
@@ -191,7 +203,8 @@
 				 (else					; (if p x y) ==> p (FJUMP L1) x L1: y
 										;             or p (FJUMP L1) x (JUMP L2) L1: y L2:
 				  (let ((l1 (gen-label))
-						(l2 (if more? (gen-label))))
+						(l2 (when more?
+							  (gen-label))))
 					(seq pcode
 						 (gen 'FJUMP l1)
 						 tcode
@@ -211,22 +224,45 @@
 ;;; Compile an application of a function to arguments
 
 (define (comp-funcall f args env val? more?)
-  (let ((prim (primitive? f env (length args))))
+  (let ((prim (primitive-op? f env (length args))))
 	(cond (prim							; function compilable to a primitive instruction
+		   (log-it "Compiling prim")
 		   (if (and (false? val?)
 					(false? (prim-side-effects prim)))
 			   ;; side-effect free primitive when value unused
-			   (com-begin args env #f more?)
+			   (begin
+				 (log-it "no side effect, and not used - just compiling args")
+				 (com-begin args env #f more?))
 			   ;; primitive with value or call needed
-			   (seq (comp-list args env)
-					(gen (prim-opcode prim))
-					(unless val?
-					  (gen 'POP))
-					(unless more?
-					  (gen 'RETURN)))))
+			   (begin
+				 (log-it "compiling call")
+				 (seq (comp-list args env)
+					  (gen (prim-opcode prim))
+					  (unless val?
+						(gen 'POP))
+					  (unless more?
+						(gen 'RETURN))))))
+		  ((special-form? (eval f))
+		   (log-it "Compiling special form")
+		   (seq (map (lambda (arg)
+					   (gen 'CONST arg))
+					 args)
+				;(comp f env #t #t)
+				(gen 'PRIM f (length args))
+				(when (false? val?)
+				  (gen 'POP))))
+		  ((primitive? (eval f))
+		   (log-it "Compiling primitive function")
+		   (seq (comp-list args env)
+				;; (comp f env #t #t)
+				(gen 'PRIM f (length args))
+				(when (false? val?)
+				  (gen 'POP))
+				(unless more?
+				  (gen 'RETURN))))
 		  ((and (starts-with? f 'lambda)
 				(nil? (second f)))
-		   ;; ((lambda () coby) ==> (begin body)
+		   ;; ((lambda () body) ==> (begin body)
 		   (unless (nil? args)
 			 (error "Too many arguments supplied"))
 		   (comp-begin (cddr f) env val? more?))
@@ -246,21 +282,19 @@
 
 
 (define *primitive-fns*
-  '((+ 2 + #t) (- 2 - #t) (* 2 * #t) (/ 2 / #t)
-	(< 2 <) (> 2 >) (<= 2 <=) (>= 2 >=)
-	(eq? 2 EQ?) (equal? 2 EQUAL?) (eqv? 2 EQV?)
-	(not 1 NOT) (nil? 1 NIL?)
+  '((+ 2 PLUS #t) (- 2 MINUS #t) (* 2 TIMES #t) (/ 2 DIVIDE #t)
+	(< 2 LT) (> 2 GT) (<= 2 LTE) (>= 2 GTE)
+	(eq? 2 EQ) (neq? 2 NEQ) (equal? 2 EQUAL) (nequal? 2 NEQUAL) (eqv? 2 EQV) (neqv? 2 NEQV)
+	(not 1 NOT) (nil? 1 NILP)
 	(car 1 CAR) (cdr 1 CDR) (cadr 1 CADR) (cons 2 CONS #t)
 	(list 1 LIST #t) (list 2 LIST2 #t) (list 3 LIST3 #t)
-	(read 0 READ #f #t) (write 1 WRITE #f #t) (display 1 DISPLAY #f #t)
-	(newline 0 NEWLINE #f #t) (compiler 1 COMPILER #t)
-	(name! 2 NAME! #t) (random 1 RANDOM #t #f)))
+	(name! 2 NAMEBANG #t)))
 
 
 ;;; F is a primitive is it is in the table, and is not shadowed
 ;;; by somethign in the environment, and has the right number of args.
 
-(define (primitive? f env n-args)
+(define (primitive-op? f env n-args)
   (and (false? (in-env? f env))
 	   (find (lambda (prim)
 			   (and (equal? f (prim-symbol prim))
@@ -297,23 +331,12 @@
 			*primitive-fns*))
 
 
-(define (list1 x)
-  (list x))
-
-
-(define (list2 x y)
-  (list x y))
-
-
-(define (list3 x y z)
-  (list x y z))
-
-
 ;;; Compile a lambda form into a closure with compiled code.
 
 (define (comp-lambda args body env)
   (log-it "COMP-LAMBDA args: ~A~%            body: ~A~%            env: ~A" args body env)
-  (new-fn env: env
+  (new-fn name: "anon"
+		  env: env
 		  args: args
 		  code: (seq (gen-args args 0)
 					 (comp-begin body (cons (make-true-list args) env) #t #f))))
@@ -348,11 +371,11 @@
 ;;; Build a new function.
 
 (define (new-fn . stuff)
-  (let ((f (apply make-frame stuff)))
-	(assemble (make-frame env: (env: f)
-						  name: (if (name:? f) (name: f))
-						  args: (if (args:? f) (args: f) '())
-						  code: (optimize (code: f))))))
+  (let ((fn-data (apply make-frame stuff)))
+	(assemble (make-frame env: (get-slot fn-data env:)
+						  name: (get-slot-or-nil fn-data name:)
+						  args: (get-slot-or-nil fn-data args:)
+						  code: (optimize (get-slot fn-data code:))))))
 
 
 (define (optimize code)
@@ -409,7 +432,7 @@
 (define (gen-var var env)
   (let ((p (in-env? var env)))
 	(if p
-		(gen 'LVAR (car p) (cadr p) ";" var)
+		(gen 'LVAR (car p) (cadr p))
 		(gen 'GVAR var))))
 
 
@@ -418,55 +441,10 @@
 (define (gen-set var env)
   (let ((p (in-env? var env)))
 	(if p
-		(gen 'LSET (car p) (cadr p) ";" var)
+		(gen 'LSET (car p) (cadr p))
 		(if (assoc var *primitive-fns*)
 			(error (format #f "Can't alter the constant ~A" var))
 			(gen 'GSET var)))))
-
-
-(define (print-fn fn . options)
-  (let ((stream (if (nil? options) *standard-output* (car options)))
-		(depth (if (or (nil? options) (eqv? (length options) 1)) 0 (cadr options))))
-	(format stream "~A" (if (name:? fn) (name: fn) "??"))))
-
-
-;;; Is x a label?
-
-(define (label? x)
-  (symbol? x))
-
-
-(define (format-code-index i)
-  (let ((prefix (cond ((< i 10) "  ")
-					  ((< i 100) " ")
-					  (else ""))))
-	(format #f "~A~A: " prefix i)))
-
-
-;;; Print all the instructions in a function.
-;;; If the argument is not a function, just princ it,
-;;; but in a column at least 8 spaces wide.
-
-(define (show-fn fn . options)
-  (log-it "show-fn")
-  (let ((stream (if (nil? options)
-					*standard-output*
-					(car options)))
-		(indent (if (or (nil? options)
-						(nil? (cdr options)))
-				   2
-				   (cadr options))))
-	(if (not (frame? fn))
-		(format stream "~8A" fn)
-		(begin
-		  (newline stream)
-		  (for-each (lambda (i)
-					  (format stream (format-code-index i))
-					  (for-each (lambda (arg)
-								  (show-fn arg stream (+ indent 8)))
-								(vector-ref (code: fn) i))
-					  (newline stream))
-					(iota (vector-length (code: fn))))))))
 
 
 (define (position x coll)
@@ -494,14 +472,22 @@
 ;;;-----------------------------------------------------------------------------
 ;;; Assembler
 
+
+;;; Is x a label?
+
+(define (label? x)
+  (symbol? x))
+
+
+
 ;;; Turn a list of instructions into a vector
 
 (define (assemble fn)
   (log-it "assemble ~A" fn)
-  (let* ((result (asm-first-pass (code: fn)))
+  (let* ((result (asm-first-pass (get-slot fn code:)))
 		 (len (first result))
 		 (labels (second result)))
-	(code:! fn (asm-second-pass (code: fn) len labels))
+	(set-slot! fn code: (asm-second-pass (get-slot fn code:) len labels))
 	fn))
 
 
@@ -536,7 +522,7 @@
 				  (vector-set! code-vector addr instr)
 				  (set! addr (1+ addr))))
 			  code)
-	code-vector))
+	(convert-to-bytecode code-vector)))
 
 
 ;;; Convert the assembly code into bytecode vectors
@@ -555,3 +541,56 @@
   (if (list? op)
 	  (memv (car instr) op)
 	  (eqv? (car instr) op)))
+
+
+;;;-----------------------------------------------------------------------------
+;;; Print a compiled function
+
+;;; Format the code index to be right aligned, indented appropriately
+
+(define (format-code-index i indent)
+  (let ((prefix (cond ((< i 10) "  ")
+					  ((< i 100) " ")
+					  (else ""))))
+	(format #f "~VA~A~A: " indent "" prefix i)))
+
+
+;;; Print all the instructions in a function.
+;;; If the argument is not a function, just princ it,
+;;; but in a column at least 8 spaces wide.
+
+(define (show-fn fn . options)
+  ;(log-it "show-fn")
+  (let ((stream (if (nil? options)
+					*standard-output*
+					(car options)))
+		(indent (if (or (nil? options) (nil? (cdr options)))
+				   0
+				   (cadr options))))
+	(if (not (frame? fn))
+		(format stream "~8A" fn)
+		(begin
+		  (newline stream)
+		  (for-each (lambda (i)
+					  (let* ((instr (vector-ref (get-slot fn code:) i))
+							 (instr-length (vector-length instr)))
+						(format stream (format-code-index i indent))
+						(vector-for-each (lambda (arg)
+										   (show-fn arg stream (+ indent 8)))
+										 (subvector instr 0 (min (list instr-length 3))))
+						(format stream "~VA; ~A ~A"
+								(vector-ref #(0 16 8 0 0) instr-length) ""
+								(car (rassoc (vector-ref instr 0) opcodes))
+								(if (eqv? instr-length 4) (vector-ref instr 3) ""))
+						(newline stream)))
+					(iota (vector-length (get-slot fn code:))))))))
+
+
+
+
+;;;-----------------------------------------------------------------------------
+;;; Compiled code serialization
+
+(define (save-code code)
+  (format #t "~S" ))
+
