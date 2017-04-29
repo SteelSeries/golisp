@@ -43,7 +43,6 @@ func RegisterSpecialFormPrimitives() {
 	MakeSpecialForm("typedef", ">=1", TypeDefImpl)
 	MakeSpecialForm("defmacro", ">=1", DefmacroImpl)
 	MakeSpecialForm("define-macro", ">=1", DefmacroImpl)
-	// MakeSpecialForm("letrec", ">=1", LetRecImpl)
 	MakeSpecialForm("do", ">=2", DoImpl)
 	MakeSpecialForm("apply", ">=1", ApplyImpl)
 	MakeSpecialForm("->", ">=1", ChainImpl)

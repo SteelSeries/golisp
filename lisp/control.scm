@@ -16,3 +16,12 @@
 	  `(begin ,@body)
 	  `(let (,(first bindings))
 		 (let* ,(cdr bindings) ,@body))))
+
+(define-macro (letrec bindings . body)
+  `(let ,(map (lambda (binding)
+				(list (car binding) nil))
+			  bindings)
+	 ,@(map (lambda (binding)
+			  `(set! ,@binding))
+			bindings)
+	 ,@body))
