@@ -286,8 +286,7 @@ func VectorP(d *Data) bool {
 }
 
 func EmptyCons() *Data {
-	cell := ConsCell{Car: nil, Cdr: nil}
-	return &Data{Type: ConsCellType, Value: unsafe.Pointer(&cell)}
+	return &Data{Type: ConsCellType, Value: unsafe.Pointer(&ConsCell{Car: nil, Cdr: nil})}
 }
 
 func Cons(car *Data, cdr *Data) *Data {
