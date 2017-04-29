@@ -126,21 +126,6 @@ func (self *PrimitiveFunction) internalApply(args *Data, env *SymbolTableFrame, 
 		argArray = append(argArray, argValue)
 	}
 
-	// if self.Name == "+" {
-	// 	fmt.Printf("In %s\n", self.Name)
-	// 	fmt.Printf("args: %s\n", String(args))
-	// 	numberOfArgs := len(argArray)
-	// 	fmt.Printf("Number of arguments: %d\n", numberOfArgs)
-	// 	numberOfTypesLimit := len(self.ArgTypes) - 1
-	// 	fmt.Printf("number of types: %d\n", len(self.ArgTypes))
-	// 	for argIndex, typeIndex := 0, 0; argIndex < numberOfArgs; argIndex, typeIndex = argIndex+1, nextTypeIndex(typeIndex, numberOfTypesLimit) {
-	// 		fmt.Printf("Arg %d: %v of type %d. Expecting %d\n", argIndex, String(argArray[argIndex]), TypeOf(argArray[argIndex]), self.ArgTypes[typeIndex])
-	// 		if (argArray[argIndex] != nil) && ((TypeOf(argArray[argIndex]) & self.ArgTypes[typeIndex]) == 0) {
-	// 			fmt.Printf("Arg type check failed\n")
-	// 		}
-	// 	}
-	// }
-
 	argCheckResult := self.checkArgumentTypes(argArray)
 	if argCheckResult != -1 {
 		err = fmt.Errorf("Wrong argument type for argument %d; expected %s but got the %s: %s", argCheckResult, self.typesToString(self.argTypesFor(argCheckResult)), TypeName(TypeOf(argArray[argCheckResult])), String(argArray[argCheckResult]))
