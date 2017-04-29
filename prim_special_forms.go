@@ -43,9 +43,7 @@ func RegisterSpecialFormPrimitives() {
 	MakeSpecialForm("typedef", ">=1", TypeDefImpl)
 	MakeSpecialForm("defmacro", ">=1", DefmacroImpl)
 	MakeSpecialForm("define-macro", ">=1", DefmacroImpl)
-	MakeSpecialForm("let", ">=1", LetImpl)
-	MakeSpecialForm("let*", ">=1", LetStarImpl)
-	MakeSpecialForm("letrec", ">=1", LetRecImpl)
+	// MakeSpecialForm("letrec", ">=1", LetRecImpl)
 	MakeSpecialForm("do", ">=2", DoImpl)
 	MakeSpecialForm("apply", ">=1", ApplyImpl)
 	MakeSpecialForm("->", ">=1", ChainImpl)
@@ -218,82 +216,6 @@ func bindLetLocals(bindingForms *Data, rec bool, localEnv *SymbolTableFrame, eva
 		localEnv.BindLocallyTo(name, value)
 	}
 	return
-}
-
-func LetCommon(args *Data, env *SymbolTableFrame, star bool, rec bool) (result *Data, err error) {
-	if !ListP(Car(args)) {
-		err = ProcessError("Let requires a list of bindings as it's first argument", env)
-		return
-	}
-
-	localEnv := NewSymbolTableFrameBelow(env, "let")
-	localEnv.Previous = env
-	var evalEnv *SymbolTableFrame
-	if star || rec {
-		evalEnv = localEnv
-	} else {
-		evalEnv = env
-	}
-	err = bindLetLocals(Car(args), rec, localEnv, evalEnv)
-	if err != nil {
-		return
-	}
-
-	for cell := Cdr(args); NotNilP(cell); cell = Cdr(cell) {
-		sexpr := Car(cell)
-		result, err = Eval(sexpr, localEnv)
-		if err != nil {
-			return
-		}
-	}
-
-	return
-}
-
-func namedLetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	name := First(args)
-	bindings := Second(args)
-	if !ListP(bindings) {
-		err = ProcessError("A named let requires a list of bindings as it's second argument", env)
-		return
-	}
-	body := Cddr(args)
-
-	vars := make([]*Data, 0, Length(bindings))
-	initials := make([]*Data, 0, Length(bindings))
-	for remainingBindings := bindings; NotNilP(remainingBindings); remainingBindings = Cdr(remainingBindings) {
-		binding := Car(remainingBindings)
-		if !SymbolP(Car(binding)) {
-			err = ProcessError("The first element of a binding must be a symbol", env)
-			return
-		}
-		vars = append(vars, Car(binding))
-		initials = append(initials, Cadr(binding))
-	}
-	varsList := ArrayToList(vars)
-	initialsList := ArrayToList(initials)
-	localEnv := NewSymbolTableFrameBelow(env, StringValue(name))
-	localEnv.Previous = env
-	localEnv.BindLocallyTo(name, nil)
-	namedLetProc := FunctionWithNameParamsDocBodyAndParent(StringValue(name), varsList, "", body, localEnv)
-	localEnv.BindLocallyTo(name, namedLetProc)
-	return FunctionValue(namedLetProc).Apply(initialsList, env)
-}
-
-func LetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if SymbolP(Car(args)) {
-		return namedLetImpl(args, env)
-	} else {
-		return LetCommon(args, env, false, false)
-	}
-}
-
-func LetStarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return LetCommon(args, env, true, false)
-}
-
-func LetRecImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return LetCommon(args, env, false, true)
 }
 
 func rebindDoLocals(bindingForms *Data, env *SymbolTableFrame) (err error) {
