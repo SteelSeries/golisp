@@ -40,7 +40,7 @@
 
 (define (comp x env val? more?)
   (log-it "COMP exps: ~A~%     env: ~A" x env)
-  (cond ((member x '(#t #f nil 0 1 2))
+  (cond ((member x (list #t #f nil 0 1 2))
 		 (comp-const x val? more?))
 		((symbol? x)
 		 (log-it "- symbol")
@@ -142,7 +142,7 @@
 				(gen 'TRUE))
 			   ((eqv? x #f)
 				(gen 'FALSE))
-			   ((eqv? x nil)
+			   ((nil? x)
 				(gen 'NIL))
 			   ((eqv? x 0)
 				(gen 'ZERO))
