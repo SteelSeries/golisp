@@ -595,6 +595,16 @@ func executeBytecode(f *Data, env *SymbolTableFrame) (result *Data, err error) {
 			if err != nil {
 				return
 			}
+		case NILP:
+			val, err = CompiledFunctionStack.Pop()
+			if err != nil {
+				return
+			}
+
+			err = CompiledFunctionStack.Push(BooleanWithValue(NilP(val)))
+			if err != nil {
+				return
+			}
 		case LIST1:
 			val, err = CompiledFunctionStack.Pop()
 			if err != nil {
