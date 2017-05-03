@@ -15,7 +15,7 @@ import (
 )
 
 func RegisterVMPrimitives() {
-	MakePrimitiveFunction("machine", "1", MachineImpl)
+	MakePrimitiveFunction("execute", "1", machineImpl)
 }
 
 const (
@@ -148,10 +148,6 @@ func (self *RuntimeStack) Push(value *Data) (err error) {
 	}
 	self.storage[self.sp] = value
 	self.sp++
-	fmt.Printf("Pushing. Stack now:\n")
-	for i := 0; i < self.sp; i++ {
-		fmt.Printf("    %d: %s\n", i, String(self.storage[i]))
-	}
 	return nil
 }
 
@@ -160,15 +156,6 @@ func (self *RuntimeStack) Pop() (value *Data, err error) {
 		return nil, errors.New("Stack underflow")
 	}
 	self.sp--
-	println("Poping.")
-	if self.sp == 0 {
-		println("Stack now empty.")
-	} else {
-		println("Stack now:")
-		for i := 0; i < self.sp; i++ {
-			fmt.Printf("    %d: %s\n", i, String(self.storage[i]))
-		}
-	}
 	return self.storage[self.sp], nil
 }
 
@@ -177,6 +164,21 @@ func (self *RuntimeStack) Top() (value *Data, err error) {
 		return nil, errors.New("Stack empty")
 	}
 	return self.storage[self.sp-1], nil
+}
+
+func (self *RuntimeStack) Dump() {
+	fmt.Printf("Stack: ")
+	if self.sp == 0 {
+		fmt.Printf("empty\n")
+	} else {
+		for i := 0; i < self.sp; i++ {
+			if i > 0 {
+				fmt.Printf("       ")
+			}
+			fmt.Printf("%s\n", String(self.storage[i]))
+		}
+	}
+
 }
 
 //------------------------------------------------------------------------------
@@ -191,35 +193,72 @@ func newEnv(size int, parent *LocalEnvFrame) *LocalEnvFrame {
 	return &LocalEnvFrame{Values: make([]*Data, size), Next: parent}
 }
 
-func getLvar(env *LocalEnvFrame, frameIndex int64, varIndex int64) (result *Data, err error) {
+func newEnvFrom(savedEnv *Data) *LocalEnvFrame {
+	frames := ToArray(savedEnv)
+	var newFrame *LocalEnvFrame = nil
+	for i := len(frames) - 1; i >= 0; i-- {
+		newFrame = &LocalEnvFrame{Values: ToArray(frames[i]), Next: newFrame}
+	}
+	return newFrame
+}
+
+func (self *LocalEnvFrame) Package() *Data {
+	frames := make([]*Data, 0, 16)
+	for f := self; f != nil; f = f.Next {
+		frames = append(frames, ArrayToList(f.Values))
+	}
+	fmt.Printf("packaged env: %s\n", String(ArrayToList(frames)))
+	return ArrayToList(frames)
+}
+
+func (self *LocalEnvFrame) Get(frameIndex int64, varIndex int64) (result *Data, err error) {
+	env := self
 	for i := frameIndex; i > 0; i-- {
 		env = env.Next
 		if env == nil {
-			return nil, errors.New("getLVar: Local frame depth out of range")
+			return nil, errors.New("local environment get: Local frame depth out of range")
 		}
 	}
 
 	if varIndex < 0 || varIndex >= int64(len(env.Values)) {
-		return nil, errors.New(fmt.Sprintf("getLVar: Local variable index out of range: %d", varIndex))
+		return nil, errors.New(fmt.Sprintf("local environment get: Local variable index out of range: %d", varIndex))
 	}
 
 	return env.Values[varIndex], nil
 }
 
-func setLvar(env *LocalEnvFrame, frameIndex int64, varIndex int64, value *Data) (err error) {
+func (self *LocalEnvFrame) Set(frameIndex int64, varIndex int64, value *Data) (err error) {
+	env := self
 	for i := frameIndex; i > 0; i-- {
 		env = env.Next
 		if env == nil {
-			return errors.New("setLVar: Local frame depth out of range")
+			return errors.New("local environment set: Local frame depth out of range")
 		}
 	}
 
 	if varIndex < 0 || varIndex >= int64(len(env.Values)) {
-		return errors.New(fmt.Sprintf("setLVar: Local variable index out of range: %d", varIndex))
+		return errors.New(fmt.Sprintf("local environment set: Local variable index out of range: %d", varIndex))
 	}
 
 	env.Values[varIndex] = value
 	return nil
+}
+
+func (self *LocalEnvFrame) Dump() {
+	fmt.Printf("Local environment:\n")
+	for frameIndex, env := 0, self; env != nil; frameIndex, env = frameIndex+1, env.Next {
+		fmt.Printf("  Frame %2d: ", frameIndex)
+		if len(env.Values) == 0 {
+			fmt.Printf("\n")
+		} else {
+			for offset := 0; offset < len(env.Values); offset++ {
+				if offset > 0 {
+					fmt.Printf("            ")
+				}
+				fmt.Printf("%2d: %s\n", offset, String(env.Values[offset]))
+			}
+		}
+	}
 }
 
 type CompiledFunctionInvocation struct {
@@ -260,7 +299,7 @@ func makeReturnAddr(pc int, f *Data, env *LocalEnvFrame) (result *Data, err erro
 
 var CompiledFunctionStack *RuntimeStack
 
-func MachineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func machineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return executeBytecode(First(args), env)
 }
 
@@ -283,6 +322,7 @@ func humanifyInstruction(code *Data) string {
 }
 
 func executeBytecode(f *Data, env *SymbolTableFrame) (result *Data, err error) {
+	fmt.Printf("Execute: %s\n", String(f))
 	CompiledFunctionStack = newRuntimeStack()
 	fMap := FrameValue(f)
 	var code = VectorValue(fMap.Get("code:"))
@@ -296,7 +336,13 @@ func executeBytecode(f *Data, env *SymbolTableFrame) (result *Data, err error) {
 	fmt.Printf("Entering VM: %s\n", String(fMap.Get("code:")))
 	for {
 		instr := VectorValue(code[pc])
-		fmt.Printf("%3d: %s  ; %s\n", pc, String(code[pc]), humanifyInstruction(code[pc]))
+
+		// print the execution context
+		println("//----------------------------------------")
+		CompiledFunctionStack.Dump()
+		localEnv.Dump()
+		fmt.Printf("Executing at %3d: %s  ; %s\n", pc, String(code[pc]), humanifyInstruction(code[pc]))
+
 		pc++
 		opcode := IntegerValue(instr[0])
 		switch opcode {
@@ -334,7 +380,7 @@ func executeBytecode(f *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 			// Variable/stack manipulation instructions
 		case LVAR:
-			val, err = getLvar(localEnv, IntegerValue(instr[1]), IntegerValue(instr[2]))
+			val, err = localEnv.Get(IntegerValue(instr[1]), IntegerValue(instr[2]))
 			if err != nil {
 				return
 			}
@@ -347,7 +393,7 @@ func executeBytecode(f *Data, env *SymbolTableFrame) (result *Data, err error) {
 			if err != nil {
 				return
 			}
-			err = setLvar(localEnv, IntegerValue(instr[1]), IntegerValue(instr[2]), val)
+			err = localEnv.Set(IntegerValue(instr[1]), IntegerValue(instr[2]), val)
 			if err != nil {
 				return
 			}
@@ -458,12 +504,16 @@ func executeBytecode(f *Data, env *SymbolTableFrame) (result *Data, err error) {
 			if FrameP(f) {
 				localEnv = localEnv.Next // discard the top frame
 				fMap = FrameValue(f)
-				fmt.Printf("Calling compiled function: %s\n", (String(fMap.Get("name:"))))
+				fname := fMap.Get("name:")
+				if NilP(fname) {
+					fname = StringWithValue("<anon>")
+				}
+				fmt.Printf("Calling compiled function: %s\n", (String(fname)))
 				code = VectorValue(fMap.Get("code:"))
-				localEnv.Values = ToArray(fMap.Get("env:"))
+				localEnv = newEnvFrom(fMap.Get("env:"))
 				pc = 0
 			} else {
-				err = errors.New("Function expected for CALLJ")
+				err = errors.New(fmt.Sprintf("Compiled function expected for CALLJ, but got %s", String(f)))
 				return
 			}
 		case ARGS:
@@ -500,7 +550,10 @@ func executeBytecode(f *Data, env *SymbolTableFrame) (result *Data, err error) {
 				localEnv.Values[i] = val
 			}
 		case FN:
-			err = CompiledFunctionStack.Push(instr[1])
+			var fn FrameMap = make(map[string]*Data, 2)
+			fn.Set("code:", FrameValue(instr[1]).Get("code:"))
+			fn.Set("env:", localEnv.Package())
+			err = CompiledFunctionStack.Push(FrameWithValue(&fn))
 			if err != nil {
 				return
 			}
