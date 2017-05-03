@@ -378,13 +378,9 @@
 						  code: (optimize (get-slot fn-data code:))))))
 
 
-(define (optimize code)
-  code)
-
-
 ;;; Compile an expression as if it were in a parameterless lambda.
 
-(define (compiler x)
+(define (compile x)
   (set! *label-num* 0)
   (log-it "COMPILER: ~A" x)
   (comp-lambda '() (list x) nil))
@@ -544,6 +540,99 @@
 
 
 ;;;-----------------------------------------------------------------------------
+;;; Optimizer
+
+;;; Helpers
+
+(define opcode first)
+(define arg1 second)
+(define arg3 third)
+
+
+;;; Perform peephole optimization on assembly code.
+
+(define (optimize code)
+  ;; optimize each tail
+  (if (do ((code-tail code (cdr tail))
+		   (changed? #f (or (optimize-1 code-tail code)
+							changed?)))
+		  ((nil? code-tail) changed?))
+	(optimize code)
+	code))
+
+
+;;; Perform peephole optimization on a tail of the assembly code.
+;;; Return whether a change was made
+
+(define (optimize-1 code all-code)
+  (let* ((instr (car code))
+		 (optimizer (get-optimizer (opcode instr))))
+	(when (optimizer)
+	  (optimizer instr code all-code))))
+
+
+;;; Optimizer management using a alist
+
+(define optimizers '())
+
+;;; Get the assembly language optimizer for this opcode.
+
+(define (get-optimizer opcode)
+  (let ((pair (assoc opcode optimizers)))
+	(and pair (cdr pair))))
+
+
+;;; Store an assembly language optimizer for this opcode.
+
+(define (put-optimizer opcode fn)
+  (set! optimizers (acons opcode fn optimizers)))
+
+
+;;; Define assembly language optimizers for these opcodes.
+
+(define-macro (def-optimizer opcodes args . body)
+  (unless (and (list? opcodes) (list? args) (= (length args) 3))
+	(error "Invalid optimizer definition"))
+  `(for-each (lambda (op)
+			   (put-optimizer op (lambda ,args ,@body)))
+			 ,opcodes))
+
+
+;;; Generate a single instruction
+
+(define (gen1 . args)
+  args)
+
+
+;;; Find the code sequence that a jump statement branches to
+
+(define (target instr code)
+  (second (member (arg1 instr) code)))
+
+
+;;; Find the next actual instruction in a sequence (skipping labels)
+
+(define (next-instr code)
+  (let ((pair (memp (lambda (x)
+					  (not (label? x)))
+					code)))
+	(and pair (car pair))))
+
+
+;;; ... L ... => ... ... ; if no reference to L
+
+(def-optimizer (LABEL) (instr code all-code)
+  (let ((label (arg1 instr)))
+	(if (not (memp (lambda (i)
+					   (eqv? (arg1 i) label))))
+	  (begin
+		(set-car! code (cadr code))
+		(set-cdr! code (cddr code))
+		#t)
+	  #f)))
+
+
+;;;-----------------------------------------------------------------------------
 ;;; Print a compiled function
 
 ;;; Format the code index to be right aligned, indented appropriately
@@ -593,4 +682,28 @@
 
 (define (save-code code)
   (format #t "~S" ))
+
+
+(define (reconstitute-code raw)
+  (format #t "reconstituting ~A~%" raw)
+  (cond ((nil? raw)
+		 nil)
+		((list? raw)
+		 (if (eqv? (car raw) 'make-frame)
+			 (apply make-frame (reconstitute-code (cdr raw)))
+			 (map reconstitute-code raw)))
+		((vector? raw)
+		 (vector-map reconstitute-code raw))
+		(else
+		 raw)))
+
+(define (load-code fname)
+  (let* ((f (open-input-file fname))
+		 (raw-code (read f)))
+	(close-port f)
+	(reconstitute-code raw-code)))
+
+
+(define (run x)
+  (execute (compile x)))
 
