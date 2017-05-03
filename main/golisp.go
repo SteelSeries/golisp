@@ -23,6 +23,9 @@ var (
 	codeToEval   string = ""
 )
 
+// var CompilerSymbol *Data
+// var CompilerFunction CompiledFunction
+
 func test() {
 	verboseFlag := ""
 	testFunction := ""
@@ -135,10 +138,12 @@ func main() {
 		}
 
 		if codeToEval != "" {
+			//			ast, err := Parse(codeToEval)
 			result, err := ParseAndEval(codeToEval)
 			if err != nil {
 				fmt.Printf("Error: %s\n", err)
 			} else {
+				//				compiledCode, err := Compile(ast)
 				fmt.Printf("==> %s\n", String(result))
 			}
 		}
