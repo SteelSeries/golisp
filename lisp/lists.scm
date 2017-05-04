@@ -37,52 +37,49 @@
 
 (define (list-tail l k)
   (cond ((list? l)
-         (let loop ((the-tail l)
-                    (n k))
-           (cond ((= n 0)
-                  the-tail)
-                 ((null? the-tail)
-                  (error "list-tail requires an index <= the length of the list."))
-                 (else
-                  (loop (cdr the-tail) (- n 1))))))
+         (cond ((zero? k)
+				l)
+			   ((nil? l)
+				(error "list-tail requires an index <= the length of the list."))
+			   (else
+				(list-tail (cdr l) (-1+ k)))))
         (else
          (error "list-tail require a proper list."))))
 
 (define (list-ref l k)
   (nth k l))
 
-(define (except-last-pair x)
-  (cond ((null? x)
-         (error "except-last-pair requires a non-empty list."))
-        ((circular-list? x)
-         (error "except-last-pair requires a non-circular list."))
-        (else
-         (let loop ((l x)
-                    (result '()))
-           (cond ((pair? (cdr l))
-                  (loop (cdr l) (if (nil? result)
-                                    (list (car l))
-                                    (append! result (list (car l))))))
-                 (else
-                  result))))))
+(define (except-last-pair-1 l result)
+  (cond ((pair? (cdr l))
+		 (except-last-pair-1 (cdr l) (append result (list (car l)))))
+		(else
+		 result)))
 
-(define (except-last-pair! x)
-  (cond ((null? x)
+(define (except-last-pair l)
+  (cond ((nil? l)
          (error "except-last-pair requires a non-empty list."))
-        ((circular-list? x)
+        ((circular-list? l)
          (error "except-last-pair requires a non-circular list."))
-        ((and (or (list? x) (dotted-list? x))
-              (pair? (cdr x)))
-         (let loop ((l x)
-                    (prev '())
-                    (result x))
-           (cond ((pair? (cdr l))
-                  (loop (cdr l) l result))
-                 (else
-                  (set-cdr! prev '())
-                  result))))
         (else
-         '())))
+		 (except-last-pair-1 l '()))))
+
+(define (except-last-pair-1! l prev result)
+  (if (pair? (cdr l))
+	  (except-last-pair-1! (cdr l) l result)
+	  (begin
+		(set-cdr! prev '())
+		result)))
+
+
+(define (except-last-pair! l)
+  (cond ((null? l)
+         (error "except-last-pair requires a non-empty list."))
+        ((circular-list? l)
+         (error "except-last-pair requires a non-circular list."))
+        ((and (or (list? l) (dotted-list? l))
+			  (pair? (cdr l)))
+         (except-last-pair-1! l '() l))
+		(else '())))
 
 (define (take n l)
   (define (take-iter acc n l)

@@ -22,7 +22,7 @@
                    (assert-true (atom? "bar"))
                    (assert-false (string? 3))
                    (assert-true (symbol? 'a))
-                   (assert-true (atom? 'a))
+                   (assert-false (atom? 'a))
                    (assert-false (symbol? "bar"))
                    (assert-true (integer? a))
                    (assert-true (number? a))

@@ -7,11 +7,25 @@
 
 
 (define-macro (let bindings . body)
+  ;; (unless (and (list? bindings)
+  ;; 			   (every (lambda (x)
+  ;; 						(and (list? x)
+  ;; 							 (eqv? (length x) 2)
+  ;; 							 (symbol? (car x))))
+  ;; 					  bindings))
+  ;; 	(error "let bindings must be a list of two elements lists, the first of which is a symbol"))
   `((lambda ,(map car bindings) ,@body)
 	,@(map cadr bindings)))
 
 
 (define-macro (let* bindings . body)
+  ;; (unless (and (list? bindings)
+  ;; 			   (every (lambda (x)
+  ;; 						(and (list? x)
+  ;; 							 (eqv? (length x) 2)
+  ;; 							 (symbol? (car x))))
+  ;; 					  bindings))
+  ;; 	(error "let bindings must be a lists of two elements lists, the first of which is a symbol"))
   (if (nil? bindings)
 	  `(begin ,@body)
 	  `(let (,(first bindings))
