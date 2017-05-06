@@ -49,6 +49,12 @@
 (define (list-ref l k)
   (nth k l))
 
+(define (list-copy l)
+  (cond ((nil? l)
+		 nil)
+		(cons (car l) (list-copy (cdr l)))))
+
+
 (define (except-last-pair-1 l result)
   (cond ((pair? (cdr l))
 		 (except-last-pair-1 (cdr l) (append result (list (car l)))))
