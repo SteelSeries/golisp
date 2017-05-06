@@ -128,7 +128,7 @@ func (self *PrimitiveFunction) internalApply(args *Data, env *SymbolTableFrame, 
 
 	argCheckResult := self.checkArgumentTypes(argArray)
 	if argCheckResult != -1 {
-		err = fmt.Errorf("Wrong argument type for argument %d; expected %s but got the %s: %s", argCheckResult, self.typesToString(self.argTypesFor(argCheckResult)), TypeName(TypeOf(argArray[argCheckResult])), String(argArray[argCheckResult]))
+		err = fmt.Errorf("Wrong argument type for argument %d of %s; expected %s but got the %s: %s", argCheckResult, self.Name, self.typesToString(self.argTypesFor(argCheckResult)), TypeName(TypeOf(argArray[argCheckResult])), String(argArray[argCheckResult]))
 		return
 	}
 
