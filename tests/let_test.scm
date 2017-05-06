@@ -9,10 +9,9 @@
              (assert-eq (let ()
                           42)
                         42)
-             ;; (assert-error (let 5 42))    ;non-list bindings
-             ;; (assert-error (let ((5 1)) 42)) ;non-symbol binding name
-             ;; (assert-error (let (5 3) 42))
-			 ) ;non-pair binding
+             (assert-error (let 5 42))    ;non-list bindings
+             (assert-error (let ((5 1)) 42)) ;non-symbol binding name
+             (assert-error (let (5 3) 42))) ;non-pair binding
 
          (it "let-with-multiple-expr-body"
              (assert-eq (let ()
