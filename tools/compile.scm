@@ -513,8 +513,8 @@
 				  (when (is instr '(JUMP TJUMP FJUMP SAVE))
 					(log-it "label: ~A" (nth 1 instr))
 					(log-it "labels: ~A" labels)
-					(log-it "assoced: ~A" (assoc (nth 1 instr) labels))
-					(set-nth! 1 instr (cdr (assoc (nth 1 instr) labels))))
+					(log-it "assoced: ~A" (assoc (second instr) labels))
+					(set-nth! 1 instr (cdr (assoc (second instr) labels))))
 				  (vector-set! code-vector addr instr)
 				  (set! addr (1+ addr))))
 			  code)
@@ -546,19 +546,30 @@
 
 (define opcode first)
 (define arg1 second)
-(define arg3 third)
+(define arg2 third)
 
 
 ;;; Perform peephole optimization on assembly code.
 
 (define (optimize code)
   ;; optimize each tail
-  (if (do ((code-tail code (cdr tail))
-		   (changed? #f (or (optimize-1 code-tail code)
-							changed?)))
-		  ((nil? code-tail) changed?))
-	(optimize code)
-	code))
+  (format #t "Optimizing ~A~%" code)
+  (if (try-to-optimize code code)
+	  (begin
+		(format #t "Changes made, reoptimizing.~%")
+		(optimize code))
+	  code))
+
+
+;;; Try to optimize
+
+(define (try-to-optimize code all-code)
+  (cond ((nil? code)
+		 #f)
+		((optimize-1 code all-code)
+		 #t)
+		(else
+		 (try-to-optimize (cdr code) all-code))))
 
 
 ;;; Perform peephole optimization on a tail of the assembly code.
@@ -566,9 +577,13 @@
 
 (define (optimize-1 code all-code)
   (let* ((instr (car code))
-		 (optimizer (get-optimizer (opcode instr))))
-	(when (optimizer)
-	  (optimizer instr code all-code))))
+		 (optimizer (if (label? instr)
+						#f
+						(get-optimizer (opcode instr)))))
+	(if optimizer (format #t "Using optimizer for ~A~%" (opcode instr)))
+	(if optimizer
+	  (optimizer instr code all-code)
+	  #f)))
 
 
 ;;; Optimizer management using a alist
@@ -590,12 +605,12 @@
 
 ;;; Define assembly language optimizers for these opcodes.
 
-(define-macro (def-optimizer opcodes args . body)
-  (unless (and (list? opcodes) (list? args) (= (length args) 3))
-	(error "Invalid optimizer definition"))
-  `(for-each (lambda (op)
-			   (put-optimizer op (lambda ,args ,@body)))
-			 ,opcodes))
+(define-macro (define-optimizer opcodes args . body)
+  (if (and (list? opcodes) (list? args) (= (length args) 3))
+	`(for-each (lambda (op)
+				 (put-optimizer op (lambda ,args ,@body)))
+			   ',opcodes)
+  	(error "Invalid optimizer definition")))
 
 
 ;;; Generate a single instruction
@@ -607,29 +622,128 @@
 ;;; Find the code sequence that a jump statement branches to
 
 (define (target instr code)
-  (second (member (arg1 instr) code)))
+  (let ((found (member (arg1 instr) code)))
+	(if found
+	  (second found)
+	  nil)))
 
 
-;;; Find the next actual instruction in a sequence (skipping labels)
 
 (define (next-instr code)
+  ;; Find the next actual instruction in a sequence (skipping labels)
   (let ((pair (memp (lambda (x)
 					  (not (label? x)))
 					code)))
 	(and pair (car pair))))
 
 
-;;; ... L ... => ... ... ; if no reference to L
+(define (set-first! l v)
+  (set-car! l v))
 
-(def-optimizer (LABEL) (instr code all-code)
-  (let ((label (arg1 instr)))
-	(if (not (memp (lambda (i)
-					   (eqv? (arg1 i) label))))
-	  (begin
-		(set-car! code (cadr code))
-		(set-cdr! code (cddr code))
-		#t)
-	  #f)))
+(define (set-rest! l v)
+  (set-cdr! l v))
+
+(define (set-second! l v)
+  (set-car! (cdr l) v))
+
+(define (rest l)
+  (cdr l))
+
+(define (rest2 l)
+  (cddr l))
+
+(define (rest3 l)
+  (cdddr l))
+
+
+;; (define-optimizer (LABEL) (instr code all-code)
+;;   ;; ... L ... => ... ... ; if no reference to L
+;;   (let ((label (arg1 instr)))
+;; 	(if (not (memp (lambda (i)
+;; 					   (eqv? (arg1 i) label))))
+;; 	  (begin
+;; 		(set-car! code (cadr code))
+;; 		(set-cdr! code (cddr code))
+;; 		#t)
+;; 	  #f)))
+
+
+(define-optimizer (GSET LSET) (instr code all-code)
+  ;; (set x) (pop) (var x) ==> (set x)
+  ;; e.g. (begin (set! x y) (if x y))
+  (if (and (is (second code) 'POP)
+		   (is (third code) '(GVAR LVAR))
+		   (eqv? (arg1 instr) (arg1 (third code))))
+	(begin
+	  (set-cdr! code (cdddr code))
+	  #t)
+	#f))
+
+
+(define-optimizer (JUMP) (instr code all-code)
+  ;; (JUMP L1) ...dead code... L2 ==> (JUMP L1) L2
+  (let ((next-label (memp label? (cdr code))))
+	(when (and next-label
+			   (neqv? next-label (second code)))
+	  (set-rest! code next-label)))
+  
+  (cond
+   ;; (JUMP L1) L1 ... ==> ...
+   ((eqv? (arg1 instr) (second code))
+	(set-car! code (second code))
+	(set-cdr! code (rest2 code))) 
+   ;; (JUMP L1) ... L1 (JUMP L2) ==> (JUMP L2) ... L1 (JUMP L2)
+   ((and (is (target instr code) 'JUMP)
+		 (neqv? (arg1 instr) (arg1 (target instr code))))
+	(set-second! instr (arg1 (target instr code)))
+	#t)
+   (else
+	#f)))
+
+
+(define-optimizer (TJUMP FJUMP) (instr code all-code)
+  ;; (FJUMP L1) ... L1 (JUMP L2) ==> (FJUMP L2 ... L1 (JUMP L2)
+  (if (is (target instr code) 'JUMP)
+	(begin
+	  (set-second! instr (arg1 (target instr code)))
+	  #t)
+	#f))
+
+
+(define-optimizer (TRUE) (instr code all-code)
+  (case (opcode (second code))
+	((NOT) ;; (TRUE) (NOT) ==> (FALSE)
+	 (set-car! code (gen1 'FALSE))
+	 (set-cdr! code (rest2 code))
+	 #t)
+	((FJUMP) ;; (TRUE) (FJUMP L) ... ==> ...
+	 (set-car! code (third code))
+	 (set-cdr! code (rest3 code))
+	 #t)
+	((TJUMP) ;; (TRUE) (TJUMP L) ... ==> (JUMP L) ...
+	 (set-car! code (gen1 'JUMP (arg1 (second code))))
+	 (set-cdr! code (rest2 code))
+	 #t)
+	(else
+	 #f)))
+
+
+(define-optimizer (FALSE) (instr code all-code)
+  (case (opcode (second code))
+	((NOT) ;; (FALSE) (NOT) ==> (TRUE)
+	 (set-car! code (gen1 'TRUE))
+	 (set-cdr! code (rest2 code))
+	 #t)
+	((TJUMP) ;; (FALSE) (TJUMP L) ... ==> ...
+	 (set-car! code (third code))
+	 (set-cdr! code (rest3 code))
+	 #t)
+	((FJUMP) ;; (FALSE) (FJUMP L) ==> (JUMP L)
+	 (set-car! code (gen1 'JUMP (arg1 (second code))))
+	 (set-cdr! code (rest2 code))
+	 #t)
+	(else
+	 #f)))
 
 
 ;;;-----------------------------------------------------------------------------
