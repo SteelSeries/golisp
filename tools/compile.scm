@@ -534,9 +534,10 @@
 ;;; True if instr's opcode is OP, or one of OP if OP is a list
 
 (define (is instr op)
-  (if (list? op)
-	  (memv (car instr) op)
-	  (eqv? (car instr) op)))
+  (and (not (label? instr))
+	   (if (list? op)
+		   (memv (car instr) op)
+		   (eqv? (car instr) op))))
 
 
 ;;;-----------------------------------------------------------------------------
@@ -544,20 +545,23 @@
 
 ;;; Helpers
 
-(define opcode first)
+(define (opcode instr)
+  (if (label? instr)
+	  'LABEL
+	  (car instr)))
+
 (define arg1 second)
 (define arg2 third)
 
 
 ;;; Perform peephole optimization on assembly code.
+(define **optimize** #t)
 
 (define (optimize code)
-  ;; optimize each tail
-  (format #t "Optimizing ~A~%" code)
-  (if (try-to-optimize code code)
-	  (begin
-		(format #t "Changes made, reoptimizing.~%")
-		(optimize code))
+  (if **optimize**
+	  (if (try-to-optimize code code)
+		  (optimize code)
+		  code)
 	  code))
 
 
@@ -577,9 +581,7 @@
 
 (define (optimize-1 code all-code)
   (let* ((instr (car code))
-		 (optimizer (if (label? instr)
-						#f
-						(get-optimizer (opcode instr)))))
+		 (optimizer (get-optimizer (opcode instr))))
 	(if optimizer (format #t "Using optimizer for ~A~%" (opcode instr)))
 	(if optimizer
 	  (optimizer instr code all-code)
@@ -593,6 +595,7 @@
 ;;; Get the assembly language optimizer for this opcode.
 
 (define (get-optimizer opcode)
+  
   (let ((pair (assoc opcode optimizers)))
 	(and pair (cdr pair))))
 
@@ -656,23 +659,25 @@
   (cdddr l))
 
 
-;; (define-optimizer (LABEL) (instr code all-code)
-;;   ;; ... L ... => ... ... ; if no reference to L
-;;   (let ((label (arg1 instr)))
-;; 	(if (not (memp (lambda (i)
-;; 					   (eqv? (arg1 i) label))))
-;; 	  (begin
-;; 		(set-car! code (cadr code))
-;; 		(set-cdr! code (cddr code))
-;; 		#t)
-;; 	  #f)))
+(define-optimizer (LABEL) (instr code all-code)
+  ;; ... L ... => ... ... ; if no reference to L
+  (if (false? (memp (lambda (i)
+					  (and (is i '(JUMP FJUMP TJUMP))
+						   (eqv? (arg1 i) instr)))
+					all-code))
+	  (begin
+		(set-car! code (cadr code))
+		(set-cdr! code (cddr code))
+		#t)
+	  #f))
 
 
-(define-optimizer (GSET LSET) (instr code all-code)
+(define-optimizer (GSET) (instr code all-code)
   ;; (set x) (pop) (var x) ==> (set x)
   ;; e.g. (begin (set! x y) (if x y))
+  (format #t "code: ~A~%" code)
   (if (and (is (second code) 'POP)
-		   (is (third code) '(GVAR LVAR))
+		   (is (third code) 'GVAR)
 		   (eqv? (arg1 instr) (arg1 (third code))))
 	(begin
 	  (set-cdr! code (cdddr code))
@@ -710,7 +715,7 @@
 	#f))
 
 
-(define-optimizer (TRUE) (instr code all-code)
+(define-optimizer (TRUE ZERO ONE TWO NIL) (instr code all-code)
   (case (opcode (second code))
 	((NOT) ;; (TRUE) (NOT) ==> (FALSE)
 	 (set-car! code (gen1 'FALSE))
