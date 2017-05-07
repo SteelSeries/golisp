@@ -389,7 +389,7 @@
 ;;; Compile an expression and show the resulting code
 
 (define (comp-show x)
-  (show-fn (compiler x))
+  (show-fn (compile x))
   nil)
 
 
