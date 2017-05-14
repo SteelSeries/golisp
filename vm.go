@@ -10,6 +10,7 @@ package golisp
 import (
 	"errors"
 	"fmt"
+	"github.com/golang/glog"
 	"strings"
 	"unsafe"
 )
@@ -167,15 +168,15 @@ func (self *RuntimeStack) Top() (value *Data, err error) {
 }
 
 func (self *RuntimeStack) Dump() {
-	fmt.Printf("Stack: ")
+	glog.Info("Stack: ")
 	if self.sp == 0 {
-		fmt.Printf("empty\n")
+		glog.Info("empty")
 	} else {
 		for i := 0; i < self.sp; i++ {
 			if i > 0 {
-				fmt.Printf("       ")
+				glog.Info("       ")
 			}
-			fmt.Printf("%s\n", String(self.storage[i]))
+			glog.Infof("%s", String(self.storage[i]))
 		}
 	}
 
@@ -207,7 +208,7 @@ func (self *LocalEnvFrame) Package() *Data {
 	for f := self; f != nil; f = f.Next {
 		frames = append(frames, ArrayToList(f.Values))
 	}
-	fmt.Printf("packaged env: %s\n", String(ArrayToList(frames)))
+	glog.Infof("packaged env: %s", String(ArrayToList(frames)))
 	return ArrayToList(frames)
 }
 
@@ -245,17 +246,17 @@ func (self *LocalEnvFrame) Set(frameIndex int64, varIndex int64, value *Data) (e
 }
 
 func (self *LocalEnvFrame) Dump() {
-	fmt.Printf("Local environment:\n")
+	glog.Info("Local environment:")
 	for frameIndex, env := 0, self; env != nil; frameIndex, env = frameIndex+1, env.Next {
-		fmt.Printf("  Frame %2d: ", frameIndex)
+		glog.Infof("  Frame %2d: ", frameIndex)
 		if len(env.Values) == 0 {
-			fmt.Printf("\n")
+			glog.Info("\n")
 		} else {
 			for offset := 0; offset < len(env.Values); offset++ {
 				if offset > 0 {
-					fmt.Printf("            ")
+					glog.Info("            ")
 				}
-				fmt.Printf("%2d: %s\n", offset, String(env.Values[offset]))
+				glog.Infof("%2d: %s\n", offset, String(env.Values[offset]))
 			}
 		}
 	}
@@ -333,15 +334,15 @@ func executeBytecode(f *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var val2 *Data = nil
 	var val3 *Data = nil
 	var mathResult float64 = 0.0
-	fmt.Printf("Entering VM: %s\n", String(fMap.Get("code:")))
+	glog.Infof("Entering VM: %s\n", String(f.Code))
 	for {
 		instr := VectorValue(code[pc])
 
 		// print the execution context
-		println("//----------------------------------------")
+		glog.Info("//----------------------------------------")
 		CompiledFunctionStack.Dump()
 		localEnv.Dump()
-		fmt.Printf("Executing at %3d: %s  ; %s\n", pc, String(code[pc]), humanifyInstruction(code[pc]))
+		glog.Infof("Executing at %3d: %s  ; %s\n", pc, String(code[pc]), humanifyInstruction(code[pc]))
 
 		pc++
 		opcode := IntegerValue(instr[0])
@@ -580,8 +581,8 @@ func executeBytecode(f *Data, env *SymbolTableFrame) (result *Data, err error) {
 			}
 
 			// eval the primitive
-			fmt.Printf("Calling primitive function: %s\n", String(instr[1]))
 			val, err = PrimitiveValue(prim).ApplyWithoutEval(ArrayToList(args), Global)
+			glog.Infof("Calling primitive function: %s\n", String(instr[1]))
 			if err != nil {
 				return
 			}
