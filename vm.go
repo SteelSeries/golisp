@@ -16,7 +16,7 @@ import (
 )
 
 func RegisterVMPrimitives() {
-	MakePrimitiveFunction("execute", "1", machineImpl)
+	MakeTypedPrimitiveFunction("execute", "1", machineImpl, []uint32{CompiledFunctionType})
 }
 
 const (
