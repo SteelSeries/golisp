@@ -136,7 +136,7 @@ func MakeCompiledFunction(name string, env *Data, args *Data, code *Data) *Compi
 }
 
 func (self *CompiledFunction) String() string {
-	return fmt.Sprintf("<comp: %s, %v>", self.Name, self.Code)
+	return fmt.Sprintf("<compiled function: %s>", self.Name)
 }
 
 func (self *CompiledFunction) internalApply(args *Data, env *SymbolTableFrame, shouldEval bool) (result *Data, err error) {

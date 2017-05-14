@@ -1091,7 +1091,7 @@ func String(d *Data) string {
 	case PrimitiveType:
 		return fmt.Sprintf("<prim: %s>", PrimitiveValue(d).Name)
 	case CompiledFunctionType:
-		return fmt.Sprintf("<comp: %s>", CompiledFunctionValue(d).Name)
+		return fmt.Sprintf("<compiled function: %s>", CompiledFunctionValue(d).Name)
 	case VectorType:
 		vals := VectorValue(d)
 		svals := make([]string, 0, len(vals))
