@@ -53,5 +53,6 @@ func InitBuiltins() {
 	RegisterTimerPrimitives()
 	RegisterTimePrimitives()
 	RegisterRegexPrimitives()
+	RegisterCompiledFunctionPrimitives()
 	RegisterVMPrimitives()
 }

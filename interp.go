@@ -176,7 +176,7 @@ INTERP:
 				return nil, err
 			}
 			var argList *Data
-			if FunctionP(proc) || (PrimitiveP(proc) && !PrimitiveValue(proc).Special) {
+			if CompiledFunctionP(proc) || FunctionP(proc) || (PrimitiveP(proc) && !PrimitiveValue(proc).Special) {
 				args := make([]*Data, 0, Length(x)-1)
 				for cell := Cdr(x); NotNilP(cell); cell = Cdr(cell) {
 					v, err := Eval(Car(cell), env)
@@ -216,6 +216,9 @@ INTERP:
 				}
 				x = Cons(Intern("begin"), f.Body)
 				goto INTERP
+			} else if CompiledFunctionP(proc) {
+				f := CompiledFunctionValue(proc)
+				return f.ApplyWithoutEval(argList, env)
 			} else {
 				//				fmt.Printf("primitive: %s\n", String(proc))
 				result, err = ApplyWithoutEval(proc, argList, env)

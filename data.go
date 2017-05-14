@@ -37,6 +37,7 @@ const (
 	PortType        = 0x00008000
 	AnyType         = 0xFFFFFFFF
 	AtomType        = 0x0000F0FC
+	CompiledFunctionType = 0x00001000
 )
 
 const (
@@ -117,6 +118,8 @@ func TypeName(t uint32) string {
 		return "Macro"
 	case PrimitiveType:
 		return "Primitive"
+	case CompiledFunctionType:
+		return "Compiled Function"
 	case FrameType:
 		return "Frame"
 	case BoxedObjectType:
@@ -263,6 +266,10 @@ func FunctionP(d *Data) bool {
 
 func PrimitiveP(d *Data) bool {
 	return d != nil && TypeOf(d) == PrimitiveType
+}
+
+func CompiledFunctionP(d *Data) bool {
+	return d != nil && TypeOf(d) == CompiledFunctionType
 }
 
 func MacroP(d *Data) bool {
@@ -440,6 +447,10 @@ func MacroWithNameParamsBodyAndParent(name string, params *Data, body *Data, par
 
 func PrimitiveWithNameAndFunc(name string, f *PrimitiveFunction) *Data {
 	return &Data{Type: PrimitiveType, Value: unsafe.Pointer(f)}
+}
+
+func CompiledFunctionWithValue(f *CompiledFunction) *Data {
+	return &Data{Type: CompiledFunctionType, Value: unsafe.Pointer(f)}
 }
 
 func ObjectWithTypeAndValue(typeName string, o unsafe.Pointer) *Data {
@@ -631,9 +642,14 @@ func PrimitiveValue(d *Data) *PrimitiveFunction {
 func ObjectType(d *Data) (oType string) {
 	if d == nil {
 		return
+func CompiledFunctionValue(d *Data) *CompiledFunction {
+	if d != nil && d.Type == CompiledFunctionType {
+		return (*CompiledFunction)(d.Value)
 	}
 
 	if ObjectP(d) {
+	return nil
+}
 		return (*((*BoxedObject)(d.Value))).ObjType
 	}
 
@@ -1065,6 +1081,8 @@ func IsEqual(d *Data, o *Data) bool {
 		return MacroValue(d) == MacroValue(o)
 	} else if t == PrimitiveType {
 		return PrimitiveValue(d) == PrimitiveValue(o)
+	} else if t == CompiledFunctionType {
+		return CompiledFunctionValue(d) == CompiledFunctionValue(o)
 	} else if t == BoxedObjectType {
 		return (ObjectType(d) == ObjectType(o)) && (ObjectValue(d) == ObjectValue(o))
 	}
@@ -1133,6 +1151,8 @@ func String(d *Data) string {
 		return fmt.Sprintf("<macro: %s>", MacroValue(d).Name)
 	case PrimitiveType:
 		return fmt.Sprintf("<prim: %s>", PrimitiveValue(d).Name)
+	case CompiledFunctionType:
+		return fmt.Sprintf("<comp: %s>", CompiledFunctionValue(d).Name)
 	case VectorType:
 		vals := VectorValue(d)
 		svals := make([]string, 0, len(vals))
@@ -1289,6 +1309,8 @@ func Apply(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err
 		result, err = MacroValue(function).Apply(args, env)
 	case PrimitiveType:
 		result, err = PrimitiveValue(function).Apply(args, env)
+	case CompiledFunctionType:
+		result, err = CompiledFunctionValue(function).Apply(args, env)
 	default:
 		err = errors.New(fmt.Sprintf("%s when function or macro expected for %s.", TypeName(TypeOf(function)), String(function)))
 		return
@@ -1314,6 +1336,8 @@ func ApplyWithoutEval(function *Data, args *Data, env *SymbolTableFrame) (result
 		result, err = MacroValue(function).ApplyWithoutEval(args, env)
 	case PrimitiveType:
 		result, err = PrimitiveValue(function).ApplyWithoutEval(args, env)
+	case CompiledFunctionType:
+		result, err = CompiledFunctionValue(function).ApplyWithoutEval(args, env)
 	default:
 		err = errors.New(fmt.Sprintf("%s when function or macro expected for %s.", TypeName(TypeOf(function)), String(function)))
 		return

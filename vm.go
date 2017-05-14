@@ -42,6 +42,7 @@ const (
 	ARGSDOT
 	FN
 	PRIM
+	FUNC
 	SET_CC
 	CC
 	CAR
@@ -95,6 +96,7 @@ var opcodeNames = [HALT + 1]string{
 	"ARGSDOT",
 	"FN",
 	"PRIM",
+	"FUNC",
 	"SET_CC",
 	"CC",
 	"CAR",
@@ -284,12 +286,12 @@ func setGvar(name *Data, value *Data) (err error) {
 
 type ReturnAddress struct {
 	pc  int
-	f   *Data
+	f   *CompiledFunction
 	env *LocalEnvFrame
 }
 
-func makeReturnAddr(pc int, f *Data, env *LocalEnvFrame) (result *Data, err error) {
-	if pc >= Length(FrameValue(f).Get("code:")) {
+func makeReturnAddr(pc int, f *CompiledFunction, env *LocalEnvFrame) (result *Data, err error) {
+	if pc >= Length(f.Code) {
 		return nil, errors.New("Return address out of range")
 	}
 	return ObjectWithTypeAndValue("returnAddress", unsafe.Pointer(&ReturnAddress{pc: pc, f: f, env: env})), nil
@@ -301,7 +303,7 @@ func makeReturnAddr(pc int, f *Data, env *LocalEnvFrame) (result *Data, err erro
 var CompiledFunctionStack *RuntimeStack
 
 func machineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return executeBytecode(First(args), env)
+	return ExecuteBytecode(CompiledFunctionValue(First(args)), env)
 }
 
 func humanifyInstruction(code *Data) string {
@@ -322,14 +324,21 @@ func humanifyInstruction(code *Data) string {
 	return strings.Join(parts, " ")
 }
 
-func executeBytecode(f *Data, env *SymbolTableFrame) (result *Data, err error) {
-	fmt.Printf("Execute: %s\n", String(f))
+func ExecuteBytecode(f *CompiledFunction, env *SymbolTableFrame) (result *Data, err error) {
+	return ExecuteBytecodeWithArgs(f, make([]*Data, 0), env)
+}
+
+func ExecuteBytecodeWithArgs(f *CompiledFunction, args []*Data, env *SymbolTableFrame) (result *Data, err error) {
+	glog.Infof("Execute: %s\n", f.String())
 	CompiledFunctionStack = newRuntimeStack()
-	fMap := FrameValue(f)
-	var code = VectorValue(fMap.Get("code:"))
+	for _, arg := range args {
+		CompiledFunctionStack.Push(arg)
+	}
+	var nArgs = len(args)
+
+	var code = VectorValue(f.Code)
 	var pc = 0
 	var localEnv *LocalEnvFrame = newEnv(0, nil)
-	var nArgs = 0
 	var val *Data = nil
 	var val2 *Data = nil
 	var val3 *Data = nil
@@ -487,8 +496,7 @@ func executeBytecode(f *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 			retAddr := (*ReturnAddress)(ObjectValue(retAddrObj))
 			f = retAddr.f
-			fMap = FrameValue(f)
-			code = VectorValue(fMap.Get("code:"))
+			code = VectorValue(f.Code)
 			localEnv = retAddr.env
 			pc = retAddr.pc
 
@@ -497,29 +505,30 @@ func executeBytecode(f *Data, env *SymbolTableFrame) (result *Data, err error) {
 				return
 			}
 		case CALLJ:
-			f, err = CompiledFunctionStack.Pop()
+			var fObj *Data
+			fObj, err = CompiledFunctionStack.Pop()
 			if err != nil {
 				return
 			}
-			nArgs = int(IntegerValue(instr[1]))
-			if FrameP(f) {
+			if CompiledFunctionP(fObj) {
+				f = CompiledFunctionValue(fObj)
+				nArgs = int(IntegerValue(instr[1]))
 				localEnv = localEnv.Next // discard the top frame
-				fMap = FrameValue(f)
-				fname := fMap.Get("name:")
-				if NilP(fname) {
-					fname = StringWithValue("<anon>")
+				fname := f.Name
+				if fname == "" {
+					fname = "<anon>"
 				}
-				fmt.Printf("Calling compiled function: %s\n", (String(fname)))
-				code = VectorValue(fMap.Get("code:"))
-				localEnv = newEnvFrom(fMap.Get("env:"))
+				glog.Infof("Calling compiled function: %s\n", fname)
+				code = VectorValue(f.Code)
+				localEnv = newEnvFrom(f.Env)
 				pc = 0
 			} else {
-				err = errors.New(fmt.Sprintf("Compiled function expected for CALLJ, but got %s", String(f)))
+				err = errors.New(fmt.Sprintf("Compiled function expected for CALLJ, but got %s", String(fObj)))
 				return
 			}
 		case ARGS:
 			if nArgs != int(IntegerValue(instr[1])) {
-				return nil, errors.New(fmt.Sprintf("Wrong number of arguments to %s: %d expected, %d supplied", fMap.Get("name:"), int(IntegerValue(instr[1])), nArgs))
+				return nil, errors.New(fmt.Sprintf("Wrong number of arguments to %s: %d expected, %d supplied", f.Name, int(IntegerValue(instr[1])), nArgs))
 			}
 			localEnv = newEnv(int(IntegerValue(instr[1])), localEnv)
 			for i := nArgs - 1; i >= 0; i-- {
@@ -531,7 +540,7 @@ func executeBytecode(f *Data, env *SymbolTableFrame) (result *Data, err error) {
 			}
 		case ARGSDOT:
 			if nArgs >= Length(instr[1]) {
-				return nil, errors.New(fmt.Sprintf("Wrong number of arguments to %s: %d or more expected, %d supplied", fMap.Get("name:"), instr[1], nArgs))
+				return nil, errors.New(fmt.Sprintf("Wrong number of arguments to %s: %d or more expected, %d supplied", f.Name, instr[1], nArgs))
 			}
 			argValue := int(IntegerValue(instr[1]))
 			localEnv = newEnv(argValue+1, localEnv)
@@ -551,10 +560,9 @@ func executeBytecode(f *Data, env *SymbolTableFrame) (result *Data, err error) {
 				localEnv.Values[i] = val
 			}
 		case FN:
-			var fn FrameMap = make(map[string]*Data, 2)
-			fn.Set("code:", FrameValue(instr[1]).Get("code:"))
-			fn.Set("env:", localEnv.Package())
-			err = CompiledFunctionStack.Push(FrameWithValue(&fn))
+			fn := instr[1]
+			CompiledFunctionValue(fn).Env = localEnv.Package()
+			err = CompiledFunctionStack.Push(fn)
 			if err != nil {
 				return
 			}
@@ -581,8 +589,43 @@ func executeBytecode(f *Data, env *SymbolTableFrame) (result *Data, err error) {
 			}
 
 			// eval the primitive
-			val, err = PrimitiveValue(prim).ApplyWithoutEval(ArrayToList(args), Global)
 			glog.Infof("Calling primitive function: %s\n", String(instr[1]))
+			val, err = PrimitiveValue(prim).ApplyWithoutEval(ArrayToList(args), env)
+			if err != nil {
+				return
+			}
+
+			// put the result onto the stack
+			err = CompiledFunctionStack.Push(val)
+			if err != nil {
+				return
+			}
+
+		case FUNC:
+			if !SymbolP(instr[1]) {
+				return nil, errors.New(fmt.Sprintf("FUNC requires an interpreted function name, but got %s", String(instr[1])))
+			}
+			fun := env.ValueOf(instr[1])
+			if !FunctionP(fun) {
+				return nil, errors.New(fmt.Sprintf("FUNC requires an interpreted function, but got %s", String(fun)))
+			}
+
+			// process the args
+			if !IntegerP(instr[2]) {
+				return nil, errors.New(fmt.Sprintf("FUNC requires an integer argument count, but got %s", String(instr[2])))
+			}
+			nArgs = int(IntegerValue(instr[2]))
+			args := make([]*Data, nArgs)
+			for i := nArgs - 1; i >= 0; i-- {
+				args[i], err = CompiledFunctionStack.Pop()
+				if err != nil {
+					return
+				}
+			}
+
+			// eval the function
+			glog.Infof("Calling interpreted function: %s\n", String(instr[1]))
+			val, err = FunctionValue(fun).ApplyWithoutEval(ArrayToList(args), env)
 			if err != nil {
 				return
 			}
@@ -947,13 +990,12 @@ func executeBytecode(f *Data, env *SymbolTableFrame) (result *Data, err error) {
 			if err != nil {
 				return
 			}
-			if !FrameP(val2) {
-				err = errors.New("Function expected for NAMEBANG function")
+			if !CompiledFunctionP(val2) {
+				err = errors.New("Compiled Function expected for NAMEBANG function")
 				return
 			}
 
-			fMap = FrameValue(val2)
-			fMap.Set("name:", val)
+			CompiledFunctionValue(val2).Name = StringValue(val)
 			CompiledFunctionStack.Push(val2)
 		case HALT:
 			return CompiledFunctionStack.Top()
