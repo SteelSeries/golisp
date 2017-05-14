@@ -19,25 +19,25 @@ import (
 )
 
 const (
-	NilType         = 0x00000001
-	ConsCellType    = 0x00000002
-	VectorType      = 0x00000004
-	IntegerType     = 0x00000008
-	FloatType       = 0x00000010
-	BooleanType     = 0x00000020
-	StringType      = 0x00000040
-	CharacterType   = 0x00000080
-	SymbolType      = 0x00000100
-	FunctionType    = 0x00000200
-	MacroType       = 0x00000400
-	PrimitiveType   = 0x00000800
-	BoxedObjectType = 0x00001000
-	FrameType       = 0x00002000
-	EnvironmentType = 0x00004000
-	PortType        = 0x00008000
-	AnyType         = 0xFFFFFFFF
-	AtomType        = 0x0000F0FC
+	NilType              = 0x00000001
+	ConsCellType         = 0x00000002
+	VectorType           = 0x00000004
+	IntegerType          = 0x00000008
+	FloatType            = 0x00000010
+	BooleanType          = 0x00000020
+	StringType           = 0x00000040
+	CharacterType        = 0x00000080
+	SymbolType           = 0x00000100
+	FunctionType         = 0x00000200
+	MacroType            = 0x00000400
+	PrimitiveType        = 0x00000800
 	CompiledFunctionType = 0x00001000
+	BoxedObjectType      = 0x00002000
+	FrameType            = 0x00004000
+	EnvironmentType      = 0x00008000
+	PortType             = 0x00010000
+	AnyType              = 0xFFFFFFFF
+	AtomType             = 0x0001E0FC
 )
 
 const (
@@ -475,11 +475,7 @@ func VectorWithValue(c []*Data) *Data {
 }
 
 func ConsValue(d *Data) *ConsCell {
-	if d == nil {
-		return nil
-	}
-
-	if TypeOf(d) == ConsCellType {
+	if d != nil && TypeOf(d) == ConsCellType {
 		return (*ConsCell)(d.Value)
 	}
 
@@ -487,11 +483,7 @@ func ConsValue(d *Data) *ConsCell {
 }
 
 func Car(d *Data) *Data {
-	if d == nil {
-		return nil
-	}
-
-	if TypeOf(d) == ConsCellType {
+	if d != nil && TypeOf(d) == ConsCellType {
 		cell := (*ConsCell)(d.Value)
 		if cell != nil {
 			return cell.Car
@@ -502,11 +494,7 @@ func Car(d *Data) *Data {
 }
 
 func Cdr(d *Data) *Data {
-	if d == nil {
-		return nil
-	}
-
-	if TypeOf(d) == ConsCellType {
+	if d != nil && TypeOf(d) == ConsCellType {
 		cell := (*ConsCell)(d.Value)
 		if cell != nil {
 			return cell.Cdr
@@ -556,11 +544,7 @@ func FloatValue(d *Data) float64 {
 }
 
 func StringValue(d *Data) string {
-	if d == nil {
-		return ""
-	}
-
-	if StringP(d) || SymbolP(d) || CharacterP(d) {
+	if d != nil && (StringP(d) || SymbolP(d) || CharacterP(d)) {
 		return *((*string)(d.Value))
 	}
 
@@ -568,11 +552,7 @@ func StringValue(d *Data) string {
 }
 
 func CharacterValue(d *Data) string {
-	if NilP(d) {
-		return " "
-	}
-
-	if CharacterP(d) {
+	if d != nil && CharacterP(d) {
 		return *((*string)(d.Value))
 	}
 
@@ -580,11 +560,7 @@ func CharacterValue(d *Data) string {
 }
 
 func BooleanValue(d *Data) bool {
-	if NilP(d) {
-		return true
-	}
-
-	if BooleanP(d) {
+	if d != nil && BooleanP(d) {
 		return *((*bool)(d.Value))
 	}
 
@@ -592,11 +568,7 @@ func BooleanValue(d *Data) bool {
 }
 
 func FrameValue(d *Data) *FrameMap {
-	if d == nil {
-		return nil
-	}
-
-	if FrameP(d) {
+	if d != nil && FrameP(d) {
 		return (*FrameMap)(d.Value)
 	}
 
@@ -604,11 +576,7 @@ func FrameValue(d *Data) *FrameMap {
 }
 
 func FunctionValue(d *Data) *Function {
-	if d == nil {
-		return nil
-	}
-
-	if d.Type == FunctionType {
+	if d != nil && d.Type == FunctionType {
 		return (*Function)(d.Value)
 	}
 
@@ -616,11 +584,7 @@ func FunctionValue(d *Data) *Function {
 }
 
 func MacroValue(d *Data) *Macro {
-	if d == nil {
-		return nil
-	}
-
-	if d.Type == MacroType {
+	if d != nil && d.Type == MacroType {
 		return (*Macro)(d.Value)
 	}
 
@@ -628,28 +592,23 @@ func MacroValue(d *Data) *Macro {
 }
 
 func PrimitiveValue(d *Data) *PrimitiveFunction {
-	if d == nil {
-		return nil
-	}
-
-	if d.Type == PrimitiveType {
+	if d != nil && d.Type == PrimitiveType {
 		return (*PrimitiveFunction)(d.Value)
 	}
 
 	return nil
 }
 
-func ObjectType(d *Data) (oType string) {
-	if d == nil {
-		return
 func CompiledFunctionValue(d *Data) *CompiledFunction {
 	if d != nil && d.Type == CompiledFunctionType {
 		return (*CompiledFunction)(d.Value)
 	}
 
-	if ObjectP(d) {
 	return nil
 }
+
+func ObjectType(d *Data) (oType string) {
+	if d != nil && ObjectP(d) {
 		return (*((*BoxedObject)(d.Value))).ObjType
 	}
 
@@ -657,11 +616,7 @@ func CompiledFunctionValue(d *Data) *CompiledFunction {
 }
 
 func ObjectValue(d *Data) (p unsafe.Pointer) {
-	if d == nil {
-		return
-	}
-
-	if ObjectP(d) {
+	if d != nil && ObjectP(d) {
 		return (*((*BoxedObject)(d.Value))).Obj
 	}
 
@@ -669,11 +624,7 @@ func ObjectValue(d *Data) (p unsafe.Pointer) {
 }
 
 func BoxedObjectValue(d *Data) *BoxedObject {
-	if d == nil {
-		return nil
-	}
-
-	if ObjectP(d) {
+	if d != nil && ObjectP(d) {
 		return (*BoxedObject)(d.Value)
 	}
 
@@ -681,11 +632,7 @@ func BoxedObjectValue(d *Data) *BoxedObject {
 }
 
 func EnvironmentValue(d *Data) *SymbolTableFrame {
-	if d == nil {
-		return nil
-	}
-
-	if EnvironmentP(d) {
+	if d != nil && EnvironmentP(d) {
 		return (*SymbolTableFrame)(d.Value)
 	}
 
@@ -693,11 +640,7 @@ func EnvironmentValue(d *Data) *SymbolTableFrame {
 }
 
 func PortValue(d *Data) *os.File {
-	if d == nil {
-		return nil
-	}
-
-	if PortP(d) {
+	if d != nil && PortP(d) {
 		return (*os.File)(d.Value)
 	}
 
@@ -705,11 +648,7 @@ func PortValue(d *Data) *os.File {
 }
 
 func VectorValue(d *Data) []*Data {
-	if d == nil {
-		return nil
-	}
-
-	if VectorP(d) {
+	if d != nil && VectorP(d) {
 		vptr := (*([]*Data))(d.Value)
 		return *vptr
 	}
