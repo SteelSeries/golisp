@@ -49,7 +49,7 @@ func Repl() {
 						AddHistory(input)
 						lastInput = input
 					}
-					d, err := Eval(code, replEnv)
+					d, err := Eval(code, Global)
 					if err != nil {
 						fmt.Printf("Error in evaluation: %s\n", err)
 						if DebugOnError {
