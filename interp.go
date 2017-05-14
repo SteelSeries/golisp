@@ -91,6 +91,10 @@ func postProcessShortcuts(d *Data) *Data {
 func evalHelper(x *Data, env *SymbolTableFrame, needFunction bool) (result *Data, err error) {
 	//	fmt.Printf("############ ENTERING EVAL ###########\n")
 INTERP:
+	if IsInteractive && !DebugEvalInDebugRepl {
+		env.CurrentCode.PushFront(fmt.Sprintf("Eval %s", String(x)))
+	}
+
 	logEval(x, env)
 
 	if NilP(x) {
@@ -229,6 +233,9 @@ INTERP:
 		}
 	}
 	logResult(result, env)
+	if IsInteractive && !DebugEvalInDebugRepl && env.CurrentCode.Len() > 0 {
+		env.CurrentCode.Remove(env.CurrentCode.Front())
+	}
 	return
 }
 

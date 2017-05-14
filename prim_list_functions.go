@@ -409,9 +409,11 @@ func FindTailImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var found *Data
 	for c := l; NotNilP(c); c = Cdr(c) {
 		found, err = ApplyWithoutEval(f, InternalMakeList(Car(c)), env)
-
+		if err != nil {
+			return
+		}
 		if !BooleanP(found) {
-			err = ProcessError("memp/find-tail needs a predicate function as its first argument.", env)
+			err = ProcessError(fmt.Sprintf("memp/find-tail needs a predicate function as its first argument, but it returned %s.", String(found)), env)
 			return
 		}
 		if BooleanValue(found) {
@@ -433,6 +435,9 @@ func FindImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var found *Data
 	for c := col; NotNilP(c); c = Cdr(c) {
 		found, err = ApplyWithoutEval(f, InternalMakeList(Car(c)), env)
+		if err != nil {
+			return
+		}
 		if !BooleanP(found) {
 			err = ProcessError("find needs a predicate function as its first argument.", env)
 			return

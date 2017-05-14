@@ -107,7 +107,7 @@ func (self *PrimitiveFunction) argTypesFor(argIndex int) uint32 {
 
 func (self *PrimitiveFunction) internalApply(args *Data, env *SymbolTableFrame, shouldEval bool) (result *Data, err error) {
 	if !self.checkArgumentCount(Length(args)) {
-		err = fmt.Errorf("Wrong number of args to %s, expected %s but got %d.", self.Name, self.NumberOfArgs, Length(args))
+		err = ProcessError(fmt.Sprintf("Wrong number of args to %s, expected %s but got %d.", self.Name, self.NumberOfArgs, Length(args)), env)
 		return
 	}
 
@@ -128,7 +128,7 @@ func (self *PrimitiveFunction) internalApply(args *Data, env *SymbolTableFrame, 
 
 	argCheckResult := self.checkArgumentTypes(argArray)
 	if argCheckResult != -1 {
-		err = fmt.Errorf("Wrong argument type for argument %d of %s; expected %s but got the %s: %s", argCheckResult, self.Name, self.typesToString(self.argTypesFor(argCheckResult)), TypeName(TypeOf(argArray[argCheckResult])), String(argArray[argCheckResult]))
+		err = ProcessError(fmt.Sprintf("Wrong argument type for argument %d of %s; expected %s but got the %s: %s", argCheckResult, self.Name, self.typesToString(self.argTypesFor(argCheckResult)), TypeName(TypeOf(argArray[argCheckResult])), String(argArray[argCheckResult])), env)
 		return
 	}
 

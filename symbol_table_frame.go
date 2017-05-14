@@ -25,7 +25,7 @@ type SymbolTableFrame struct {
 	Previous    *SymbolTableFrame
 	Frame       *FrameMap
 	Bindings    map[string]*Binding
-	Mutex        sync.RWMutex
+	Mutex       sync.RWMutex
 	CurrentCode *list.List
 }
 
@@ -80,6 +80,20 @@ func (self *SymbolTableFrame) CurrentCodeString() string {
 	} else {
 		return "Unknown code"
 	}
+}
+
+func (self *SymbolTableFrame) StackTrace() []string {
+	var previous []string
+	if self.Previous != nil {
+		previous = self.Previous.StackTrace()
+	} else {
+		previous = make([]string, 0)
+	}
+	current := make([]string, 0, self.CurrentCode.Len()+len(previous))
+	for e := self.CurrentCode.Front(); e != nil; e = e.Next() {
+		current = append(current, e.Value.(string))
+	}
+	return append(current, previous...)
 }
 
 func (self *SymbolTableFrame) InternalDump(frameNumber int) {
