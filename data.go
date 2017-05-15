@@ -860,7 +860,7 @@ func Copy(d *Data) *Data {
 }
 
 func IsEqv(d *Data, o *Data) bool {
-	if d == o {
+	if d == o && TypeOf(d) != FloatType {
 		return true
 	}
 
@@ -891,7 +891,7 @@ func IsEqv(d *Data, o *Data) bool {
 }
 
 func IsEq(d *Data, o *Data) bool {
-	if d == o {
+	if d == o && TypeOf(d) != FloatType {
 		return true
 	}
 
@@ -939,7 +939,7 @@ func IsEq(d *Data, o *Data) bool {
 }
 
 func IsEqual(d *Data, o *Data) bool {
-	if d == o {
+	if d == o && TypeOf(d) != FloatType {
 		return true
 	}
 
