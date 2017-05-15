@@ -163,7 +163,7 @@ func VectorGrowImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 	size := IntegerValue(k)
 
 	if int(size) <= len(originalValues) {
-		err = ProcessError(fmt.Sprintf("vector-grow needs a new size that is larger than the size of its vector argument (%d), but got %s.", len(originalValues), size), env)
+		err = ProcessError(fmt.Sprintf("vector-grow needs a new size that is larger than the size of its vector argument (%d), but got %d.", len(originalValues), size), env)
 		return
 	}
 

@@ -275,8 +275,8 @@ func getGvar(name *Data) (result *Data, err error) {
 }
 
 func setGvar(name *Data, value *Data) (err error) {
-	Global.BindTo(name, value)
-	return nil
+	_, err = Global.BindTo(name, value)
+	return
 }
 
 //------------------------------------------------------------------------------
@@ -519,7 +519,7 @@ func executeBytecode(f *Data, env *SymbolTableFrame) (result *Data, err error) {
 			}
 		case ARGS:
 			if nArgs != int(IntegerValue(instr[1])) {
-				return nil, errors.New(fmt.Sprintf("Wrong number of arguments to %s: %d expected, %d supplied", fMap.Get("name:"), int(IntegerValue(instr[1])), nArgs))
+				return nil, errors.New(fmt.Sprintf("Wrong number of arguments to %s: %d expected, %d supplied", String(fMap.Get("name:")), int(IntegerValue(instr[1])), nArgs))
 			}
 			localEnv = newEnv(int(IntegerValue(instr[1])), localEnv)
 			for i := nArgs - 1; i >= 0; i-- {
@@ -531,7 +531,7 @@ func executeBytecode(f *Data, env *SymbolTableFrame) (result *Data, err error) {
 			}
 		case ARGSDOT:
 			if nArgs >= Length(instr[1]) {
-				return nil, errors.New(fmt.Sprintf("Wrong number of arguments to %s: %d or more expected, %d supplied", fMap.Get("name:"), instr[1], nArgs))
+				return nil, errors.New(fmt.Sprintf("Wrong number of arguments to %s: %d or more expected, %d supplied", String(fMap.Get("name:")), instr[1], nArgs))
 			}
 			argValue := int(IntegerValue(instr[1]))
 			localEnv = newEnv(argValue+1, localEnv)

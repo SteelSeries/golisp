@@ -384,7 +384,7 @@ func TapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func DefinitionOfImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var name *Data = nil
+	var name *Data
 	if SymbolP(Car(args)) {
 		name = Car(args)
 	} else {
@@ -426,7 +426,7 @@ func DocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	function := FunctionValue(f)
 	if function.DocString == "" {
-		return StringWithValue(fmt.Sprintf("%s has no documentation string.", name)), nil
+		return StringWithValue(fmt.Sprintf("%s has no documentation string.", StringValue(name))), nil
 	} else {
 		return StringWithValue(function.DocString), nil
 	}

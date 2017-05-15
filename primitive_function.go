@@ -38,7 +38,7 @@ func MakeSpecialForm(name string, argCount string, function func(*Data, *SymbolT
 }
 
 func (self *PrimitiveFunction) String() string {
-	return fmt.Sprintf("<prim: %s, %v>", self.Name, self.Body)
+	return fmt.Sprintf("<prim: %s, %v>", self.Name, &self.Body)
 }
 
 func (self *PrimitiveFunction) checkArgumentCount(argCount int) bool {
