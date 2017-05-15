@@ -372,13 +372,11 @@ func ExecuteBytecodeWithArgs(f *CompiledFunction, args []*Data, env *SymbolTable
 		case JUMP:
 			pc = int(IntegerValue(instr[1]))
 		case FJUMP:
-			val = CompiledFunctionStack.Pop()
-			if val == LispFalse {
+			if CompiledFunctionStack.Pop() == LispFalse {
 				pc = int(IntegerValue(instr[1]))
 			}
 		case TJUMP:
-			val = CompiledFunctionStack.Pop()
-			if val == LispTrue {
+			if CompiledFunctionStack.Pop() != LispFalse {
 				pc = int(IntegerValue(instr[1]))
 			}
 
