@@ -121,15 +121,8 @@ func (s *TokenizerSuite) TestProperHexInteger(c *C) {
 	c.Assert(lit, Equals, "1f")
 }
 
-func (s *TokenizerSuite) TestHexInteger(c *C) {
-	t := NewTokenizerFromString("0x1f a")
-	tok, lit := t.NextToken()
-	c.Assert(tok, Equals, HEXNUMBER)
-	c.Assert(lit, Equals, "1f")
-}
-
 func (s *TokenizerSuite) TestUppercaseHexInteger(c *C) {
-	t := NewTokenizerFromString("0x1F a")
+	t := NewTokenizerFromString("#x1F a")
 	tok, lit := t.NextToken()
 	c.Assert(tok, Equals, HEXNUMBER)
 	c.Assert(lit, Equals, "1F")
@@ -336,4 +329,30 @@ func (s *TokenizerSuite) TestTrue(c *C) {
 	tok, lit := t.NextToken()
 	c.Assert(tok, Equals, TRUE)
 	c.Assert(lit, Equals, `#t`)
+}
+
+func (s *TokenizerSuite) TestOpenVector(c *C) {
+	t := NewTokenizerFromString(`#(1 2)`)
+	tok, lit := t.NextToken()
+	c.Assert(tok, Equals, OPEN_VECTOR)
+	c.Assert(lit, Equals, `#(`)
+
+	t.ConsumeToken()
+	tok, lit = t.NextToken()
+	c.Assert(tok, Equals, NUMBER)
+	c.Assert(lit, Equals, `1`)
+}
+
+func (s *TokenizerSuite) TestCharacter(c *C) {
+	t := NewTokenizerFromString(`#\* a`)
+	tok, lit := t.NextToken()
+	c.Assert(tok, Equals, CHARACTER)
+	c.Assert(lit, Equals, "*")
+}
+
+func (s *TokenizerSuite) TestSpaceCharacter(c *C) {
+	t := NewTokenizerFromString(`#\space a`)
+	tok, lit := t.NextToken()
+	c.Assert(tok, Equals, CHARACTER)
+	c.Assert(lit, Equals, " ")
 }

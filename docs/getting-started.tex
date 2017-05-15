@@ -1,0 +1,96 @@
+
+\documentclass{scrartcl}
+
+\usepackage[utf8x]{inputenc}
+
+\usepackage[T1]{fontenc}
+\usepackage{listings}
+
+\usepackage{hyperref}
+
+
+
+
+
+\setcounter{footnote}{0}
+
+\hypersetup{colorlinks=true,urlcolor=blue}
+
+\begin{document}
+\begin{center}
+\rule{3in}{0.4pt}
+\end{center}
+layout: golisp
+title: ``Getting started with SteelSeries/GoLisp''
+---
+
+\subsection{Go}\hypertarget{go}{}\label{go}
+
+First, you'll need to download and install the Go language for your system. Visit the  and follow the instruction for your platform. At this time we suggest Go 1.4.2.
+
+Once you're finished, typing the command \texttt{go version} should result in something like (platform details may be different for you) \texttt{go version go1.4.2 darwin/amd64}.
+
+\subsection{Git}\hypertarget{git}{}\label{git}
+
+Skip this if you already have Git installed.
+
+If you don't you'll need it to get the GoLisp code.  Point your browser at , download the version for your system and install it.
+
+\subsection{SteelSeries/GoLisp}\hypertarget{steelseriesgolisp}{}\label{steelseriesgolisp}
+
+Now that you have Git and Go installed and running, you need to clone the SteelSeries/GoLisp GitHub repo. Go to an appropriate place in your system and give the command
+
+\begin{verbatim}git clone https://github.com/SteelSeries/golisp.git
+\end{verbatim}
+
+Once the clone has completed cd into the new \texttt{golisp} directory.
+
+You can also visit the repo .
+
+You now need to set the environment variable GOPATH to the current directory On OSX or Linux you would use the command:
+
+\begin{verbatim}export GOPATH=`pwd`
+\end{verbatim}
+
+If you are on Windows, use:
+
+\begin{verbatim}GOPATH=%CD%
+\end{verbatim}
+
+Now that Go knows where you are, you can install the other packages that SteelSeries/GoLisp depends on:
+
+\begin{verbatim}go get gopkg.in/check.v1
+go get gopkg.in/fatih/set.v0
+go get github.com/jimsmart/bufrr
+\end{verbatim}
+
+\subsection{Off and running}\hypertarget{off-and-running}{}\label{off-and-running}
+
+Now, execute the following commands (switching to backslashes if you are on Windows):
+
+\begin{verbatim}cd src/github.com/steelseries/golisp
+go run main/golisp.go
+\end{verbatim}
+
+You should see the following
+
+\begin{verbatim}Welcome to GoLisp 1.0
+Copyright 2015 SteelSeries
+Evaluate '(quit)' to exit.
+
+>
+\end{verbatim}
+
+You are now at the GoLisp REPL prompt and you can type lisp expressions (on a single line, spanning multiple lines isn't supported yet) and GoLisp will evaluate them and print the result:
+
+\begin{verbatim}> (map + '(1 2 3) '(4 5 6))
+==> (5 7 9)
+>
+\end{verbatim}
+
+\subsection{Next steps}\hypertarget{next-steps}{}\label{next-steps}
+
+To get familiar with SteelSeries/GoLisp have a look at the documents and posts listed \href{documents.html}{here}. The language reference can be found \href{language-ref.html}{here}.
+
+
+\end{document}

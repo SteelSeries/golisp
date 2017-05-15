@@ -12,6 +12,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -19,27 +20,29 @@ import (
 var symbolCounts map[string]int = make(map[string]int)
 
 func RegisterSystemPrimitives() {
-	MakePrimitiveFunction("sleep", "1", SleepImpl)
+	Global.BindTo(Intern("__OS__"), Intern(runtime.GOOS))
+
+	MakeTypedPrimitiveFunction("sleep", "1", SleepImpl, []uint32{IntegerType})
 	MakePrimitiveFunction("millis", "0", MillisImpl)
 	MakePrimitiveFunction("write-line", "*", WriteLineImpl)
 	MakePrimitiveFunction("write-log", "*", WriteLogImpl)
 	MakePrimitiveFunction("str", "*", MakeStringImpl)
-	MakePrimitiveFunction("intern", "1", InternImpl)
 	MakePrimitiveFunction("quit", "0", QuitImpl)
-	MakePrimitiveFunction("gensym", "0|1", GensymImpl)
-	MakePrimitiveFunction("gensym-naked", "0|1", GensymNakedImpl)
-	MakePrimitiveFunction("eval", "1|2", EvalImpl)
-
-	MakeRestrictedPrimitiveFunction("load", "1", LoadFileImpl)
-	MakeRestrictedPrimitiveFunction("global-eval", "1", GlobalEvalImpl)
-	MakeRestrictedPrimitiveFunction("panic!", "1", PanicImpl)
+	MakeTypedPrimitiveFunction("intern", "1", InternImpl, []uint32{StringType})
+	MakeTypedPrimitiveFunction("symbol->string", "1", SymbolToStringImpl, []uint32{SymbolType})
+	MakeTypedPrimitiveFunction("gensym", "0|1", GensymImpl, []uint32{StringType | SymbolType})
+	MakeTypedPrimitiveFunction("eval", "1|2", EvalImpl, []uint32{AnyType, EnvironmentType})
+	MakePrimitiveFunction("load", "1", LoadFileImpl)
+	MakePrimitiveFunction("global-eval", "1", GlobalEvalImpl)
+	MakePrimitiveFunction("panic!", "1", PanicImpl)
 	MakePrimitiveFunction("error", "1", ErrorImpl)
+	MakeTypedPrimitiveFunction("exec", ">=1", ExecImpl, []uint32{StringType, AnyType})
+	MakeTypedPrimitiveFunction("get-env", "1", getEnvImpl, []uint32{StringType | SymbolType})
+	MakeTypedPrimitiveFunction("set-env", "2", setEnvImpl, []uint32{StringType | SymbolType, StringType | SymbolType})
+	MakeTypedPrimitiveFunction("unset-env", "1", setEnvImpl, []uint32{StringType | SymbolType})
 	MakeSpecialForm("on-error", "2|3", OnErrorImpl)
-
 	MakeSpecialForm("time", "1", TimeImpl)
 	MakeSpecialForm("profile", "1|2", ProfileImpl)
-
-	MakeRestrictedPrimitiveFunction("exec", ">=1", ExecImpl)
 }
 
 func LoadFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -66,21 +69,22 @@ var goodbyes []string = []string{
 	"do svidan'ya",
 	"farvel",
 	"namárië",
+	"later dude",
 }
 
 func PanicImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	panic(String(Car(args)))
+	panic(String(First(args)))
 }
 
 func ErrorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return nil, ProcessError(String(Car(args)), env)
+	return nil, ProcessError(PrintString(First(args)), env)
 }
 
 func OnErrorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	result, errThrown := Eval(Car(args), env)
+	result, errThrown := Eval(First(args), env)
 	if errThrown == nil {
 		if Length(args) == 3 {
-			f, err := Eval(Caddr(args), env)
+			f, err := Eval(Third(args), env)
 			if err != nil {
 				return nil, err
 			}
@@ -95,7 +99,7 @@ func OnErrorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		}
 	}
 
-	f, err := Eval(Cadr(args), env)
+	f, err := Eval(Second(args), env)
 	if err != nil {
 		return
 	}
@@ -120,18 +124,18 @@ func QuitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func SleepImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	n := Car(args)
-	if !IntegerP(n) {
-		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(n)), env)
-		return
-	}
-	millis := IntegerValue(n)
+	millis := IntegerValue(First(args))
 	time.Sleep(time.Duration(millis) * time.Millisecond)
 	return
 }
 
 func MillisImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	result = IntegerWithValue(int64(time.Now().UnixNano() / 1e6))
+	now := time.Now()
+	hour := now.Hour()
+	minute := now.Minute()
+	second := now.Second()
+	milli := now.Nanosecond() / 1000000
+	result = IntegerWithValue(int64(hour*3600000 + minute*60000 + second*1000 + milli))
 	return
 }
 
@@ -177,13 +181,11 @@ func TimeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func InternImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	sym := Car(args)
-	if !StringP(sym) {
-		err = ProcessError(fmt.Sprintf("intern expects a string, but received %s.", String(sym)), env)
-		return
-	}
+	return Intern(StringValue(First(args))), nil
+}
 
-	return Intern(StringValue(sym)), nil
+func SymbolToStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return StringWithValue(StringValue(First(args))), nil
 }
 
 func gensymHelper(primitiveName string, args *Data, env *SymbolTableFrame) (prefix string, count int, err error) {
@@ -233,13 +235,9 @@ func GensymNakedImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 
 func EvalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var evalEnv *SymbolTableFrame
-	sexpr := Car(args)
+	sexpr := First(args)
 	if Length(args) == 2 {
-		if !EnvironmentP(Cadr(args)) {
-			err = ProcessError(fmt.Sprintf("eval expects an environment as it's second argument, but recieved %s.", String(Cadr(args))), env)
-			return
-		}
-		evalEnv = EnvironmentValue(Cadr(args))
+		evalEnv = EnvironmentValue(Second(args))
 	} else {
 		evalEnv = env
 	}
@@ -247,7 +245,7 @@ func EvalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func GlobalEvalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return Eval(Car(args), Global)
+	return Eval(First(args), Global)
 }
 
 func ProfileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -268,11 +266,7 @@ func ProfileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func ExecImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if !StringP(First(args)) {
-		err = ProcessError(fmt.Sprintf("exec requires a string command, but received %s.", String(First(args))), env)
-	}
 	cmdString := StringValue(First(args))
-
 	cmdArgs := make([]string, 0, Length(args)-1)
 
 	var cmd *exec.Cmd
@@ -291,5 +285,20 @@ func ExecImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		cmd = exec.Command(cmdString)
 	}
 	err = cmd.Start()
+	return
+}
+
+func getEnvImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	result = StringWithValue(os.Getenv(StringValue(First(args))))
+	return
+}
+
+func setEnvImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	err = os.Setenv(StringValue(First(args)), StringValue(Second(args)))
+	return
+}
+
+func unsetEnvImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	err = os.Unsetenv(StringValue(First(args)))
 	return
 }

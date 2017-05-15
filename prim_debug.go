@@ -23,9 +23,9 @@ func RegisterDebugPrimitives() {
 	MakePrimitiveFunction("remove-debug-on-entry", "1", RemoveDebugOnEntryImpl)
 	MakePrimitiveFunction("dump", "0", DumpSymbolTableImpl)
 
-	MakeRestrictedPrimitiveFunction("debug", "0", DebugImpl)
-	MakeRestrictedPrimitiveFunction("debug-on-error", "0|1", DebugOnErrorImpl)
-	MakeRestrictedPrimitiveFunction("add-debug-on-entry", "1", AddDebugOnEntryImpl)
+	MakePrimitiveFunction("debug", "0", DebugImpl)
+	MakePrimitiveFunction("debug-on-error", "0|1", DebugOnErrorImpl)
+	MakePrimitiveFunction("add-debug-on-entry", "1", AddDebugOnEntryImpl)
 }
 
 func DumpSymbolTableImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

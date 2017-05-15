@@ -101,12 +101,12 @@ func (s *BuiltinsSuite) TestTrinaryMultiply(c *C) {
 // Quotient
 
 func (s *BuiltinsSuite) TestUnaryQuotient(c *C) {
-	code, _ := Parse("(/ 24)")
+	code, _ := Parse("(/ 4)")
 	result, err := Eval(code, Global)
 	c.Assert(err, IsNil)
 	c.Assert(result, NotNil)
-	c.Assert(int(TypeOf(result)), Equals, IntegerType)
-	c.Assert(IntegerValue(result), Equals, int64(24))
+	c.Assert(int(TypeOf(result)), Equals, FloatType)
+	c.Assert(FloatValue(result), Equals, float64(0.25))
 }
 
 func (s *BuiltinsSuite) TestBinaryQuotient(c *C) {
@@ -136,88 +136,6 @@ func (s *BuiltinsSuite) TestCompoundMath(c *C) {
 	c.Assert(result, NotNil)
 	c.Assert(int(TypeOf(result)), Equals, IntegerType)
 	c.Assert(IntegerValue(result), Equals, int64(7))
-}
-
-// If
-
-func (s *BuiltinsSuite) TestIfTrueWithThen(c *C) {
-	code, _ := Parse("(if #t 5)")
-	result, err := Eval(code, Global)
-	c.Assert(err, IsNil)
-	c.Assert(result, NotNil)
-	c.Assert(int(TypeOf(result)), Equals, IntegerType)
-	c.Assert(IntegerValue(result), Equals, int64(5))
-}
-
-func (s *BuiltinsSuite) TestIfFalseWithThen(c *C) {
-	code, _ := Parse("(if #f 5)")
-	result, err := Eval(code, Global)
-	c.Assert(err, IsNil)
-	c.Assert(result, IsNil)
-}
-
-func (s *BuiltinsSuite) TestIfTrueWithThenAndElse(c *C) {
-	code, _ := Parse("(if #t 5 10)")
-	result, err := Eval(code, Global)
-	c.Assert(err, IsNil)
-	c.Assert(result, NotNil)
-	c.Assert(int(TypeOf(result)), Equals, IntegerType)
-	c.Assert(IntegerValue(result), Equals, int64(5))
-}
-
-func (s *BuiltinsSuite) TestIfFalseWithThenAndElse(c *C) {
-	code, _ := Parse("(if #f 5 10)")
-	result, err := Eval(code, Global)
-	c.Assert(err, IsNil)
-	c.Assert(result, NotNil)
-	c.Assert(int(TypeOf(result)), Equals, IntegerType)
-	c.Assert(IntegerValue(result), Equals, int64(10))
-}
-
-func (s *BuiltinsSuite) TestIfTrueWithNoClauses(c *C) {
-	code, _ := Parse("(if #t)")
-	result, err := Eval(code, Global)
-	c.Assert(err, NotNil)
-	c.Assert(result, IsNil)
-}
-
-func (s *BuiltinsSuite) TestIfFalseWithNoClauses(c *C) {
-	code, _ := Parse("(if #f)")
-	result, err := Eval(code, Global)
-	c.Assert(err, NotNil)
-	c.Assert(result, IsNil)
-}
-
-func (s *BuiltinsSuite) TestIfWithNoArgs(c *C) {
-	code, _ := Parse("(if)")
-	result, err := Eval(code, Global)
-	c.Assert(err, NotNil)
-	c.Assert(result, IsNil)
-}
-
-func (s *BuiltinsSuite) TestWithTooManyArgs(c *C) {
-	code, _ := Parse("(if #f 2 3 4)")
-	result, err := Eval(code, Global)
-	c.Assert(err, NotNil)
-	c.Assert(result, IsNil)
-}
-
-func (s *BuiltinsSuite) TestIfTrueWithMoreInvolvedArgs(c *C) {
-	code, _ := Parse("(if #t (+ 3 2) (- 3 2))")
-	result, err := Eval(code, Global)
-	c.Assert(err, IsNil)
-	c.Assert(result, NotNil)
-	c.Assert(int(TypeOf(result)), Equals, IntegerType)
-	c.Assert(IntegerValue(result), Equals, int64(5))
-}
-
-func (s *BuiltinsSuite) TestIfFalseWithMoreInvolvedArgs(c *C) {
-	code, _ := Parse("(if #f (+ 3 2) (- 3 2))")
-	result, err := Eval(code, Global)
-	c.Assert(err, IsNil)
-	c.Assert(result, NotNil)
-	c.Assert(int(TypeOf(result)), Equals, IntegerType)
-	c.Assert(IntegerValue(result), Equals, int64(1))
 }
 
 // %

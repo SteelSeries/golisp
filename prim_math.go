@@ -14,37 +14,38 @@ import (
 )
 
 func RegisterMathPrimitives() {
-	MakePrimitiveFunction("+", "*", AddImpl)
-	MakePrimitiveFunction("-", "*", SubtractImpl)
-	MakePrimitiveFunction("*", "*", MultiplyImpl)
-	MakePrimitiveFunction("/", "*", QuotientImpl)
-	MakePrimitiveFunction("succ", "1", IncrementImpl)
-	MakePrimitiveFunction("pred", "1", DecrementImpl)
-	MakePrimitiveFunction("quotient", "*", QuotientImpl)
-	MakePrimitiveFunction("%", "2", RemainderImpl)
-	MakePrimitiveFunction("modulo", "2", RemainderImpl)
+	MakeTypedPrimitiveFunction("+", "*", AddImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("-", "*", SubtractImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("*", "*", MultiplyImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("/", "*", DivideImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("succ", "1", IncrementImpl, []uint32{IntegerType})
+	MakeTypedPrimitiveFunction("1+", "1", IncrementImpl, []uint32{IntegerType})
+	MakeTypedPrimitiveFunction("pred", "1", DecrementImpl, []uint32{IntegerType})
+	MakeTypedPrimitiveFunction("-1+", "1", DecrementImpl, []uint32{IntegerType})
+	MakeTypedPrimitiveFunction("quotient", "2", QuotientImpl, []uint32{IntegerType, IntegerType})
+	MakeTypedPrimitiveFunction("modulo", "2", ModuloImpl, []uint32{IntegerType, IntegerType})
+	MakeTypedPrimitiveFunction("remainder", "2", RemainderImpl, []uint32{IntegerType, IntegerType})
+	MakeTypedPrimitiveFunction("%", "2", RemainderImpl, []uint32{IntegerType, IntegerType})
 	MakePrimitiveFunction("random-byte", "0", RandomByteImpl)
-	MakePrimitiveFunction("interval", "1|2|3", IntervalImpl)
-	MakePrimitiveFunction("integer", "1", ToIntImpl)
-	MakePrimitiveFunction("float", "1", ToFloatImpl)
-	MakePrimitiveFunction("number->string", "1|2", NumberToStringImpl)
-	MakePrimitiveFunction("string->number", "1|2", StringToNumberImpl)
-	MakePrimitiveFunction("min", "1", MinImpl)
-	MakePrimitiveFunction("max", "1", MaxImpl)
-	MakePrimitiveFunction("floor", "1", FloorImpl)
-	MakePrimitiveFunction("ceiling", "1", CeilingImpl)
-	MakePrimitiveFunction("abs", "1", AbsImpl)
-	MakePrimitiveFunction("zero?", "1", ZeroImpl)
-	MakePrimitiveFunction("positive?", "1", PositiveImpl)
-	MakePrimitiveFunction("negative?", "1", NegativeImpl)
-	MakePrimitiveFunction("even?", "1", EvenImpl)
-	MakePrimitiveFunction("odd?", "1", OddImpl)
-	MakePrimitiveFunction("sign", "1", SignImpl)
-	MakePrimitiveFunction("pow", "2", PowImpl)
-	MakePrimitiveFunction("inf?", "1", IsInfImpl)
-	MakePrimitiveFunction("nan?", "1", IsNaNImpl)
-	MakePrimitiveFunction("float->bits", "1", FloatToBitsImpl)
-	MakePrimitiveFunction("bits->float", "1", BitsToFloatImpl)
+	MakeTypedPrimitiveFunction("random", "0|1", RandomImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("interval", "1|2|3", IntervalImpl, []uint32{IntegerType, IntegerType, IntegerType})
+	MakeTypedPrimitiveFunction("integer", "1", ToIntImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("float", "1", ToFloatImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("number->string", "1|2", NumberToStringImpl, []uint32{IntegerType, IntegerType})
+	MakeTypedPrimitiveFunction("string->number", "1|2", StringToNumberImpl, []uint32{StringType, IntegerType})
+	MakeTypedPrimitiveFunction("min", "1", MinImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("max", "1", MaxImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("floor", "1", FloorImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("ceiling", "1", CeilingImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("abs", "1", AbsImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("zero?", "1", ZeroImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("positive?", "1", PositiveImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("negative?", "1", NegativeImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("even?", "1", EvenImpl, []uint32{IntegerType})
+	MakeTypedPrimitiveFunction("odd?", "1", OddImpl, []uint32{IntegerType})
+	MakeTypedPrimitiveFunction("sign", "1", SignImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("log", "1", LogImpl, []uint32{IntegerType, FloatType})
+	MakeTypedPrimitiveFunction("expt", "2", ExptImpl, []uint32{IntegerType, FloatType})
 
 	makeUnaryFloatFunction("acos", math.Acos)
 	makeUnaryFloatFunction("acosh", math.Acosh)
@@ -55,63 +56,77 @@ func RegisterMathPrimitives() {
 	makeUnaryFloatFunction("cbrt", math.Cbrt)
 	makeUnaryFloatFunction("cos", math.Cos)
 	makeUnaryFloatFunction("cosh", math.Cosh)
-	makeUnaryFloatFunction("erf", math.Erf)
-	makeUnaryFloatFunction("erfc", math.Erfc)
-	makeUnaryFloatFunction("exp", math.Exp)
-	makeUnaryFloatFunction("exp2", math.Exp2)
-	makeUnaryFloatFunction("expm1", math.Expm1)
-	makeUnaryFloatFunction("gamma", math.Gamma)
-	makeUnaryFloatFunction("j0", math.J0)
-	makeUnaryFloatFunction("j1", math.J1)
-	makeUnaryFloatFunction("log", math.Log)
-	makeUnaryFloatFunction("log10", math.Log10)
-	makeUnaryFloatFunction("log1p", math.Log1p)
-	makeUnaryFloatFunction("log2", math.Log2)
-	makeUnaryFloatFunction("logb", math.Logb)
 	makeUnaryFloatFunction("sin", math.Sin)
 	makeUnaryFloatFunction("sinh", math.Sinh)
 	makeUnaryFloatFunction("sqrt", math.Sqrt)
 	makeUnaryFloatFunction("tan", math.Tan)
 	makeUnaryFloatFunction("tanh", math.Tanh)
-	makeUnaryFloatFunction("y0", math.Y0)
-	makeUnaryFloatFunction("y1", math.Y1)
 
-	Global.BindToProtected(Intern("pi"), FloatWithValue(float32(math.Pi)))
-	Global.BindToProtected(Intern("e"), FloatWithValue(float32(math.E)))
-	Global.BindToProtected(Intern("phi"), FloatWithValue(float32(math.Phi)))
-	Global.BindToProtected(Intern("sqrt2"), FloatWithValue(float32(math.Sqrt2)))
-	Global.BindToProtected(Intern("sqrte"), FloatWithValue(float32(math.SqrtE)))
-	Global.BindToProtected(Intern("sqrtpi"), FloatWithValue(float32(math.SqrtPi)))
-	Global.BindToProtected(Intern("sqrtphi"), FloatWithValue(float32(math.SqrtPhi)))
-	Global.BindToProtected(Intern("ln2"), FloatWithValue(float32(math.Ln2)))
-	Global.BindToProtected(Intern("log2e"), FloatWithValue(float32(math.Log2E)))
-	Global.BindToProtected(Intern("ln10"), FloatWithValue(float32(math.Ln10)))
-	Global.BindToProtected(Intern("log10e"), FloatWithValue(float32(math.Log10E)))
-	Global.BindToProtected(Intern("nan"), FloatWithValue(float32(math.NaN())))
-	Global.BindToProtected(Intern("+inf"), FloatWithValue(float32(math.Inf(1))))
-	Global.BindToProtected(Intern("-inf"), FloatWithValue(float32(math.Inf(-1))))
+	MakePrimitiveFunction("inf?", "1", IsInfImpl)
+	MakePrimitiveFunction("nan?", "1", IsNaNImpl)
+
+	Global.BindToProtected(Intern("pi"), FloatWithValue(math.Pi))
+	Global.BindToProtected(Intern("e"), FloatWithValue(math.E))
+	Global.BindToProtected(Intern("phi"), FloatWithValue(math.Phi))
+	Global.BindToProtected(Intern("sqrt2"), FloatWithValue(math.Sqrt2))
+	Global.BindToProtected(Intern("sqrte"), FloatWithValue(math.SqrtE))
+	Global.BindToProtected(Intern("sqrtpi"), FloatWithValue(math.SqrtPi))
+	Global.BindToProtected(Intern("sqrtphi"), FloatWithValue(math.SqrtPhi))
+	Global.BindToProtected(Intern("ln2"), FloatWithValue(math.Ln2))
+	Global.BindToProtected(Intern("log2e"), FloatWithValue(math.Log2E))
+	Global.BindToProtected(Intern("ln10"), FloatWithValue(math.Ln10))
+	Global.BindToProtected(Intern("log10e"), FloatWithValue(math.Log10E))
+	Global.BindToProtected(Intern("nan"), FloatWithValue(math.NaN()))
+	Global.BindToProtected(Intern("+inf"), FloatWithValue(math.Inf(1)))
+	Global.BindToProtected(Intern("-inf"), FloatWithValue(math.Inf(-1)))
+	MakePrimitiveFunction("pow", "2", PowImpl)
+	MakePrimitiveFunction("inf?", "1", IsInfImpl)
+	MakePrimitiveFunction("nan?", "1", IsNaNImpl)
+	MakePrimitiveFunction("float->bits", "1", FloatToBitsImpl)
+	MakePrimitiveFunction("bits->float", "1", BitsToFloatImpl)
 }
 
 func makeUnaryFloatFunction(name string, f func(float64) float64) {
 	primFunc := func(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		valObj := Car(args)
-
 		if !NumberP(valObj) {
 			err = ProcessError(fmt.Sprintf("%s expects a number as a parameter, got %s", name, String(valObj)), env)
 			return
 		}
-
 		val := FloatValue(valObj)
-
 		ret := f(float64(val))
-
-		return FloatWithValue(float32(ret)), nil
+		return FloatWithValue(ret), nil
 	}
-
-	MakePrimitiveFunction(name, "1", primFunc)
+	MakeTypedPrimitiveFunction(name, "1", primFunc, []uint32{IntegerType | FloatType})
 }
 
-func sgn(a float32) int64 {
+func IsInfImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	val := Car(args)
+	if !NumberP(val) {
+		err = ProcessError(fmt.Sprintf("inf? expected a nunber, received %s", String(val)), env)
+		return
+	}
+	if FloatP(val) {
+		return BooleanWithValue(math.IsInf(float64(FloatValue(val)), 0)), nil
+	} else {
+		return BooleanWithValue(false), nil
+	}
+}
+
+func IsNaNImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	val := Car(args)
+	if !NumberP(val) {
+		err = ProcessError(fmt.Sprintf("nan? expected a nunber, received %s", String(val)), env)
+		return
+	}
+	if FloatP(val) {
+		return BooleanWithValue(math.IsNaN(float64(FloatValue(val)))), nil
+	} else {
+		return BooleanWithValue(false), nil
+	}
+}
+
+func sgn(a float64) int64 {
 	switch {
 	case a < 0:
 		return -1
@@ -122,31 +137,21 @@ func sgn(a float32) int64 {
 }
 
 func intSgn(a int64) int64 {
-	return sgn(float32(a))
+	return sgn(float64(a))
 }
 
 func IncrementImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if !IntegerP(Car(args)) {
-		err = ProcessError("1+ requires an integer argument", env)
-		return
-	}
-
-	val := IntegerValue(Car(args))
+	val := IntegerValue(First(args))
 	return IntegerWithValue(val + 1), nil
 }
 
 func DecrementImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if !IntegerP(Car(args)) {
-		err = ProcessError("1- requires an integer argument", env)
-		return
-	}
-
-	val := IntegerValue(Car(args))
+	val := IntegerValue(First(args))
 	return IntegerWithValue(val - 1), nil
 }
 
 func addFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var acc float32 = 0
+	var acc float64 = 0
 	for c := args; NotNilP(c); c = Cdr(c) {
 		acc += FloatValue(Car(c))
 	}
@@ -163,10 +168,6 @@ func addInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func anyFloats(args *Data, env *SymbolTableFrame) (result bool, err error) {
 	for c := args; NotNilP(c); c = Cdr(c) {
-		if !NumberP(Car(c)) {
-			err = ProcessError(fmt.Sprintf("Number expected, received %s", String(Car(c))), env)
-			return
-		}
 		if FloatP(Car(c)) {
 			return true, nil
 		}
@@ -188,16 +189,24 @@ func AddImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func subtractInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	acc := IntegerValue(Car(args))
-	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-		acc -= IntegerValue(Car(c))
+	if Length(args) == 1 {
+		acc = -1 * acc
+	} else {
+		for c := Cdr(args); NotNilP(c); c = Cdr(c) {
+			acc -= IntegerValue(Car(c))
+		}
 	}
 	return IntegerWithValue(acc), nil
 }
 
 func subtractFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	acc := FloatValue(Car(args))
-	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-		acc -= FloatValue(Car(c))
+	if Length(args) == 1 {
+		acc = -1.0 * acc
+	} else {
+		for c := Cdr(args); NotNilP(c); c = Cdr(c) {
+			acc -= FloatValue(Car(c))
+		}
 	}
 	return FloatWithValue(acc), nil
 }
@@ -223,7 +232,7 @@ func multiplyInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func multiplyFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var acc float32 = 1.0
+	var acc float64 = 1.0
 	for c := args; NotNilP(c); c = Cdr(c) {
 		acc *= FloatValue(Car(c))
 	}
@@ -242,60 +251,105 @@ func MultiplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 }
 
-func quotientInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	acc := IntegerValue(Car(args))
-	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-		v := IntegerValue(Car(c))
-		if v == 0 {
-			err = ProcessError(fmt.Sprintf("Quotent: %s -> Divide by zero.", String(args)), env)
+// TODO roll this into DivideImpl
+func divideFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	var acc float64
+	if Length(args) == 1 {
+		v := FloatValue(First(args))
+		if v == 0.0 {
+			err = ProcessError(fmt.Sprintf("Quotient: %s -> Divide by zero.", String(args)), env)
 			return
-		} else {
-			acc /= v
 		}
-	}
-	return IntegerWithValue(acc), nil
-}
-
-func quotientFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var acc float32 = FloatValue(Car(args))
-	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-		v := FloatValue(Car(c))
-		if v == 0 {
-			err = ProcessError(fmt.Sprintf("Quotent: %s -> Divide by zero.", String(args)), env)
-			return
-		} else {
-			acc /= v
+		acc = 1.0 / v
+	} else {
+		acc = FloatValue(First(args))
+		for c := Cdr(args); NotNilP(c); c = Cdr(c) {
+			v := FloatValue(Car(c))
+			if v == 0.0 {
+				err = ProcessError(fmt.Sprintf("Quotent: %s -> Divide by zero.", String(args)), env)
+				return
+			} else {
+				acc /= v
+			}
 		}
 	}
 	return FloatWithValue(acc), nil
 }
 
-func QuotientImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	areFloats, err := anyFloats(args, env)
+func DivideImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	q, err := divideFloats(args, env)
 	if err != nil {
 		return
 	}
-	if areFloats {
-		return quotientFloats(args, env)
+
+	qval := FloatValue(q)
+	if qval == math.Trunc(float64(qval)) {
+		result = IntegerWithValue(int64(qval))
 	} else {
-		return quotientInts(args, env)
+		result = q
 	}
+	return
+}
+
+func QuotientImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	dividendObj := First(args)
+	dividend := IntegerValue(dividendObj)
+
+	divisorObj := Second(args)
+	divisor := IntegerValue(divisorObj)
+
+	if divisor == 0 {
+		err = ProcessError("quotient: Divide by zero.", env)
+		return
+	}
+
+	val := dividend / divisor
+
+	if intSgn(val) != intSgn(divisor) {
+		val = val * -1
+	}
+
+	return IntegerWithValue(val), nil
+}
+
+func ModuloImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	dividendObj := First(args)
+	dividend := IntegerValue(dividendObj)
+
+	divisorObj := Second(args)
+	divisor := IntegerValue(divisorObj)
+
+	if divisor == 0 {
+		err = ProcessError("modulo: Divide by zero.", env)
+		return
+	}
+
+	val := dividend % divisor
+	if intSgn(val) != intSgn(divisor) {
+		val = val + divisor
+	}
+
+	return IntegerWithValue(val), nil
 }
 
 func RemainderImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	dividend := Car(args)
-	if !IntegerP(dividend) {
-		err = ProcessError(fmt.Sprintf("%/modulo expected an integer first arg, received %s", String(dividend)), env)
+	dividendObj := First(args)
+	dividend := IntegerValue(dividendObj)
+
+	divisorObj := Second(args)
+	divisor := IntegerValue(divisorObj)
+
+	if divisor == 0 {
+		err = ProcessError("remainder: Divide by zero.", env)
 		return
 	}
 
-	divisor := Cadr(args)
-	if !IntegerP(divisor) {
-		err = ProcessError(fmt.Sprintf("%/modulo expected an integer second arg, received %s", String(divisor)), env)
-		return
+	val := dividend % divisor
+
+	if intSgn(val) != intSgn(dividend) {
+		val = val * -1
 	}
 
-	val := IntegerValue(dividend) % IntegerValue(divisor)
 	return IntegerWithValue(val), nil
 }
 
@@ -306,13 +360,33 @@ func RandomByteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 	return
 }
 
+func RandomImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if Length(args) == 0 {
+		result = IntegerWithValue(rand.Int63n(math.MaxUint32))
+	} else {
+		modulus := First(args)
+		if IntegerP(modulus) {
+			result = IntegerWithValue(rand.Int63n(IntegerValue(modulus)))
+		} else if FloatP(modulus) {
+			if FloatValue(modulus) != 1.0 {
+				err = ProcessError(fmt.Sprintf("random only accepts floating point modulus of 1.0, received %s", String(modulus)), env)
+				return
+			}
+			result = FloatWithValue(rand.Float64())
+		} else {
+			err = ProcessError(fmt.Sprintf("random expected an integer or float modulus, received %s", String(modulus)), env)
+			return
+		}
+	}
+	return
+}
+
 func IntervalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var direction int64 = 1
 	var step int64
 	var end int64
 
-	startObj := Car(args)
-	start := IntegerValue(startObj)
+	start := IntegerValue(First(args))
 
 	if Length(args) == 1 {
 		direction = 1
@@ -320,20 +394,14 @@ func IntervalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		end = start
 		start = 1
 	} else {
-
-		endObj := Cadr(args)
-		end = IntegerValue(endObj)
+		end = IntegerValue(Second(args))
 
 		if start > end {
 			direction = -1
 		}
 
 		if Length(args) == 3 {
-			if !IntegerP(Caddr(args)) {
-				err = ProcessError(fmt.Sprintf("interval step must be an integer, received %s", String(Caddr(args))), env)
-				return
-			}
-			step = IntegerValue(Caddr(args))
+			step = IntegerValue(Third(args))
 			if intSgn(step) != direction {
 				return nil, ProcessError("The sign of step has to match the direction of the interval", env)
 			}
@@ -358,32 +426,18 @@ func IntervalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func ToIntImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	n := Car(args)
-	if !NumberP(n) {
-		err = ProcessError(fmt.Sprintf("integer expected an number, received %s", String(n)), env)
-		return
-	}
-
-	return IntegerWithValue(IntegerValue(n)), nil
+	return IntegerWithValue(IntegerValue(First(args))), nil
 }
 
 func ToFloatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	n := Car(args)
-	if !NumberP(n) {
-		err = ProcessError(fmt.Sprintf("float expected a number, received %s", String(n)), env)
-		return
-	}
-
-	return FloatWithValue(FloatValue(n)), nil
+	return FloatWithValue(FloatValue(First(args))), nil
 }
 
 func NumberToStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	valObj := First(args)
-	val := IntegerValue(valObj)
+	val := IntegerValue(First(args))
 	var base int64
 	if Length(args) == 2 {
-		baseObj := Second(args)
-		base = IntegerValue(baseObj)
+		base = IntegerValue(Second(args))
 	} else {
 		base = 10
 	}
@@ -399,19 +453,17 @@ func NumberToStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err er
 	case 16:
 		format = "%x"
 	default:
-		format = "Unsupported base: %d"
-		val = base
+		err = ProcessError(fmt.Sprintf("number->string: unsupported base %d", base), env)
+		return
 	}
 	return StringWithValue(fmt.Sprintf(format, val)), nil
 }
 
 func StringToNumberImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	strObj := First(args)
-	str := StringValue(strObj)
+	str := StringValue(First(args))
 	var base int64
 	if Length(args) == 2 {
-		baseObj := Second(args)
-		base = IntegerValue(baseObj)
+		base = IntegerValue(Second(args))
 	} else {
 		base = 10
 	}
@@ -427,7 +479,8 @@ func StringToNumberImpl(args *Data, env *SymbolTableFrame) (result *Data, err er
 	case 16:
 		format = "%x"
 	default:
-		return IntegerWithValue(0), nil
+		err = ProcessError(fmt.Sprintf("string->number: unsupported base %d", base), env)
+		return
 	}
 	var val int64
 	_, err = fmt.Sscanf(str, format, &val)
@@ -465,7 +518,7 @@ func minFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		err = ProcessError(fmt.Sprintf("min requires numbers, received %s", String(n)), env)
 		return
 	}
-	var acc float32 = FloatValue(n)
+	var acc float64 = FloatValue(n)
 
 	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
 		n = Car(c)
@@ -482,7 +535,7 @@ func minFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func MinImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	numbers := Car(args)
+	numbers := First(args)
 	if !ListP(numbers) {
 		err = ProcessError(fmt.Sprintf("min requires a list of numbers, received %s", String(numbers)), env)
 		return
@@ -530,7 +583,7 @@ func maxFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		err = ProcessError(fmt.Sprintf("max requires numbers, received %s", String(n)), env)
 		return
 	}
-	var acc float32 = FloatValue(n)
+	var acc float64 = FloatValue(n)
 
 	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
 		n = Car(c)
@@ -547,9 +600,9 @@ func maxFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func MaxImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	numbers := Car(args)
+	numbers := First(args)
 	if !ListP(numbers) {
-		err = ProcessError(fmt.Sprintf("max requires a list of numbers, received %s", String(numbers)), env)
+		err = ProcessError(fmt.Sprintf("max requires a proper list of numbers, received %s", String(numbers)), env)
 		return
 	}
 
@@ -569,99 +622,80 @@ func MaxImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func FloorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	val := Car(args)
-
-	if !NumberP(val) {
-		err = ProcessError(fmt.Sprintf("floor expected an number, received %s", String(Car(args))), env)
-		return
-	}
-
-	return FloatWithValue(float32(math.Floor(float64(FloatValue(val))))), nil
+	return FloatWithValue(math.Floor(float64(FloatValue(First(args))))), nil
 }
 
 func CeilingImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	val := Car(args)
-
-	if !NumberP(val) {
-		err = ProcessError(fmt.Sprintf("ceiling expected a number, received %s", String(Car(args))), env)
-		return
-	}
-
-	return FloatWithValue(float32(math.Ceil(float64(FloatValue(val))))), nil
+	return FloatWithValue(math.Ceil(float64(FloatValue(First(args))))), nil
 }
 
 func AbsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	val := Car(args)
-	if !NumberP(val) {
-		err = ProcessError(fmt.Sprintf("abs expected a number, received %s", String(Car(args))), env)
-		return
-	}
-	absval := math.Abs(float64(FloatValue(val)))
+	val := First(args)
+	absval := math.Abs(FloatValue(val))
 	if IntegerP(val) {
 		result = IntegerWithValue(int64(absval))
 	} else {
-		result = FloatWithValue(float32(absval))
+		result = FloatWithValue(absval)
 	}
 	return
 }
 
 func ZeroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	val := Car(args)
-	if !NumberP(val) {
-		err = ProcessError(fmt.Sprintf("zero? expected a number, received %s", String(Car(args))), env)
-		return
-	}
 	return BooleanWithValue(FloatValue(val) == 0.0), nil
 }
 
 func PositiveImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	val := Car(args)
-	if !NumberP(val) {
-		err = ProcessError(fmt.Sprintf("positive? expected a number, received %s", String(Car(args))), env)
-		return
-	}
 	return BooleanWithValue(FloatValue(val) > 0.0), nil
 }
 
 func NegativeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	val := Car(args)
-	if !NumberP(val) {
-		err = ProcessError(fmt.Sprintf("negative expected a number, received %s", String(Car(args))), env)
-		return
-	}
 	return BooleanWithValue(FloatValue(val) < 0.0), nil
 }
 
 func EvenImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	val := Car(args)
-	if !IntegerP(val) {
-		err = ProcessError(fmt.Sprintf("even? expected an integer, received %s", String(Car(args))), env)
-		return
-	}
 	return BooleanWithValue(IntegerValue(val)%2 == 0), nil
 }
 
 func OddImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	val := Car(args)
-	if !IntegerP(val) {
-		err = ProcessError(fmt.Sprintf("odd? expected an integer, received %s", String(Car(args))), env)
-		return
-	}
 	return BooleanWithValue(IntegerValue(val)%2 != 0), nil
 }
 
 func SignImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	val := Car(args)
-	if !NumberP(val) {
-		err = ProcessError(fmt.Sprintf("sign expected a nunber, received %s", String(Car(args))), env)
-		return
-	}
-
 	if FloatP(val) {
-		return IntegerWithValue(sgn(float32(FloatValue(val)))), nil
+		return IntegerWithValue(sgn(FloatValue(val))), nil
 	} else {
 		return IntegerWithValue(intSgn(IntegerValue(val))), nil
 	}
+}
+
+func LogImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	result = FloatWithValue(math.Log(FloatValue(First(args))))
+	return
+}
+
+func ExptImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	baseObj := First(args)
+	expObj := Second(args)
+	if NumberP(baseObj) && NumberP(expObj) {
+		floating := FloatP(baseObj) || FloatP(expObj)
+		base := FloatValue(baseObj)
+		exp := FloatValue(expObj)
+		val := math.Pow(base, exp)
+		if floating {
+			result = FloatWithValue(val)
+		} else {
+			result = IntegerWithValue(int64(val))
+		}
+	} else {
+		err = ProcessError(fmt.Sprintf("expt expects a numeric arguments, received %s, %s", String(First(args)), String(Second(args))), env)
+	}
+	return
 }
 
 func PowImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

@@ -19,22 +19,11 @@ var _ = Suite(&TypeSuite{})
 func (s *TypeSuite) TestList(c *C) {
 	sexpr := Cons(IntegerWithValue(5), nil)
 	c.Assert(ListP(sexpr), Equals, true)
+	c.Assert(ProperListP(sexpr), Equals, true)
 	c.Assert(PairP(sexpr), Equals, true)
 	c.Assert(int(TypeOf(sexpr)), Equals, ConsCellType)
 	c.Assert(TypeName(ConsCellType), Equals, "List")
 }
-
-// func (s *TypeSuite) TestAlist(c *C) {
-// 	sexpr := Acons(IntegerWithValue(5), StringWithValue("five"), nil)
-// 	c.Assert(AlistP(sexpr), Equals, true)
-// 	c.Assert(ListP(sexpr), Equals, true)
-// 	c.Assert(int(TypeOf(sexpr)), Equals, AlistType)
-// 	c.Assert(TypeName(AlistType), Equals, "Association List")
-
-// 	c.Assert(DottedPairP(Car(sexpr)), Equals, true)
-// 	c.Assert(TypeOf(Car(sexpr)), Equals, AlistCellType)
-// 	c.Assert(TypeName(AlistCellType), Equals, "Association List Cell")
-// }
 
 func (s *TypeSuite) TestInteger(c *C) {
 	sexpr := IntegerWithValue(5)
@@ -72,7 +61,7 @@ func (s *TypeSuite) TestSymbol(c *C) {
 }
 
 func (s *TypeSuite) TestFunction(c *C) {
-	sexpr := FunctionWithNameParamsBodyAndParent("func", nil, nil, nil)
+	sexpr := FunctionWithNameParamsDocBodyAndParent("func", nil, "", nil, nil)
 	c.Assert(FunctionP(sexpr), Equals, true)
 	c.Assert(int(TypeOf(sexpr)), Equals, FunctionType)
 	c.Assert(TypeName(FunctionType), Equals, "Function")

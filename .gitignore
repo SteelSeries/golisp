@@ -31,8 +31,6 @@ src/gopkg.in/fatih/set.v0/
 
 *.log
 
-*.pdf
-
 *.toc
 
 *.bbl
@@ -50,3 +48,5 @@ cover.out
 
 .golisp_history
 golisp
+*.out
+docs/auto

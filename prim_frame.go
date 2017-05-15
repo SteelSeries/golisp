@@ -12,21 +12,33 @@ import (
 )
 
 func RegisterFramePrimitives() {
+	MakeTypedPrimitiveFunction("make-slotname", "1", MakeSlotnameImpl, []uint32{StringType | SymbolType})
 	MakePrimitiveFunction("make-frame", "*", MakeFrameImpl)
-	MakePrimitiveFunction("has-slot?", "2", HasSlotImpl)
-	MakePrimitiveFunction("get-slot", "2", GetSlotImpl)
-	MakePrimitiveFunction("get-slot-or-nil", "2", GetSlotOrNilImpl)
-	MakePrimitiveFunction("remove-slot!", "2", RemoveSlotImpl)
-	MakePrimitiveFunction("set-slot!", "3", SetSlotImpl)
-	MakePrimitiveFunction("send", ">=2", SendImpl)
-	MakePrimitiveFunction("send-super", ">=1", SendSuperImpl)
-	MakeSpecialForm("apply-slot", ">=3", ApplySlotImpl)
-	MakeSpecialForm("apply-slot-super", ">=2", ApplySlotSuperImpl)
-	MakePrimitiveFunction("clone", "1", CloneImpl)
-	MakePrimitiveFunction("json->lisp", "1", JsonToLispImpl)
-	MakePrimitiveFunction("lisp->json", "1", LispToJsonImpl)
-	MakePrimitiveFunction("frame-keys", "1", FrameKeysImpl)
-	MakePrimitiveFunction("frame-values", "1", FrameValuesImpl)
+	MakeTypedPrimitiveFunction("has-slot?", "2", HasSlotImpl, []uint32{FrameType, SymbolType})
+	MakeTypedPrimitiveFunction("get-slot", "2", GetSlotImpl, []uint32{FrameType, SymbolType})
+	MakeTypedPrimitiveFunction("get-slot-or-nil", "2", GetSlotOrNilImpl, []uint32{FrameType, SymbolType})
+	MakeTypedPrimitiveFunction("remove-slot!", "2", RemoveSlotImpl, []uint32{FrameType, SymbolType})
+	MakeTypedPrimitiveFunction("set-slot!", "3", SetSlotImpl, []uint32{FrameType, SymbolType, AnyType})
+	MakeTypedPrimitiveFunction("send", ">=2", SendImpl, []uint32{FrameType, SymbolType, AnyType})
+	MakeTypedPrimitiveFunction("send-super", ">=1", SendSuperImpl, []uint32{SymbolType, AnyType})
+	MakeTypedPrimitiveFunction("apply-slot", ">=3", ApplySlotImpl, []uint32{FrameType, SymbolType, AnyType})
+	MakeTypedPrimitiveFunction("apply-slot-super", ">=2", ApplySlotSuperImpl, []uint32{SymbolType, AnyType})
+	MakeTypedPrimitiveFunction("clone", "1", CloneImpl, []uint32{FrameType})
+	MakeTypedPrimitiveFunction("json->lisp", "1", JsonToLispImpl, []uint32{StringType})
+	MakeTypedPrimitiveFunction("lisp->json", "1", LispToJsonImpl, []uint32{NilType | FrameType | ConsCellType | IntegerType | FloatType | StringType | SymbolType | BooleanType})
+	MakeTypedPrimitiveFunction("frame-keys", "1", FrameKeysImpl, []uint32{FrameType})
+	MakeTypedPrimitiveFunction("frame-values", "1", FrameValuesImpl, []uint32{FrameType})
+	MakeTypedPrimitiveFunction("frame-length", "1", FrameLengthImpl, []uint32{FrameType})
+}
+
+func MakeSlotnameImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	base := First(args)
+	if NakedP(base) {
+		result = base
+	} else {
+		result = NakedSymbolFrom(base)
+	}
+	return
 }
 
 func MakeFrameImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -49,13 +61,8 @@ func MakeFrameImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 }
 
 func HasSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	f := Car(args)
-	if !FrameP(f) {
-		err = ProcessError(fmt.Sprintf("has-slot? requires a frame as it's first argument, but was given %s.", String(f)), env)
-		return
-	}
-
-	k := Cadr(args)
+	f := First(args)
+	k := Second(args)
 	if !NakedP(k) {
 		err = ProcessError(fmt.Sprintf("has-slot? requires a naked symbol as it's second argument, but was given %s.", String(k)), env)
 		return
@@ -65,18 +72,13 @@ func HasSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func GetSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	f := Car(args)
-	if !FrameP(f) {
-		err = ProcessError(fmt.Sprintf("get-slot requires a frame as it's first argument, but was given %s.", String(f)), env)
-		return
-	}
-
+	f := First(args)
 	if FrameValue(f) == nil {
 		err = ProcessError("get-slot received a nil frame.", env)
 		return
 	}
 
-	k := Cadr(args)
+	k := Second(args)
 	if !NakedP(k) {
 		err = ProcessError(fmt.Sprintf("get-slot requires a naked symbol as it's second argument, but was given %s.", String(k)), env)
 		return
@@ -91,68 +93,41 @@ func GetSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func GetSlotOrNilImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	f := Car(args)
-	if !FrameP(f) {
-		err = ProcessError(fmt.Sprintf("get-slot-or-nil requires a frame as it's first argument, but was given %s.", String(f)), env)
-		return
-	}
-
-	k := Cadr(args)
+	f := First(args)
+	k := Second(args)
 	if !NakedP(k) {
 		err = ProcessError(fmt.Sprintf("get-slot-or-nil requires a naked symbol as it's second argument, but was given %s.", String(k)), env)
-		return
+	} else {
+		result = FrameValue(f).Get(StringValue(k))
 	}
-
-	return FrameValue(f).Get(StringValue(k)), nil
+	return
 }
 
 func RemoveSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	f := Car(args)
-
-	if NilP(f) {
-		return LispFalse, nil
-	}
-
-	if !FrameP(f) {
-		err = ProcessError(fmt.Sprintf("remove-slot! requires a frame as it's first argument, but was given %s.", String(f)), env)
-		return
-	}
-
-	k := Cadr(args)
+	f := First(args)
+	k := Second(args)
 	if !NakedP(k) {
 		err = ProcessError(fmt.Sprintf("remove-slot! requires a naked symbol as it's second argument, but was given %s.", String(k)), env)
-		return
+	} else {
+		result = BooleanWithValue(FrameValue(f).Remove(StringValue(k)))
 	}
-
-	return BooleanWithValue(FrameValue(f).Remove(StringValue(k))), nil
+	return
 }
 
 func SetSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	f := Car(args)
-	if !FrameP(f) {
-		err = ProcessError(fmt.Sprintf("set-slot! requires a frame as it's first argument, but was given %s.", String(f)), env)
-		return
-	}
-
-	k := Cadr(args)
+	f := First(args)
+	k := Second(args)
 	if !NakedP(k) {
 		err = ProcessError(fmt.Sprintf("set-slot! requires a naked symbol as it's second argument, but was given %s.", String(k)), env)
-		return
+	} else {
+		result = FrameValue(f).Set(StringValue(k), Third(args))
 	}
-
-	v := Caddr(args)
-
-	return FrameValue(f).Set(StringValue(k), v), nil
+	return
 }
 
 func SendImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	f := Car(args)
-	if !FrameP(f) {
-		err = ProcessError(fmt.Sprintf("send requires a frame as it's first argument, but was given %s.", String(f)), env)
-		return
-	}
-
-	k := Cadr(args)
+	f := First(args)
+	k := Second(args)
 	if !NakedP(k) {
 		err = ProcessError(fmt.Sprintf("send requires a naked symbol as it's second argument, but was given %s.", String(k)), env)
 		return
@@ -195,7 +170,7 @@ func SendSuperImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 		return
 	}
 
-	selector := Car(args)
+	selector := First(args)
 	if !NakedP(selector) {
 		err = ProcessError(fmt.Sprintf("Selector must be a naked symbol but was %s.", TypeName(TypeOf(selector))), env)
 		return
@@ -216,20 +191,10 @@ func SendSuperImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 	return FunctionValue(fun).ApplyWithoutEval(params, frameEnv)
 }
 
+	frameEnv := NewSymbolTableFrameBelowWithFrame(env, env.Frame, fmt.Sprintf("%s'", env.Name))
 func ApplySlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	f, err := Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-	if !FrameP(f) {
-		err = ProcessError(fmt.Sprintf("apply-slot requires a frame as it's first argument, but was given %s.", String(f)), env)
-		return
-	}
-
-	k, err := Eval(Cadr(args), env)
-	if err != nil {
-		return
-	}
+	f := First(args)
+	k := Second(args)
 	if !NakedP(k) {
 		err = ProcessError(fmt.Sprintf("apply-slot requires a naked symbol as it's second argument, but was given %s.", String(k)), env)
 		return
@@ -246,16 +211,7 @@ func ApplySlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 		return
 	}
 
-	ary := make([]*Data, 0, Length(args)-2)
-
-	var v *Data
-	for c := Cddr(args); NotNilP(c); c = Cdr(c) {
-		v, err = Eval(Car(c), env)
-		if err != nil {
-			return
-		}
-		ary = append(ary, v)
-	}
+	ary := ToArray(Cddr(args))
 
 	var argList *Data
 	if ListP(ary[len(ary)-1]) {
@@ -278,31 +234,22 @@ func ApplySlotSuperImpl(args *Data, env *SymbolTableFrame) (result *Data, err er
 		return
 	}
 
-	selector, err := Eval(Car(args), env)
+	selector := First(args)
 	if err != nil {
 		return
 	}
 	if !NakedP(selector) {
-		err = ProcessError(fmt.Sprintf("Selector must be a naked symbol but was %s.", TypeName(TypeOf(selector))), env)
+		err = ProcessError(fmt.Sprintf("apply-slot-super requirs a naked symbol as it's first argumentbut was %s.", TypeName(TypeOf(selector))), env)
 		return
 	}
 
 	fun := getSuperFunction(StringValue(selector), env)
 	if fun == nil || !FunctionP(fun) {
-		err = ProcessError(fmt.Sprintf("Message sent must select a function slot but was %s.", TypeName(TypeOf(fun))), env)
+		err = ProcessError(fmt.Sprintf("apply-slot-super must select a function slot but was %s.", TypeName(TypeOf(fun))), env)
 		return
 	}
 
-	ary := make([]*Data, 0, Length(args)-1)
-
-	var v *Data
-	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
-		v, err = Eval(Car(c), env)
-		if err != nil {
-			return
-		}
-		ary = append(ary, v)
-	}
+	ary := ToArray(Cdr(args))
 
 	var argList *Data
 	if ListP(ary[len(ary)-1]) {
@@ -319,7 +266,7 @@ func ApplySlotSuperImpl(args *Data, env *SymbolTableFrame) (result *Data, err er
 	frameEnv := NewSymbolTableFrameBelowWithFrame(env, env.Frame, fmt.Sprintf("%s'", env.Name))
 	_, err = frameEnv.BindLocallyTo(Intern("self"), FrameWithValue(env.Frame))
 	if err != nil {
-		return
+	    return
 	}
 	return FunctionValue(fun).ApplyWithoutEval(argList, frameEnv)
 }
@@ -335,37 +282,26 @@ func CloneImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func JsonToLispImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	j := Car(args)
-	if !StringP(j) {
-		err = ProcessError(fmt.Sprintf("json->lisp requires a string as it's argument, but was given %s.", String(j)), env)
-		return
-	}
-
+	j := First(args)
 	return JsonStringToLispWithFrames(StringValue(j)), nil
 }
 
 func LispToJsonImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l := Car(args)
-
+	l := First(args)
 	return StringWithValue(LispWithFramesToJsonString(l)), nil
 }
 
 func FrameKeysImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	f := Car(args)
-	if !FrameP(f) {
-		err = ProcessError(fmt.Sprintf("frame-keys requires a frame as it's argument, but was given %s.", String(f)), env)
-		return
-	}
-
+	f := First(args)
 	return ArrayToList(FrameValue(f).Keys()), nil
 }
 
 func FrameValuesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	f := Car(args)
-	if !FrameP(f) {
-		err = ProcessError(fmt.Sprintf("frame-values requires a frame as it's argument, but was given %s.", String(f)), env)
-		return
-	}
-
+	f := First(args)
 	return ArrayToList(FrameValue(f).Values()), nil
+}
+
+func FrameLengthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	f := First(args)
+	return IntegerWithValue(int64(len(*FrameValue(f)))), nil
 }

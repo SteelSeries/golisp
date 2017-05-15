@@ -43,3 +43,7 @@ func ToArray(list *Data) []*Data {
 	}
 	return result
 }
+
+func ArrayToVector(ary []*Data) *Data {
+	return VectorWithValue(ary)
+}

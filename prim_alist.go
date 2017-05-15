@@ -10,29 +10,19 @@ package golisp
 import ()
 
 func RegisterAListPrimitives() {
-	MakePrimitiveFunction("acons", "2|3", AconsImpl)
-	MakePrimitiveFunction("pairlis", "2|3", PairlisImpl)
-	MakePrimitiveFunction("assq", "2", AssocImpl)
-	MakePrimitiveFunction("assv", "2", AssocImpl)
-	MakePrimitiveFunction("assoc", "2", AssocImpl)
-	MakePrimitiveFunction("dissoc", "2", DissocImpl)
-	MakePrimitiveFunction("rassoc", "2", RassocImpl)
-	MakePrimitiveFunction("alist", "1", AlistImpl)
-}
-
-func AlistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l := Car(args)
-	result = Alist(l)
-	return
+	MakeTypedPrimitiveFunction("acons", "2|3", AconsImpl, []uint32{AnyType, AnyType, ConsCellType})
+	MakeTypedPrimitiveFunction("pairlis", "2|3", PairlisImpl, []uint32{ConsCellType, ConsCellType, ConsCellType})
+	MakeTypedPrimitiveFunction("assq", "2", AssqImpl, []uint32{AnyType, ConsCellType})
+	MakeTypedPrimitiveFunction("assv", "2", AssvImpl, []uint32{AnyType, ConsCellType})
+	MakeTypedPrimitiveFunction("assoc", "2", AssocImpl, []uint32{AnyType, ConsCellType})
+	MakeTypedPrimitiveFunction("dissq", "2", DissqImpl, []uint32{AnyType, ConsCellType})
+	MakeTypedPrimitiveFunction("dissv", "2", DissvImpl, []uint32{AnyType, ConsCellType})
+	MakeTypedPrimitiveFunction("dissoc", "2", DissocImpl, []uint32{AnyType, ConsCellType})
+	MakeTypedPrimitiveFunction("rassoc", "2", RassocImpl, []uint32{AnyType, ConsCellType})
 }
 
 func AconsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	key := First(args)
-	if PairP(key) {
-		err = ProcessError("Alist key can not be a list", env)
-		return
-	}
-
 	value := Second(args)
 
 	var alist *Data = nil
@@ -44,18 +34,8 @@ func AconsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func PairlisImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	keys := Car(args)
-	if !PairP(keys) {
-		err = ProcessError("First arg of pairlis must be a list", env)
-		return
-	}
-
-	values := Cadr(args)
-
-	if !PairP(values) {
-		err = ProcessError("Second arg of Pairlis must be a list", env)
-		return
-	}
+	keys := First(args)
+	values := Second(args)
 
 	if Length(keys) != Length(values) {
 		err = ProcessError("Pairlis requires the same number of keys and values", env)
@@ -64,17 +44,10 @@ func PairlisImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	result = Third(args)
 
-	if NotNilP(result) {
-		if !PairP(result) {
-			err = ProcessError("Third arg of pairlis must be an association list (if provided)", env)
-			return
-		}
-	}
-
 	for keyCell, valueCell := keys, values; NotNilP(keyCell); keyCell, valueCell = Cdr(keyCell), Cdr(valueCell) {
 		key := Car(keyCell)
 		if NilP(key) {
-			err = ProcessError("Assoc list keys can not be nil", env)
+			err = ProcessError("pairlis found a nil assoc list keys", env)
 		}
 		value := Car(valueCell)
 		result = Acons(key, value, result)
@@ -83,15 +56,27 @@ func PairlisImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return
 }
 
+func AssqImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	key := First(args)
+	alist := Second(args)
+	return Assq(key, alist)
+}
+
+func AssvImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	key := First(args)
+	alist := Second(args)
+	return Assv(key, alist)
+}
+
 func AssocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	key := Car(args)
-	list := Cadr(args)
-	return Assoc(key, list)
+	key := First(args)
+	alist := Second(args)
+	return Assoc(key, alist)
 }
 
 func RassocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	value := Car(args)
-	list := Cadr(args)
+	value := First(args)
+	list := Second(args)
 
 	for c := list; NotNilP(c); c = Cdr(c) {
 		pair := Car(c)
@@ -107,8 +92,20 @@ func RassocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return
 }
 
+func DissqImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	key := First(args)
+	list := Second(args)
+	return Dissq(key, list)
+}
+
+func DissvImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	key := First(args)
+	list := Second(args)
+	return Dissv(key, list)
+}
+
 func DissocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	key := Car(args)
-	list := Cadr(args)
+	key := First(args)
+	list := Second(args)
 	return Dissoc(key, list)
 }

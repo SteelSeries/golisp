@@ -21,22 +21,31 @@ import (
 )
 
 const (
-	NilType = iota
-	ConsCellType
-	AlistType
-	AlistCellType
-	IntegerType
-	FloatType
-	BooleanType
-	StringType
-	SymbolType
-	FunctionType
-	MacroType
-	PrimitiveType
-	BoxedObjectType
-	FrameType
-	EnvironmentType
-	PortType
+	NilType         = 0x00000001
+	ConsCellType    = 0x00000002
+	VectorType      = 0x00000004
+	IntegerType     = 0x00000008
+	FloatType       = 0x00000010
+	BooleanType     = 0x00000020
+	StringType      = 0x00000040
+	CharacterType   = 0x00000080
+	SymbolType      = 0x00000100
+	FunctionType    = 0x00000200
+	MacroType       = 0x00000400
+	PrimitiveType   = 0x00000800
+	BoxedObjectType = 0x00001000
+	FrameType       = 0x00002000
+	EnvironmentType = 0x00004000
+	PortType        = 0x00008000
+	AnyType         = 0xFFFFFFFF
+	AtomType        = 0x0000F0FC
+)
+
+const (
+	NotAList = iota
+	ProperList
+	DottedList
+	ListWithLoop
 )
 
 type ConsCell struct {
@@ -50,7 +59,7 @@ type BoxedObject struct {
 }
 
 type Data struct {
-	Type  uint8
+	Type  uint32
 	Value unsafe.Pointer
 }
 
@@ -78,7 +87,7 @@ var IsInteractive bool = false
 var DebugReturnValue *Data = nil
 var DebugOnEntry *set.Set = set.New()
 
-func TypeOf(d *Data) uint8 {
+func TypeOf(d *Data) uint32 {
 	if d == nil {
 		return NilType
 	} else {
@@ -86,16 +95,12 @@ func TypeOf(d *Data) uint8 {
 	}
 }
 
-func TypeName(t uint8) string {
+func TypeName(t uint32) string {
 	switch t {
 	case NilType:
 		return "Nil"
 	case ConsCellType:
 		return "List"
-	case AlistType:
-		return "Association List"
-	case AlistCellType:
-		return "Association List Cell"
 	case IntegerType:
 		return "Integer"
 	case FloatType:
@@ -104,6 +109,8 @@ func TypeName(t uint8) string {
 		return "Boolean"
 	case StringType:
 		return "String"
+	case CharacterType:
+		return "Character"
 	case SymbolType:
 		return "Symbol"
 	case FunctionType:
@@ -120,6 +127,8 @@ func TypeName(t uint8) string {
 		return "Environment"
 	case PortType:
 		return "Port"
+	case VectorType:
+		return "Vector"
 	default:
 		return "Unknown"
 	}
@@ -130,13 +139,9 @@ func NilP(d *Data) bool {
 	if d == nil {
 		return true
 	}
-
-	if d.Type == ConsCellType || d.Type == AlistType || d.Type == AlistCellType {
+	if d.Type == ConsCellType {
 		cell := (*ConsCell)(d.Value)
-
-		if cell == nil || (cell.Car == nil && cell.Cdr == nil) {
-			return true
-		}
+		return cell == nil || (cell.Car == nil && cell.Cdr == nil)
 	}
 
 	return false
@@ -146,20 +151,66 @@ func NotNilP(d *Data) bool {
 	return !NilP(d)
 }
 
-func PairP(d *Data) bool {
-	return d == nil || TypeOf(d) == ConsCellType
+func AtomP(d *Data) bool {
+	return (d == nil) || (d.Type&AtomType) != 0
 }
 
-func ListP(d *Data) bool {
-	return PairP(d) || AlistP(d)
+func PairP(d *Data) bool {
+	return NotNilP(d) && TypeOf(d) == ConsCellType
 }
 
 func DottedPairP(d *Data) bool {
-	return d == nil || TypeOf(d) == AlistCellType
+	return PairP(d) && !PairP(Cdr(d))
 }
 
-func AlistP(d *Data) bool {
-	return d == nil || TypeOf(d) == AlistType
+func ListP(d *Data) bool {
+	return NilP(d) || (TypeOf(d) == ConsCellType)
+}
+
+func hasVisited(cell *Data, visitedCells []*Data) bool {
+	for _, c := range visitedCells {
+		if c == cell {
+			return true
+		}
+	}
+	return false
+}
+
+func AnalyzeList(d *Data) int {
+	if NilP(d) {
+		return ProperList
+	}
+
+	if !PairP(d) {
+		return NotAList
+	}
+
+	visitedCells := make([]*Data, 0, 5)
+	var cell *Data
+	for cell = d; NotNilP(cell) && PairP(cell); cell = Cdr(cell) {
+		if hasVisited(cell, visitedCells) {
+			return ListWithLoop
+		}
+		visitedCells = append(visitedCells, cell)
+	}
+
+	if NilP(cell) {
+		return ProperList
+	} else {
+		return DottedList
+	}
+}
+
+func ProperListP(d *Data) bool {
+	return AnalyzeList(d) == ProperList
+}
+
+func DottedListP(d *Data) bool {
+	return AnalyzeList(d) == DottedList
+}
+
+func ListWithLoopP(d *Data) bool {
+	return AnalyzeList(d) == ListWithLoop
 }
 
 func BooleanP(d *Data) bool {
@@ -178,6 +229,10 @@ func StringP(d *Data) bool {
 	return d != nil && TypeOf(d) == StringType
 }
 
+func CharacterP(d *Data) bool {
+	return d != nil && TypeOf(d) == CharacterType
+}
+
 func IntegerP(d *Data) bool {
 	return d != nil && TypeOf(d) == IntegerType
 }
@@ -192,6 +247,14 @@ func NumberP(d *Data) bool {
 
 func ObjectP(d *Data) bool {
 	return d != nil && TypeOf(d) == BoxedObjectType
+}
+
+func BytearrayP(d *Data) bool {
+	return d != nil && TypeOf(d) == BoxedObjectType && ObjectType(d) == "[]byte"
+}
+
+func ChannelP(d *Data) bool {
+	return d != nil && TypeOf(d) == BoxedObjectType && ObjectType(d) == "Channel"
 }
 
 func FunctionOrPrimitiveP(d *Data) bool {
@@ -222,9 +285,12 @@ func PortP(d *Data) bool {
 	return d != nil && TypeOf(d) == PortType
 }
 
+func VectorP(d *Data) bool {
+	return d != nil && TypeOf(d) == VectorType
+}
+
 func EmptyCons() *Data {
-	cell := ConsCell{Car: nil, Cdr: nil}
-	return &Data{Type: ConsCellType, Value: unsafe.Pointer(&cell)}
+	return &Data{Type: ConsCellType, Value: unsafe.Pointer(&ConsCell{Car: nil, Cdr: nil})}
 }
 
 func Cons(car *Data, cdr *Data) *Data {
@@ -307,29 +373,8 @@ func RemoveFromListBang(l *Data, item *Data) (result *Data) {
 }
 
 func Acons(car *Data, cdr *Data, alist *Data) *Data {
-	pair, _ := Assoc(car, alist)
-	if NilP(pair) {
-		p := ConsCell{Car: car, Cdr: cdr}
-		cell := Data{Type: AlistCellType, Value: unsafe.Pointer(&p)}
-		conscell := ConsCell{Car: &cell, Cdr: alist}
-		return &Data{Type: AlistType, Value: unsafe.Pointer(&conscell)}
-	} else {
-		((*ConsCell)(pair.Value)).Cdr = cdr
-		return alist
-	}
-}
-
-func Alist(d *Data) *Data {
-	if NilP(d) {
-		return nil
-	}
-
-	if PairP(d) {
-		headPair := Car(d)
-		return Acons(Car(headPair), Cdr(headPair), Alist(Cdr(d)))
-	}
-
-	return d
+	cell := Cons(car, cdr)
+	return Cons(cell, alist)
 }
 
 func InternalMakeList(c ...*Data) *Data {
@@ -348,7 +393,7 @@ func IntegerWithValue(n int64) *Data {
 	return &Data{Type: IntegerType, Value: unsafe.Pointer(&n)}
 }
 
-func FloatWithValue(n float32) *Data {
+func FloatWithValue(n float64) *Data {
 	return &Data{Type: FloatType, Value: unsafe.Pointer(&n)}
 }
 
@@ -362,6 +407,10 @@ func BooleanWithValue(b bool) *Data {
 
 func StringWithValue(s string) *Data {
 	return &Data{Type: StringType, Value: unsafe.Pointer(&s)}
+}
+
+func CharacterWithValue(c string) *Data {
+	return &Data{Type: CharacterType, Value: unsafe.Pointer(&c)}
 }
 
 func SetStringValue(d *Data, s string) *Data {
@@ -385,8 +434,8 @@ func NakedSymbolFrom(d *Data) *Data {
 	return NakedSymbolWithName(StringValue(d))
 }
 
-func FunctionWithNameParamsBodyAndParent(name string, params *Data, body *Data, parentEnv *SymbolTableFrame) *Data {
-	return &Data{Type: FunctionType, Value: unsafe.Pointer(MakeFunction(name, params, body, parentEnv))}
+func FunctionWithNameParamsDocBodyAndParent(name string, params *Data, doc string, body *Data, parentEnv *SymbolTableFrame) *Data {
+	return &Data{Type: FunctionType, Value: unsafe.Pointer(MakeFunction(name, params, doc, body, parentEnv))}
 }
 
 func MacroWithNameParamsBodyAndParent(name string, params *Data, body *Data, parentEnv *SymbolTableFrame) *Data {
@@ -410,12 +459,20 @@ func PortWithValue(e *os.File) *Data {
 	return &Data{Type: PortType, Value: unsafe.Pointer(e)}
 }
 
+func VectorWithValues(c ...*Data) *Data {
+	return ArrayToVector(c)
+}
+
+func VectorWithValue(c []*Data) *Data {
+	return &Data{Type: VectorType, Value: unsafe.Pointer(&c)}
+}
+
 func ConsValue(d *Data) *ConsCell {
 	if d == nil {
 		return nil
 	}
 
-	if PairP(d) || AlistP(d) || DottedPairP(d) {
+	if TypeOf(d) == ConsCellType {
 		return (*ConsCell)(d.Value)
 	}
 
@@ -428,7 +485,7 @@ func Car(d *Data) *Data {
 		return nil
 	}
 
-	if d.Type == ConsCellType || d.Type == AlistType || d.Type == AlistCellType {
+	if d.Type == ConsCellType {
 		cell := (*ConsCell)(d.Value)
 
 		if cell != nil {
@@ -445,7 +502,7 @@ func Cdr(d *Data) *Data {
 		return nil
 	}
 
-	if d.Type == ConsCellType || d.Type == AlistType || d.Type == AlistCellType {
+	if d.Type == ConsCellType {
 		cell := (*ConsCell)(d.Value)
 
 		if cell != nil {
@@ -454,6 +511,13 @@ func Cdr(d *Data) *Data {
 	}
 
 	return nil
+}
+
+func LastPair(l *Data) *Data {
+	var c *Data
+	for c = l; PairP(Cdr(c)); c = Cdr(c) {
+	}
+	return c
 }
 
 func IntegerValue(d *Data) int64 {
@@ -466,23 +530,23 @@ func IntegerValue(d *Data) int64 {
 	}
 
 	if FloatP(d) {
-		return int64(*((*float32)(d.Value)))
+		return int64(*((*float64)(d.Value)))
 	}
 
 	return 0
 }
 
-func FloatValue(d *Data) float32 {
+func FloatValue(d *Data) float64 {
 	if d == nil {
 		return 0
 	}
 
 	if FloatP(d) {
-		return *((*float32)(d.Value))
+		return *((*float64)(d.Value))
 	}
 
 	if IntegerP(d) {
-		return float32(*((*int64)(d.Value)))
+		return float64(*((*int64)(d.Value)))
 	}
 
 	return 0
@@ -493,16 +557,28 @@ func StringValue(d *Data) string {
 		return ""
 	}
 
-	if StringP(d) || SymbolP(d) {
+	if StringP(d) || SymbolP(d) || CharacterP(d) {
 		return *((*string)(d.Value))
 	}
 
 	return ""
 }
 
+func CharacterValue(d *Data) string {
+	if NilP(d) {
+		return " "
+	}
+
+	if CharacterP(d) {
+		return *((*string)(d.Value))
+	}
+
+	return " "
+}
+
 func BooleanValue(d *Data) bool {
 	if NilP(d) {
-		return false
+		return true
 	}
 
 	if BooleanP(d) {
@@ -620,34 +696,48 @@ func PortValue(d *Data) *os.File {
 	return nil
 }
 
-// Function has heavy traffic, try to keep it fast, at least for the list/bytearray cases
+func VectorValue(d *Data) []*Data {
+	if d == nil {
+		return nil
+	}
+
+	if VectorP(d) {
+		vptr := (*([]*Data))(d.Value)
+		return *vptr
+	}
+
+	return nil
+}
+
 func Length(d *Data) int {
 	if d == nil {
 		return 0
-	}
-
-	if d.Type == ConsCellType || d.Type == AlistType {
+	} else 	if d.Type == ConsCellType {
 		l := 0
 		for c := d; NotNilP(c); c = Cdr(c) {
 			l += 1
 		}
 		return l
-	}
-
-	if d.Type == BoxedObjectType && ((*BoxedObject)(d.Value)).ObjType == "[]byte" {
-		dBytes := *(*[]byte)(((*BoxedObject)(d.Value)).Obj)
-		return len(dBytes)
-	}
-
-	if FrameP(d) {
+	} else if d.Type == VectorType {
+		return len(VectorValue(d))
+	} else if d.Type == FrameType {
 		frame := FrameValue(d)
 		frame.Mutex.RLock()
 		length := len(frame.Data)
 		frame.Mutex.RUnlock()
 		return length
+	} else if d.Type == BoxedObjectType && ((*BoxedObject)(d.Value)).ObjType == "[]byte" {
+		dBytes := *(*[]byte)(((*BoxedObject)(d.Value)).Obj)
+		return len(dBytes)
+	} else if ProperListP(d) {
+		l := 0
+		for cell := d; PairP(cell); cell = Cdr(cell) {
+			l = l + 1
+		}
+		return l
+	} else {
+		return 0
 	}
-
-	return 0
 }
 
 func Reverse(d *Data) (result *Data) {
@@ -655,7 +745,7 @@ func Reverse(d *Data) (result *Data) {
 		return nil
 	}
 
-	if !ListP(d) {
+	if !ProperListP(d) {
 		return d
 	}
 
@@ -672,13 +762,13 @@ func Flatten(d *Data) (result *Data, err error) {
 		return nil, nil
 	}
 
-	if !ListP(d) {
+	if !ProperListP(d) {
 		return d, nil
 	}
 
 	var l []*Data = make([]*Data, 0, 10)
 	for c := d; NotNilP(c); c = Cdr(c) {
-		if ListP(Car(c)) {
+		if ProperListP(Car(c)) {
 			for i := Car(c); i != nil; i = Cdr(i) {
 				l = append(l, Car(i))
 			}
@@ -695,14 +785,14 @@ func RecursiveFlatten(d *Data) (result *Data, err error) {
 		return nil, nil
 	}
 
-	if !ListP(d) {
+	if !ProperListP(d) {
 		return d, nil
 	}
 
 	var l []*Data = make([]*Data, 0, 10)
 	var elem *Data
 	for c := d; NotNilP(c); c = Cdr(c) {
-		if ListP(Car(c)) {
+		if ProperListP(Car(c)) {
 			elem, err = RecursiveFlatten(Car(c))
 			if err != nil {
 				return
@@ -738,34 +828,67 @@ func QuoteAll(d *Data) (result *Data) {
 	return ArrayToList(l)
 }
 
-func Assoc(key *Data, alist *Data) (result *Data, err error) {
+func doAssoc(comparator func(d *Data, o *Data) bool, key *Data, alist *Data) (result *Data, err error) {
 	for c := alist; NotNilP(c); c = Cdr(c) {
 		pair := Car(c)
 		if !DottedPairP(pair) && !PairP(pair) {
 			err = errors.New("An alist MUST be made of pairs.")
 			return
 		}
-		if IsEqual(Car(pair), key) {
+		if comparator(Car(pair), key) {
 			result = pair
 			return
 		}
 	}
+	result = LispFalse
 	return
 }
 
-func Dissoc(key *Data, alist *Data) (result *Data, err error) {
-	var newList *Data = nil
+func Assq(key *Data, alist *Data) (result *Data, err error) {
+	return doAssoc(IsEq, key, alist)
+}
+
+func Assv(key *Data, alist *Data) (result *Data, err error) {
+	return doAssoc(IsEqv, key, alist)
+}
+
+func Assoc(key *Data, alist *Data) (result *Data, err error) {
+	return doAssoc(IsEqual, key, alist)
+}
+
+func doDissoc(comparator func(d *Data, o *Data) bool, key *Data, alist *Data) (result *Data, err error) {
+	didRemoval := false
+	newList := make([]*Data, 0, 5)
 	for c := alist; NotNilP(c); c = Cdr(c) {
 		pair := Car(c)
-		if !DottedPairP(pair) && !PairP(pair) {
+		if !PairP(pair) {
 			err = errors.New("An alist MUST be made of pairs.")
 			return
 		}
-		if !IsEqual(Car(pair), key) {
-			newList = Acons(Car(pair), Cdr(pair), newList)
+		if comparator(Car(pair), key) {
+			didRemoval = true
+		} else {
+			newList = append(newList, pair)
 		}
 	}
-	return newList, nil
+	if didRemoval {
+		result = ArrayToList(newList)
+	} else {
+		result = alist
+	}
+	return
+}
+
+func Dissq(key *Data, alist *Data) (result *Data, err error) {
+	return doDissoc(IsEq, key, alist)
+}
+
+func Dissv(key *Data, alist *Data) (result *Data, err error) {
+	return doDissoc(IsEqv, key, alist)
+}
+
+func Dissoc(key *Data, alist *Data) (result *Data, err error) {
+	return doDissoc(IsEqual, key, alist)
 }
 
 func Copy(d *Data) *Data {
@@ -774,14 +897,6 @@ func Copy(d *Data) *Data {
 	}
 
 	switch d.Type {
-	case AlistType:
-		{
-			alist := Acons(Copy(Caar(d)), Copy(Cdar(d)), nil)
-			for c := Cdr(d); NotNilP(c); c = Cdr(c) {
-				alist = Acons(Copy(Caar(c)), Copy(Cdar(c)), alist)
-			}
-			return alist
-		}
 	case ConsCellType:
 		{
 			if NilP(d) {
@@ -802,12 +917,19 @@ func Copy(d *Data) *Data {
 			frame.Mutex.RUnlock()
 			return FrameWithValue(&m)
 		}
+	case VectorType:
+		v := VectorValue(d)
+		newV := make([]*Data, 0, len(v))
+		for _, e := range v {
+			newV = append(newV, e)
+		}
+		return VectorWithValue(newV)
 	}
 
 	return d
 }
 
-func IsEqual(d *Data, o *Data) bool {
+func IsEqv(d *Data, o *Data) bool {
 	if d == o && !FloatP(d) {
 		return true
 	}
@@ -816,44 +938,107 @@ func IsEqual(d *Data, o *Data) bool {
 		return false
 	}
 
-	if AlistP(d) {
-		if !AlistP(o) && !ListP(o) {
-			return false
-		}
-	} else if DottedPairP(d) {
-		if !PairP(o) && !DottedPairP(o) {
-			return false
-		}
-	} else if TypeOf(o) != TypeOf(d) {
-		return false
-	}
-
-	if AlistP(d) {
-		if Length(d) != Length(o) {
-			return false
-		}
-		for c := d; NotNilP(c); c = Cdr(c) {
-			otherPair, err := Assoc(Caar(c), o)
-			if err != nil || NilP(otherPair) || !IsEqual(Cdar(c), Cdr(otherPair)) {
-				return false
-			}
-		}
+	if NilP(d) && NilP(o) {
 		return true
 	}
 
-	if DottedPairP(d) {
-		return IsEqual(Car(d), Car(o)) && IsEqual(Cdr(d), Cdr(o))
+	if TypeOf(d) != TypeOf(o) {
+		return false
 	}
 
-	if ListP(d) {
-		if Length(d) != Length(o) {
+	switch TypeOf(d) {
+	case IntegerType:
+		return IntegerValue(d) == IntegerValue(o)
+	case FloatType:
+		return FloatValue(d) == FloatValue(o)
+	case BooleanType:
+		return BooleanValue(d) == BooleanValue(o)
+	case BoxedObjectType:
+		return (ObjectType(d) == ObjectType(o)) && (ObjectValue(d) == ObjectValue(o))
+	}
+
+	return d.Value == o.Value
+}
+
+func IsEq(d *Data, o *Data) bool {
+	if d == o {
+		return true
+	}
+
+	if d == nil || o == nil {
+		return false
+	}
+
+	if NilP(d) && NilP(o) {
+		return true
+	}
+
+	if TypeOf(d) != TypeOf(o) {
+		return false
+	}
+
+	switch TypeOf(d) {
+	case IntegerType:
+		return IntegerValue(d) == IntegerValue(o)
+	case FloatType:
+		return FloatValue(d) == FloatValue(o)
+	case BooleanType:
+		return BooleanValue(d) == BooleanValue(o)
+	case BoxedObjectType:
+		return (ObjectType(d) == ObjectType(o)) && (ObjectValue(d) == ObjectValue(o))
+	case VectorType:
+		v1 := VectorValue(d)
+		v2 := VectorValue(o)
+
+		if len(v1) != len(v2) {
 			return false
 		}
-		for a1, a2 := d, o; NotNilP(a1); a1, a2 = Cdr(a1), Cdr(a2) {
-			if !IsEqual(Car(a1), Car(a2)) {
+
+		for i := 0; i < len(v1); i++ {
+			if !IsEq(v1[i], v2[i]) {
 				return false
 			}
 		}
+
+		return true
+	case StringType, CharacterType:
+		return StringValue(d) == StringValue(o)
+	}
+
+	return d.Value == o.Value
+}
+
+func IsEqual(d *Data, o *Data) bool {
+	if d == o {
+		return true
+	}
+
+	if NilP(d) && NilP(o) {
+		return true
+	}
+
+	if d == nil || o == nil {
+		return false
+	}
+
+	if TypeOf(o) != TypeOf(d) {
+		return false
+	}
+
+	if VectorP(d) {
+		v1 := VectorValue(d)
+		v2 := VectorValue(o)
+
+		if len(v1) != len(v2) {
+			return false
+		}
+
+		for i := 0; i < len(v1); i++ {
+			if !IsEqual(v1[i], v2[i]) {
+				return false
+			}
+		}
+
 		return true
 	}
 
@@ -886,33 +1071,61 @@ func IsEqual(d *Data, o *Data) bool {
 
 		if len(dBytes) != len(oBytes) {
 			return false
-		} else {
-			for i := 0; i < len(dBytes); i++ {
-				if dBytes[i] != oBytes[i] {
-					return false
-				}
+		}
+
+		for i := 0; i < len(dBytes); i++ {
+			if dBytes[i] != oBytes[i] {
+				return false
 			}
 		}
+
 		return true
 	}
 
-	switch TypeOf(d) {
-	case IntegerType:
+	t := TypeOf(d)
+
+	if t == IntegerType {
 		return IntegerValue(d) == IntegerValue(o)
-	case FloatType:
+	} else if t == FloatType {
 		return FloatValue(d) == FloatValue(o)
-	case BooleanType:
+	} else if t == BooleanType {
 		return BooleanValue(d) == BooleanValue(o)
-	case StringType, SymbolType: // check symbols not generated using intern (aka: gensym and gensym-naked)
+	} else if (t == StringType) || (t == CharacterType) {
 		return StringValue(d) == StringValue(o)
-	case FunctionType:
+	} else if t == FunctionType {
 		return FunctionValue(d) == FunctionValue(o)
-	case MacroType:
+	} else if t == MacroType {
 		return MacroValue(d) == MacroValue(o)
-	case PrimitiveType:
+	} else if t == PrimitiveType {
 		return PrimitiveValue(d) == PrimitiveValue(o)
-	case BoxedObjectType:
+	} else if t == BoxedObjectType {
 		return (ObjectType(d) == ObjectType(o)) && (ObjectValue(d) == ObjectValue(o))
+	}
+
+	if PairP(d) {
+		td := AnalyzeList(d)
+		to := AnalyzeList(o)
+
+		if td != to {
+			return false
+		}
+
+		if (td == ListWithLoop) || (td == NotAList) {
+			return false
+		}
+
+		if Length(d) != Length(o) {
+			return false
+		}
+
+		var a1 *Data
+		var a2 *Data
+		for a1, a2 = d, o; PairP(a1) && NotNilP(a1) && PairP(a2) && NotNilP(a2); a1, a2 = Cdr(a1), Cdr(a2) {
+			if !IsEqual(Car(a1), Car(a2)) {
+				return false
+			}
+		}
+		return IsEqual(a1, a2)
 	}
 
 	return *d == *o
@@ -931,15 +1144,45 @@ func escapeQuotes(str string) string {
 
 func String(d *Data) string {
 	if d == nil {
-		return "()"
+		return "nil"
 	}
 
 	switch d.Type {
+	case IntegerType:
+		return fmt.Sprintf("%d", IntegerValue(d))
+	case BooleanType:
+		if BooleanValue(d) {
+			return "#t"
+		} else {
+			return "#f"
+		}
+	case StringType:
+		return fmt.Sprintf(`"%s"`, escapeQuotes(StringValue(d)))
+	case SymbolType:
+		return StringValue(d)
+	case FunctionType:
+		return fmt.Sprintf("<function: %s>", FunctionValue(d).Name)
+	case MacroType:
+		return fmt.Sprintf("<macro: %s>", MacroValue(d).Name)
+	case PrimitiveType:
+		return fmt.Sprintf("<prim: %s>", PrimitiveValue(d).Name)
+	case VectorType:
+		vals := VectorValue(d)
+		svals := make([]string, 0, len(vals))
+		for _, v := range vals {
+			svals = append(svals, String(v))
+		}
+		return fmt.Sprintf("#(%s)", strings.Join(svals, " "))
 	case ConsCellType:
 		{
 			if NilP(d) {
-				return "()"
+				return "nil"
 			}
+
+			if ListWithLoopP(d) {
+				return "<Unprintable looping pair structure>"
+			}
+
 			var c *Data = d
 
 			contents := make([]string, 0, Length(d))
@@ -950,7 +1193,7 @@ func String(d *Data) string {
 			if NilP(c) {
 				if SymbolP(Car(d)) && StringValue(Car(d)) == "quote" {
 					if len(contents) == 1 {
-						return fmt.Sprintf("'()")
+						return "'()"
 					} else {
 						return fmt.Sprintf("'%s", contents[1])
 					}
@@ -961,21 +1204,6 @@ func String(d *Data) string {
 				return fmt.Sprintf("(%s . %s)", strings.Join(contents, " "), String(c))
 			}
 		}
-	case AlistType:
-		{
-			if NilP(d) {
-				return "()"
-			}
-			contents := make([]string, 0, Length(d))
-			for c := d; NotNilP(c); c = Cdr(c) {
-				contents = append(contents, String(Car(c)))
-			}
-			return fmt.Sprintf("(%s)", strings.Join(contents, " "))
-		}
-	case AlistCellType:
-		return fmt.Sprintf("(%s . %s)", String(Car(d)), String(Cdr(d)))
-	case IntegerType:
-		return fmt.Sprintf("%d", IntegerValue(d))
 	case FloatType:
 		{
 			v := FloatValue(d)
@@ -995,22 +1223,27 @@ func String(d *Data) string {
 			}
 			return fmt.Sprintf("%s.0", raw)
 		}
-	case BooleanType:
-		if BooleanValue(d) {
-			return "#t"
-		} else {
-			return "#f"
+	case CharacterType:
+		switch CharacterValue(d) {
+		case "\x1B":
+			return `#\esc`
+		case "\x08":
+			return `#\backspace`
+		case "\n":
+			return `#\newline`
+		case "\x0C":
+			return `#\page`
+		case "\x0D":
+			return `#\return`
+		case "\x7F":
+			return `#\rubout`
+		case " ":
+			return `#\space`
+		case "\t":
+			return `#\tab`
+		default:
+			return fmt.Sprintf("#\\%s", CharacterValue(d))
 		}
-	case StringType:
-		return fmt.Sprintf(`"%s"`, escapeQuotes(StringValue(d)))
-	case SymbolType:
-		return StringValue(d)
-	case FunctionType:
-		return fmt.Sprintf("<function: %s>", FunctionValue(d).Name)
-	case MacroType:
-		return fmt.Sprintf("<macro: %s>", MacroValue(d).Name)
-	case PrimitiveType:
-		return fmt.Sprintf("<prim: %s>", PrimitiveValue(d).Name)
 	case BoxedObjectType:
 		if ObjectType(d) == "[]byte" {
 			bytes := (*[]byte)(ObjectValue(d))
@@ -1049,143 +1282,11 @@ func String(d *Data) string {
 }
 
 func PrintString(d *Data) string {
-	if StringP(d) {
+	if StringP(d) || CharacterP(d) {
 		return StringValue(d)
 	} else {
 		return String(d)
 	}
-}
-
-func postProcessShortcuts(d *Data) *Data {
-	symbolObj := Car(d)
-
-	if !SymbolP(symbolObj) {
-		return d
-	}
-
-	pseudoFunction := StringValue(symbolObj)
-
-	switch {
-	// channel shortcuts
-	case strings.HasPrefix(pseudoFunction, "<-"):
-		return AppendBangList(InternalMakeList(Intern("channel-read"), Intern(strings.TrimPrefix(pseudoFunction, "<-"))), Cdr(d))
-	case strings.HasSuffix(pseudoFunction, "<-"):
-		return AppendBangList(InternalMakeList(Intern("channel-write"), Intern(strings.TrimSuffix(pseudoFunction, "<-"))), Cdr(d))
-
-		// frame shortcuts
-	case strings.HasSuffix(pseudoFunction, ":"):
-		return AppendBangList(InternalMakeList(Intern("get-slot"), Cadr(d), Car(d)), Cddr(d))
-	case strings.HasSuffix(pseudoFunction, ":!"):
-		return AppendBangList(InternalMakeList(Intern("set-slot!"), Cadr(d), Intern(strings.TrimSuffix(pseudoFunction, "!")), Caddr(d)), Cdddr(d))
-	case strings.HasSuffix(pseudoFunction, ":?"):
-		return AppendBangList(InternalMakeList(Intern("has-slot?"), Cadr(d), Intern(strings.TrimSuffix(pseudoFunction, "?"))), Cddr(d))
-	case strings.HasSuffix(pseudoFunction, ":>"):
-		return AppendBangList(InternalMakeList(Intern("send"), Cadr(d), Intern(strings.TrimSuffix(pseudoFunction, ">"))), Cddr(d))
-	case strings.HasSuffix(pseudoFunction, ":^"):
-		return AppendBangList(InternalMakeList(Intern("send-super"), Intern(strings.TrimSuffix(pseudoFunction, "^"))), Cdr(d))
-	default:
-		return d
-	}
-}
-
-func printDashes(indent int) {
-	for i := indent; i > 0; i -= 1 {
-		fmt.Print("-")
-	}
-}
-
-func logEval(d *Data, env *SymbolTableFrame) {
-	if LispTrace && !DebugEvalInDebugRepl {
-		depth := env.Depth()
-		fmt.Printf("%3d: ", depth)
-		printDashes(depth)
-		fmt.Printf("> %s\n", String(d))
-		EvalDepth += 1
-	}
-}
-
-func logResult(result *Data, env *SymbolTableFrame) {
-	if LispTrace && !DebugEvalInDebugRepl {
-		depth := env.Depth()
-		fmt.Printf("%3d: <", depth)
-		printDashes(depth)
-		fmt.Printf(" %s\n", String(result))
-	}
-}
-
-func evalHelper(d *Data, env *SymbolTableFrame, needFunction bool) (result *Data, err error) {
-	if IsInteractive && !DebugEvalInDebugRepl {
-		env.CurrentCode.PushFront(fmt.Sprintf("Eval %s", String(d)))
-	}
-
-	logEval(d, env)
-
-	if DebugSingleStep {
-		DebugSingleStep = false
-		DebugRepl(env)
-	}
-
-	if DebugCurrentFrame != nil && env == DebugCurrentFrame.Previous {
-		DebugCurrentFrame = nil
-		DebugRepl(env)
-	}
-
-	if d != nil {
-		switch d.Type {
-		case ConsCellType:
-			{
-				d = postProcessShortcuts(d)
-
-				// catch empty cons cell
-				if NilP(d) {
-					return EmptyCons(), nil
-				}
-
-				var function *Data
-				function, err = evalHelper(Car(d), env, true)
-
-				if err != nil {
-					return
-				}
-				if NilP(function) {
-					err = errors.New(fmt.Sprintf("Nil when function or macro expected for %s.", String(Car(d))))
-					return
-				}
-
-				if !DebugSingleStep && TypeOf(function) == FunctionType && DebugOnEntry.Has(FunctionValue(function).Name) {
-					DebugRepl(env)
-				}
-
-				args := Cdr(d)
-
-				result, err = Apply(function, args, env)
-				if err != nil {
-					err = errors.New(fmt.Sprintf("\nEvaling %s. %s", String(d), err))
-					return
-				} else if DebugReturnValue != nil {
-					result = DebugReturnValue
-					DebugReturnValue = nil
-				}
-			}
-		case SymbolType:
-			if NakedP(d) {
-				result = d
-			} else {
-				result = env.ValueOfWithFunctionSlotCheck(d, needFunction)
-			}
-		default:
-			result = d
-		}
-	}
-	logResult(result, env)
-	if IsInteractive && !DebugEvalInDebugRepl && env.CurrentCode.Len() > 0 {
-		env.CurrentCode.Remove(env.CurrentCode.Front())
-	}
-	return result, nil
-}
-
-func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return evalHelper(d, env, false)
 }
 
 func formatApply(function *Data, args *Data) string {

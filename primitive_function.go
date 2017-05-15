@@ -17,28 +17,24 @@ type PrimitiveFunction struct {
 	Name         string
 	Special      bool
 	NumberOfArgs string
+	ArgTypes     []uint32
 	Body         func(d *Data, env *SymbolTableFrame) (*Data, error)
-	IsRestricted bool
+}
+
+func MakeTypedPrimitiveFunction(name string, argCount string, function func(*Data, *SymbolTableFrame) (*Data, error), types []uint32) {
+	f := &PrimitiveFunction{Name: name, Special: false, NumberOfArgs: argCount, ArgTypes: types, Body: function}
+	sym := Global.Intern(name)
+	Global.BindToProtected(sym, PrimitiveWithNameAndFunc(name, f))
 }
 
 func MakePrimitiveFunction(name string, argCount string, function func(*Data, *SymbolTableFrame) (*Data, error)) {
-	f := &PrimitiveFunction{Name: name, Special: false, NumberOfArgs: argCount, Body: function, IsRestricted: false}
-	Global.BindToProtected(Intern(name), PrimitiveWithNameAndFunc(name, f))
-}
-
-func MakeRestrictedPrimitiveFunction(name string, argCount string, function func(*Data, *SymbolTableFrame) (*Data, error)) {
-	f := &PrimitiveFunction{Name: name, Special: false, NumberOfArgs: argCount, Body: function, IsRestricted: true}
-	Global.BindToProtected(Intern(name), PrimitiveWithNameAndFunc(name, f))
+	MakeTypedPrimitiveFunction(name, argCount, function, make([]uint32, 0, 0))
 }
 
 func MakeSpecialForm(name string, argCount string, function func(*Data, *SymbolTableFrame) (*Data, error)) {
-	f := &PrimitiveFunction{Name: name, Special: true, NumberOfArgs: argCount, Body: function, IsRestricted: false}
-	Global.BindToProtected(Intern(name), PrimitiveWithNameAndFunc(name, f))
-}
-
-func MakeRestrictedSpecialForm(name string, argCount string, function func(*Data, *SymbolTableFrame) (*Data, error)) {
-	f := &PrimitiveFunction{Name: name, Special: true, NumberOfArgs: argCount, Body: function, IsRestricted: true}
-	Global.BindToProtected(Intern(name), PrimitiveWithNameAndFunc(name, f))
+	f := &PrimitiveFunction{Name: name, Special: true, NumberOfArgs: argCount, Body: function}
+	sym := Global.Intern(name)
+	Global.BindToProtected(sym, PrimitiveWithNameAndFunc(name, f))
 }
 
 func (self *PrimitiveFunction) String() string {
@@ -70,21 +66,55 @@ func (self *PrimitiveFunction) checkArgumentCount(argCount int) bool {
 	return false
 }
 
-func (self *PrimitiveFunction) Apply(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if self.IsRestricted && env.IsRestricted {
-		err = fmt.Errorf("The %s primitive is restricted from execution in this environment\n", self.Name)
-		return
+func nextTypeIndex(typeIndex int, limit int) int {
+	if typeIndex < limit {
+		return typeIndex + 1
+	} else {
+		return typeIndex
 	}
+}
 
+func (self *PrimitiveFunction) checkArgumentTypes(args []*Data) int {
+	if len(self.ArgTypes) > 0 {
+		numberOfArgs := len(args)
+		numberOfTypesLimit := len(self.ArgTypes) - 1
+		for argIndex, typeIndex := 0, 0; argIndex < numberOfArgs; argIndex, typeIndex = argIndex+1, nextTypeIndex(typeIndex, numberOfTypesLimit) {
+			if (args[argIndex] != nil) && ((TypeOf(args[argIndex]) & self.ArgTypes[typeIndex]) == 0) {
+				return argIndex
+			}
+		}
+	}
+	return -1
+}
+
+func (self *PrimitiveFunction) typesToString(types uint32) string {
+	typeNames := make([]string, 0, 8)
+	for mask := uint32(0x00000001); mask != 0x80000000; mask <<= 1 {
+		if (types & mask) != 0 {
+			typeNames = append(typeNames, TypeName(mask))
+		}
+	}
+	return strings.Join(typeNames, " or ")
+}
+
+func (self *PrimitiveFunction) argTypesFor(argIndex int) uint32 {
+	if argIndex >= len(self.ArgTypes) {
+		return self.ArgTypes[len(self.ArgTypes)-1]
+	} else {
+		return self.ArgTypes[argIndex]
+	}
+}
+
+func (self *PrimitiveFunction) internalApply(args *Data, env *SymbolTableFrame, shouldEval bool) (result *Data, err error) {
 	if !self.checkArgumentCount(Length(args)) {
-		err = fmt.Errorf("Wrong number of args to %s. Expected %s but got %d.\n", self.Name, self.NumberOfArgs, Length(args))
+		err = fmt.Errorf("Wrong number of args to %s, expected %s but got %d.", self.Name, self.NumberOfArgs, Length(args))
 		return
 	}
 
 	argArray := make([]*Data, 0)
 	var argValue *Data
 	for a := args; NotNilP(a); a = Cdr(a) {
-		if self.Special {
+		if self.Special || !shouldEval {
 			argValue = Car(a)
 		} else {
 			argValue, err = Eval(Car(a), env)
@@ -94,6 +124,12 @@ func (self *PrimitiveFunction) Apply(args *Data, env *SymbolTableFrame) (result 
 		}
 
 		argArray = append(argArray, argValue)
+	}
+
+	argCheckResult := self.checkArgumentTypes(argArray)
+	if argCheckResult != -1 {
+		err = fmt.Errorf("Wrong argument type for argument %d of %s; expected %s but got the %s: %s", argCheckResult, self.Name, self.typesToString(self.argTypesFor(argCheckResult)), TypeName(TypeOf(argArray[argCheckResult])), String(argArray[argCheckResult]))
+		return
 	}
 
 	localGuid := atomic.AddInt64(&ProfileGUID, 1) - 1
@@ -112,10 +148,10 @@ func (self *PrimitiveFunction) Apply(args *Data, env *SymbolTableFrame) (result 
 	return
 }
 
+func (self *PrimitiveFunction) Apply(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return self.internalApply(args, env, true)
+}
+
 func (self *PrimitiveFunction) ApplyWithoutEval(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if self.Special {
-		return self.Apply(args, env)
-	} else {
-		return self.Apply(QuoteAll(args), env)
-	}
+	return self.internalApply(args, env, false)
 }

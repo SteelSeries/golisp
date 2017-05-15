@@ -7,19 +7,21 @@
 
 package golisp
 
-import ()
+import (
+	"fmt"
+)
 
 func RegisterMutatorPrimitives() {
 	MakeSpecialForm("set!", "2", SetVarImpl)
-	MakeSpecialForm("set-car!", "2", SetCarImpl)
-	MakeSpecialForm("set-cdr!", "2", SetCdrImpl)
-	MakeSpecialForm("set-nth!", "3", SetNthImpl)
+	MakeTypedPrimitiveFunction("set-car!", "2", SetCarImpl, []uint32{ConsCellType, AnyType})
+	MakeTypedPrimitiveFunction("set-cdr!", "2", SetCdrImpl, []uint32{ConsCellType, AnyType})
+	MakeTypedPrimitiveFunction("set-nth!", "3", SetNthImpl, []uint32{IntegerType, ConsCellType, AnyType})
 }
 
 func SetVarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	symbol := Car(args)
 	if !SymbolP(symbol) {
-		err = ProcessError("set! requires a raw (unevaluated) symbol as it's first argument.", env)
+		err = ProcessError(fmt.Sprintf("set! requires a raw (unevaluated) symbol as it's first argument, but got %s.", String(symbol)), env)
 	}
 	value, err := Eval(Cadr(args), env)
 	if err != nil {
@@ -29,45 +31,22 @@ func SetVarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func SetCarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	pair, err := Eval(Car(args), env)
-	if !PairP(pair) {
-		err = ProcessError("set-car! requires a pair as it's first argument.", env)
-	}
-	value, err := Eval(Cadr(args), env)
-	if err != nil {
-		return
-	}
+	pair := First(args)
+	value := Second(args)
 	ConsValue(pair).Car = value
 	return value, nil
 }
 
 func SetCdrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	pair, err := Eval(Car(args), env)
-	if !PairP(pair) {
-		err = ProcessError("set-cdr! requires a pair as it's first argument.", env)
-	}
-	value, err := Eval(Cadr(args), env)
-	if err != nil {
-		return
-	}
+	pair := First(args)
+	value := Second(args)
 	ConsValue(pair).Cdr = value
-
 	return value, nil
 }
 
 func SetNthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l, err := Eval(First(args), env)
-	if !ListP(l) {
-		err = ProcessError("set-nth! requires a list as it's first argument.", env)
-	}
-	index, err := Eval(Second(args), env)
-	if err != nil {
-		return
-	}
-	value, err := Eval(Third(args), env)
-	if err != nil {
-		return
-	}
-
-	return SetNth(l, int(IntegerValue(index)), value), nil
+	index := First(args)
+	col := Second(args)
+	value := Third(args)
+	return SetNth(col, int(IntegerValue(index)), value), nil
 }

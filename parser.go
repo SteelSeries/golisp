@@ -48,7 +48,7 @@ func makeHexInteger(str string) (n *Data, err error) {
 }
 
 func makeFloat(str string) (n *Data, err error) {
-	var i float32
+	var i float64
 	_, err = fmt.Sscanf(str, "%f", &i)
 	if err != nil {
 		return
@@ -59,6 +59,11 @@ func makeFloat(str string) (n *Data, err error) {
 
 func makeString(str string) (s *Data, err error) {
 	s = StringWithValue(str)
+	return
+}
+
+func makeCharacter(str string) (c *Data, err error) {
+	c = CharacterWithValue(str)
 	return
 }
 
@@ -166,6 +171,36 @@ func parseBytearray(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 	return
 }
 
+func parseVector(s *Tokenizer) (sexpr *Data, eof bool, err error) {
+	tok, _ := s.NextToken()
+	if tok == RPAREN {
+		s.ConsumeToken()
+		values := make([]*Data, 0)
+		sexpr = VectorWithValue(values)
+		return
+	}
+
+	var element *Data
+	values := make([]*Data, 0, 10)
+	for tok != RPAREN {
+		element, eof, err = parseExpression(s)
+		if eof {
+			err = errors.New("Unexpected EOF (expected closing paren)")
+			return
+		}
+		if err != nil {
+			return
+		}
+		values = append(values, element)
+		tok, _ = s.NextToken()
+	}
+
+	s.ConsumeToken()
+	sexpr = VectorWithValue(values)
+
+	return
+}
+
 func parseFrame(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 	tok, _ := s.NextToken()
 	if tok == RBRACKET {
@@ -227,6 +262,10 @@ func parseExpression(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 			s.ConsumeToken()
 			sexpr, err = makeString(lit)
 			return
+		case CHARACTER:
+			s.ConsumeToken()
+			sexpr, err = makeCharacter(lit)
+			return
 		case LPAREN:
 			s.ConsumeToken()
 			sexpr, eof, err = parseConsCell(s)
@@ -238,6 +277,10 @@ func parseExpression(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 		case LBRACE:
 			s.ConsumeToken()
 			sexpr, eof, err = parseFrame(s)
+			return
+		case OPEN_VECTOR:
+			s.ConsumeToken()
+			sexpr, eof, err = parseVector(s)
 			return
 		case SYMBOL:
 			s.ConsumeToken()

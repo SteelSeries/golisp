@@ -7,21 +7,33 @@
 
 package golisp
 
+import (
+	"strings"
+)
+
 func RegisterTypePredicatePrimitives() {
+	MakePrimitiveFunction("type-of", "1", TypeofImpl)
 	MakePrimitiveFunction("atom?", "1", IsAtomImpl)
-	MakePrimitiveFunction("list?", "1", IsPairImpl)
+	MakePrimitiveFunction("list?", "1", IsListImpl)
 	MakePrimitiveFunction("pair?", "1", IsPairImpl)
-	MakePrimitiveFunction("alist?", "1", IsAlistImpl)
-	MakePrimitiveFunction("nil?", "1", NilPImpl)
-	MakePrimitiveFunction("null?", "1", NilPImpl)
-	MakePrimitiveFunction("notnil?", "1", NotNilPImpl)
-	MakePrimitiveFunction("notnull?", "1", NotNilPImpl)
+	MakePrimitiveFunction("dotted-pair?", "1", IsDottedPairImpl)
+	MakePrimitiveFunction("circular-list?", "1", IsCircularListImpl)
+	MakePrimitiveFunction("dotted-list?", "1", IsDottedListImpl)
+	MakePrimitiveFunction("proper-list?", "1", IsProperListImpl)
+	MakePrimitiveFunction("nil?", "1", IsNilImpl)
+	MakePrimitiveFunction("null?", "1", IsNilImpl)
+	MakePrimitiveFunction("notnil?", "1", IsNotNilImpl)
+	MakePrimitiveFunction("notnull?", "1", IsNotNilImpl)
 	MakePrimitiveFunction("symbol?", "1", IsSymbolImpl)
+	MakePrimitiveFunction("naked?", "1", IsNakedImpl)
 	MakePrimitiveFunction("string?", "1", IsStringImpl)
+	MakePrimitiveFunction("boolean?", "1", IsBooleanImpl)
 	MakePrimitiveFunction("integer?", "1", IsIntegerImpl)
 	MakePrimitiveFunction("number?", "1", IsNumberImpl)
 	MakePrimitiveFunction("float?", "1", IsFloatImpl)
 	MakePrimitiveFunction("function?", "1", IsFunctionImpl)
+	MakePrimitiveFunction("primitive?", "1", IsPrimitiveImpl)
+	MakePrimitiveFunction("special-form?", "1", IsSpecialFormImpl)
 	MakePrimitiveFunction("macro?", "1", IsMacroImpl)
 	MakePrimitiveFunction("frame?", "1", IsFrameImpl)
 	MakePrimitiveFunction("bytearray?", "1", IsByteArrayImpl)
@@ -29,24 +41,47 @@ func RegisterTypePredicatePrimitives() {
 	MakePrimitiveFunction("boolean?", "1", IsBooleanImpl)
 }
 
+func TypeofImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	val := Car(args)
+	result = Intern(strings.ToLower(TypeName(TypeOf(val))))
+	return
+}
+
 func IsAtomImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	val := Car(args)
-	return BooleanWithValue(NumberP(val) || SymbolP(val) || StringP(val) || BooleanP(val)), nil
+	return BooleanWithValue(NumberP(val) || StringP(val) || BooleanP(val) || CharacterP(val)), nil
+}
+
+func IsProperListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	result = BooleanWithValue(ProperListP(First(args)))
+	return
+}
+
+func IsListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return BooleanWithValue(ListP(Car(args))), nil
 }
 
 func IsPairImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return BooleanWithValue(PairP(Car(args))), nil
 }
 
-func IsAlistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return BooleanWithValue(AlistP(Car(args))), nil
+func IsDottedPairImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return BooleanWithValue(DottedPairP(Car(args))), nil
 }
 
-func NilPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func IsCircularListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return BooleanWithValue(ListWithLoopP(Car(args))), nil
+}
+
+func IsDottedListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return BooleanWithValue(DottedListP(Car(args))), nil
+}
+
+func IsNilImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return BooleanWithValue(NilP(Car(args))), nil
 }
 
-func NotNilPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func IsNotNilImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return BooleanWithValue(NotNilP(Car(args))), nil
 }
 
@@ -54,8 +89,16 @@ func IsSymbolImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return BooleanWithValue(SymbolP(Car(args))), nil
 }
 
+func IsNakedImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return BooleanWithValue(NakedP(Car(args))), nil
+}
+
 func IsStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return BooleanWithValue(StringP(Car(args))), nil
+}
+
+func IsBooleanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return BooleanWithValue(BooleanP(Car(args))), nil
 }
 
 func IsIntegerImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -72,6 +115,14 @@ func IsFloatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func IsFunctionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return BooleanWithValue(FunctionOrPrimitiveP(Car(args))), nil
+}
+
+func IsPrimitiveImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return BooleanWithValue(PrimitiveP(Car(args))), nil
+}
+
+func IsSpecialFormImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return BooleanWithValue(PrimitiveP(Car(args)) && PrimitiveValue(Car(args)).Special), nil
 }
 
 func IsMacroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

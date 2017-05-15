@@ -24,6 +24,7 @@ const (
 	BINARYNUMBER
 	FLOAT
 	STRING
+	CHARACTER
 	QUOTE
 	BACKQUOTE
 	COMMA
@@ -37,6 +38,7 @@ const (
 	PERIOD
 	TRUE
 	FALSE
+	OPEN_VECTOR
 	COMMENT
 	EOF
 )
@@ -192,6 +194,16 @@ func (self *Tokenizer) readNumber() (token int, lit string) {
 	return
 }
 
+func (self *Tokenizer) readNumberOrDecrement() (token int, lit string) {
+	token, lit = self.readNumber()
+	if lit == "-1" && self.CurrentCh == '+' {
+		self.Advance()
+		return SYMBOL, "-1+"
+	} else {
+		return
+	}
+}
+
 func (self *Tokenizer) readString() (token int, lit string) {
 	buffer := make([]rune, 0, 10)
 	self.Advance()
@@ -200,6 +212,10 @@ func (self *Tokenizer) readString() (token int, lit string) {
 			self.Advance()
 			if rune(self.CurrentCh) == 'n' {
 				buffer = append(buffer, '\n')
+			} else if rune(self.CurrentCh) == 't' {
+				buffer = append(buffer, '\t')
+			} else if rune(self.CurrentCh) == 'f' {
+				buffer = append(buffer, '\f')
 			} else {
 				buffer = append(buffer, rune(self.CurrentCh))
 			}
@@ -214,6 +230,49 @@ func (self *Tokenizer) readString() (token int, lit string) {
 	}
 	self.Advance()
 	return STRING, string(buffer)
+}
+
+func isCharCharacter(position int, ch rune) bool {
+	return !unicode.IsSpace(ch) && (position == 0 || !strings.ContainsRune(")]}", ch))
+}
+
+func (self *Tokenizer) ReadCharacter() (token int, lit string) {
+	buffer := make([]rune, 0, 10)
+	i := 0
+	for !self.isEof() && isCharCharacter(i, rune(self.CurrentCh)) {
+		buffer = append(buffer, rune(self.CurrentCh))
+		i = i + 1
+		self.Advance()
+	}
+
+	charValue := string(buffer)
+	var c string
+	switch strings.ToLower(charValue) {
+	case `altmode`, `esc`:
+		c = "\x1B"
+	case `backspace`:
+		c = "\x08"
+	case `linefeed`:
+		c = "\n"
+	case `newline`:
+		c = "\n"
+	case `page`:
+		c = "\x0C"
+	case `return`:
+		c = "\x0D"
+	case `rubout`:
+		c = "\x7F"
+	case `space`:
+		c = " "
+	case `tab`:
+		c = "\t"
+	default:
+		c = charValue[0:1]
+	}
+
+	charBuffer := make([]rune, 1)
+	charBuffer[0] = rune(c[0])
+	return CHARACTER, string(charBuffer)
 }
 
 func (self *Tokenizer) isEof() bool {
@@ -235,14 +294,14 @@ func (self *Tokenizer) readNextToken() (token int, lit string) {
 		}
 	}
 
-	if self.CurrentCh == '0' && self.NextCh == 'x' {
+	if self.CurrentCh == '1' && self.NextCh == '+' {
 		self.Advance()
 		self.Advance()
-		return self.readHexNumber()
+		return SYMBOL, "1+"
 	} else if unicode.IsNumber(self.CurrentCh) {
 		return self.readNumber()
 	} else if self.CurrentCh == '-' && unicode.IsNumber(self.NextCh) {
-		return self.readNumber()
+		return self.readNumberOrDecrement()
 	} else if self.CurrentCh == '"' {
 		return self.readString()
 	} else if self.CurrentCh == '\'' {
@@ -295,6 +354,12 @@ func (self *Tokenizer) readNextToken() (token int, lit string) {
 		} else if self.CurrentCh == 'b' {
 			self.Advance()
 			return self.readBinaryNumber()
+		} else if self.CurrentCh == '(' {
+			self.Advance()
+			return OPEN_VECTOR, "#("
+		} else if self.CurrentCh == '\\' {
+			self.Advance()
+			return self.ReadCharacter()
 		} else {
 			return ILLEGAL, fmt.Sprintf("#%c", self.NextCh)
 		}

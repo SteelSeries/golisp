@@ -15,6 +15,7 @@ import (
 type Channel chan *Data
 
 func RegisterChannelPrimitives() {
+	MakePrimitiveFunction("channel?", "1", ChannelPImpl)
 	MakePrimitiveFunction("make-channel", "0|1", MakeChannelImpl)
 	MakePrimitiveFunction("channel-write", "2", ChannelWriteImpl)
 	MakePrimitiveFunction("channel-read", "1", ChannelReadImpl)
@@ -23,13 +24,17 @@ func RegisterChannelPrimitives() {
 	MakePrimitiveFunction("close-channel", "1", CloseChannelImpl)
 }
 
+func ChannelPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return BooleanWithValue(ChannelP(First(args))), nil
+}
+
 func MakeChannelImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var c Channel
 
 	if Length(args) == 1 {
 		lengthObj := Car(args)
 		if !IntegerP(lengthObj) {
-			err = ProcessError(fmt.Sprintf("make-channel expects an Integer as its second argument but received %s.", TypeName(TypeOf(lengthObj))), env)
+			err = ProcessError(fmt.Sprintf("make-channel expects an integer size as its argument but received %s.", TypeName(TypeOf(lengthObj))), env)
 			return
 		}
 

@@ -11,107 +11,82 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"unicode"
 )
 
 func RegisterIOPrimitives() {
-	MakeRestrictedPrimitiveFunction("open-input-file", "1", OpenInputFileImpl)
-	MakeRestrictedPrimitiveFunction("open-output-file", "1|2", OpenOutputFileImpl)
-	MakeRestrictedPrimitiveFunction("close-port", "1", ClosePortImpl)
-	MakeRestrictedPrimitiveFunction("write-bytes", "2", WriteBytesImpl)
-
-	MakePrimitiveFunction("write-string", "1|2", WriteStringImpl)
-	MakePrimitiveFunction("newline", "0|1", NewlineImpl)
-	MakePrimitiveFunction("write", "1|2", WriteImpl)
-	MakePrimitiveFunction("read", "1", ReadImpl)
+	MakeTypedPrimitiveFunction("open-output-file", "1|2", OpenOutputFileImpl, []uint32{StringType, BooleanType})
+	MakeTypedPrimitiveFunction("open-input-file", "1", OpenInputFileImpl, []uint32{StringType})
+	MakeTypedPrimitiveFunction("close-port", "1", ClosePortImpl, []uint32{PortType})
+	MakeTypedPrimitiveFunction("write-bytes", "2", WriteBytesImpl, []uint32{BoxedObjectType, PortType})
+	MakeTypedPrimitiveFunction("write-string", "1|2", WriteStringImpl, []uint32{StringType, PortType})
+	MakeTypedPrimitiveFunction("write", "1|2", WriteImpl, []uint32{AnyType, PortType})
+	MakeTypedPrimitiveFunction("newline", "0|1", NewlineImpl, []uint32{PortType})
+	MakeTypedPrimitiveFunction("read-string", "0|1", ReadStringImpl, []uint32{PortType})
+	MakeTypedPrimitiveFunction("read", "1", ReadImpl, []uint32{PortType})
 	MakePrimitiveFunction("eof-object?", "1", EofObjectImpl)
+	MakeTypedPrimitiveFunction("list-directory", "1|2", ListDirectoryImpl, []uint32{StringType, StringType})
+	MakeTypedPrimitiveFunction("format", ">=2", FormatImpl, []uint32{BooleanType | PortType, StringType, AnyType})
 
-	MakePrimitiveFunction("list-directory", "1|2", ListDirectoryImpl)
-
-	MakePrimitiveFunction("format", ">=2", FormatImpl)
+	Global.BindTo(Intern("*standard-output*"), PortWithValue(os.Stdout))
+	Global.BindTo(Intern("*standard-input*"), PortWithValue(os.Stdin))
 }
 
 func OpenOutputFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	filename := Car(args)
-	if !StringP(filename) {
-		err = ProcessError("open-output-port expects its argument to be a string", env)
-		return
-	}
-
+	filename := First(args)
 	var openFlag = os.O_WRONLY | os.O_CREATE | os.O_TRUNC
-	if Length(args) == 2 && BooleanValue(Cadr(args)) {
+	if Length(args) == 2 && BooleanValue(Second(args)) {
 		openFlag = os.O_WRONLY | os.O_CREATE | os.O_APPEND
 	}
 
 	f, err := os.OpenFile(StringValue(filename), openFlag, 0666)
-	if err != nil {
-		return
+	if err == nil {
+		result = PortWithValue(f)
 	}
-	return PortWithValue(f), nil
+	return
 }
 
 func OpenInputFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	filename := Car(args)
-	if !StringP(filename) {
-		err = ProcessError("open-input-port expects its argument to be a string", env)
-		return
-	}
-
+	filename := First(args)
 	f, err := os.Open(StringValue(filename))
-	if err != nil {
-		return
+	if err == nil {
+		result = PortWithValue(f)
 	}
-	return PortWithValue(f), nil
+	return
 }
 
 func ClosePortImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	p := Car(args)
+	p := First(args)
 	if !PortP(p) {
 		err = ProcessError("close-port expects its argument be a port", env)
-		return
+	} else {
+		(*os.File)(PortValue(p)).Close()
 	}
-
-	(*os.File)(PortValue(p)).Close()
 	return
-
 }
 
 func WriteBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	bytes := Car(args)
-	if !ObjectP(bytes) || ObjectType(bytes) != "[]byte" {
+	bytes := First(args)
+	if ObjectType(bytes) != "[]byte" {
 		err = ProcessError("write expects its first argument to be a bytearray", env)
 		return
 	}
 
-	p := Cadr(args)
-	if !PortP(p) {
-		err = ProcessError("write expects its second argument be a port", env)
-		return
-	}
-
+	p := Second(args)
 	_, err = (*os.File)(PortValue(p)).Write(*(*[]byte)(ObjectValue(bytes)))
 	return
 }
 
 func WriteStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	str := Car(args)
-	if !StringP(str) {
-		err = ProcessError("write-string expects its first argument to be a string", env)
-		return
-	}
-
+	str := First(args)
 	var port *os.File
 	if Length(args) == 1 {
 		port = os.Stdout
 	} else {
-		p := Cadr(args)
-		if !PortP(p) {
-			err = ProcessError("write-string expects its second argument be a port", env)
-			return
-		}
-		port = PortValue(p)
+		port = PortValue(Second(args))
 	}
 
 	_, err = port.WriteString(StringValue(str))
@@ -124,7 +99,7 @@ func WriteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if Length(args) == 1 {
 		port = os.Stdout
 	} else {
-		p := Cadr(args)
+		p := Second(args)
 		if !PortP(p) {
 			err = ProcessError("write expects its second argument be a port", env)
 			return
@@ -132,7 +107,7 @@ func WriteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		port = PortValue(p)
 	}
 
-	_, err = port.WriteString(String(Car(args)))
+	_, err = port.WriteString(String(First(args)))
 	return
 }
 
@@ -142,15 +117,40 @@ func NewlineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if Length(args) == 0 {
 		port = os.Stdout
 	} else {
-		p := Car(args)
-		if !PortP(p) {
-			err = ProcessError("newline expects its argument be a port", env)
-			return
-		}
-		port = PortValue(p)
+		port = PortValue(First(args))
 	}
 
 	_, err = port.WriteString("\n")
+	return
+}
+
+func ReadStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	var port *os.File
+	if Length(args) == 0 {
+		port = os.Stdin
+	} else {
+		port = PortValue(First(args))
+	}
+
+	// if Length(args) == 2 {
+	// 	charset := Second(args)
+	// 	if !StringP(charset) {
+	// 		err = ProcessError(fmt.Sprintf("read-string expects its optional second argument to be a string, but got %s", String(charset)), env)
+	// 		return
+	// 	}
+	// }
+
+	info, err := port.Stat()
+	if err != nil {
+		return
+	}
+
+	readBuffer := make([]byte, info.Size())
+
+	n, err := port.Read(readBuffer)
+	if err == nil {
+		result = StringWithValue(string(readBuffer[:n]))
+	}
 	return
 }
 
@@ -160,12 +160,7 @@ func ReadImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if Length(args) == 0 {
 		port = os.Stdin
 	} else {
-		p := Car(args)
-		if !PortP(p) {
-			err = ProcessError("read expects its argument be a port", env)
-			return
-		}
-		port = PortValue(p)
+		port = PortValue(First(args))
 	}
 
 	result, err = ParseObjectFromFileInEnv(port, env)
@@ -173,14 +168,14 @@ func ReadImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func EofObjectImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return BooleanWithValue(IsEqual(Car(args), EofObject)), nil
+	return BooleanWithValue(IsEqual(First(args), EofObject)), nil
 }
 
 func ListDirectoryImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	dir := StringValue(Car(args))
+	dir := StringValue(First(args))
 	fpart := "*"
 	if Length(args) == 2 {
-		fpart = StringValue(Cadr(args))
+		fpart = StringValue(Second(args))
 	}
 	pattern := filepath.Join(dir, fpart)
 
@@ -197,22 +192,27 @@ func ListDirectoryImpl(args *Data, env *SymbolTableFrame) (result *Data, err err
 }
 
 func FormatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	destination := Car(args)
+	destination := First(args)
 	if !BooleanP(destination) && !PortP(destination) {
 		err = ProcessError(fmt.Sprintf("format expects its second argument be a boolean or port, but was %s", String(destination)), env)
 		return
 	}
 
-	controlStringObj := Cadr(args)
-	if !StringP(controlStringObj) {
-		err = ProcessError("format expects its second argument be a string", env)
-		return
-	}
+	controlStringObj := Second(args)
 	controlString := StringValue(controlStringObj)
 
 	arguments := Cddr(args)
 
-	numberOfSubstitutions := strings.Count(controlString, "~")
+	re := regexp.MustCompile("~[0-9]*@?[aAsS]")
+	varRe := regexp.MustCompile("~V@?[aAsS]")
+	numberOfFixedSubstitutions := len(re.FindAllString(controlString, -1))
+	numberOfVarSubstitutions := len(varRe.FindAllString(controlString, -1))
+	numberOfSubstitutions := (numberOfVarSubstitutions * 2) + numberOfFixedSubstitutions
+	if numberOfSubstitutions != Length(arguments) {
+		err = ProcessError(fmt.Sprintf("number of replacements (%d) in the control string (%s) and number of arguments (%d) must be equal", numberOfSubstitutions, controlString, Length(arguments)), env)
+		return
+	}
+
 	parts := make([]string, 0, numberOfSubstitutions*2+1)
 	start := 0
 	var i int
@@ -328,11 +328,6 @@ func FormatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	if start < len(controlString) {
 		parts = append(parts, controlString[start:i])
-	}
-
-	if i < len(controlString) || !NilP(arguments) {
-		err = ProcessError("number of replacements in the control string and number of arguments must be equal", env)
-		return
 	}
 
 	combinedString := strings.Join(parts, "")

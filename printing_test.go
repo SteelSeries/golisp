@@ -44,12 +44,12 @@ func (s *PrintingSuite) TestSymbol(c *C) {
 
 func (s *PrintingSuite) TestEmptyList(c *C) {
 	sexpr := EmptyCons()
-	c.Assert(String(sexpr), Equals, "()")
+	c.Assert(String(sexpr), Equals, "nil")
 }
 
 func (s *PrintingSuite) TestNil(c *C) {
 	var sexpr *Data = nil
-	c.Assert(String(sexpr), Equals, "()")
+	c.Assert(String(sexpr), Equals, "nil")
 }
 
 func (s *PrintingSuite) TestList(c *C) {
@@ -78,7 +78,7 @@ func (s *PrintingSuite) TestAlist(c *C) {
 }
 
 func (s *PrintingSuite) TestFunction(c *C) {
-	sexpr := FunctionWithNameParamsBodyAndParent("func", nil, nil, nil)
+	sexpr := FunctionWithNameParamsDocBodyAndParent("func", nil, "", nil, nil)
 	c.Assert(String(sexpr), Equals, "<function: func>")
 }
 

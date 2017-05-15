@@ -7,109 +7,109 @@
 
 package golisp
 
-import (
-	"fmt"
-)
-
 func RegisterRelativePrimitives() {
-	MakePrimitiveFunction("<", "2", LessThanImpl)
-	MakePrimitiveFunction(">", "2", GreaterThanImpl)
-	MakePrimitiveFunction("==", "2", EqualToImpl)
-	MakePrimitiveFunction("eqv?", "2", EqualToImpl)
-	MakePrimitiveFunction("eq?", "2", EqualToImpl)
-	MakePrimitiveFunction("equal?", "2", EqualToImpl)
+	MakeTypedPrimitiveFunction("<", ">=2", LessThanImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction(">", ">=2", GreaterThanImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("<=", ">=2", LessThanOrEqualToImpl, []uint32{IntegerType | FloatType})
+	MakeTypedPrimitiveFunction(">=", ">=2", GreaterThanOrEqualToImpl, []uint32{IntegerType | FloatType})
+	MakePrimitiveFunction("==", "2", EqualImpl)
+	MakePrimitiveFunction("=", "2", EqualImpl)
+	MakePrimitiveFunction("eqv?", "2", EqvImpl)
+	MakePrimitiveFunction("neqv?", "2", NotEqvImpl)
+	MakePrimitiveFunction("eq?", "2", EqImpl)
+	MakePrimitiveFunction("neq?", "2", NotEqImpl)
+	MakePrimitiveFunction("equal?", "2", EqualImpl)
+	MakePrimitiveFunction("nequal?", "2", NotEqualImpl)
 	MakePrimitiveFunction("!=", "2", NotEqualImpl)
-	MakePrimitiveFunction("neq?", "2", NotEqualImpl)
-	MakePrimitiveFunction("<=", "2", LessThanOrEqualToImpl)
-	MakePrimitiveFunction(">=", "2", GreaterThanOrEqualToImpl)
+	MakePrimitiveFunction("/=", "2", NotEqualImpl)
 	MakePrimitiveFunction("!", "1", BooleanNotImpl)
 	MakePrimitiveFunction("not", "1", BooleanNotImpl)
-	MakeSpecialForm("and", "*", BooleanAndImpl)
-	MakeSpecialForm("or", "*", BooleanOrImpl)
+	//	MakeSpecialForm("and", "*", BooleanAndImpl)
+	//	MakeSpecialForm("or", "*", BooleanOrImpl)
 }
 
 func LessThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	arg1 := Car(args)
-	if !NumberP(arg1) {
-		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(arg1)), env)
-		return
+	lhs := First(args)
+	var holds = true
+	for cell := Cdr(args); NotNilP(cell); cell = Cdr(cell) {
+		rhs := Car(cell)
+		holds = FloatValue(lhs) < FloatValue(rhs)
+		if !holds {
+			return LispFalse, nil
+		}
+		lhs = rhs
 	}
-
-	arg2 := Cadr(args)
-	if !NumberP(arg2) {
-		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(arg2)), env)
-		return
-	}
-
-	val := FloatValue(arg1) < FloatValue(arg2)
-	return BooleanWithValue(val), nil
+	return LispTrue, nil
 }
 
 func GreaterThanImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	arg1 := Car(args)
-	if !NumberP(arg1) {
-		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(arg1)), env)
-		return
+	lhs := First(args)
+	var holds = true
+	for cell := Cdr(args); NotNilP(cell); cell = Cdr(cell) {
+		rhs := Car(cell)
+		holds = FloatValue(lhs) > FloatValue(rhs)
+		if !holds {
+			return LispFalse, nil
+		}
+		lhs = rhs
 	}
-
-	arg2 := Cadr(args)
-	if !NumberP(arg2) {
-		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(arg2)), env)
-		return
-	}
-
-	val := FloatValue(arg1) > FloatValue(arg2)
-	return BooleanWithValue(val), nil
-}
-
-func EqualToImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	arg1 := Car(args)
-	arg2 := Cadr(args)
-	return BooleanWithValue(IsEqual(arg1, arg2)), nil
-}
-
-func NotEqualImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	arg1 := Car(args)
-	arg2 := Cadr(args)
-	return BooleanWithValue(!IsEqual(arg1, arg2)), nil
+	return LispTrue, nil
 }
 
 func LessThanOrEqualToImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	arg1 := Car(args)
-	if !NumberP(arg1) {
-		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(arg1)), env)
-		return
+	lhs := Car(args)
+	var holds = true
+	for cell := Cdr(args); NotNilP(cell); cell = Cdr(cell) {
+		rhs := Car(cell)
+		holds = FloatValue(lhs) <= FloatValue(rhs)
+		if !holds {
+			return LispFalse, nil
+		}
+		lhs = rhs
 	}
-
-	arg2 := Cadr(args)
-	if !NumberP(arg2) {
-		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(arg2)), env)
-		return
-	}
-
-	val := FloatValue(arg1) <= FloatValue(arg2)
-	return BooleanWithValue(val), nil
+	return LispTrue, nil
 }
 
 func GreaterThanOrEqualToImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	arg1 := Car(args)
-	if !NumberP(arg1) {
-		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(arg1)), env)
-		return
+	lhs := Car(args)
+	var holds = true
+	for cell := Cdr(args); NotNilP(cell); cell = Cdr(cell) {
+		rhs := Car(cell)
+		holds = FloatValue(lhs) >= FloatValue(rhs)
+		if !holds {
+			return LispFalse, nil
+		}
+		lhs = rhs
 	}
+	return LispTrue, nil
+}
 
-	arg2 := Cadr(args)
-	if !NumberP(arg2) {
-		err = ProcessError(fmt.Sprintf("Number expected, received %s", String(arg2)), env)
-		return
-	}
+func EqvImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return BooleanWithValue(IsEqv(First(args), Second(args))), nil
+}
 
-	val := FloatValue(arg1) >= FloatValue(arg2)
-	return BooleanWithValue(val), nil
+func NotEqvImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return BooleanWithValue(!IsEqv(First(args), Second(args))), nil
+}
+
+func EqImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return BooleanWithValue(IsEq(First(args), Second(args))), nil
+}
+
+func NotEqImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return BooleanWithValue(!IsEq(First(args), Second(args))), nil
+}
+
+func EqualImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return BooleanWithValue(IsEqual(First(args), Second(args))), nil
+}
+
+func NotEqualImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return BooleanWithValue(!IsEqual(First(args), Second(args))), nil
 }
 
 func BooleanNotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return BooleanWithValue(!BooleanValue(Car(args))), nil
+	return BooleanWithValue(!BooleanValue(First(args))), nil
 }
 
 func BooleanAndImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

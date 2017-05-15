@@ -93,7 +93,7 @@ func (self *SymbolTableFrame) InternalDump(frameNumber int) {
 			b.Dump()
 		}
 	}
-	fmt.Printf("\n")
+	println("")
 	if self.Previous != nil {
 		self.Previous.InternalDump(frameNumber + 1)
 	}
@@ -114,11 +114,11 @@ func (self *SymbolTableFrame) DumpSingleFrame(frameNumber int) {
 				b.Dump()
 			}
 		}
-		fmt.Printf("\n")
+		println("")
 	} else if self.Previous != nil {
 		self.Previous.DumpSingleFrame(frameNumber - 1)
 	} else {
-		fmt.Printf("Invalid frame selected.\n")
+		println("Invalid frame selected.")
 	}
 }
 
@@ -143,8 +143,7 @@ func NewSymbolTableFrameBelow(p *SymbolTableFrame, name string) *SymbolTableFram
 	if p != nil {
 		f = p.Frame
 	}
-	restricted := p != nil && p.IsRestricted
-	env := &SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding), Frame: f, CurrentCode: list.New(), IsRestricted: restricted}
+	env := &SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding), Frame: f, CurrentCode: list.New()}
 	if p == nil || p == Global {
 		TopLevelEnvironments.Mutex.Lock()
 		defer TopLevelEnvironments.Mutex.Unlock()
@@ -158,8 +157,7 @@ func NewSymbolTableFrameBelowWithFrame(p *SymbolTableFrame, f *FrameMap, name st
 	if f == nil {
 		f = p.Frame
 	}
-	restricted := p != nil && p.IsRestricted
-	env := &SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding, 10), Frame: f, CurrentCode: list.New(), IsRestricted: restricted}
+	env := &SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding, 10), Frame: f, CurrentCode: list.New()}
 	if p == nil || p == Global {
 		TopLevelEnvironments.Mutex.Lock()
 		defer TopLevelEnvironments.Mutex.Unlock()

@@ -12,9 +12,9 @@ import (
 )
 
 func RegisterListSetPrimitives() {
-	MakePrimitiveFunction("union", "*", UnionImpl)
-	MakePrimitiveFunction("intersection", "*", IntersectionImpl)
-	MakePrimitiveFunction("complement", "*", ComplementImpl)
+	MakeTypedPrimitiveFunction("union", "*", UnionImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("intersection", "*", IntersectionImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("complement", "*", ComplementImpl, []uint32{ConsCellType})
 }
 
 func memp(i *Data, l *Data) bool {

@@ -41,7 +41,7 @@ func JsonToLispWithFrames(json interface{}) (result *Data) {
 		if math.Trunc(numValue) == numValue {
 			return IntegerWithValue(int64(numValue))
 		} else {
-			return FloatWithValue(float32(numValue))
+			return FloatWithValue(float64(numValue))
 		}
 	}
 
@@ -50,7 +50,7 @@ func JsonToLispWithFrames(json interface{}) (result *Data) {
 		if math.Mod(floatValue, 1) == 0 {
 			return IntegerWithValue(int64(floatValue))
 		} else {
-			return FloatWithValue(float32(floatValue))
+			return FloatWithValue(float64(floatValue))
 		}
 	}
 

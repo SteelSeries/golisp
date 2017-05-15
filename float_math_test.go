@@ -35,7 +35,7 @@ func (checker *closeChecker) Check(params []interface{}, names []string) (result
 			error = fmt.Sprint(v)
 		}
 	}()
-	return math.Abs(float64(params[0].(float32)-params[1].(float32))) < params[2].(float64), ""
+	return math.Abs(float64(params[0].(float64)-params[1].(float64))) < params[2].(float64), ""
 }
 
 type FloatBuiltinsSuite struct {
@@ -53,7 +53,7 @@ func (s *FloatBuiltinsSuite) TestFloatAdd(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(result, NotNil)
 	c.Assert(int(TypeOf(result)), Equals, FloatType)
-	c.Assert(FloatValue(result), Close, float32(3.5), 0.01)
+	c.Assert(FloatValue(result), Close, float64(3.5), 0.01)
 }
 
 func (s *FloatBuiltinsSuite) TestFloatSubtract(c *C) {
@@ -62,7 +62,7 @@ func (s *FloatBuiltinsSuite) TestFloatSubtract(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(result, NotNil)
 	c.Assert(int(TypeOf(result)), Equals, FloatType)
-	c.Assert(FloatValue(result), Close, float32(1.1), 0.01)
+	c.Assert(FloatValue(result), Close, float64(1.1), 0.01)
 }
 
 func (s *FloatBuiltinsSuite) TestFloatSubtractWithNegativeResult(c *C) {
@@ -71,7 +71,7 @@ func (s *FloatBuiltinsSuite) TestFloatSubtractWithNegativeResult(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(result, NotNil)
 	c.Assert(int(TypeOf(result)), Equals, FloatType)
-	c.Assert(FloatValue(result), Close, float32(-1.1), 0.01)
+	c.Assert(FloatValue(result), Close, float64(-1.1), 0.01)
 }
 
 func (s *FloatBuiltinsSuite) TestFloatMultiply(c *C) {
@@ -80,7 +80,7 @@ func (s *FloatBuiltinsSuite) TestFloatMultiply(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(result, NotNil)
 	c.Assert(int(TypeOf(result)), Equals, FloatType)
-	c.Assert(FloatValue(result), Close, float32(2.76), 0.01)
+	c.Assert(FloatValue(result), Close, float64(2.76), 0.01)
 }
 
 func (s *FloatBuiltinsSuite) TestFloatDivide(c *C) {
@@ -89,5 +89,5 @@ func (s *FloatBuiltinsSuite) TestFloatDivide(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(result, NotNil)
 	c.Assert(int(TypeOf(result)), Equals, FloatType)
-	c.Assert(FloatValue(result), Close, float32(1.9167), 0.01)
+	c.Assert(FloatValue(result), Close, float64(1.9167), 0.01)
 }

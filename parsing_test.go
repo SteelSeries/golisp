@@ -44,14 +44,6 @@ func (s *ParsingSuite) TestNegaitveInteger(c *C) {
 	c.Assert(IntegerValue(sexpr), Equals, int64(-5))
 }
 
-func (s *ParsingSuite) TestHexInteger(c *C) {
-	sexpr, err := Parse("0xa5")
-	c.Assert(err, IsNil)
-	c.Assert(sexpr, NotNil)
-	c.Assert(int(TypeOf(sexpr)), Equals, IntegerType)
-	c.Assert(IntegerValue(sexpr), Equals, int64(165))
-}
-
 func (s *ParsingSuite) TestProperHexInteger(c *C) {
 	sexpr, err := Parse("#xa5")
 	c.Assert(err, IsNil)
@@ -73,7 +65,7 @@ func (s *ParsingSuite) TestFloat(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(sexpr, NotNil)
 	c.Assert(int(TypeOf(sexpr)), Equals, FloatType)
-	c.Assert(FloatValue(sexpr), Equals, float32(12.345))
+	c.Assert(FloatValue(sexpr), Equals, float64(12.345))
 }
 
 func (s *ParsingSuite) TestNegativeFloat(c *C) {
@@ -81,11 +73,11 @@ func (s *ParsingSuite) TestNegativeFloat(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(sexpr, NotNil)
 	c.Assert(int(TypeOf(sexpr)), Equals, FloatType)
-	c.Assert(FloatValue(sexpr), Equals, float32(-12.345))
+	c.Assert(FloatValue(sexpr), Equals, float64(-12.345))
 }
 
 func (s *ParsingSuite) TestUppercaseHexInteger(c *C) {
-	sexpr, err := Parse("0xA5")
+	sexpr, err := Parse("#xA5")
 	c.Assert(err, IsNil)
 	c.Assert(sexpr, NotNil)
 	c.Assert(int(TypeOf(sexpr)), Equals, IntegerType)
@@ -93,7 +85,7 @@ func (s *ParsingSuite) TestUppercaseHexInteger(c *C) {
 }
 
 func (s *ParsingSuite) TestMixedCaseHexInteger(c *C) {
-	sexpr, err := Parse("0xAf")
+	sexpr, err := Parse("#xAf")
 	c.Assert(err, IsNil)
 	c.Assert(sexpr, NotNil)
 	c.Assert(int(TypeOf(sexpr)), Equals, IntegerType)
@@ -270,6 +262,17 @@ func (s *ParsingSuite) TestEmptyByteArray(c *C) {
 	c.Assert(ObjectType(sexpr), Equals, "[]byte")
 	bytes := (*[]byte)(ObjectValue(sexpr))
 	c.Assert(len(*bytes), Equals, 0)
+}
+
+func (s *ParsingSuite) TestVector(c *C) {
+	sexpr, err := Parse("#(1 2)")
+	c.Assert(err, IsNil)
+	c.Assert(sexpr, NotNil)
+	c.Assert(int(TypeOf(sexpr)), Equals, VectorType)
+	values := VectorValue(sexpr)
+	c.Assert(len(values), Equals, 2)
+	c.Assert(IntegerValue(values[0]), Equals, int64(1))
+	c.Assert(IntegerValue(values[1]), Equals, int64(2))
 }
 
 func (s *ParsingSuite) TestQuote(c *C) {

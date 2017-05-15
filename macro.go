@@ -53,6 +53,9 @@ func (self *Macro) makeLocalBindings(args *Data, argEnv *SymbolTableFrame, local
 		} else {
 			argValue = Car(a)
 		}
+		if SymbolP(p) {
+			accumulatingParam = p
+		}
 		if accumulatingParam != nil {
 			accumulatedArgs = append(accumulatedArgs, argValue)
 		} else {
@@ -63,9 +66,6 @@ func (self *Macro) makeLocalBindings(args *Data, argEnv *SymbolTableFrame, local
 		}
 		if accumulatingParam == nil {
 			p = Cdr(p)
-		}
-		if SymbolP(p) {
-			accumulatingParam = p
 		}
 	}
 	if accumulatingParam != nil {

@@ -7,97 +7,39 @@
 
 package golisp
 
-import (
-	"fmt"
-)
-
 func RegisterBinaryPrimitives() {
-	MakePrimitiveFunction("binary-and", "2", BinaryAndImpl)
-	MakePrimitiveFunction("binary-or", "2", BinaryOrImpl)
-	MakePrimitiveFunction("binary-not", "1", BinaryNotImpl)
-	MakePrimitiveFunction("left-shift", "2", LeftShiftImpl)
-	MakePrimitiveFunction("right-shift", "2", RightShiftImpl)
+	MakeTypedPrimitiveFunction("binary-and", "2", BinaryAndImpl, []uint32{IntegerType, IntegerType})
+	MakeTypedPrimitiveFunction("binary-or", "2", BinaryOrImpl, []uint32{IntegerType, IntegerType})
+	MakeTypedPrimitiveFunction("binary-not", "1", BinaryNotImpl, []uint32{IntegerType, IntegerType})
+	MakeTypedPrimitiveFunction("left-shift", "2", LeftShiftImpl, []uint32{IntegerType, IntegerType})
+	MakeTypedPrimitiveFunction("right-shift", "2", RightShiftImpl, []uint32{IntegerType, IntegerType})
 }
 
 func BinaryAndImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	arg1 := First(args)
-	if !IntegerP(arg1) {
-		err = ProcessError(fmt.Sprintf("Integer expected, received %s %s", TypeName(TypeOf(arg1)), String(arg1)), env)
-		return
-	}
-	b1 := uint64(IntegerValue(arg1))
-
-	arg2 := Second(args)
-	if !IntegerP(arg2) {
-		err = ProcessError(fmt.Sprintf("Integer expected, received %s %s", TypeName(TypeOf(arg2)), String(arg2)), env)
-		return
-	}
-	b2 := uint64(IntegerValue(arg2))
-
+	b1 := uint64(IntegerValue(First(args)))
+	b2 := uint64(IntegerValue(Second(args)))
 	return IntegerWithValue(int64(b1 & b2)), nil
 }
 
 func BinaryOrImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	arg1 := First(args)
-	if !IntegerP(arg1) {
-		err = ProcessError(fmt.Sprintf("Integer expected, received %s %s", TypeName(TypeOf(arg1)), String(arg1)), env)
-		return
-	}
-	b1 := uint64(IntegerValue(arg1))
-
-	arg2 := Second(args)
-	if !IntegerP(arg2) {
-		err = ProcessError(fmt.Sprintf("Integer expected, received %s %s", TypeName(TypeOf(arg2)), String(arg2)), env)
-		return
-	}
-	b2 := uint64(IntegerValue(arg2))
-
+	b1 := uint64(IntegerValue(First(args)))
+	b2 := uint64(IntegerValue(Second(args)))
 	return IntegerWithValue(int64(b1 | b2)), nil
 }
 
 func BinaryNotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	arg1 := First(args)
-	if !IntegerP(arg1) {
-		err = ProcessError(fmt.Sprintf("Integer expected, received %s %s", TypeName(TypeOf(arg1)), String(arg1)), env)
-		return
-	}
-	b1 := uint64(IntegerValue(arg1))
-
+	b1 := uint64(IntegerValue(First(args)))
 	return IntegerWithValue(int64(b1 ^ uint64(0xFFFFFFFF))), nil
 }
 
 func LeftShiftImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	arg1 := First(args)
-	if !IntegerP(arg1) {
-		err = ProcessError(fmt.Sprintf("Integer expected, received %s %s", TypeName(TypeOf(arg1)), String(arg1)), env)
-		return
-	}
-	b1 := uint64(IntegerValue(arg1))
-
-	arg2 := Second(args)
-	if !IntegerP(arg2) {
-		err = ProcessError(fmt.Sprintf("Integer expected, received %s %s", TypeName(TypeOf(arg2)), String(arg2)), env)
-		return
-	}
-	b2 := uint64(IntegerValue(arg2))
-
+	b1 := uint64(IntegerValue(First(args)))
+	b2 := uint64(IntegerValue(Second(args)))
 	return IntegerWithValue(int64(b1 << b2)), nil
 }
 
 func RightShiftImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	arg1 := First(args)
-	if !IntegerP(arg1) {
-		err = ProcessError(fmt.Sprintf("Integer expected, received %s %s", TypeName(TypeOf(arg1)), String(arg1)), env)
-		return
-	}
-	b1 := uint64(IntegerValue(arg1))
-
-	arg2 := Second(args)
-	if !IntegerP(arg2) {
-		err = ProcessError(fmt.Sprintf("Integer expected, received %s %s", TypeName(TypeOf(arg2)), String(arg2)), env)
-		return
-	}
-	b2 := uint64(IntegerValue(arg2))
-
+	b1 := uint64(IntegerValue(First(args)))
+	b2 := uint64(IntegerValue(Second(args)))
 	return IntegerWithValue(int64(b1 >> b2)), nil
 }
