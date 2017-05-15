@@ -8,15 +8,17 @@
 package golisp
 
 import (
-	"errors"
 	"fmt"
 	"strings"
-	"sync"
 	"unsafe"
 )
 
 func RegisterVMPrimitives() {
-	MakePrimitiveFunction("execute", "1", machineImpl)
+	MakeTypedPrimitiveFunction("execute", "1", machineImpl, []uint32{CompiledFunctionType})
+}
+
+func machineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return ExecuteBytecode(CompiledFunctionValue(First(args)), env)
 }
 
 const (
@@ -42,6 +44,7 @@ const (
 	ARGSDOT
 	FN
 	PRIM
+	FUNC
 	SET_CC
 	CC
 	CAR
@@ -95,6 +98,7 @@ var opcodeNames = [HALT + 1]string{
 	"ARGSDOT",
 	"FN",
 	"PRIM",
+	"FUNC",
 	"SET_CC",
 	"CC",
 	"CAR",
@@ -143,43 +147,45 @@ func newRuntimeStack() *RuntimeStack {
 	return &RuntimeStack{storage: make([]*Data, MAXSTACK), sp: 0}
 }
 
-func (self *RuntimeStack) Push(value *Data) (err error) {
+func (self *RuntimeStack) Push(value *Data) {
 	if self.sp >= MAXSTACK {
-		return errors.New("Stack overflow")
+		panic("Push: Stack overflow")
 	}
 	self.storage[self.sp] = value
 	self.sp++
-	return nil
 }
 
-func (self *RuntimeStack) Pop() (value *Data, err error) {
+func (self *RuntimeStack) Pop() *Data {
 	if self.sp == 0 {
-		return nil, errors.New("Stack underflow")
+		panic("Pop: Stack underflow")
 	}
 	self.sp--
-	return self.storage[self.sp], nil
+	return self.storage[self.sp]
 }
 
-func (self *RuntimeStack) Top() (value *Data, err error) {
+func (self *RuntimeStack) Top() *Data {
 	if self.sp == 0 {
-		return nil, errors.New("Stack empty")
+		panic("Top: Stack underflow")
 	}
-	return self.storage[self.sp-1], nil
+	return self.storage[self.sp-1]
+}
+
+func (self *RuntimeStack) Empty() bool {
+	return self.sp == 0
 }
 
 func (self *RuntimeStack) Dump() {
 	fmt.Printf("Stack: ")
 	if self.sp == 0 {
-		fmt.Printf("empty\n")
+		fmt.Printf("empty")
 	} else {
 		for i := 0; i < self.sp; i++ {
 			if i > 0 {
 				fmt.Printf("       ")
 			}
-			fmt.Printf("%s\n", String(self.storage[i]))
+			fmt.Printf("%s", String(self.storage[i]))
 		}
 	}
-
 }
 
 //------------------------------------------------------------------------------
@@ -208,45 +214,28 @@ func (self *LocalEnvFrame) Package() *Data {
 	for f := self; f != nil; f = f.Next {
 		frames = append(frames, ArrayToList(f.Values))
 	}
-	fmt.Printf("packaged env: %s\n", String(ArrayToList(frames)))
+	// fmt.Printf("packaged env: %s", String(ArrayToList(frames)))
 	return ArrayToList(frames)
 }
 
-func (self *LocalEnvFrame) Get(frameIndex int64, varIndex int64) (result *Data, err error) {
+func (self *LocalEnvFrame) Get(frameIndex int64, varIndex int64) *Data {
 	env := self
 	for i := frameIndex; i > 0; i-- {
 		env = env.Next
-		if env == nil {
-			return nil, errors.New("local environment get: Local frame depth out of range")
-		}
 	}
-
-	if varIndex < 0 || varIndex >= int64(len(env.Values)) {
-		return nil, errors.New(fmt.Sprintf("local environment get: Local variable index out of range: %d", varIndex))
-	}
-
-	return env.Values[varIndex], nil
+	return env.Values[varIndex]
 }
 
-func (self *LocalEnvFrame) Set(frameIndex int64, varIndex int64, value *Data) (err error) {
+func (self *LocalEnvFrame) Set(frameIndex int64, varIndex int64, value *Data) {
 	env := self
 	for i := frameIndex; i > 0; i-- {
 		env = env.Next
-		if env == nil {
-			return errors.New("local environment set: Local frame depth out of range")
-		}
 	}
-
-	if varIndex < 0 || varIndex >= int64(len(env.Values)) {
-		return errors.New(fmt.Sprintf("local environment set: Local variable index out of range: %d", varIndex))
-	}
-
 	env.Values[varIndex] = value
-	return nil
 }
 
 func (self *LocalEnvFrame) Dump() {
-	fmt.Printf("Local environment:\n")
+	fmt.Printf("Local environment:")
 	for frameIndex, env := 0, self; env != nil; frameIndex, env = frameIndex+1, env.Next {
 		fmt.Printf("  Frame %2d: ", frameIndex)
 		if len(env.Values) == 0 {
@@ -270,8 +259,8 @@ type CompiledFunctionInvocation struct {
 //------------------------------------------------------------------------------
 // Global variable management
 
-func getGvar(name *Data) (result *Data, err error) {
-	return Global.ValueOf(name), nil
+func getGvar(name *Data) (result *Data) {
+	return Global.ValueOf(name)
 }
 
 func setGvar(name *Data, value *Data) (err error) {
@@ -284,25 +273,18 @@ func setGvar(name *Data, value *Data) (err error) {
 
 type ReturnAddress struct {
 	pc  int
-	f   *Data
+	f   *CompiledFunction
 	env *LocalEnvFrame
 }
 
-func makeReturnAddr(pc int, f *Data, env *LocalEnvFrame) (result *Data, err error) {
-	if pc >= Length(FrameValue(f).Get("code:")) {
-		return nil, errors.New("Return address out of range")
-	}
-	return ObjectWithTypeAndValue("returnAddress", unsafe.Pointer(&ReturnAddress{pc: pc, f: f, env: env})), nil
+func makeReturnAddr(pc int, f *CompiledFunction, env *LocalEnvFrame) *Data {
+	return ObjectWithTypeAndValue("returnAddress", unsafe.Pointer(&ReturnAddress{pc: pc, f: f, env: env}))
 }
 
 //------------------------------------------------------------------------------
 // Bytecode Executer
 
 var CompiledFunctionStack *RuntimeStack
-
-func machineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return executeBytecode(First(args), env)
-}
 
 func humanifyInstruction(code *Data) string {
 	bytecode := VectorValue(code)
@@ -322,641 +304,319 @@ func humanifyInstruction(code *Data) string {
 	return strings.Join(parts, " ")
 }
 
-func executeBytecode(f *Data, env *SymbolTableFrame) (result *Data, err error) {
-	fmt.Printf("Execute: %s\n", String(f))
+func ExecuteBytecode(f *CompiledFunction, env *SymbolTableFrame) (result *Data, err error) {
+	return ExecuteBytecodeWithArgs(f, make([]*Data, 0), env)
+}
+
+func ExecuteBytecodeWithArgs(f *CompiledFunction, args []*Data, env *SymbolTableFrame) (result *Data, err error) {
+	// fmt.Printf("Execute: %s\n", f.String())
 	CompiledFunctionStack = newRuntimeStack()
-	fMap := FrameValue(f)
-	var code = VectorValue(fMap.Get("code:"))
+	for _, arg := range args {
+		CompiledFunctionStack.Push(arg)
+	}
+	var nArgs = len(args)
+
+	var code = VectorValue(f.Code)
 	var pc = 0
 	var localEnv *LocalEnvFrame = newEnv(0, nil)
-	var nArgs = 0
 	var val *Data
 	var val2 *Data
 	var val3 *Data
 	var mathResult float64
-	fmt.Printf("Entering VM: %s\n", String(fMap.Get("code:")))
+	// fmt.Printf("Entering VM: %s\n", String(fMap.Get("code:")))
 	for {
 		instr := VectorValue(code[pc])
 
 		// print the execution context
-		println("//----------------------------------------")
-		CompiledFunctionStack.Dump()
-		localEnv.Dump()
-		fmt.Printf("Executing at %3d: %s  ; %s\n", pc, String(code[pc]), humanifyInstruction(code[pc]))
+		// fmt.Printf("//----------------------------------------\n")
+		// CompiledFunctionStack.Dump()
+		// localEnv.Dump()
+		// fmt.Printf("Executing at %3d: %s  ; %s\n", pc, String(code[pc]), humanifyInstruction(code[pc]))
 
 		pc++
 		opcode := IntegerValue(instr[0])
 		switch opcode {
 		//Constants
 		case ZERO_CONST:
-			err = CompiledFunctionStack.Push(ZeroConstant)
-			if err != nil {
-				return
-			}
+			CompiledFunctionStack.Push(ZeroConstant)
 		case ONE_CONST:
-			err = CompiledFunctionStack.Push(OneConstant)
-			if err != nil {
-				return
-			}
+			CompiledFunctionStack.Push(OneConstant)
 		case TWO_CONST:
-			err = CompiledFunctionStack.Push(TwoConstant)
-			if err != nil {
-				return
-			}
+			CompiledFunctionStack.Push(TwoConstant)
 		case TRUE_CONST:
-			err = CompiledFunctionStack.Push(LispTrue)
-			if err != nil {
-				return
-			}
+			CompiledFunctionStack.Push(LispTrue)
 		case FALSE_CONST:
-			err = CompiledFunctionStack.Push(LispFalse)
-			if err != nil {
-				return
-			}
+			CompiledFunctionStack.Push(LispFalse)
 		case NIL_CONST:
-			err = CompiledFunctionStack.Push(EmptyCons())
-			if err != nil {
-				return
-			}
+			CompiledFunctionStack.Push(EmptyCons())
 
 			// Variable/stack manipulation instructions
 		case LVAR:
-			val, err = localEnv.Get(IntegerValue(instr[1]), IntegerValue(instr[2]))
-			if err != nil {
-				return
-			}
-			err = CompiledFunctionStack.Push(val)
-			if err != nil {
-				return
-			}
+			val = localEnv.Get(IntegerValue(instr[1]), IntegerValue(instr[2]))
+			CompiledFunctionStack.Push(val)
 		case LSET:
-			val, err = CompiledFunctionStack.Top()
-			if err != nil {
-				return
-			}
-			err = localEnv.Set(IntegerValue(instr[1]), IntegerValue(instr[2]), val)
-			if err != nil {
-				return
-			}
+			val = CompiledFunctionStack.Top()
+			localEnv.Set(IntegerValue(instr[1]), IntegerValue(instr[2]), val)
 		case GVAR:
-			val, err = getGvar(instr[1])
-			if err != nil {
-				return
-			}
-			err = CompiledFunctionStack.Push(val)
-			if err != nil {
-				return
-			}
+			val = getGvar(instr[1])
+			CompiledFunctionStack.Push(val)
 		case GSET:
-			val, err = CompiledFunctionStack.Top()
-			if err != nil {
-				return
-			}
-			err = setGvar(instr[1], val)
-			if err != nil {
-				return
-			}
+			val = CompiledFunctionStack.Top()
+			setGvar(instr[1], val)
 		case POP:
-			_, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
+			CompiledFunctionStack.Pop()
 		case CONST:
 			val = instr[1]
-			err = CompiledFunctionStack.Push(val)
-			if err != nil {
-				return
-			}
+			CompiledFunctionStack.Push(val)
 
 			// Branching instructions
 		case JUMP:
-			if int(IntegerValue(instr[1])) >= len(code) {
-				return nil, errors.New("JUMP target is out of range")
-			}
 			pc = int(IntegerValue(instr[1]))
 		case FJUMP:
-			if int(IntegerValue(instr[1])) >= len(code) {
-				return nil, errors.New("FJUMP target is out of range")
-			}
-			val, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			if !BooleanValue(val) {
+			if CompiledFunctionStack.Pop() == LispFalse {
 				pc = int(IntegerValue(instr[1]))
 			}
 		case TJUMP:
-			if int(IntegerValue(instr[1])) >= len(code) {
-				return nil, errors.New("TJUMP target is out of range")
-			}
-			val, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			if BooleanValue(val) {
+			if CompiledFunctionStack.Pop() != LispFalse {
 				pc = int(IntegerValue(instr[1]))
 			}
 
 			// Function call/return instructions
 		case SAVE:
-			if int(IntegerValue(instr[1])) >= len(code) {
-				return nil, errors.New("SAVE target is out of range")
-			}
-			val, err = makeReturnAddr(int(IntegerValue(instr[1])), f, localEnv)
-			if err != nil {
-				return
-			}
-			err = CompiledFunctionStack.Push(val)
-			if err != nil {
-				return
-			}
+			val = makeReturnAddr(int(IntegerValue(instr[1])), f, localEnv)
+			CompiledFunctionStack.Push(val)
 		case RETURN: // return value is top of stack, return address is second
-			val, err = CompiledFunctionStack.Pop() // save the return value
-			if err != nil {
-				return
-			}
-
-			var retAddrObj *Data
-			retAddrObj, err = CompiledFunctionStack.Pop()
-			if err != nil {
+			val = CompiledFunctionStack.Pop() // save the return value
+			// if the stack is empty, return the value from the VM execution
+			if CompiledFunctionStack.Empty() {
 				return val, nil
 			}
-			if ObjectType(retAddrObj) != "returnAddress" {
-				return nil, errors.New("Bad return type object")
-			}
-
+			// otherwise handle the return address
+			var retAddrObj *Data
+			retAddrObj = CompiledFunctionStack.Pop()
 			retAddr := (*ReturnAddress)(ObjectValue(retAddrObj))
 			f = retAddr.f
-			fMap = FrameValue(f)
-			code = VectorValue(fMap.Get("code:"))
+			code = VectorValue(f.Code)
 			localEnv = retAddr.env
 			pc = retAddr.pc
 
-			err = CompiledFunctionStack.Push(val) // put the return value back
-			if err != nil {
-				return
-			}
+			CompiledFunctionStack.Push(val) // put the return value back
 		case CALLJ:
-			f, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
+			var fObj *Data
+			fObj = CompiledFunctionStack.Pop()
+			f = CompiledFunctionValue(fObj)
 			nArgs = int(IntegerValue(instr[1]))
-			if FrameP(f) {
-				localEnv = localEnv.Next // discard the top frame
-				fMap = FrameValue(f)
-				fname := fMap.Get("name:")
-				if NilP(fname) {
-					fname = StringWithValue("<anon>")
-				}
-				fmt.Printf("Calling compiled function: %s\n", (String(fname)))
-				code = VectorValue(fMap.Get("code:"))
-				localEnv = newEnvFrom(fMap.Get("env:"))
-				pc = 0
-			} else {
-				err = errors.New(fmt.Sprintf("Compiled function expected for CALLJ, but got %s", String(f)))
-				return
+			localEnv = localEnv.Next // discard the top frame
+			fname := f.Name
+			if fname == "" {
+				fname = "<anon>"
 			}
+			// fmt.Printf("Calling compiled function: %s\n", fname)
+			code = VectorValue(f.Code)
+			localEnv = newEnvFrom(f.Env)
+			pc = 0
 		case ARGS:
-			if nArgs != int(IntegerValue(instr[1])) {
-				return nil, errors.New(fmt.Sprintf("Wrong number of arguments to %s: %d expected, %d supplied", String(fMap.Get("name:")), int(IntegerValue(instr[1])), nArgs))
-			}
 			localEnv = newEnv(int(IntegerValue(instr[1])), localEnv)
 			for i := nArgs - 1; i >= 0; i-- {
-				val, err = CompiledFunctionStack.Pop()
-				if err != nil {
-					return
-				}
+				val = CompiledFunctionStack.Pop()
 				localEnv.Values[i] = val
 			}
 		case ARGSDOT:
-			if nArgs >= Length(instr[1]) {
-				return nil, errors.New(fmt.Sprintf("Wrong number of arguments to %s: %d or more expected, %d supplied", String(fMap.Get("name:")), instr[1], nArgs))
-			}
 			argValue := int(IntegerValue(instr[1]))
 			localEnv = newEnv(argValue+1, localEnv)
 			restArgs := make([]*Data, 0, nArgs-argValue)
 			for i := nArgs - argValue; i > 0; i-- {
-				val, err = CompiledFunctionStack.Pop()
-				if err != nil {
-					return
-				}
+				val = CompiledFunctionStack.Pop()
 				restArgs = append(restArgs, val)
 			}
 			for i := argValue - 1; i >= 0; i-- {
-				val, err = CompiledFunctionStack.Pop()
-				if err != nil {
-					return
-				}
+				val = CompiledFunctionStack.Pop()
 				localEnv.Values[i] = val
 			}
+			localEnv.Values[argValue-1] = ArrayToList(restArgs)
 		case FN:
-			var fn FrameMap = FrameMap{Data: make(map[string]*Data, 2), Mutex: sync.RWMutex{}}
-			fn.Set("code:", FrameValue(instr[1]).Get("code:"))
-			fn.Set("env:", localEnv.Package())
-			err = CompiledFunctionStack.Push(FrameWithValue(&fn))
-			if err != nil {
-				return
-			}
+			fn := instr[1]
+			CompiledFunctionValue(fn).Env = localEnv.Package()
+			CompiledFunctionStack.Push(fn)
 		case PRIM:
-			if !SymbolP(instr[1]) {
-				return nil, errors.New(fmt.Sprintf("PRIM requires a primitive function name, but got %s", String(instr[1])))
-			}
 			prim := env.ValueOf(instr[1])
-			if !PrimitiveP(prim) {
-				return nil, errors.New(fmt.Sprintf("PRIM requires a primitive function, but got %s", String(prim)))
-			}
-
 			// process the args
-			if !IntegerP(instr[2]) {
-				return nil, errors.New(fmt.Sprintf("PRIM requires an integer argument count, but got %s", String(instr[2])))
-			}
 			nArgs = int(IntegerValue(instr[2]))
 			args := make([]*Data, nArgs)
 			for i := nArgs - 1; i >= 0; i-- {
-				args[i], err = CompiledFunctionStack.Pop()
-				if err != nil {
-					return
-				}
+				args[i] = CompiledFunctionStack.Pop()
 			}
 
 			// eval the primitive
-			fmt.Printf("Calling primitive function: %s\n", String(instr[1]))
-			val, err = PrimitiveValue(prim).ApplyWithoutEval(ArrayToList(args), Global)
+			// fmt.Printf("Calling primitive function: %s\n", String(instr[1]))
+			val, err = PrimitiveValue(prim).ApplyWithoutEval(ArrayToList(args), env)
 			if err != nil {
 				return
 			}
 
 			// put the result onto the stack
-			err = CompiledFunctionStack.Push(val)
+			CompiledFunctionStack.Push(val)
+
+		case FUNC:
+			fun := env.ValueOf(instr[1])
+			// process the args
+			nArgs = int(IntegerValue(instr[2]))
+			args := make([]*Data, nArgs)
+			for i := nArgs - 1; i >= 0; i-- {
+				args[i] = CompiledFunctionStack.Pop()
+			}
+
+			// eval the function
+			// fmt.Printf("Calling interpreted function: %s\n", String(instr[1]))
+			val, err = FunctionValue(fun).ApplyWithoutEval(ArrayToList(args), env)
 			if err != nil {
 				return
 			}
 
-			// Continuation instructions
+			// put the result onto the stack
+			CompiledFunctionStack.Push(val)
+
+		// Continuation instructions
 		case SET_CC:
-			val, err = CompiledFunctionStack.Top()
-			if err != nil {
-				return
-			}
-			if !ObjectP(val) {
-				return nil, errors.New(fmt.Sprintf("SET_CC expected a stack object, but received a %s", TypeName(TypeOf(val))))
-			}
-			if ObjectType(val) != "stack" {
-				return nil, errors.New(fmt.Sprintf("SET_CC expected a stack object, but received a %s", ObjectType(val)))
-			}
+			val = CompiledFunctionStack.Top()
 			CompiledFunctionStack = (*RuntimeStack)(ObjectValue(val))
 		case CC:
 
 			// Unary operations
 		case CAR:
-			val, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-
-			err = CompiledFunctionStack.Push(Car(val))
-			if err != nil {
-				return
-			}
+			val = CompiledFunctionStack.Pop()
+			CompiledFunctionStack.Push(Car(val))
 		case CDR:
-			val, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-
-			err = CompiledFunctionStack.Push(Cdr(val))
-			if err != nil {
-				return
-			}
+			val = CompiledFunctionStack.Pop()
+			CompiledFunctionStack.Push(Cdr(val))
 		case CADR:
-			val, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-
-			err = CompiledFunctionStack.Push(Cadr(val))
-			if err != nil {
-				return
-			}
+			val = CompiledFunctionStack.Pop()
+			CompiledFunctionStack.Push(Cadr(val))
 		case NOT:
-			val, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
+			if CompiledFunctionStack.Pop() == LispFalse {
+				val = LispTrue
+			} else {
+				val = LispFalse
 			}
-
-			err = CompiledFunctionStack.Push(BooleanWithValue(!BooleanValue(val)))
-			if err != nil {
-				return
-			}
+			CompiledFunctionStack.Push(val)
 		case NILP:
-			val, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-
-			err = CompiledFunctionStack.Push(BooleanWithValue(NilP(val)))
-			if err != nil {
-				return
-			}
+			val = CompiledFunctionStack.Pop()
+			CompiledFunctionStack.Push(BooleanWithValue(NilP(val)))
 		case LIST1:
-			val, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-
-			err = CompiledFunctionStack.Push(InternalMakeList(val))
-			if err != nil {
-				return
-			}
+			val = CompiledFunctionStack.Pop()
+			CompiledFunctionStack.Push(InternalMakeList(val))
 
 			// Binary operations
 		case PLUS:
 			isFloat := false
 
-			val2, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			val, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
+			val2 = CompiledFunctionStack.Pop()
+			val = CompiledFunctionStack.Pop()
 			isFloat = FloatP(val) || FloatP(val2)
 			mathResult = FloatValue(val) + FloatValue(val2)
 			if isFloat {
-				err = CompiledFunctionStack.Push(FloatWithValue(mathResult))
+				CompiledFunctionStack.Push(FloatWithValue(mathResult))
 			} else {
-				err = CompiledFunctionStack.Push(IntegerWithValue(int64(mathResult)))
-			}
-			if err != nil {
-				return
+				CompiledFunctionStack.Push(IntegerWithValue(int64(mathResult)))
 			}
 		case MINUS:
 			isFloat := false
 
-			val2, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			val, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
+			val2 = CompiledFunctionStack.Pop()
+			val = CompiledFunctionStack.Pop()
 			isFloat = FloatP(val) || FloatP(val2)
 			mathResult = FloatValue(val) - FloatValue(val2)
 			if isFloat {
-				err = CompiledFunctionStack.Push(FloatWithValue(mathResult))
+				CompiledFunctionStack.Push(FloatWithValue(mathResult))
 			} else {
-				err = CompiledFunctionStack.Push(IntegerWithValue(int64(mathResult)))
-			}
-			if err != nil {
-				return
+				CompiledFunctionStack.Push(IntegerWithValue(int64(mathResult)))
 			}
 		case TIMES:
 			isFloat := false
 
-			val2, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			val, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
+			val2 = CompiledFunctionStack.Pop()
+			val = CompiledFunctionStack.Pop()
 			isFloat = FloatP(val) || FloatP(val2)
 			mathResult = FloatValue(val) * FloatValue(val2)
 			if isFloat {
-				err = CompiledFunctionStack.Push(FloatWithValue(mathResult))
+				CompiledFunctionStack.Push(FloatWithValue(mathResult))
 			} else {
-				err = CompiledFunctionStack.Push(IntegerWithValue(int64(mathResult)))
-			}
-			if err != nil {
-				return
+				CompiledFunctionStack.Push(IntegerWithValue(int64(mathResult)))
 			}
 		case DIVIDE:
 			isFloat := false
 
-			val2, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			val, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
+			val2 = CompiledFunctionStack.Pop()
+			val = CompiledFunctionStack.Pop()
 			isFloat = FloatP(val) || FloatP(val2)
 			mathResult = FloatValue(val) / FloatValue(val2)
 			if isFloat {
-				err = CompiledFunctionStack.Push(FloatWithValue(mathResult))
+				CompiledFunctionStack.Push(FloatWithValue(mathResult))
 			} else {
-				err = CompiledFunctionStack.Push(IntegerWithValue(int64(mathResult)))
-			}
-			if err != nil {
-				return
+				CompiledFunctionStack.Push(IntegerWithValue(int64(mathResult)))
 			}
 		case LT:
-			val2, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			val, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-
-			err = CompiledFunctionStack.Push(BooleanWithValue(FloatValue(val) < FloatValue(val2)))
-			if err != nil {
-				return
-			}
+			val2 = CompiledFunctionStack.Pop()
+			val = CompiledFunctionStack.Pop()
+			CompiledFunctionStack.Push(BooleanWithValue(FloatValue(val) < FloatValue(val2)))
 		case GT:
-			val2, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			val, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-
-			err = CompiledFunctionStack.Push(BooleanWithValue(FloatValue(val) > FloatValue(val2)))
-			if err != nil {
-				return
-			}
+			val2 = CompiledFunctionStack.Pop()
+			val = CompiledFunctionStack.Pop()
+			CompiledFunctionStack.Push(BooleanWithValue(FloatValue(val) > FloatValue(val2)))
 		case LTEQ:
-			val2, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			val, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-
-			err = CompiledFunctionStack.Push(BooleanWithValue(FloatValue(val) <= FloatValue(val2)))
-			if err != nil {
-				return
-			}
+			val2 = CompiledFunctionStack.Pop()
+			val = CompiledFunctionStack.Pop()
+			CompiledFunctionStack.Push(BooleanWithValue(FloatValue(val) <= FloatValue(val2)))
 		case GTEQ:
-			val2, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			val, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-
-			err = CompiledFunctionStack.Push(BooleanWithValue(FloatValue(val) >= FloatValue(val2)))
-			if err != nil {
-				return
-			}
+			val2 = CompiledFunctionStack.Pop()
+			val = CompiledFunctionStack.Pop()
+			CompiledFunctionStack.Push(BooleanWithValue(FloatValue(val) >= FloatValue(val2)))
 		case CONS:
-			val2, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			val, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			err = CompiledFunctionStack.Push(Cons(val, val2))
-			if err != nil {
-				return
-			}
+			val2 = CompiledFunctionStack.Pop()
+			val = CompiledFunctionStack.Pop()
+			CompiledFunctionStack.Push(Cons(val, val2))
 		case LIST2:
-			val2, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			val, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			err = CompiledFunctionStack.Push(InternalMakeList(val, val2))
-			if err != nil {
-				return
-			}
+			val2 = CompiledFunctionStack.Pop()
+			val = CompiledFunctionStack.Pop()
+			CompiledFunctionStack.Push(InternalMakeList(val, val2))
 		case EQV:
-			val2, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			val, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			err = CompiledFunctionStack.Push(BooleanWithValue(IsEqv(val, val2)))
-			if err != nil {
-				return
-			}
+			val2 = CompiledFunctionStack.Pop()
+			val = CompiledFunctionStack.Pop()
+			CompiledFunctionStack.Push(BooleanWithValue(IsEqv(val, val2)))
 		case NEQV:
-			val2, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			val, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			err = CompiledFunctionStack.Push(BooleanWithValue(!IsEqv(val, val2)))
-			if err != nil {
-				return
-			}
+			val2 = CompiledFunctionStack.Pop()
+			val = CompiledFunctionStack.Pop()
+			CompiledFunctionStack.Push(BooleanWithValue(!IsEqv(val, val2)))
 		case EQ:
-			val2, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			val, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			err = CompiledFunctionStack.Push(BooleanWithValue(IsEq(val, val2)))
-			if err != nil {
-				return
-			}
+			val2 = CompiledFunctionStack.Pop()
+			val = CompiledFunctionStack.Pop()
+			CompiledFunctionStack.Push(BooleanWithValue(IsEq(val, val2)))
 		case NEQ:
-			val2, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			val, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			err = CompiledFunctionStack.Push(BooleanWithValue(!IsEq(val, val2)))
-			if err != nil {
-				return
-			}
+			val2 = CompiledFunctionStack.Pop()
+			val = CompiledFunctionStack.Pop()
+			CompiledFunctionStack.Push(BooleanWithValue(!IsEq(val, val2)))
 		case EQUAL:
-			val2, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			val, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			err = CompiledFunctionStack.Push(BooleanWithValue(IsEqual(val, val2)))
-			if err != nil {
-				return
-			}
+			val2 = CompiledFunctionStack.Pop()
+			val = CompiledFunctionStack.Pop()
+			CompiledFunctionStack.Push(BooleanWithValue(IsEqual(val, val2)))
 		case NEQUAL:
-			val2, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			val, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			err = CompiledFunctionStack.Push(BooleanWithValue(!IsEqual(val, val2)))
-			if err != nil {
-				return
-			}
+			val2 = CompiledFunctionStack.Pop()
+			val = CompiledFunctionStack.Pop()
+			CompiledFunctionStack.Push(BooleanWithValue(!IsEqual(val, val2)))
 		case LIST3:
-			val3, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			val2, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			val, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			err = CompiledFunctionStack.Push(InternalMakeList(val, val2, val3))
-			if err != nil {
-				return
-			}
+			val3 = CompiledFunctionStack.Pop()
+			val2 = CompiledFunctionStack.Pop()
+			val = CompiledFunctionStack.Pop()
+			CompiledFunctionStack.Push(InternalMakeList(val, val2, val3))
 		case NAMEBANG:
 			// pop the name
-			val, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			if !StringP(val) && !SymbolP(val) {
-				err = errors.New("Stringy value expected for NAMEBANG name")
-			}
-
+			val = CompiledFunctionStack.Pop()
 			// pop the function
-			val2, err = CompiledFunctionStack.Pop()
-			if err != nil {
-				return
-			}
-			if !FrameP(val2) {
-				err = errors.New("Function expected for NAMEBANG function")
-				return
-			}
-
-			fMap = FrameValue(val2)
-			fMap.Set("name:", val)
+			val2 = CompiledFunctionStack.Pop()
+			CompiledFunctionValue(val2).Name = StringValue(val)
 			CompiledFunctionStack.Push(val2)
 		case HALT:
-			return CompiledFunctionStack.Top()
+			return CompiledFunctionStack.Top(), nil
 		}
 	}
 }

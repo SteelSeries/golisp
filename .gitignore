@@ -50,3 +50,4 @@ cover.out
 golisp
 *.out
 docs/auto
+*~

@@ -92,6 +92,10 @@ func postProcessShortcuts(d *Data) *Data {
 func evalHelper(x *Data, env *SymbolTableFrame, needFunction bool) (result *Data, err error) {
 	//	fmt.Printf("############ ENTERING EVAL ###########\n")
 INTERP:
+	if IsInteractive && !DebugEvalInDebugRepl {
+		env.CurrentCode.PushFront(fmt.Sprintf("Eval %s", String(x)))
+	}
+
 	logEval(x, env)
 
 	if NilP(x) {
@@ -182,7 +186,7 @@ INTERP:
 				return nil, err
 			}
 			var argList *Data
-			if FunctionP(proc) || (PrimitiveP(proc) && !PrimitiveValue(proc).Special) {
+			if CompiledFunctionP(proc) || FunctionP(proc) || (PrimitiveP(proc) && !PrimitiveValue(proc).Special) {
 				args := make([]*Data, 0, Length(x)-1)
 				for cell := Cdr(x); NotNilP(cell); cell = Cdr(cell) {
 					var v *Data
@@ -223,6 +227,9 @@ INTERP:
 				}
 				x = Cons(Intern("begin"), f.Body)
 				goto INTERP
+			} else if CompiledFunctionP(proc) {
+				f := CompiledFunctionValue(proc)
+				return f.ApplyWithoutEval(argList, env)
 			} else {
 				//				fmt.Printf("primitive: %s\n", String(proc))
 				result, err = ApplyWithoutEval(proc, argList, env)
@@ -233,6 +240,9 @@ INTERP:
 		}
 	}
 	logResult(result, env)
+	if IsInteractive && !DebugEvalInDebugRepl && env.CurrentCode.Len() > 0 {
+		env.CurrentCode.Remove(env.CurrentCode.Front())
+	}
 	return
 }
 

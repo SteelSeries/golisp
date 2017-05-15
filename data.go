@@ -21,24 +21,25 @@ import (
 )
 
 const (
-	NilType         = 0x00000001
-	ConsCellType    = 0x00000002
-	VectorType      = 0x00000004
-	IntegerType     = 0x00000008
-	FloatType       = 0x00000010
-	BooleanType     = 0x00000020
-	StringType      = 0x00000040
-	CharacterType   = 0x00000080
-	SymbolType      = 0x00000100
-	FunctionType    = 0x00000200
-	MacroType       = 0x00000400
-	PrimitiveType   = 0x00000800
-	BoxedObjectType = 0x00001000
-	FrameType       = 0x00002000
-	EnvironmentType = 0x00004000
-	PortType        = 0x00008000
-	AnyType         = 0xFFFFFFFF
-	AtomType        = 0x0000F0FC
+	NilType              = 0x00000001
+	ConsCellType         = 0x00000002
+	VectorType           = 0x00000004
+	IntegerType          = 0x00000008
+	FloatType            = 0x00000010
+	BooleanType          = 0x00000020
+	StringType           = 0x00000040
+	CharacterType        = 0x00000080
+	SymbolType           = 0x00000100
+	FunctionType         = 0x00000200
+	MacroType            = 0x00000400
+	PrimitiveType        = 0x00000800
+	CompiledFunctionType = 0x00001000
+	BoxedObjectType      = 0x00002000
+	FrameType            = 0x00004000
+	EnvironmentType      = 0x00008000
+	PortType             = 0x00010000
+	AnyType              = 0xFFFFFFFF
+	AtomType             = 0x0001E0FC
 )
 
 const (
@@ -119,6 +120,8 @@ func TypeName(t uint32) string {
 		return "Macro"
 	case PrimitiveType:
 		return "Primitive"
+	case CompiledFunctionType:
+		return "Compiled Function"
 	case FrameType:
 		return "Frame"
 	case BoxedObjectType:
@@ -267,6 +270,10 @@ func FunctionP(d *Data) bool {
 
 func PrimitiveP(d *Data) bool {
 	return d != nil && TypeOf(d) == PrimitiveType
+}
+
+func CompiledFunctionP(d *Data) bool {
+	return d != nil && TypeOf(d) == CompiledFunctionType
 }
 
 func MacroP(d *Data) bool {
@@ -446,6 +453,10 @@ func PrimitiveWithNameAndFunc(name string, f *PrimitiveFunction) *Data {
 	return &Data{Type: PrimitiveType, Value: unsafe.Pointer(f)}
 }
 
+func CompiledFunctionWithValue(f *CompiledFunction) *Data {
+	return &Data{Type: CompiledFunctionType, Value: unsafe.Pointer(f)}
+}
+
 func ObjectWithTypeAndValue(typeName string, o unsafe.Pointer) *Data {
 	bo := BoxedObject{ObjType: typeName, Obj: o}
 	return &Data{Type: BoxedObjectType, Value: unsafe.Pointer(&bo)}
@@ -468,11 +479,7 @@ func VectorWithValue(c []*Data) *Data {
 }
 
 func ConsValue(d *Data) *ConsCell {
-	if d == nil {
-		return nil
-	}
-
-	if TypeOf(d) == ConsCellType {
+	if d != nil && TypeOf(d) == ConsCellType {
 		return (*ConsCell)(d.Value)
 	}
 
@@ -481,11 +488,7 @@ func ConsValue(d *Data) *ConsCell {
 
 // Function has heavy traffic, try to keep it fast
 func Car(d *Data) *Data {
-	if d == nil {
-		return nil
-	}
-
-	if d.Type == ConsCellType {
+	if d != nil && TypeOf(d) == ConsCellType {
 		cell := (*ConsCell)(d.Value)
 
 		if cell != nil {
@@ -498,11 +501,7 @@ func Car(d *Data) *Data {
 
 // Function has heavy traffic, try to keep it fast
 func Cdr(d *Data) *Data {
-	if d == nil {
-		return nil
-	}
-
-	if d.Type == ConsCellType {
+	if d != nil && TypeOf(d) == ConsCellType {
 		cell := (*ConsCell)(d.Value)
 
 		if cell != nil {
@@ -553,11 +552,7 @@ func FloatValue(d *Data) float64 {
 }
 
 func StringValue(d *Data) string {
-	if d == nil {
-		return ""
-	}
-
-	if StringP(d) || SymbolP(d) || CharacterP(d) {
+	if d != nil && (StringP(d) || SymbolP(d) || CharacterP(d)) {
 		return *((*string)(d.Value))
 	}
 
@@ -565,11 +560,7 @@ func StringValue(d *Data) string {
 }
 
 func CharacterValue(d *Data) string {
-	if NilP(d) {
-		return " "
-	}
-
-	if CharacterP(d) {
+	if d != nil && CharacterP(d) {
 		return *((*string)(d.Value))
 	}
 
@@ -577,11 +568,7 @@ func CharacterValue(d *Data) string {
 }
 
 func BooleanValue(d *Data) bool {
-	if NilP(d) {
-		return true
-	}
-
-	if BooleanP(d) {
+	if d != nil && BooleanP(d) {
 		return *((*bool)(d.Value))
 	}
 
@@ -589,11 +576,7 @@ func BooleanValue(d *Data) bool {
 }
 
 func FrameValue(d *Data) *FrameMap {
-	if d == nil {
-		return nil
-	}
-
-	if FrameP(d) {
+	if d != nil && FrameP(d) {
 		return (*FrameMap)(d.Value)
 	}
 
@@ -601,11 +584,7 @@ func FrameValue(d *Data) *FrameMap {
 }
 
 func FunctionValue(d *Data) *Function {
-	if d == nil {
-		return nil
-	}
-
-	if d.Type == FunctionType {
+	if d != nil && d.Type == FunctionType {
 		return (*Function)(d.Value)
 	}
 
@@ -613,11 +592,7 @@ func FunctionValue(d *Data) *Function {
 }
 
 func MacroValue(d *Data) *Macro {
-	if d == nil {
-		return nil
-	}
-
-	if d.Type == MacroType {
+	if d != nil && d.Type == MacroType {
 		return (*Macro)(d.Value)
 	}
 
@@ -625,23 +600,23 @@ func MacroValue(d *Data) *Macro {
 }
 
 func PrimitiveValue(d *Data) *PrimitiveFunction {
-	if d == nil {
-		return nil
-	}
-
-	if d.Type == PrimitiveType {
+	if d != nil && d.Type == PrimitiveType {
 		return (*PrimitiveFunction)(d.Value)
 	}
 
 	return nil
 }
 
-func ObjectType(d *Data) (oType string) {
-	if d == nil {
-		return
+func CompiledFunctionValue(d *Data) *CompiledFunction {
+	if d != nil && d.Type == CompiledFunctionType {
+		return (*CompiledFunction)(d.Value)
 	}
 
-	if ObjectP(d) {
+	return nil
+}
+
+func ObjectType(d *Data) (oType string) {
+	if d != nil && ObjectP(d) {
 		return (*((*BoxedObject)(d.Value))).ObjType
 	}
 
@@ -649,11 +624,7 @@ func ObjectType(d *Data) (oType string) {
 }
 
 func ObjectValue(d *Data) (p unsafe.Pointer) {
-	if d == nil {
-		return
-	}
-
-	if ObjectP(d) {
+	if d != nil && ObjectP(d) {
 		return (*((*BoxedObject)(d.Value))).Obj
 	}
 
@@ -661,11 +632,7 @@ func ObjectValue(d *Data) (p unsafe.Pointer) {
 }
 
 func BoxedObjectValue(d *Data) *BoxedObject {
-	if d == nil {
-		return nil
-	}
-
-	if ObjectP(d) {
+	if d != nil && ObjectP(d) {
 		return (*BoxedObject)(d.Value)
 	}
 
@@ -673,11 +640,7 @@ func BoxedObjectValue(d *Data) *BoxedObject {
 }
 
 func EnvironmentValue(d *Data) *SymbolTableFrame {
-	if d == nil {
-		return nil
-	}
-
-	if EnvironmentP(d) {
+	if d != nil && EnvironmentP(d) {
 		return (*SymbolTableFrame)(d.Value)
 	}
 
@@ -685,11 +648,7 @@ func EnvironmentValue(d *Data) *SymbolTableFrame {
 }
 
 func PortValue(d *Data) *os.File {
-	if d == nil {
-		return nil
-	}
-
-	if PortP(d) {
+	if d != nil && PortP(d) {
 		return (*os.File)(d.Value)
 	}
 
@@ -697,11 +656,7 @@ func PortValue(d *Data) *os.File {
 }
 
 func VectorValue(d *Data) []*Data {
-	if d == nil {
-		return nil
-	}
-
-	if VectorP(d) {
+	if d != nil && VectorP(d) {
 		vptr := (*([]*Data))(d.Value)
 		return *vptr
 	}
@@ -930,7 +885,7 @@ func Copy(d *Data) *Data {
 }
 
 func IsEqv(d *Data, o *Data) bool {
-	if d == o && !FloatP(d) {
+	if d == o && TypeOf(d) != FloatType {
 		return true
 	}
 
@@ -961,7 +916,7 @@ func IsEqv(d *Data, o *Data) bool {
 }
 
 func IsEq(d *Data, o *Data) bool {
-	if d == o && !FloatP(d) {
+	if d == o && TypeOf(d) != FloatType {
 		return true
 	}
 
@@ -1009,7 +964,7 @@ func IsEq(d *Data, o *Data) bool {
 }
 
 func IsEqual(d *Data, o *Data) bool {
-	if d == o && !FloatP(d) {
+	if d == o && TypeOf(d) != FloatType {
 		return true
 	}
 
@@ -1098,6 +1053,8 @@ func IsEqual(d *Data, o *Data) bool {
 		return MacroValue(d) == MacroValue(o)
 	} else if t == PrimitiveType {
 		return PrimitiveValue(d) == PrimitiveValue(o)
+	} else if t == CompiledFunctionType {
+		return CompiledFunctionValue(d) == CompiledFunctionValue(o)
 	} else if t == BoxedObjectType {
 		return (ObjectType(d) == ObjectType(o)) && (ObjectValue(d) == ObjectValue(o))
 	}
@@ -1166,6 +1123,8 @@ func String(d *Data) string {
 		return fmt.Sprintf("<macro: %s>", MacroValue(d).Name)
 	case PrimitiveType:
 		return fmt.Sprintf("<prim: %s>", PrimitiveValue(d).Name)
+	case CompiledFunctionType:
+		return fmt.Sprintf("<compiled function: %s>", CompiledFunctionValue(d).Name)
 	case VectorType:
 		vals := VectorValue(d)
 		svals := make([]string, 0, len(vals))
@@ -1325,6 +1284,8 @@ func Apply(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err
 		result, err = MacroValue(function).Apply(args, env)
 	case PrimitiveType:
 		result, err = PrimitiveValue(function).Apply(args, env)
+	case CompiledFunctionType:
+		result, err = CompiledFunctionValue(function).Apply(args, env)
 	default:
 		err = errors.New(fmt.Sprintf("%s when function or macro expected for %s.", TypeName(TypeOf(function)), String(function)))
 		return
@@ -1350,6 +1311,8 @@ func ApplyWithoutEval(function *Data, args *Data, env *SymbolTableFrame) (result
 		result, err = MacroValue(function).ApplyWithoutEval(args, env)
 	case PrimitiveType:
 		result, err = PrimitiveValue(function).ApplyWithoutEval(args, env)
+	case CompiledFunctionType:
+		result, err = CompiledFunctionValue(function).ApplyWithoutEval(args, env)
 	default:
 		err = errors.New(fmt.Sprintf("%s when function or macro expected for %s.", TypeName(TypeOf(function)), String(function)))
 		return

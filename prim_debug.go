@@ -257,6 +257,7 @@ func ProcessError(errorMessage string, env *SymbolTableFrame) error {
 		DebugRepl(env)
 		return nil
 	} else {
-		return errors.New(errorMessage)
+		stackTrace := env.StackTrace()
+		return errors.New(fmt.Sprintf("%s\nStack trace:\n%s", errorMessage, strings.Join(stackTrace, "\n")))
 	}
 }

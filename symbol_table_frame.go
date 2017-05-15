@@ -84,6 +84,20 @@ func (self *SymbolTableFrame) CurrentCodeString() string {
 	}
 }
 
+func (self *SymbolTableFrame) StackTrace() []string {
+	var previous []string
+	if self.Previous != nil {
+		previous = self.Previous.StackTrace()
+	} else {
+		previous = make([]string, 0)
+	}
+	current := make([]string, 0, self.CurrentCode.Len()+len(previous))
+	for e := self.CurrentCode.Front(); e != nil; e = e.Next() {
+		current = append(current, e.Value.(string))
+	}
+	return append(current, previous...)
+}
+
 func (self *SymbolTableFrame) InternalDump(frameNumber int) {
 	fmt.Printf("Frame %d: %s\n", frameNumber, self.CurrentCodeString())
 	self.Mutex.RLock()
