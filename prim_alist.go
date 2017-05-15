@@ -7,8 +7,6 @@
 
 package golisp
 
-import ()
-
 func RegisterAListPrimitives() {
 	MakeTypedPrimitiveFunction("acons", "2|3", AconsImpl, []uint32{AnyType, AnyType, ConsCellType})
 	MakeTypedPrimitiveFunction("pairlis", "2|3", PairlisImpl, []uint32{ConsCellType, ConsCellType, ConsCellType})

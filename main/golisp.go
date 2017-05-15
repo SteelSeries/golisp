@@ -9,10 +9,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/golang/glog"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/golang/glog"
 
 	. "github.com/SteelSeries/golisp"
 )

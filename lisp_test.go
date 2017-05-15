@@ -9,9 +9,10 @@ package golisp
 
 import (
 	"fmt"
-	. "gopkg.in/check.v1"
 	"os"
 	"path/filepath"
+
+	. "gopkg.in/check.v1"
 )
 
 type LispSuite struct {

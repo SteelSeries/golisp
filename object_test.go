@@ -8,8 +8,9 @@
 package golisp
 
 import (
-	. "gopkg.in/check.v1"
 	"unsafe"
+
+	. "gopkg.in/check.v1"
 )
 
 type ObjectAtomSuite struct {

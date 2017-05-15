@@ -9,8 +9,9 @@ package golisp
 
 import (
 	"fmt"
-	. "gopkg.in/check.v1"
 	"math"
+
+	. "gopkg.in/check.v1"
 )
 
 type closeChecker struct {
