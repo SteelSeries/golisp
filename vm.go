@@ -434,6 +434,7 @@ func ExecuteBytecodeWithArgs(f *CompiledFunction, args []*Data, env *SymbolTable
 				val = CompiledFunctionStack.Pop()
 				localEnv.Values[i] = val
 			}
+			localEnv.Values[argValue-1] = ArrayToList(restArgs)
 		case FN:
 			fn := instr[1]
 			CompiledFunctionValue(fn).Env = localEnv.Package()
