@@ -61,4 +61,4 @@
                                (make-vector 5 'a)))
          (assert-false (equal? (lambda (x) x)
                                (lambda (y) y)))
-         (assert-true (equal? nan nan)))
+         (assert-false (equal? nan nan)))

@@ -294,7 +294,7 @@ func (self *Function) ExtendEnv(args *Data, argEnv *SymbolTableFrame, frame *Fra
 	selfSym := Intern("self")
 	if frame != nil {
 		localEnv.BindLocallyTo(selfSym, FrameWithValue(frame))
-	} else if self.SlotFunction {
+	} else if atomic.LoadInt32(&self.SlotFunction) == 1 {
 		selfBinding, found := argEnv.findBindingInLocalFrameFor(selfSym)
 		if found {
 			localEnv.BindLocallyTo(selfSym, selfBinding.Val)

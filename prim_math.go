@@ -46,6 +46,13 @@ func RegisterMathPrimitives() {
 	MakeTypedPrimitiveFunction("sign", "1", SignImpl, []uint32{IntegerType | FloatType})
 	MakeTypedPrimitiveFunction("log", "1", LogImpl, []uint32{IntegerType, FloatType})
 	MakeTypedPrimitiveFunction("expt", "2", ExptImpl, []uint32{IntegerType, FloatType})
+	MakeTypedPrimitiveFunction("pow", "2", PowImpl, []uint32{IntegerType | FloatType, IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("inf?", "1", IsInfImpl, []uint32{IntegerType | FloatType, IntegerType | FloatType})
+	MakeTypedPrimitiveFunction("nan?", "1", IsNaNImpl, []uint32{IntegerType, FloatType})
+	MakeTypedPrimitiveFunction("float->bits", "1", FloatToBitsImpl, []uint32{IntegerType, FloatType})
+	MakeTypedPrimitiveFunction("bits->float", "1", BitsToFloatImpl, []uint32{IntegerType})
+	MakeTypedPrimitiveFunction("double->bits", "1", DoubleToBitsImpl, []uint32{IntegerType, FloatType})
+	MakeTypedPrimitiveFunction("bits->double", "1", BitsToDoubleImpl, []uint32{IntegerType})
 
 	makeUnaryFloatFunction("acos", math.Acos)
 	makeUnaryFloatFunction("acosh", math.Acosh)
@@ -62,9 +69,6 @@ func RegisterMathPrimitives() {
 	makeUnaryFloatFunction("tan", math.Tan)
 	makeUnaryFloatFunction("tanh", math.Tanh)
 
-	MakePrimitiveFunction("inf?", "1", IsInfImpl)
-	MakePrimitiveFunction("nan?", "1", IsNaNImpl)
-
 	Global.BindToProtected(Intern("pi"), FloatWithValue(math.Pi))
 	Global.BindToProtected(Intern("e"), FloatWithValue(math.E))
 	Global.BindToProtected(Intern("phi"), FloatWithValue(math.Phi))
@@ -79,11 +83,6 @@ func RegisterMathPrimitives() {
 	Global.BindToProtected(Intern("nan"), FloatWithValue(math.NaN()))
 	Global.BindToProtected(Intern("+inf"), FloatWithValue(math.Inf(1)))
 	Global.BindToProtected(Intern("-inf"), FloatWithValue(math.Inf(-1)))
-	MakePrimitiveFunction("pow", "2", PowImpl)
-	MakePrimitiveFunction("inf?", "1", IsInfImpl)
-	MakePrimitiveFunction("nan?", "1", IsNaNImpl)
-	MakePrimitiveFunction("float->bits", "1", FloatToBitsImpl)
-	MakePrimitiveFunction("bits->float", "1", BitsToFloatImpl)
 }
 
 func makeUnaryFloatFunction(name string, f func(float64) float64) {
@@ -98,32 +97,6 @@ func makeUnaryFloatFunction(name string, f func(float64) float64) {
 		return FloatWithValue(ret), nil
 	}
 	MakeTypedPrimitiveFunction(name, "1", primFunc, []uint32{IntegerType | FloatType})
-}
-
-func IsInfImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	val := Car(args)
-	if !NumberP(val) {
-		err = ProcessError(fmt.Sprintf("inf? expected a nunber, received %s", String(val)), env)
-		return
-	}
-	if FloatP(val) {
-		return BooleanWithValue(math.IsInf(float64(FloatValue(val)), 0)), nil
-	} else {
-		return BooleanWithValue(false), nil
-	}
-}
-
-func IsNaNImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	val := Car(args)
-	if !NumberP(val) {
-		err = ProcessError(fmt.Sprintf("nan? expected a nunber, received %s", String(val)), env)
-		return
-	}
-	if FloatP(val) {
-		return BooleanWithValue(math.IsNaN(float64(FloatValue(val)))), nil
-	} else {
-		return BooleanWithValue(false), nil
-	}
 }
 
 func sgn(a float64) int64 {
@@ -708,7 +681,7 @@ func PowImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	exponent := Cadr(args)
 
 	if areFloats {
-		return FloatWithValue(float32(math.Pow(float64(FloatValue(base)), float64(FloatValue(exponent))))), nil
+		return FloatWithValue(math.Pow(FloatValue(base), FloatValue(exponent))), nil
 	} else {
 		ret := int64(1)
 		b := IntegerValue(base)
@@ -759,7 +732,7 @@ func FloatToBitsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 		return
 	}
 
-	return IntegerWithValue(int64(math.Float32bits(FloatValue(float)))), nil
+	return IntegerWithValue(int64(math.Float32bits(float32(FloatValue(float))))), nil
 }
 
 func BitsToFloatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -769,5 +742,25 @@ func BitsToFloatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 		return
 	}
 
-	return FloatWithValue(math.Float32frombits(uint32(IntegerValue(bits)))), nil
+	return FloatWithValue(float64(math.Float32frombits(uint32(IntegerValue(bits))))), nil
+}
+
+func DoubleToBitsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	double := Car(args)
+	if !FloatP(double) {
+		err = ProcessError(fmt.Sprintf("double->bits expected a float, received %s", String(double)), env)
+		return
+	}
+
+	return IntegerWithValue(int64(math.Float64bits(FloatValue(double)))), nil
+}
+
+func BitsToDoubleImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	bits := Car(args)
+	if !IntegerP(bits) {
+		err = ProcessError(fmt.Sprintf("bits->double expected an integer, received %s", String(bits)), env)
+		return
+	}
+
+	return FloatWithValue(math.Float64frombits(uint64(IntegerValue(bits)))), nil
 }

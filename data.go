@@ -712,7 +712,7 @@ func VectorValue(d *Data) []*Data {
 func Length(d *Data) int {
 	if d == nil {
 		return 0
-	} else 	if d.Type == ConsCellType {
+	} else if d.Type == ConsCellType {
 		l := 0
 		for c := d; NotNilP(c); c = Cdr(c) {
 			l += 1
@@ -961,7 +961,7 @@ func IsEqv(d *Data, o *Data) bool {
 }
 
 func IsEq(d *Data, o *Data) bool {
-	if d == o {
+	if d == o && !FloatP(d) {
 		return true
 	}
 
@@ -1009,7 +1009,7 @@ func IsEq(d *Data, o *Data) bool {
 }
 
 func IsEqual(d *Data, o *Data) bool {
-	if d == o {
+	if d == o && !FloatP(d) {
 		return true
 	}
 

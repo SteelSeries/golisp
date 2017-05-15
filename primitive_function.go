@@ -23,7 +23,7 @@ type PrimitiveFunction struct {
 
 func MakeTypedPrimitiveFunction(name string, argCount string, function func(*Data, *SymbolTableFrame) (*Data, error), types []uint32) {
 	f := &PrimitiveFunction{Name: name, Special: false, NumberOfArgs: argCount, ArgTypes: types, Body: function}
-	sym := Global.Intern(name)
+	sym := Intern(name)
 	Global.BindToProtected(sym, PrimitiveWithNameAndFunc(name, f))
 }
 
@@ -33,7 +33,7 @@ func MakePrimitiveFunction(name string, argCount string, function func(*Data, *S
 
 func MakeSpecialForm(name string, argCount string, function func(*Data, *SymbolTableFrame) (*Data, error)) {
 	f := &PrimitiveFunction{Name: name, Special: true, NumberOfArgs: argCount, Body: function}
-	sym := Global.Intern(name)
+	sym := Intern(name)
 	Global.BindToProtected(sym, PrimitiveWithNameAndFunc(name, f))
 }
 

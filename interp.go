@@ -9,6 +9,7 @@ package golisp
 
 import (
 	"fmt"
+	"sync/atomic"
 )
 
 // Interned symbols for interp branching
@@ -126,14 +127,19 @@ INTERP:
 			goto INTERP
 		} else if head == setSym {
 			//			fmt.Printf("set!: %s\n", String(Cadr(x)))
-			v, err := Eval(Caddr(x), env)
+			var v *Data
+			v, err = Eval(Caddr(x), env)
 			if err != nil {
 				return nil, err
 			}
-			result = env.BindTo(Cadr(x), v)
+			result, err = env.BindTo(Cadr(x), v)
+			if err != nil {
+				return
+			}
 		} else if head == ifSym {
 			//			fmt.Printf("if\n")
-			c, err := Eval(Second(x), env)
+			var c *Data
+			c, err = Eval(Second(x), env)
 			if err != nil {
 				return nil, err
 			}
@@ -179,7 +185,8 @@ INTERP:
 			if FunctionP(proc) || (PrimitiveP(proc) && !PrimitiveValue(proc).Special) {
 				args := make([]*Data, 0, Length(x)-1)
 				for cell := Cdr(x); NotNilP(cell); cell = Cdr(cell) {
-					v, err := Eval(Car(cell), env)
+					var v *Data
+					v, err = Eval(Car(cell), env)
 					if err != nil {
 						return nil, err
 					}
@@ -207,7 +214,7 @@ INTERP:
 				//				fmt.Printf("function: %s\n", String(proc))
 				f := FunctionValue(proc)
 				var fr *FrameMap
-				if f.SlotFunction && env.HasFrame() {
+				if atomic.LoadInt32(&f.SlotFunction) == 1 && env.HasFrame() {
 					fr = env.Frame
 				}
 				env, err = f.ExtendEnv(argList, env, fr)

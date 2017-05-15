@@ -31,6 +31,7 @@ func RegisterSystemPrimitives() {
 	MakeTypedPrimitiveFunction("intern", "1", InternImpl, []uint32{StringType})
 	MakeTypedPrimitiveFunction("symbol->string", "1", SymbolToStringImpl, []uint32{SymbolType})
 	MakeTypedPrimitiveFunction("gensym", "0|1", GensymImpl, []uint32{StringType | SymbolType})
+	MakeTypedPrimitiveFunction("gensym-naked", "0|1", GensymNakedImpl, []uint32{StringType | SymbolType})
 	MakeTypedPrimitiveFunction("eval", "1|2", EvalImpl, []uint32{AnyType, EnvironmentType})
 	MakePrimitiveFunction("load", "1", LoadFileImpl)
 	MakePrimitiveFunction("global-eval", "1", GlobalEvalImpl)

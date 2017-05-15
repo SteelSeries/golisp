@@ -191,7 +191,6 @@ func SendSuperImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 	return FunctionValue(fun).ApplyWithoutEval(params, frameEnv)
 }
 
-	frameEnv := NewSymbolTableFrameBelowWithFrame(env, env.Frame, fmt.Sprintf("%s'", env.Name))
 func ApplySlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
 	k := Second(args)
@@ -266,7 +265,7 @@ func ApplySlotSuperImpl(args *Data, env *SymbolTableFrame) (result *Data, err er
 	frameEnv := NewSymbolTableFrameBelowWithFrame(env, env.Frame, fmt.Sprintf("%s'", env.Name))
 	_, err = frameEnv.BindLocallyTo(Intern("self"), FrameWithValue(env.Frame))
 	if err != nil {
-	    return
+		return
 	}
 	return FunctionValue(fun).ApplyWithoutEval(argList, frameEnv)
 }
@@ -303,5 +302,5 @@ func FrameValuesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 
 func FrameLengthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
-	return IntegerWithValue(int64(len(*FrameValue(f)))), nil
+	return IntegerWithValue(int64(len(FrameValue(f).Data))), nil
 }

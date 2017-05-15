@@ -108,7 +108,7 @@ func NetRequestImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 	}
 
 	if Length(args) >= 3 {
-		for k, v := range *headerMap {
+		for k, v := range headerMap.Data {
 			tweaked_key := strings.Title(strings.ToLower(strings.TrimRight(k, ":")))
 			req.Header.Add(tweaked_key, StringValue(v))
 		}

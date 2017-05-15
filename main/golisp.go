@@ -7,12 +7,13 @@
 package main
 
 import (
-	. "bitbucket.org/dastels/golisp"
 	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+
+	. "github.com/SteelSeries/golisp"
 )
 
 var (
@@ -28,7 +29,7 @@ var (
 
 func test() {
 	verboseFlag := ""
-	testFunction := ""
+	var testFunction string
 	if verboseTests {
 		verboseFlag = " #t"
 	}
@@ -81,7 +82,7 @@ func main() {
 
 	if definition != "" {
 		symbolAndValue := strings.Split(definition, "=")
-		sym := Global.Intern(symbolAndValue[0])
+		sym := Intern(symbolAndValue[0])
 		val, err := ParseAndEval(symbolAndValue[1])
 		if err != nil {
 			fmt.Println("Error with cmd line definition value")
