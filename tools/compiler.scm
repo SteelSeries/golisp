@@ -24,7 +24,7 @@
 
 
 (define (create-compiled-function name env args code)
-  (optimize-and-assemble-function (new-fn name env args code)))
+  (optimize-and-assemble-function (make-compiled-function name env args code)))
 
 ;;;-----------------------------------------------------------------------------
 ;;; Print a compiled function
@@ -81,6 +81,35 @@
 
 
 
+;;;-----------------------------------------------------------------------------
+;;; Compiled function utilities
+
+
+(define (expand-code code)
+  (vector-map (lambda (c)
+				(if (eqv? (vector-first c) 20) ; FN?
+				  (let ((f (vector-second c)))
+					(vector 20 (make-frame name: (compiled-name f) env: (compiled-env f) args: (compiled-args f) code: (expand-code (compiled-code f)))))
+				  c))
+			  code))
+
+
+(define (compress-code expanded-code)
+  (vector-map (lambda (c)
+				(if (eqv? (vector-first c) 20) ; FN?
+				  (let ((m (vector-second c)))
+					(vector 20 (make-compiled-function (name: m) (env: m) (args: m) (compress-code (code: m)))))
+				  c))
+			  expanded-code))
+
+
+(define (compiled-function->frame func)
+  {name: (compiled-name func) env: (compiled-env func) args: (compiled-args func) code: (expand-code (compiled-code func))})
+
+
+(define (frame->compiled-function frame)
+  ;; (format #t "~A~%" frame)
+  (make-compiled-function (name: frame) (env: frame) (args: frame) (compress-code (code: frame))))
 
 
 ;;;-----------------------------------------------------------------------------
@@ -88,8 +117,8 @@
 
 
 (define (reconstitute-code raw)
-  (format #t "reconstituting ~A~%" raw)
-  (cond ((nil? raw)
+  ;; (format #t "reconstituting ~A: ~A~%" (type-of raw) raw)
+  (cond ((or (eqv? 'nil raw) (nil? raw))
 		 nil)
 		((list? raw)
 		 (if (eqv? (car raw) 'make-frame)
@@ -105,16 +134,35 @@
   (let* ((f (open-input-file fname))
 		 (raw-code (read f)))
 	(close-port f)
-	(map execute (reconstitute-code raw-code))))
+	(for-each execute (map frame->compiled-function (reconstitute-code raw-code)))
+	'OK))
 
+
+(define (load-file fname)
+  (cond ((string-suffix? ".scm" fname)
+		 (load fname))
+		((string-suffix? ".scmc" fname)
+		 (load-bytecode fname))
+		(else
+		 (let* ((source-name (string-append fname ".scm"))
+				(bytecode-name (string-append fname ".scmc"))
+				(source-time (if (file-exists? source-name)
+							   (file-modification-time source-name)
+							   0))
+				(bytecode-time (if (file-exists? bytecode-name)
+								 (file-modification-time bytecode-name)
+								 0)))
+		   (if (> bytecode-time source-time)
+			 (and (not (zero? bytecode-time)) (load-bytecode bytecode-name))
+			 (and (not (zero? source-time))) (load source-name))))))
 
 ;;;-----------------------------------------------------------------------------
 ;;; Compiling a file of source code
 
 
-(define (save-code fname code)
+(define (save-compiled-function fname functions)
   (let ((bytecode-file (open-output-file fname)))
-	(format bytecode-file "~S" code)
+	(format bytecode-file "~A" (map compiled-function->frame functions))
 	(close-port bytecode-file)))
 
 
