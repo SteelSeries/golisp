@@ -107,6 +107,23 @@ func LispWithFramesToJson(d *Data) (result interface{}) {
 		return ary
 	}
 
+	if VectorP(d) {
+		ary := make([]interface{}, 0, Length(d))
+		v := VectorValue(d)
+		for _, val := range v {
+			ary = append(ary, LispWithFramesToJson(val))
+		}
+		return ary
+	}
+
+	if ObjectP(d) && ObjectType(d) == "[]byte" {
+		ary := make([]interface{}, 0, Length(d))
+		for _, b := range *(*[]byte)(ObjectValue(d)) {
+			ary = append(ary, b)
+		}
+		return ary
+	}
+
 	if FrameP(d) {
 		dict := make(map[string]interface{}, Length(d))
 		for k, v := range *FrameValue(d) {
