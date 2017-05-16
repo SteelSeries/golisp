@@ -126,11 +126,15 @@
 
 
 (define (compile-file fname)
-  (format #t "Compiling ~A~%" fname)
-  (let* ((source-file (open-input-file fname))
-		 (compiled-code (compile-sexprs source-file '())))
+  ;; (format #t "Compiling ~A~%" fname)
+  (let* ((source-name (if (string-suffix? ".scm" fname)
+						fname
+						(string-append fname ".scm")))
+		 (bytecode-name (string-append source-name "c"))
+		 (source-file (open-input-file source-name))
+		 (compiled-code (reverse (compile-sexprs source-file '()))))
 	(close-port source-file)
-	(save-code (str fname "c") compiled-code)
-	nil))
+	(save-compiled-function bytecode-name compiled-code)
+	(format #t "Compiled ~S~%Bytecode saved to ~S~%" source-name bytecode-name)))
 
 
