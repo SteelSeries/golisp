@@ -59,6 +59,8 @@ func RegisterStringPrimitives() {
 
 	MakeTypedPrimitiveFunction("string-compare", "5", StringCompareImpl, []uint32{StringType, StringType, FunctionType, FunctionType, FunctionType})
 	MakeTypedPrimitiveFunction("string-compare-ci", "5", StringCompareCiImpl, []uint32{StringType, StringType, FunctionType, FunctionType, FunctionType})
+
+	MakePrimitiveFunction("string-append", "*", MakeStringImpl)
 }
 
 func StringToListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -425,4 +427,16 @@ func StringCompareCiImpl(args *Data, env *SymbolTableFrame) (result *Data, err e
 	}
 
 	return
+}
+
+func stringAppendImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	a := ToArray(args)
+	if len(a) == 0 {
+		return StringWithValue(""), nil
+	}
+	pieces := make([]string, 0, Length(args))
+	for i, s := range a {
+		pieces[i] = StringValue(s)
+	}
+	return StringWithValue(strings.Join(pieces, "")), nil
 }
