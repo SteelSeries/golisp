@@ -60,12 +60,11 @@ func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	var d []*Data = make([]*Data, 0, loopCount)
 	var v *Data
-	var a *Data
 	for index := 0; index < int(loopCount); index++ {
 		mapArgs := make([]*Data, 0, len(collections))
-		for _, mapArgCollection := range collections {
-			a = Nth(mapArgCollection, index)
-			mapArgs = append(mapArgs, a)
+		for key, mapArgCollection := range collections {
+			mapArgs = append(mapArgs, Car(mapArgCollection))
+			collections[key] = Cdr(mapArgCollection)
 		}
 		v, err = ApplyWithoutEval(f, ArrayToList(mapArgs), env)
 		if err != nil {
@@ -92,12 +91,11 @@ func ForEachImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	var a *Data
 	for index := 0; index < int(loopCount); index++ {
 		mapArgs := make([]*Data, 0, len(collections))
-		for _, mapArgCollection := range collections {
-			a = Nth(mapArgCollection, index)
-			mapArgs = append(mapArgs, a)
+		for key, mapArgCollection := range collections {
+			mapArgs = append(mapArgs, Car(mapArgCollection))
+			collections[key] = Cdr(mapArgCollection)
 		}
 		_, err = ApplyWithoutEval(f, ArrayToList(mapArgs), env)
 		if err != nil {
@@ -123,13 +121,12 @@ func AnyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	var a *Data
 	var b *Data
 	for index := 0; index < int(loopCount); index++ {
 		mapArgs := make([]*Data, 0, len(collections))
-		for _, mapArgCollection := range collections {
-			a = Nth(mapArgCollection, index)
-			mapArgs = append(mapArgs, a)
+		for key, mapArgCollection := range collections {
+			mapArgs = append(mapArgs, Car(mapArgCollection))
+			collections[key] = Cdr(mapArgCollection)
 		}
 		b, err = ApplyWithoutEval(f, ArrayToList(mapArgs), env)
 		if err != nil {
@@ -159,13 +156,12 @@ func EveryImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	var a *Data
 	var b *Data
 	for index := 0; index < int(loopCount); index++ {
 		mapArgs := make([]*Data, 0, len(collections))
-		for _, mapArgCollection := range collections {
-			a = Nth(mapArgCollection, index)
-			mapArgs = append(mapArgs, a)
+		for key, mapArgCollection := range collections {
+			mapArgs = append(mapArgs, Car(mapArgCollection))
+			collections[key] = Cdr(mapArgCollection)
 		}
 		b, err = ApplyWithoutEval(f, ArrayToList(mapArgs), env)
 		if err != nil {
