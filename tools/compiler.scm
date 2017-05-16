@@ -80,38 +80,6 @@
   (execute (compile x)))
 
 
-
-;;;-----------------------------------------------------------------------------
-;;; Compiled function utilities
-
-
-(define (expand-code code)
-  (vector-map (lambda (c)
-				(if (eqv? (vector-first c) 20) ; FN?
-				  (let ((f (vector-second c)))
-					(vector 20 (make-frame name: (compiled-name f) env: (compiled-env f) args: (compiled-args f) code: (expand-code (compiled-code f)))))
-				  c))
-			  code))
-
-
-(define (compress-code expanded-code)
-  (vector-map (lambda (c)
-				(if (eqv? (vector-first c) 20) ; FN?
-				  (let ((m (vector-second c)))
-					(vector 20 (make-compiled-function (name: m) (env: m) (args: m) (compress-code (code: m)))))
-				  c))
-			  expanded-code))
-
-
-(define (compiled-function->frame func)
-  {name: (compiled-name func) env: (compiled-env func) args: (compiled-args func) code: (expand-code (compiled-code func))})
-
-
-(define (frame->compiled-function frame)
-  ;; (format #t "~A~%" frame)
-  (make-compiled-function (name: frame) (env: frame) (args: frame) (compress-code (code: frame))))
-
-
 ;;;-----------------------------------------------------------------------------
 ;;; Loading bytecode
 
@@ -128,6 +96,26 @@
 		 (vector-map reconstitute-code raw))
 		(else
 		 raw)))
+
+
+(define (compress-code expanded-code)
+  (vector-map (lambda (c)
+				(if (eqv? (vector-first c) 20) ; FN?
+				  (let ((m (vector-second c)))
+					(vector 20 (make-compiled-function (name: m)
+													   (env: m)
+													   (args: m)
+													   (compress-code (code: m)))))
+				  c))
+			  expanded-code))
+
+
+(define (frame->compiled-function frame)
+  ;; (format #t "~A~%" frame)
+  (make-compiled-function (name: frame)
+						  (env: frame)
+						  (args: frame)
+						  (compress-code (code: frame))))
 
 
 (define (load-bytecode fname)
@@ -153,11 +141,32 @@
 								 (file-modification-time bytecode-name)
 								 0)))
 		   (if (> bytecode-time source-time)
-			 (and (not (zero? bytecode-time)) (load-bytecode bytecode-name))
-			 (and (not (zero? source-time))) (load source-name))))))
+			 (and (> bytecode-time 0)
+				  (load-bytecode bytecode-name))
+			 (and (> source-time 0)
+				  (load source-name)))))))
 
 ;;;-----------------------------------------------------------------------------
 ;;; Compiling a file of source code
+
+
+(define (expand-code code)
+  (vector-map (lambda (c)
+				(if (eqv? (vector-first c) 20) ; FN?
+				  (let ((f (vector-second c)))
+					(vector 20 (make-frame name: (compiled-name f)
+										   env: (compiled-env f)
+										   args: (compiled-args f)
+										   code: (expand-code (compiled-code f)))))
+				  c))
+			  code))
+
+
+(define (compiled-function->frame func)
+  (make-frame name: (compiled-name func)
+			  env: (compiled-env func)
+			  args: (compiled-args func)
+			  code: (expand-code (compiled-code func))))
 
 
 (define (save-compiled-function fname functions)
