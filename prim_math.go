@@ -68,6 +68,7 @@ func RegisterMathPrimitives() {
 	makeUnaryFloatFunction("sqrt", math.Sqrt)
 	makeUnaryFloatFunction("tan", math.Tan)
 	makeUnaryFloatFunction("tanh", math.Tanh)
+	makeUnaryFloatFunction("log", math.Log)
 
 	Global.BindToProtected(Intern("pi"), FloatWithValue(math.Pi))
 	Global.BindToProtected(Intern("e"), FloatWithValue(math.E))
