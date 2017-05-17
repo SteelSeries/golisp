@@ -19,116 +19,55 @@ type CompiledFunction struct {
 }
 
 func RegisterCompiledFunctionPrimitives() {
-	MakePrimitiveFunction("new-fn", "4", newFnImpl)
-	MakePrimitiveFunction("compiled-name", "1", getCompiledNameImpl)
-	MakePrimitiveFunction("compiled-name!", "2", setCompiledNameImpl)
-	MakePrimitiveFunction("compiled-code", "1", getCompiledCodeImpl)
-	MakePrimitiveFunction("compiled-code!", "2", setCompiledCodeImpl)
-	MakePrimitiveFunction("compiled-env", "1", getCompiledEnvImpl)
-	MakePrimitiveFunction("compiled-env!", "2", setCompiledEnvImpl)
+	MakeTypedPrimitiveFunction("make-compiled-function", "4", newFnImpl, []uint32{StringType | SymbolType, ConsCellType, ConsCellType, ConsCellType | VectorType})
+	MakeTypedPrimitiveFunction("compiled-name", "1", getCompiledNameImpl, []uint32{CompiledFunctionType})
+	MakeTypedPrimitiveFunction("compiled-name!", "2", setCompiledNameImpl, []uint32{CompiledFunctionType, StringType | SymbolType})
+	MakeTypedPrimitiveFunction("compiled-code", "1", getCompiledCodeImpl, []uint32{CompiledFunctionType})
+	MakeTypedPrimitiveFunction("compiled-code!", "2", setCompiledCodeImpl, []uint32{CompiledFunctionType, ConsCellType | VectorType})
+	MakeTypedPrimitiveFunction("compiled-env", "1", getCompiledEnvImpl, []uint32{CompiledFunctionType})
+	MakeTypedPrimitiveFunction("compiled-env!", "2", setCompiledEnvImpl, []uint32{CompiledFunctionType, ConsCellType})
+	MakeTypedPrimitiveFunction("compiled-args", "1", getCompiledArgsImpl, []uint32{CompiledFunctionType})
+	MakeTypedPrimitiveFunction("compiled-args!", "2", setCompiledArgsImpl, []uint32{CompiledFunctionType, ConsCellType})
 }
 
 func newFnImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	name := First(args)
-	if !StringP(name) && !SymbolP(name) {
-		err = ProcessError(fmt.Sprintf("new-fn expects a string or symbol name, but recieved %s.", String(name)), env)
-		return
-	}
-
-	localEnv := Second(args)
-	if !ListP(localEnv) {
-		err = ProcessError(fmt.Sprintf("new-fn expects a list for local environment, but recieved %s.", String(localEnv)), env)
-		return
-	}
-
-	argList := Third(args)
-	if !ListP(argList) {
-		err = ProcessError(fmt.Sprintf("new-fn expects a list for arguments, but recieved %s.", String(argList)), env)
-		return
-	}
-
-	code := Fourth(args)
-	if !VectorP(code) && !ListP(code) {
-		err = ProcessError(fmt.Sprintf("new-fn expects a vector or list of code, but recieved %s.", String(code)), env)
-		return
-	}
-
-	return CompiledFunctionWithValue(MakeCompiledFunction(StringValue(name), localEnv, argList, code)), nil
+	return CompiledFunctionWithValue(MakeCompiledFunction(StringValue(First(args)), Second(args), Third(args), Fourth(args))), nil
 }
 
 func getCompiledNameImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	f := First(args)
-	if !CompiledFunctionP(f) {
-		err = ProcessError(fmt.Sprintf("compiled-name expects a compiled function, but recieved %s.", String(f)), env)
-		return
-	}
-	result = StringWithValue(CompiledFunctionValue(f).Name)
-	return
+	return StringWithValue(CompiledFunctionValue(First(args)).Name), nil
 }
 
 func setCompiledNameImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	f := First(args)
-	if !CompiledFunctionP(f) {
-		err = ProcessError(fmt.Sprintf("compiled-name! expects a compiled function, but recieved %s.", String(f)), env)
-		return
-	}
-	name := Second(args)
-	if !StringP(name) && !SymbolP(name) {
-		err = ProcessError(fmt.Sprintf("compiled-name! expects a compiled function, but recieved %s.", String(name)), env)
-		return
-	}
-	CompiledFunctionValue(f).Name = StringValue(name)
-	return
+	CompiledFunctionValue(First(args)).Name = StringValue(Second(args))
+	return First(args), nil
 }
 
 func getCompiledCodeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	f := First(args)
-	if !CompiledFunctionP(f) {
-		err = ProcessError(fmt.Sprintf("compiled-code expects a compiled function, but recieved %s.", String(f)), env)
-		return
-	}
-	result = CompiledFunctionValue(f).Code
-	return
+	return CompiledFunctionValue(First(args)).Code, nil
 }
 
 func setCompiledCodeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	f := First(args)
-	if !CompiledFunctionP(f) {
-		err = ProcessError(fmt.Sprintf("compiled-code! expects a compiled function as its first argument, but recieved %s.", String(f)), env)
-		return
-	}
-	code := Second(args)
-	if !ListP(code) && !VectorP(code) {
-		err = ProcessError(fmt.Sprintf("compiled-code! expects a list or vector of code as its second argument, but recieved %s.", String(code)), env)
-		return
-	}
-	CompiledFunctionValue(f).Code = code
-	return
+	CompiledFunctionValue(First(args)).Code = Second(args)
+	return First(args), nil
 }
 
 func getCompiledEnvImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	f := First(args)
-	if !CompiledFunctionP(f) {
-		err = ProcessError(fmt.Sprintf("compiled-env expects a compiled function, but recieved %s.", String(f)), env)
-		return
-	}
-	result = CompiledFunctionValue(f).Env
-	return
+	return CompiledFunctionValue(First(args)).Env, nil
 }
 
 func setCompiledEnvImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	f := First(args)
-	if !CompiledFunctionP(f) {
-		err = ProcessError(fmt.Sprintf("compiled-env! expects a compiled function as its first argument, but recieved %s.", String(f)), env)
-		return
-	}
-	localEnv := Second(args)
-	if !ListP(localEnv) {
-		err = ProcessError(fmt.Sprintf("compiled-env! expects a list as its second argument, but recieved %s.", String(localEnv)), env)
-		return
-	}
-	CompiledFunctionValue(f).Env = localEnv
-	return
+	CompiledFunctionValue(First(args)).Env = Second(args)
+	return First(args), nil
+}
+
+func getCompiledArgsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return CompiledFunctionValue(First(args)).Args, nil
+}
+
+func setCompiledArgsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	CompiledFunctionValue(First(args)).Args = Second(args)
+	return First(args), nil
 }
 
 func MakeCompiledFunction(name string, env *Data, args *Data, code *Data) *CompiledFunction {

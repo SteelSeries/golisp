@@ -47,6 +47,7 @@ func InitBuiltins() {
 	RegisterConcurrencyPrimitives()
 	RegisterEnvironmentPrimitives()
 	RegisterIOPrimitives()
+	RegisterFilePrimitives()
 	RegisterNetPrimitives()
 	RegisterChannelPrimitives()
 	RegisterVectorPrimitives()

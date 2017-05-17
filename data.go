@@ -1241,7 +1241,7 @@ func String(d *Data) string {
 }
 
 func PrintString(d *Data) string {
-	if StringP(d) || CharacterP(d) {
+	if StringP(d) {
 		return StringValue(d)
 	} else {
 		return String(d)
