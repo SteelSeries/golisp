@@ -872,6 +872,14 @@ func Copy(d *Data) *Data {
 			frame.Mutex.RUnlock()
 			return FrameWithValue(&m)
 		}
+	case BoxedObjectType:
+		{
+			if ObjectType(d) == "[]byte" {
+				bytes := (*[]byte)(ObjectValue(d))
+				copy := append([]byte{}, *bytes...)
+				return ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&copy))
+			}
+		}
 	case VectorType:
 		v := VectorValue(d)
 		newV := make([]*Data, 0, len(v))
