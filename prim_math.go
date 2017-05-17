@@ -94,7 +94,7 @@ func makeUnaryFloatFunction(name string, f func(float64) float64) {
 			return
 		}
 		val := FloatValue(valObj)
-		ret := f(float64(val))
+		ret := f(val)
 		return FloatWithValue(ret), nil
 	}
 	MakeTypedPrimitiveFunction(name, "1", primFunc, []uint32{IntegerType | FloatType})
@@ -595,11 +595,11 @@ func MaxImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func FloorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return FloatWithValue(math.Floor(float64(FloatValue(First(args))))), nil
+	return FloatWithValue(math.Floor(FloatValue(First(args)))), nil
 }
 
 func CeilingImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return FloatWithValue(math.Ceil(float64(FloatValue(First(args))))), nil
+	return FloatWithValue(math.Ceil(FloatValue(First(args)))), nil
 }
 
 func AbsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -705,7 +705,7 @@ func IsInfImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	if FloatP(val) {
-		return BooleanWithValue(math.IsInf(float64(FloatValue(val)), 0)), nil
+		return BooleanWithValue(math.IsInf(FloatValue(val), 0)), nil
 	} else {
 		return BooleanWithValue(false), nil
 	}
@@ -719,7 +719,7 @@ func IsNaNImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	if FloatP(val) {
-		return BooleanWithValue(math.IsNaN(float64(FloatValue(val)))), nil
+		return BooleanWithValue(math.IsNaN(FloatValue(val))), nil
 	} else {
 		return BooleanWithValue(false), nil
 	}
