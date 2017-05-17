@@ -37,7 +37,7 @@ const (
 	EnvironmentType      = 0x00008000
 	PortType             = 0x00010000
 	AnyType              = 0xFFFFFFFF
-	AtomType             = 0x0001E0FC
+	AtomType             = 0x0001FEFD
 )
 
 const (
