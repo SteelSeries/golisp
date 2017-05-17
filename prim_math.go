@@ -49,9 +49,9 @@ func RegisterMathPrimitives() {
 	MakeTypedPrimitiveFunction("pow", "2", PowImpl, []uint32{IntegerType | FloatType, IntegerType | FloatType})
 	MakeTypedPrimitiveFunction("inf?", "1", IsInfImpl, []uint32{IntegerType | FloatType, IntegerType | FloatType})
 	MakeTypedPrimitiveFunction("nan?", "1", IsNaNImpl, []uint32{IntegerType, FloatType})
-	MakeTypedPrimitiveFunction("float->bits", "1", FloatToBitsImpl, []uint32{IntegerType, FloatType})
+	MakeTypedPrimitiveFunction("float->bits", "1", FloatToBitsImpl, []uint32{FloatType})
 	MakeTypedPrimitiveFunction("bits->float", "1", BitsToFloatImpl, []uint32{IntegerType})
-	MakeTypedPrimitiveFunction("double->bits", "1", DoubleToBitsImpl, []uint32{IntegerType, FloatType})
+	MakeTypedPrimitiveFunction("double->bits", "1", DoubleToBitsImpl, []uint32{FloatType})
 	MakeTypedPrimitiveFunction("bits->double", "1", BitsToDoubleImpl, []uint32{IntegerType})
 
 	makeUnaryFloatFunction("acos", math.Acos)
@@ -251,6 +251,7 @@ func divideFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func DivideImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	q, err := divideFloats(args, env)
+	fmt.Printf("q: %+v, err: %v\n", q, err)
 	if err != nil {
 		return
 	}
@@ -727,40 +728,20 @@ func IsNaNImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func FloatToBitsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	float := Car(args)
-	if !FloatP(float) {
-		err = ProcessError(fmt.Sprintf("float->bits expected a float, received %s", String(float)), env)
-		return
-	}
-
 	return IntegerWithValue(int64(math.Float32bits(float32(FloatValue(float))))), nil
 }
 
 func BitsToFloatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	bits := Car(args)
-	if !IntegerP(bits) {
-		err = ProcessError(fmt.Sprintf("bits->float expected an integer, received %s", String(bits)), env)
-		return
-	}
-
 	return FloatWithValue(float64(math.Float32frombits(uint32(IntegerValue(bits))))), nil
 }
 
 func DoubleToBitsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	double := Car(args)
-	if !FloatP(double) {
-		err = ProcessError(fmt.Sprintf("double->bits expected a float, received %s", String(double)), env)
-		return
-	}
-
 	return IntegerWithValue(int64(math.Float64bits(FloatValue(double)))), nil
 }
 
 func BitsToDoubleImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	bits := Car(args)
-	if !IntegerP(bits) {
-		err = ProcessError(fmt.Sprintf("bits->double expected an integer, received %s", String(bits)), env)
-		return
-	}
-
 	return FloatWithValue(math.Float64frombits(uint64(IntegerValue(bits)))), nil
 }
