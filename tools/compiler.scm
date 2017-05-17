@@ -5,7 +5,7 @@
 ;;; Use of this source code is governed by a BSD-style
 ;;; license that can be found in the LICENSE file.
 
-;;; GoLisp compiler
+;;; GoLisp compiler driver
 
 
 (define (make-path filename)
@@ -38,6 +38,8 @@
 	(format #f "~VA~A~A: " indent "" prefix i)))
 
 
+;  5: 16                              ; RETURN
+
 ;;; Print all the instructions in a function.
 ;;; If the argument is not a function, just princ it,
 ;;; but in a column at least 8 spaces wide.
@@ -60,10 +62,14 @@
 						(vector-for-each (lambda (arg)
 										   (show-fn arg stream (+ indent 8)))
 										 (subvector instr 0 (min (list instr-length 3))))
-						(format stream "~VA; ~A ~A"
-								(vector-ref #(0 16 8 0 0) instr-length) ""
+						(format stream "~VA; ~A ~A ~A ~A"
+								(if (eqv? 20 (vector-first instr))
+								  37
+								  (+ (- 8 indent) (vector-ref #(0 16 8 0 0) instr-length))) ""
 								(car (rassoc (vector-ref instr 0) opcodes))
-								(if (eqv? instr-length 4) (vector-ref instr 3) ""))
+								(if (> instr-length 1) (vector-ref instr 1) "")
+								(if (> instr-length 2) (vector-ref instr 2) "")
+								(if (> instr-length 3) (vector-ref instr 3) ""))
 						(newline stream)))
 					(iota (vector-length (compiled-code fn))))))))
 
@@ -75,6 +81,9 @@
 	(format #t "Result:~%")
 	(show-fn fn)
 	nil))
+
+
+;;; Compile an expression and execute the resulting code
 
 (define (run x)
   (execute (compile x)))
@@ -186,12 +195,24 @@
   ;; (format #t "Compiling ~A~%" fname)
   (let* ((source-name (if (string-suffix? ".scm" fname)
 						fname
-						(string-append fname ".scm")))
-		 (bytecode-name (string-append source-name "c"))
-		 (source-file (open-input-file source-name))
-		 (compiled-code (reverse (compile-sexprs source-file '()))))
-	(close-port source-file)
-	(save-compiled-function bytecode-name compiled-code)
-	(format #t "Compiled ~S~%Bytecode saved to ~S~%" source-name bytecode-name)))
+						(string-append fname ".scm"))))
+	(if (file-exists? source-name)
+	  (begin (format #t "Compiling: ~A~%" source-name)
+		 	 (let* ((bytecode-name (string-append source-name "c"))
+					(source-file (open-input-file source-name))
+					(compiled-code (reverse (compile-sexprs source-file '()))))
+			   (close-port source-file)
+			   (save-compiled-function bytecode-name compiled-code)
+			   (format #t "Compiled ~S~%Bytecode saved to ~S~%" source-name bytecode-name)))
+	  (format #t "Could not find file: ~S~%" source-name))))
 
+
+(define (compile-directory dirname)
+  (when (file-exists? dirname)
+	(for-each (lambda (fname)
+				(cond ((file-directory? fname)
+					   (compile-directory fname))
+					  ((string-suffix? ".scm" fname)
+					   (compile-file fname))))
+			  (directory-read dirname))))
 
