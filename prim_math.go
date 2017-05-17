@@ -251,7 +251,6 @@ func divideFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func DivideImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	q, err := divideFloats(args, env)
-	fmt.Printf("q: %+v, err: %v\n", q, err)
 	if err != nil {
 		return
 	}
