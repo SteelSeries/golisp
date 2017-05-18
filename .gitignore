@@ -51,3 +51,4 @@ golisp
 *.out
 docs/auto
 *~
+*.scmc
