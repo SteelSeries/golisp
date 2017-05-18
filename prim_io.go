@@ -10,7 +10,6 @@ package golisp
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -28,7 +27,6 @@ func RegisterIOPrimitives() {
 	MakeTypedPrimitiveFunction("read-string", "0|1", ReadStringImpl, []uint32{PortType})
 	MakeTypedPrimitiveFunction("read", "1", ReadImpl, []uint32{PortType})
 	MakePrimitiveFunction("eof-object?", "1", EofObjectImpl)
-	MakeTypedPrimitiveFunction("list-directory", "1|2", ListDirectoryImpl, []uint32{StringType, StringType})
 	MakeTypedPrimitiveFunction("format", ">=2", FormatImpl, []uint32{BooleanType | PortType, StringType, AnyType})
 
 	Global.BindTo(Intern("*standard-output*"), PortWithValue(os.Stdout))
@@ -169,26 +167,6 @@ func ReadImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func EofObjectImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return BooleanWithValue(IsEqual(First(args), EofObject)), nil
-}
-
-func ListDirectoryImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	dir := StringValue(First(args))
-	fpart := "*"
-	if Length(args) == 2 {
-		fpart = StringValue(Second(args))
-	}
-	pattern := filepath.Join(dir, fpart)
-
-	filenames, err := filepath.Glob(pattern)
-	if err != nil {
-		return
-	}
-
-	names := make([]*Data, 0, 0)
-	for _, fname := range filenames {
-		names = append(names, StringWithValue(fname))
-	}
-	return ArrayToList(names), nil
 }
 
 func FormatImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
