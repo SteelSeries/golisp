@@ -14,10 +14,12 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 )
 
 var symbolCounts map[string]int = make(map[string]int)
+var symbolCountsMutex sync.Mutex
 
 func RegisterSystemPrimitives() {
 	Global.BindTo(Intern("__OS__"), Intern(runtime.GOOS))
@@ -206,6 +208,7 @@ func gensymHelper(primitiveName string, args *Data, env *SymbolTableFrame) (pref
 		prefix = StringValue(arg)
 	}
 
+	symbolCountsMutex.Lock()
 	count = symbolCounts[prefix]
 	if count == 0 {
 		count = 1
@@ -213,6 +216,7 @@ func gensymHelper(primitiveName string, args *Data, env *SymbolTableFrame) (pref
 		count += 1
 	}
 	symbolCounts[prefix] = count
+	symbolCountsMutex.Unlock()
 	return
 }
 

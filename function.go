@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"unsafe"
 )
@@ -35,6 +36,7 @@ type Function struct {
 }
 
 var functionTypeSignatures map[string]*FunctonTypeSignature = make(map[string]*FunctonTypeSignature, 20)
+var functionTypeSignaturesMutex sync.Mutex
 
 func computeRequiredArgumentCount(args *Data) (requiredArgumentCount int, varArgs bool) {
 	requiredArgumentCount = 0
@@ -51,13 +53,17 @@ func computeRequiredArgumentCount(args *Data) (requiredArgumentCount int, varArg
 }
 
 func AddTypesForFunction(name string, argTypes []uint32, retType uint32) {
+	functionTypeSignaturesMutex.Lock()
 	functionTypeSignatures[name] = &FunctonTypeSignature{ArgumentTypes: argTypes, ReturnType: retType}
+	functionTypeSignaturesMutex.Unlock()
 }
 
 func MakeFunction(name string, params *Data, doc string, body *Data, parentEnv *SymbolTableFrame) *Function {
 	requiredArgs, varArgs := computeRequiredArgumentCount(params)
+	functionTypeSignaturesMutex.Lock()
 	f := &Function{Name: name, Params: params, VarArgs: varArgs, RequiredArgCount: requiredArgs, TypeSignature: functionTypeSignatures[name], DocString: doc, Body: body, Env: parentEnv, SlotFunction: 0}
 	functionTypeSignatures[name] = nil
+	functionTypeSignaturesMutex.Unlock()
 	return f
 }
 
