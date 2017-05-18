@@ -90,7 +90,7 @@ func postProcessShortcuts(d *Data) *Data {
 }
 
 func evalHelper(x *Data, env *SymbolTableFrame, needFunction bool) (result *Data, err error) {
-	//	fmt.Printf("############ ENTERING EVAL ###########\n")
+
 INTERP:
 	if IsInteractive && !DebugEvalInDebugRepl {
 		env.CurrentCode.PushFront(fmt.Sprintf("Eval %s", String(x)))
@@ -194,19 +194,12 @@ INTERP:
 					if err != nil {
 						return nil, err
 					}
-					// if PrimitiveP(proc) && PrimitiveValue(proc).Name == "+" {
-					// 	fmt.Printf("Adding arg %s from %s\n", String(v), String(Car(cell)))
-					// }
-
 					args = append(args, v)
 				}
 				argList = ArrayToList(args)
 			} else {
 				argList = Cdr(x)
 			}
-			// if PrimitiveP(proc) && PrimitiveValue(proc).Name == "+" {
-			// 	fmt.Printf("Args: %s\n", String(argList))
-			// }
 			if MacroP(proc) {
 				//				fmt.Printf("macro: %s\n", String(proc))
 				x, err = MacroValue(proc).Expand(Cdr(x), env)
