@@ -19,9 +19,6 @@
 (define string str)
 
 
-(define string-append str)
-
-
 (define (string-copy s)
   (substring s 0 (string-length s)))
 
