@@ -101,7 +101,7 @@ func (s *BuiltinsSuite) TestTrinaryMultiply(c *C) {
 // Quotient
 
 func (s *BuiltinsSuite) TestUnaryQuotient(c *C) {
-	code, _ := Parse("(/ 4)")
+	code, _ := Parse("(/ 4.0)")
 	result, err := Eval(code, Global)
 	c.Assert(err, IsNil)
 	c.Assert(result, NotNil)
