@@ -14,9 +14,9 @@ import (
 
 func RegisterFilePrimitives() {
 	MakeTypedPrimitiveFunction("file-exists?", "1", fileExistsImpl, []uint32{StringType})
-	MakeTypedPrimitiveFunction("file-directory?", "1", directoryReadImpl, []uint32{StringType})
+	MakeTypedPrimitiveFunction("file-directory?", "1", directoryPImpl, []uint32{StringType})
 	MakeTypedPrimitiveFunction("file-modification-time", "1", fileModificationTimeImpl, []uint32{StringType})
-	MakeTypedPrimitiveFunction("directory-read", "1", listDirectoryImpl, []uint32{StringType})
+	MakeTypedPrimitiveFunction("directory-read", "1", directoryReadImpl, []uint32{StringType})
 }
 
 func fileExistsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -24,7 +24,7 @@ func fileExistsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 	return BooleanWithValue(!os.IsNotExist(ferr)), nil
 }
 
-func directoryReadImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func directoryPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	info, err := os.Stat(StringValue(Car(args)))
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -46,9 +46,8 @@ func fileModificationTimeImpl(args *Data, env *SymbolTableFrame) (result *Data, 
 	return IntegerWithValue(info.ModTime().Unix()), nil
 }
 
-func listDirectoryImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	dir := StringValue(First(args))
-	pattern := filepath.Join(dir, "*")
+func directoryReadImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	pattern := StringValue(First(args))
 
 	filenames, err := filepath.Glob(pattern)
 	if err != nil {

@@ -161,11 +161,11 @@
 
 (define (run-all-tests test-dir . optionals)
   (reset-testing)
-  (set! verbose-tests (not (nil? optionals)))
+  (set! verbose-tests (notnil? optionals))
   (let ((t (time (for-each (lambda (filename)
                              (when verbose-tests (format #t "~%------~%Loading: ~A~%" filename))
                              (load filename))
-                           (list-directory test-dir "*_test.scm")))))
+                           (directory-read (string-append test-dir "/*_test.scm"))))))
     (dump-summary t)))
 
 (define (run-test test-file . optionals)

@@ -9,6 +9,7 @@ package golisp
 
 import (
 	"fmt"
+	"math"
 )
 
 func RegisterListManipulationPrimitives() {
@@ -24,7 +25,9 @@ func RegisterListManipulationPrimitives() {
 	MakePrimitiveFunction("append", "*", AppendImpl)
 	MakePrimitiveFunction("append!", "*", AppendBangImpl)
 	MakeTypedPrimitiveFunction("copy", "1", CopyImpl, []uint32{ConsCellType})
-	MakePrimitiveFunction("partition", "2|3", PartitionImpl)
+	MakeTypedPrimitiveFunction("partition", "2", partitionImpl, []uint32{FunctionType | PrimitiveType | CompiledFunctionType, ConsCellType})
+	MakePrimitiveFunction("chunk", "2|3", chunkImpl)
+	MakePrimitiveFunction("chunk*", "2|3", chunkStarImpl)
 	MakeTypedPrimitiveFunction("sublist", "3", SublistImpl, []uint32{ConsCellType, IntegerType, IntegerType})
 	MakeTypedPrimitiveFunction("sort", "2", SortImpl, []uint32{ConsCellType, FunctionType | PrimitiveType})
 }
@@ -150,15 +153,115 @@ func CopyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return Copy(First(args)), nil
 }
 
-func partitionBySize(size int64, step int64, l *Data, env *SymbolTableFrame) (result *Data, err error) {
+func partitionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	pred := First(args)
+	l := Second(args)
+	falseSection := make([]*Data, 0, 16)
+	trueSection := make([]*Data, 0, 16)
+	var predicateResult *Data
+	for c := l; NotNilP(c); c = Cdr(c) {
+		predicateResult, err = ApplyWithoutEval(pred, InternalMakeList(Car(c)), env)
+		if err != nil {
+			return
+		}
+		if BooleanValue(predicateResult) {
+			trueSection = append(trueSection, Car(c))
+		} else {
+			falseSection = append(falseSection, Car(c))
+		}
+	}
+
+	return InternalMakeList(ArrayToList(trueSection), ArrayToList(falseSection)), nil
+}
+
+func chunkImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	var l *Data
+	var size int64
+	var step int64
+
+	if !IntegerP(First(args)) {
+		err = ProcessError(fmt.Sprintf("chunk requires an integer size as its first argument, but got %s", String(First(args))), env)
+		return
+	}
+	size = IntegerValue(First(args))
+	if size < 1 {
+		err = ProcessError("chunk requires a chunk size > 0.", env)
+		return
+	}
+
+	if IntegerP(Second(args)) {
+		if Length(args) != 3 {
+			err = ProcessError("chunk requires 3 arguments if a step is given", env)
+			return
+		}
+		step = IntegerValue(Second(args))
+		l = Third(args)
+	} else {
+		step = size
+		l = Second(args)
+	}
+
+	if step < 1 {
+		err = ProcessError("chunk requires a positive step size.", env)
+		return
+	}
+
+	if !ListP(l) {
+		err = ProcessError("chunk requires a list as it's final argument.", env)
+		return
+	}
+
+	elements := ToArray(l)
+
+	pieces := make([]*Data, 0, 5)
+	var start int64 = 0
+	var end int64 = int64(math.Min(float64(size), float64(len(elements))))
+	for start < int64(len(elements)) {
+		fmt.Printf("start: %d, end: %d\n", start, end)
+		pieces = append(pieces, ArrayToList(elements[start:end]))
+		start = start + step
+		end = int64(math.Min(float64(start+size), float64(len(elements))))
+	}
+
+	return ArrayToList(pieces), nil
+}
+
+func chunkStarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	var l *Data
+	var size int64
+	var step int64
+
+	if !IntegerP(First(args)) {
+		err = ProcessError(fmt.Sprintf("chunk* requires an integer size as its first argument, but got %s", String(First(args))), env)
+		return
+	}
+	size = IntegerValue(First(args))
+	if IntegerP(Second(args)) {
+		if Length(args) != 3 {
+			err = ProcessError("chunk* requires 3 arguments if a step is given", env)
+			return
+		}
+		step = IntegerValue(Second(args))
+		l = Third(args)
+	} else {
+		step = size
+		l = Second(args)
+	}
+
 	elements := ToArray(l)
 
 	if size < 1 || size > int64(len(elements)) {
-		err = ProcessError("partition requires a clump size that fits in the list.", env)
+		err = ProcessError("chunk* requires a chunk size that fits in the list.", env)
 		return
 	}
+
 	if step < 1 {
-		err = ProcessError("partition requires a positive step size.", env)
+		err = ProcessError("chunk* requires a positive step size.", env)
+		return
+	}
+
+	if !ListP(l) {
+		err = ProcessError("chunk* requires a list as it's final argument.", env)
 		return
 	}
 
@@ -172,63 +275,6 @@ func partitionBySize(size int64, step int64, l *Data, env *SymbolTableFrame) (re
 	}
 
 	return ArrayToList(pieces), nil
-}
-
-func partitionByPredicate(determiner *Data, l *Data, env *SymbolTableFrame) (result *Data, err error) {
-	pieces := make([]*Data, 0, 5)
-	falseSection := make([]*Data, 0, 5)
-	trueSection := make([]*Data, 0, 5)
-	var predicateResult *Data
-	for c := l; NotNilP(c); c = Cdr(c) {
-		predicateResult, err = ApplyWithoutEval(determiner, InternalMakeList(Car(c)), env)
-		if err != nil {
-			return
-		}
-		if BooleanValue(predicateResult) {
-			trueSection = append(trueSection, Car(c))
-		} else {
-			falseSection = append(falseSection, Car(c))
-		}
-	}
-
-	pieces = append(pieces, ArrayToList(trueSection))
-	pieces = append(pieces, ArrayToList(falseSection))
-
-	return ArrayToList(pieces), nil
-}
-
-func PartitionImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	determiner := First(args)
-	if !IntegerP(determiner) && !FunctionOrPrimitiveP(determiner) {
-		err = ProcessError("partition requires an integer or function as it's first argument.", env)
-		return
-	}
-
-	var l *Data
-	var step int64
-
-	if IntegerP(determiner) {
-		if IntegerP(Second(args)) {
-			step = IntegerValue(Second(args))
-			l = Third(args)
-		} else {
-			step = IntegerValue(determiner)
-			l = Second(args)
-		}
-	} else {
-		l = Second(args)
-	}
-
-	if !ListP(l) {
-		err = ProcessError("partition requires a list as it's final argument.", env)
-		return
-	}
-
-	if IntegerP(determiner) {
-		return partitionBySize(IntegerValue(determiner), step, l, env)
-	} else {
-		return partitionByPredicate(determiner, l, env)
-	}
 }
 
 func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

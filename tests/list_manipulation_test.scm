@@ -41,11 +41,17 @@
              (assert-eq (flatten* (list)) '())
              (assert-error (flatten* 42)))
 
-         (it "partition-by-size"
-             (assert-eq (partition 2 '(1 2 3 4 5 6 7 8)) '((1 2) (3 4) (5 6) (7 8)))
-             (assert-eq (partition 4 '(1 2 3 4 5 6 7 8)) '((1 2 3 4) (5 6 7 8))))
+		 (it "chunk"
+			 (assert-eq (chunk 3 '(1 2 3 4 5 6)) '((1 2 3) (4 5 6)))
+			 (assert-eq (chunk 3 '(1 2 3 4 5 6 7 8)) '((1 2 3) (4 5 6) (7 8)))
+			 (assert-eq (chunk 3 2 '(1 2 3 4 5 6 7)) '((1 2 3) (3 4 5) (5 6 7) (7))))
 
-         (it "partition-by-predicate"
+		 (it "chunk*"
+			 (assert-eq (chunk* 3 '(1 2 3 4 5 6)) '((1 2 3) (4 5 6)))
+			 (assert-eq (chunk* 3 '(1 2 3 4 5 6 7 8)) '((1 2 3) (4 5 6)))
+			 (assert-eq (chunk* 3 2 '(1 2 3 4 5 6 7)) '((1 2 3) (3 4 5) (5 6 7))))
+
+         (it "partition"
              (assert-eq (partition odd? '(1 2 3 4 5 6 7 8 9)) '((1 3 5 7 9) (2 4 6 8)))
              (assert-eq (partition even? '(1 2 3 4 5 6 7 8 9)) '((2 4 6 8) (1 3 5 7 9))))
 

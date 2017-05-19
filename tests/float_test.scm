@@ -22,7 +22,7 @@
 
          (it "can divide"
              (assert-eq (/ 25.0 5.0)
-                        5)))
+                        5.0)))
 
 (define fx 2.2)
 (define fy 8.8)
