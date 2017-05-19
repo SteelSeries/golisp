@@ -67,10 +67,6 @@ func MakeListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 func ListLengthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	col := First(args)
-	if !ListP(col) {
-		err = ProcessError(fmt.Sprintf("length requires a list but was given %s.", String(col)), env)
-		return
-	}
 
 	return IntegerWithValue(int64(Length(col))), nil
 }
@@ -217,7 +213,6 @@ func chunkImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var start int64 = 0
 	var end int64 = int64(math.Min(float64(size), float64(len(elements))))
 	for start < int64(len(elements)) {
-		fmt.Printf("start: %d, end: %d\n", start, end)
 		pieces = append(pieces, ArrayToList(elements[start:end]))
 		start = start + step
 		end = int64(math.Min(float64(start+size), float64(len(elements))))
