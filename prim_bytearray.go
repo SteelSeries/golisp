@@ -14,6 +14,7 @@ import (
 
 func RegisterBytearrayPrimitives() {
 	MakePrimitiveFunction("bytearray?", "1", BytearrayPImpl)
+	MakeTypedPrimitiveFunction("bytearray-length", "1", BytearrayLengthImpl, []uint32{BoxedObjectType})
 	MakeTypedPrimitiveFunction("list->bytearray", "1", ListToBytesImpl, []uint32{ConsCellType})
 	MakeTypedPrimitiveFunction("bytearray->list", "1", BytesToListImpl, []uint32{BoxedObjectType})
 	MakeTypedPrimitiveFunction("replace-byte", "3", ReplaceByteImpl, []uint32{BoxedObjectType, IntegerType, IntegerType})
@@ -68,6 +69,17 @@ func ListToBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 		}
 	}
 	return ObjectWithTypeAndValue("[]byte", unsafe.Pointer(&bytes)), nil
+}
+
+func BytearrayLengthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	dataByteObject := First(args)
+	if !BytearrayP(dataByteObject) {
+		err = ProcessError(fmt.Sprintf("Bytearray object should return []byte but returned %s.", ObjectType(dataByteObject)), env)
+		return
+	}
+
+	result = IntegerWithValue(int64(Length(dataByteObject)))
+	return
 }
 
 func BytesToListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
