@@ -14,6 +14,7 @@ import (
 func RegisterFramePrimitives() {
 	MakeTypedPrimitiveFunction("make-slotname", "1", MakeSlotnameImpl, []uint32{StringType | SymbolType})
 	MakePrimitiveFunction("make-frame", "*", MakeFrameImpl)
+	MakeTypedPrimitiveFunction("frame-copy", "1", FrameCopyImpl, []uint32{FrameType})
 	MakeTypedPrimitiveFunction("has-slot?", "2", HasSlotImpl, []uint32{FrameType, SymbolType})
 	MakeTypedPrimitiveFunction("get-slot", "2", GetSlotImpl, []uint32{FrameType, SymbolType})
 	MakeTypedPrimitiveFunction("get-slot-or-nil", "2", GetSlotOrNilImpl, []uint32{FrameType, SymbolType})
@@ -58,6 +59,10 @@ func MakeFrameImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 		m.Data[StringValue(k)] = v
 	}
 	return FrameWithValue(&m), nil
+}
+
+func FrameCopyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return Copy(First(args)), nil
 }
 
 func HasSlotImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
