@@ -8,13 +8,65 @@
 ;;; GoLisp compiler - compiler
 
 
-(define opcode-symbols '(ZERO ONE TWO TRUE FALSE NIL LVAR LSET GVAR GSET POP CONST JUMP FJUMP TJUMP SAVE RETURN CALLJ ARGS ARGSDOT FN PRIM FUNC SET_CC CC CAR CDR CADR NOT NILP LIST1 RANDOM PLUS MINUS TIMES DIVIDE LT GT LTEQ GTEQ CONS LIST2 EQV NEQV EQ NEQ EQUAL NEQUAL LIST3 NAMEBANG HALT))
+(define opcode-symbols '(ZERO			; 0
+						 ONE			; 1
+						 TWO			; 2
+						 TRUE			; 3
+						 FALSE			; 4
+						 NIL			; 5
+						 LVAR			; 6
+						 LSET			; 7
+						 GVAR			; 8
+						 GSET			; 9
+						 POP			; 10
+						 CONST			; 11
+						 JUMP			; 12
+						 FJUMP			; 13
+						 TJUMP			; 14
+						 SAVE			; 15
+						 RETURN			; 16
+						 CALLJ			; 17
+						 ARGS			; 18
+						 ARGSDOT		; 19
+						 FN				; 20
+						 PRIM			; 21
+						 FUNC			; 22
+						 SET_CC			; 23
+						 CC				; 24
+						 CAR			; 25
+						 CDR			; 26
+						 CADR			; 27
+						 NOT			; 28
+						 NILP			; 29
+						 LIST1			; 30
+						 RANDOM			; 31
+						 PLUS			; 32
+						 MINUS			; 33
+						 TIMES			; 34
+						 DIVIDE			; 35
+						 LT				; 36
+						 GT				; 37
+						 LTEQ			; 38
+						 GTEQ			; 39
+						 CONS			; 40
+						 LIST2			; 41
+						 EQV			; 42
+						 NEQV			; 43
+						 EQ				; 44
+						 NEQ			; 45
+						 EQUAL			; 46
+						 NEQUAL			; 47
+						 LIST3			; 48
+						 NAMEBANG		; 49
+						 HALT))			; 50
 
-(define opcodes (do ((syms opcode-symbols (cdr syms))
-					 (index 0 (1+ index))
-					 (code-list '() (acons (car syms) index code-list)))
-					((nil? syms)
-					 code-list)))
+(define (make-opcodes syms code mapping)
+  (if (nil? syms)
+	  mapping
+	  (make-opcodes (cdr syms) (1+ code) (acons (car syms) code mapping))))
+
+(define opcodes (make-opcodes opcode-symbols 0 '()))
+
 
 (define *label-num* 0)
 
