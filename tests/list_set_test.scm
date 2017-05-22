@@ -4,7 +4,7 @@
 
          ()
          
-         (it union
+         (it "union"
              (assert-eq (union '(1 2 3) '(3 4 5))
                         '(1 2 3 4 5))
              (assert-eq (union '() '(1))
@@ -30,7 +30,7 @@
                           '(4 5)))
              (assert-error (union 1 2)))
 
-         (it intersection
+         (it "intersection"
              (assert-eq (intersection '(1 2 3) '(2 3 4 5))
                         '(2 3))
              (assert-eq (intersection '() '(1 2))
@@ -53,7 +53,7 @@
              (assert-error (intersection 1 '()))
              (assert-error (intersection'() 2)))
 
-         (it complement
+         (it "complement"
             (assert-eq (complement '(1 2 3 4 5) '(3 5))
                        '(1 2 4))
             (assert-eq (complement '() '(1 2))
