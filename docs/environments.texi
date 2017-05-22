@@ -1,0 +1,243 @@
+@node Environments
+@chapter Environments
+@anchor{environments}
+Scheme (and thus GoLisp) is lexically scoped. This is implemented by the
+creation of a lexical environment (aka symbol table) for each lexical
+scope:
+
+@itemize
+@item
+function/lambda/macro invocations, which holds parameters and any local
+definitions
+
+@item
+@code{let} structures, which hold the @code{let} bindings
+
+@item
+@code{do} structures, which hold the @code{do} bindings
+
+@end itemize
+
+Functions and lambdas capture a reference to the environment in which
+they were defined, so they always have access to it's bindings (that's a
+closure, btw).
+
+Each environment has a connection to it's containing environment, and
+can override/hide bindings in outer scopes. When a symbol is evaluated,
+the most local environment is searched first. If a binding for the
+system isn't found there, the containing environment is searched. This
+continues until a binding for the sybol is found or we go all the way to
+the global environment and still can't find a binding.
+
+Section 3.2 of [1] does a great job of explaining environments in
+Scheme, which is the basis for environments in GoLisp.
+
+In Scheme, some environments are more important than others, mainly as
+they tend to be larger, long lived, and serve as the root of many other
+environments as a program runs. These are known as @emph{top level
+environments}. Specifially, these are the global environment (the only
+environment that is contained by nothing), and any environments directly
+below it in the environment tree. The REPL runs in one such environment,
+which effectively sandboxes it, protecting the bindings in the global
+environment from corruption.
+
+@node environment? object
+@subsection (environment? @emph{object})
+@anchor{environment-object}
+Returns @code{@hashchar{}t} if @emph{object} is an environment; otherwise returns
+@code{@hashchar{}f}.
+
+@node environment-has-parent? environment
+@subsection (environment-has-parent? @emph{environment})
+@anchor{environment-has-parent-environment}
+Returns @code{@hashchar{}t} if @emph{environment} has a parent environment;
+otherwise returns @code{@hashchar{}f}.
+
+@node environment-parent environment
+@subsection (environment-parent @emph{environment})
+@anchor{environment-parent-environment}
+Returns the parent environment of @emph{environment}. It is an error if
+@emph{environment} has no parent.
+
+@node environment-bound-names environment
+@subsection (environment-bound-names @emph{environment})
+@anchor{environment-bound-names-environment}
+Returns a newly allocated list of the names (symbols) that are bound by
+@emph{environment}. This does not include the names that are bound by
+the parent environment of @emph{environment}. It does include names that
+are unassigned or keywords in @emph{environment}.
+
+@node environment-macro-names environment
+@subsection (environment-macro-names @emph{environment})
+@anchor{environment-macro-names}
+Returns a newly allocated list of the names (symbols) that are bound to
+syntactic keywords in @emph{environment}.
+
+@node environment-bindings environment
+@subsection (environment-bindings @emph{environment})
+@anchor{environment-bindings}
+Returns a newly allocated list of the bindings of @emph{environment};
+does not include the bindings of the parent environment. Each element of
+this list takes one of two forms: @code{(symbol)} indicates that
+@emph{symbol} is bound but unassigned, while @code{(symbol object)}
+indicates that @emph{symbol} is bound, and its value is @code{object}.
+
+@node environment-reference-type environment symbol
+@subsection (environment-reference-type @emph{environment}
+@emph{symbol})
+@anchor{environment-reference-type}
+Returns a symbol describing the reference type of @emph{symbol} in
+@emph{environment} or one of its ancestor environments. The result is
+one of the following:
+
+@itemize
+@item
+@code{normal} means @emph{symbol} is a variable binding with a normal
+value.
+
+@item
+@code{unassigned} means @emph{symbol} is a variable binding with no
+value.
+
+@item
+@code{macro} means @emph{symbol} is a keyword binding.
+
+@item
+@code{unbound} means @emph{symbol} has no associated binding.
+
+@end itemize
+
+@node environment-bound? environment symbol
+@subsection (environment-bound? @emph{environment} @emph{symbol})
+@anchor{environment-boundp}
+Returns @code{@hashchar{}t} if @emph{symbol} is bound in @emph{environment} or one
+of its ancestor environments; otherwise returns @code{@hashchar{}f}. This is
+equivalent to
+
+@verbatim
+(not (eq? ’unbound
+          (environment-reference-type environment symbol)))
+@end verbatim
+
+@node environment-assigned? environment symbol
+@subsection (environment-assigned? @emph{environment} @emph{symbol})
+@anchor{environment-assignedp}
+Returns @code{@hashchar{}t} if @emph{symbol} is bound in @emph{environment} or one
+of its ancestor environments, and has a normal value. Returns @code{@hashchar{}f}
+if it is bound but unassigned. Signals an error if it is unbound or is
+bound to a keyword.
+
+@node environment-lookup environment symbol
+@subsection (environment-lookup @emph{environment} @emph{symbol})
+@anchor{environment-lookup}
+@emph{symbol} must be bound to a normal value in @emph{environment} or
+one of its ancestor environments. Returns the value to which it is
+bound. Signals an error if unbound, unassigned, or a keyword.
+
+@node environment-lookup-macro environment symbol
+@subsection (environment-lookup-macro @emph{environment} @emph{symbol})
+@anchor{environment-lookup-macrop}
+If @emph{symbol} is a keyword binding in @emph{environment} or one of
+its ancestor environments, returns the value of the binding. Otherwise,
+returns @code{@hashchar{}f}. Does not signal any errors other than argument-type
+errors.
+
+@node environment-assignable? environment symbol
+@subsection (environment-assignable? @emph{environment} @emph{symbol})
+@anchor{environment-assignablep}
+@emph{symbol} must be bound in @emph{environment} or one of its ancestor
+environments. Returns @code{@hashchar{}t} if the binding may be modified by side
+effect.
+
+@node environment-assign! environment symbol value
+@subsection (environment-assign! @emph{environment} @emph{symbol}
+@emph{value})
+@anchor{environment-assign}
+@emph{symbol} must be bound in @emph{environment} or one of its ancestor
+environments, and must be assignable. Modifies the binding to have
+@emph{value} as its value, and returns an unspecified result.
+
+@node environment-definable? environment symbol
+@subsection (environment-definable? @emph{environment} @emph{symbol})
+@anchor{environment-definablep}
+Returns @code{@hashchar{}t} if @emph{symbol} is definable in @emph{environment},
+and @code{@hashchar{}f} otherwise.
+
+@node environment-define environment symbol value
+@subsection (environment-define @emph{environment} @emph{symbol}
+@emph{value})
+@anchor{environment-define}
+Defines @emph{symbol} to be bound to object in @emph{environment}, and
+returns an unspecified value. Signals an error if @emph{symbol} isn't
+definable in @emph{environment}.
+
+@node eval sexpr environment
+@subsection (eval @emph{sexpr} @emph{environment})
+@anchor{eval-with-environment}
+Evaluates @emph{sexpr} in @emph{environment}. You rarely need eval in
+ordinary programs; it is useful mostly for evaluating expressions that
+have been created ``on the fly'' by a program.
+
+@node system-global-environment
+@subsection (system-global-environment)
+The function @code{system-global-environment} is returns the
+distinguished environment that's the highest level ancestor of all other
+environments. It is the parent environment of all other top-level
+environments. Primitives, system procedures, and most syntactic keywords
+are bound in this environment.
+
+@node the-environment
+@subsection (the-environment)
+Returns the current environment. This form may only be evaluated in a
+top-level environment. An error is signalled if it appears elsewhere.
+
+@node procedure-environment procedure
+@subsection (procedure-environment @emph{procedure})
+@anchor{procedure-environment}
+Returns the closing environment of @emph{procedure}. Signals an error if
+@emph{procedure} is a primitive procedure.
+
+@node make-top-level-environment [names [values]]
+@subsection (make-top-level-environment [@emph{names} [@emph{values}]])
+@anchor{make-top-level-environment}
+Returns a newly allocated top-level environment.
+extend-top-level-environment creates an environment that has parent
+environment, make-top-level-environment creates an environment that has
+parent system-global-environment, and make- root-top-level-environment
+creates an environment that has no parent.
+
+The optional arguments @emph{names} and @emph{values} are used to
+specify initial bindings in the new environment. If specified,
+@emph{names} must be a list of symbols, and @emph{values} must be a list
+of objects. If only @emph{names} is specified, each name in @emph{names}
+will be bound in the environment, but unassigned. If @emph{names} and
+@emph{values} are both specified, they must be the same length, and each
+name in @emph{names} will be bound to the corresponding value in
+@emph{values}. If neither @emph{names} nor @emph{values} is specified,
+the environment will have no initial bindings.
+
+Environments in GoLisp differ slightly from standard Scheme in that they
+have a name attached. For the various forms of @code{let} and @code{do}
+this is simply @code{"let"} and @code{"do"}, respectively. Not of much
+use, but then these are just a byproduct of having lexical scopes.
+What's more useful is the higher level environments. This brings us to
+the real reason for adding environment support: game integration
+sandboxes. When we were writing the game integration functionallity for
+Engine3, we wanted each game's event handling to live in a separate
+sandbox. This is implemented buy creating a new top level environment
+under the global environment. The problem here is that it's off in it's
+own world, separate from the repl. By naming environments (in this case
+by the name of the game), we can add a function to return an environment
+given it's name. That allows us to peek inside the sandbox from the
+repl, examining and manipulating the bindings there. And so we added a
+function to let us do that:
+
+@node find-top-level-environment name
+@subsection (find-top-level-environment @emph{name})
+@anchor{find-top-level-environment-name}
+Returns the top level environment with the given name.
+
+
+@c Local Variables:
+@c mode: texinfo
+@c End:

@@ -1,0 +1,8 @@
+@node Compiling
+@chapter Compiling
+@anchor{compiling}
+
+
+@c Local Variables:
+@c mode: texinfo
+@c End:

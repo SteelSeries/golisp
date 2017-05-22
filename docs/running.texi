@@ -1,0 +1,53 @@
+@node Running GoLisp
+@chapter Running GoLisp
+@anchor{running-golisp}
+Before GoLisp will work, the environment variable @code{GOLISPHOME} must
+be defined as the path where the GoLisp @code{lisp} and @code{tools}
+directories are located.
+
+@verbatim
+golisp [options] [files-to-load] [- program-args]
+@end verbatim
+
+@code{files-to-load} is a series of filenames or directories to be
+loaded at startup (after the core library files are loaded). Any files,
+and contained files, that end in ``.scm'' are loaded.
+
+Supported @code{options}:
+
+@itemize
+@item @strong{@code{-r}} after files have been loaded, drop into the REPL.
+This will cause GoLisp to NOT use the @code{main} function if it is
+present.
+
+@item @strong{@code{-t}} loads and runs tests contained
+in the first @code{files-to-load}. Any remaining file arguments are
+ignored. If a directory is specified then all test files in that
+directory are run.
+
+@item @strong{@code{-v}} use with @code{-t} to request verbose test output.
+
+@item @strong{@code{-d "symbol=value"}} define something in the global
+environment. The lisp equivalent is @code{(define symbol value)}.
+@code{value} must be a literal constant.
+
+@item @strong{@code{-e "code"}} after startup (i.e. the standard library has
+loaded as well as any files specified on the command line), evaluate
+@code{code}. The result is printed and, unless the REPL has been
+requested, GoLisp exits. E.g.
+
+@verbatim
+>:golisp -e "(+ 2 3)"
+==> 5
+@end verbatim
+
+@end itemize
+
+Once options are processed and neither testing mode nor REPL mode have
+been requested and no expression has been supplied to be evaluated, then
+a function named @code{main} is look for. If found it is applied to the
+values, if any, that follow the @code{-}.
+
+@c Local Variables:
+@c mode: texinfo
+@c End:

@@ -1,0 +1,683 @@
+@node Strings
+@chapter Strings
+@anchor{strings}
+A string is a immutable sequence of characters.
+
+A string is written as a sequence of characters enclosed within double
+quotes @code{" "}. To include a double quote inside a string, precede
+the double quote with a backslash `@backslashchar{}' (escape it), as in
+
+@verbatim
+"The word \"recursion\" has many meanings."
+@end verbatim
+
+The printed representation of this string is
+
+@verbatim
+The word "recursion" has many meanings.
+@end verbatim
+
+To include a backslash inside a string, precede it with another
+backslash; for example,
+
+@verbatim
+"Use #\\Control-q to quit."
+@end verbatim
+
+The printed representation of this string is
+
+@verbatim
+Use #\Control-q to quit.
+@end verbatim
+
+The effect of a backslash that doesn't precede a double quote or
+backslash is unspecified in standard Scheme, but GoLisp specifies the
+effect for three other characters: @code{@backslashchar{}t},
+@code{@backslashchar{}n}, and @code{@backslashchar{}f}.  These escape
+sequences are respectively translated into tab, newline, and page
+characters.
+
+If a string literal is continued from one line to another, the string
+will contain the newline character at the line break. Standard Scheme
+does not specify what appears in a string literal at a line break.
+
+The ``length'' of a string is the number of characters that it
+contains.  This number is a non-negative integer that is established
+when the string is created. Each character in a string has an
+``index'', which is a number that indicates the character's position
+in the string. The index of the first (leftmost) character in a string
+is 0, and the index of the last character is one less than the length
+of the string. The ``valid indexes'' of a string are the non-negative
+integers less than the length of the string. When speciffying
+substrings, the following relation must hold between the start and end
+values (@xref{substring}):
+
+@verbatim
+0 <= start <= end <= (string-length string)
+@end verbatim
+
+
+@menu
+* Construction of Strings::
+* String Operations::
+* Comparison of Strings::
+* Alphabetic Case in Strings::
+* Cutting and Pasting Strings::
+* Regexp Support::
+@end menu
+
+@node Construction of Strings
+@section Construction of Strings
+@anchor{construction-of-strings}
+@menu
+* make-string k [char]::
+* string char@dots{}::
+* list->string char-list::
+* string-copy string::
+@end menu
+
+@node make-string k [char]
+@subsection (make-string @emph{k} [@emph{char}])
+@anchor{make-string}
+Returns a newly allocated string of length @emph{k}. If you specify
+@emph{char}, all elements of the string are initialized to @emph{char},
+otherwise the contents of the string are unspecified.
+
+@verbatim
+(make-string 10 #\x)              ==>  "xxxxxxxxxx"
+@end verbatim
+
+@node string char@dots{}
+@subsection (string @emph{char}@dots{})
+@anchor{string-from-char}
+Returns a newly allocated string consisting of the specified characters.
+The arguments should be single character strings.
+
+@verbatim
+(string "a")                         ==>  "a"
+(string "a" "b" #\c)                 ==>  "abc"
+(string #\a #\space #\b #\space #\c) ==>  "a b c"
+(string)                             ==>  undefined
+@end verbatim
+
+@node list->string char-list
+@subsection (list->string @emph{char-list})
+@anchor{list-string}
+@emph{char-list} must be a list of strings. @code{list->string} returns
+a newly allocated string formed by concatenating the elements of
+@emph{char-list}. This is equivalent to @code{(apply string char-list)}.
+The inverse of this operation is @code{string->list}.
+
+@verbatim
+(list->string '(#\a #\b))       ==>  "ab"
+(string->list "Hello")          ==>  (#\H #\e #\l #\l #\o)
+@end verbatim
+
+@node string-copy string
+@subsection (string-copy @emph{string})
+@anchor{string-copy}
+Returns a newly allocated copy of @emph{string}.
+
+@node Selecting String Components
+@section String Operations
+@anchor{selecting-string-components}
+@menu
+* string? object::
+* string-length string::
+* string-null? string::
+* string-ref string k::
+* string-set! string k char::
+@end menu
+
+@node string? object
+@subsection (string? @emph{object})
+@anchor{stringp}
+Returns @code{@hashchar{}t} if @emph{object} is a string; otherwise returns
+@code{@hashchar{}f}.
+
+@verbatim
+(string? "Hi")                  ==>  #t
+(string? 'Hi)                   ==>  #f
+@end verbatim
+
+@node string-length string
+@subsection (string-length @emph{string})
+@anchor{string-length}
+Returns the length of @emph{string} as an non-negative integer.
+
+@verbatim
+(string-length "")              ==>  0
+(string-length "The length")    ==>  10
+@end verbatim
+
+@node string-null? string
+@subsection (string-null? @emph{string})
+@anchor{string-nullp}
+Returns @code{@hashchar{}t} if @emph{string} has zero length; otherwise returns
+@code{@hashchar{}f}.
+
+@verbatim
+(string-null? "")               ==>  #t
+(string-null? "Hi")             ==>  #f
+@end verbatim
+
+@node string-ref string k
+@subsection (string-ref @emph{string} @emph{k})
+@anchor{string-ref}
+Returns character @emph{k} of @emph{string}. @emph{k} must be a valid
+index of @emph{string}.
+
+@verbatim
+(string-ref "Hello" 1)          ==>  #\e
+(string-ref "Hello" 5)          ERROR 5 not in correct range
+@end verbatim
+
+@node string-set! string k char
+@subsection (string-set! @emph{string} @emph{k} @emph{char})
+@anchor{string-set}
+Stores @emph{char} (a single character string) in element @emph{k} of
+@emph{string} and returns an unspecified value. @emph{k} must be a valid
+index of @emph{string}.
+
+@verbatim
+(define s "Dog")              ==>  "Dog"
+(string-set! s 0 #\L)         ==>  "Log"
+s                             ==>  "Log"
+(string-set! s 3 #\t)         ERROR 3 not in correct range
+@end verbatim
+
+@node Comparison of Strings
+@section Comparison of Strings
+@anchor{comparison-of-strings}
+@menu
+* string=? string1 string2::
+* substring=? string1 start1 end1 string2 start2 end2::
+* string-ci=? string1 string2::
+* substring-ci=? string1 start1 end1 string2 start2 end2::
+* string<? string1 string2::
+* substring<? string1 start1 end1 string2 start2 end2::
+* string-ci<? string1 string2::
+* substring-ci<? string1 start1 end1 string2 start2 end2::
+* string>? string1 string2::
+* substring>? string1 start1 end1 string2 start2 end2::
+* string-ci>? string1 string2::
+* substring-ci>? string1 start1 end1 string2 start2 end2::
+* string<=? string1 string2::
+* substring<=? string1 start1 end1 string2 start2 end2::
+* string-ci<=? string1 string2::
+* substring-ci<=? string1 start1 end1 string2 start2 end2::
+* string>=? string1 string2::
+* substring>=? string1 start1 end1 string2 start2 end2::
+* string-ci>=? string1 string2::
+* substring-ci>=? string1 start1 end1 string2 start2 end2::
+* string-compare string1 string2 if-eq if-lt if-gt::
+* string-compare-ci string1 string2 if-eq if-lt if-gt::
+@end menu
+
+@node string=? string1 string2
+@subsection (string=? @emph{string1} @emph{string2})
+@anchor{string-eqp}
+
+@node substring=? string1 start1 end1 string2 start2 end2
+@subsection (substring=? @emph{string1} @emph{start1} @emph{end1} @emph{string2} @emph{start2} @emph{end2})
+@anchor{substring-eqp}
+
+@node string-ci=? string1 string2
+@subsection (string-ci=? @emph{string1} @emph{string2})
+@anchor{string-ci-eqp}
+
+@node substring-ci=? string1 start1 end1 string2 start2 end2
+@subsection (substring-ci=? @emph{string1} @emph{start1} @emph{end1} @emph{string2} @emph{start2} @emph{end2})
+@anchor{substring-ci-eqp}
+Returns @code{@hashchar{}t} if the two strings (substrings) are the same length
+and contain the same characters in the same (relative) positions;
+otherwise returns @code{@hashchar{}f}. @code{string-ci=?} and
+@code{substring-ci=?} don't distinguish uppercase and lowercase letters,
+but @code{string=?} and @code{substring=?} do.
+
+@verbatim
+(string=? "PIE" "PIE")                  ==>  #t
+(string=? "PIE" "pie")                  ==>  #f
+(string-ci=? "PIE" "pie")               ==>  #t
+(substring=? "Alamo" 1 3 "cola" 2 4)    ==>  #t ; compares "la"
+@end verbatim
+
+@node string<? string1 string2
+@subsection (string<? @emph{string1} @emph{string2})
+@anchor{string-ltp}
+
+@node substring<? string1 start1 end1 string2 start2 end2
+@subsection (substring<? string1 @emph{start1} @emph{end1} @emph{string2} @emph{start2} @emph{end2})
+@anchor{substring-ltp}
+
+@node string-ci<? string1 string2
+@subsection (string-ci<? @emph{string1} @emph{string2})
+@anchor{string-ci-ltp}
+
+@node substring-ci<? string1 start1 end1 string2 start2 end2
+@subsection (substring-ci<? @emph{string1} @emph{start1} @emph{end1} @emph{string2} @emph{start2} @emph{end2})
+@anchor{substring-ci-ltp}
+
+@node string>? string1 string2
+@subsection (string>? @emph{string1} @emph{string2})
+@anchor{string-gtp}
+
+@node substring>? string1 start1 end1 string2 start2 end2
+@subsection (substring>? @emph{string1} @emph{start1} @emph{end1} @emph{string2} @emph{start2} @emph{end2})
+@anchor{substring-gtp}
+
+@node string-ci>? string1 string2
+@subsection (string-ci>? @emph{string1} @emph{string2})
+@anchor{string-ci-gtp}
+
+@node substring-ci>? string1 start1 end1 string2 start2 end2
+@subsection (substring-ci>? @emph{string1} @emph{start1} @emph{end1} @emph{string2} @emph{start2} @emph{end2})
+@anchor{substring-ci-gtp}
+
+@node string<=? string1 string2
+@subsection (string<=? @emph{string1} @emph{string2})
+@anchor{string-ltep}
+
+@node substring<=? string1 start1 end1 string2 start2 end2
+@subsection (substring<=? @emph{string1} @emph{start1} @emph{end1} @emph{string2} @emph{start2} @emph{end2})
+@anchor{substring-ltep}
+
+@node string-ci<=? string1 string2
+@subsection (string-ci<=? @emph{string1} @emph{string2})
+@anchor{string-ci-ltep}
+
+@node substring-ci<=? string1 start1 end1 string2 start2 end2
+@subsection (substring-ci<=? @emph{string1} @emph{start1} @emph{end1} @emph{string2} @emph{start2} @emph{end2})
+@anchor{substring-ci-ltep}
+
+@node string>=? string1 string2
+@subsection (string>=? @emph{string1} @emph{string2})
+@anchor{string-gtep}
+
+@node substring>=? string1 start1 end1 string2 start2 end2
+@subsection (substring>=? @emph{string1} @emph{start1} @emph{end1} @emph{string2} @emph{start2} @emph{end2})
+@anchor{substring-gtep}
+
+@node string-ci>=? string1 string2
+@subsection (string-ci>=? @emph{string1} @emph{string2})
+@anchor{string-ci-gtep}
+
+@node substring-ci>=? string1 start1 end1 string2 start2 end2
+@subsection (substring-ci>=? @emph{string1} @emph{start1} @emph{end1} @emph{string2} @emph{start2} @emph{end2})
+@anchor{substring-ci-gtep}
+These procedures compare strings (substrings) according to the order of
+the characters they contain. The arguments are compared using a
+lexicographic (or dictionary) order. If two strings differ in length but
+are the same up to the length of the shorter string, the shorter string
+is considered to be less than the longer string.
+
+@verbatim
+(string<? "cat" "dog")          ==>  #t
+(string<? "cat" "DOG")          ==>  #f
+(string-ci<? "cat" "DOG")       ==>  #t
+(string>? "catkin" "cat")       ==>  #t ; shorter is lesser
+@end verbatim
+
+@node string-compare string1 string2 if-eq if-lt if-gt
+@subsection (string-compare @emph{string1} @emph{string2} @emph{if-eq} @emph{if-lt} @emph{if-gt})
+@anchor{string-compare}
+
+@node string-compare-ci string1 string2 if-eq if-lt if-gt
+@subsection (string-compare-ci @emph{string1} @emph{string2} @emph{if-eq} @emph{if-lt} @emph{if-gt})
+@anchor{string-compare-ci}
+@emph{if-eq}, @emph{if-lt}, and @emph{if-gt} are procedures of no
+arguments (thunks). The two strings are compared; if they are equal,
+@emph{if-eq} is applied, if @emph{string1} is less than @emph{string2},
+@emph{if-lt} is applied, else if @emph{string1} is greater than
+@emph{string2}, @emph{if-gt} is applied. The value of the procedure is
+the value of the thunk that is applied.
+
+@code{string-compare} distinguishes uppercase and lowercase letters;
+@code{string-compare-ci} does not.
+
+@verbatim
+(define (cheer) (display "Hooray!"))
+(define (boo)   (display "Boo-hiss!"))
+(string-compare "a" "b"  cheer  (lambda() 'ignore)  boo)
+        -|  Hooray!
+        ==>  unspecified
+@end verbatim
+
+In GoLisp, only @code{string-compare} and @code{string-compare-ci} are
+available by default. If you want the other comparison functions you
+need to @code{(load "lisp/strings.scm")}.
+
+@node Alphabetic Case in Strings
+@section Alphabetic Case in Strings
+@anchor{alphabetic-case-in-strings}
+@menu
+* string-capitalized? string::
+* substring-capitalized? string start end::
+* string-upper-case? string::
+* substring-upper-case? string start end::
+* string-lower-case? string::
+* substring-lower-case? string start end::
+* string-capitalize string::
+* string-capitalize! string::
+* substring-capitalize! string start end::
+* string-downcase string::
+* string-downcase! string::
+* substring-downcase! string start end::
+* string-upcase string::
+* string-upcase! string::
+* substring-upcase! string start end::
+@end menu
+
+@node string-capitalized? string
+@subsection (string-capitalized? @emph{string})
+@anchor{string-capitalizedp}
+
+@node substring-capitalized? string start end
+@subsection (substring-capitalized? @emph{string} @emph{start} @emph{end})
+@anchor{substring-capitalizedp}
+These procedures return @code{@hashchar{}t} if the first word in the string
+(substring) is capitalized, and any subsequent words are either lower
+case or capitalized. Otherwise, they return @code{@hashchar{}f}. A word is defined
+as a non-null contiguous sequence of alphabetic characters, delimited by
+non-alphabetic characters or the limits of the string (substring). A
+word is capitalized if its first letter is upper case and all its
+remaining letters are lower case.
+
+@verbatim
+(map string-capitalized? '(""    "A"    "art"  "Art"  "ART"))
+                       ==> (#f    #t     #f     #t     #f)
+@end verbatim
+
+@node string-upper-case? string
+@subsection (string-upper-case? @emph{string})
+@anchor{string-upper-casep}
+
+@node substring-upper-case? string start end
+@subsection (substring-upper-case? @emph{string} @emph{start} @emph{end})
+@anchor{substring-upper-casep}
+
+@node string-lower-case? string
+@subsection (string-lower-case? @emph{string})
+@anchor{string-lower-casep}
+
+@node substring-lower-case? string start end
+@subsection (substring-lower-case? @emph{string} @emph{start} @emph{end})
+@anchor{substring-lower-casep}
+These procedures return @code{@hashchar{}t} if all the letters in the string
+(substring) are of the correct case, otherwise they return @code{@hashchar{}f}.
+The string (substring) must contain at least one letter or the
+procedures return @code{@hashchar{}f}.
+
+@verbatim
+(map string-upper-case?  '(""    "A"    "art"  "Art"  "ART"))
+                       ==> (#f    #t     #f     #f     #t)
+@end verbatim
+
+@node string-capitalize string
+@subsection (string-capitalize @emph{string})
+@anchor{string-capitalize}
+
+@node string-capitalize! string
+@subsection (string-capitalize! @emph{string})
+@anchor{string-capitalize-bang}
+
+@node substring-capitalize! string start end
+@subsection (substring-capitalize! @emph{string} @emph{start} @emph{end})
+@anchor{substring-capitalize-bang}
+@code{string-capitalize} returns a newly allocated copy of @emph{string}
+in which the first alphabetic character is uppercase and the remaining
+alphabetic characters are lowercase. For example, @code{"abcDEF"}
+becomes @code{"Abcdef"}. @code{string-capitalize!} is the destructive
+version of @code{string-capitalize}: it alters @emph{string} and returns
+an unspecified value. @code{substring-capitalize!} destructively
+capitalizes the specified part of @emph{string}.
+
+@node string-downcase string
+@subsection (string-downcase @emph{string})
+@anchor{string-downcase}
+
+@node string-downcase! string
+@subsection (string-downcase! @emph{string})
+@anchor{string-downcase-bang}
+
+@node substring-downcase! string start end
+@subsection (substring-downcase! @emph{string} @emph{start} @emph{end})
+@anchor{substring-downcase-bang}
+@code{string-downcase} returns a newly allocated copy of @emph{string}
+in which all uppercase letters are changed to lowercase.
+@code{string-downcase!} is the destructive version of
+@code{string-downcase}: it alters @emph{string} and returns an
+unspecified value. @code{substring-downcase!} destructively changes the
+case of the specified part of @emph{string}.
+
+@verbatim
+(define str "ABCDEFG")          ==>  unspecified
+(substring-downcase! str 3 5)   ==>  "ABCdeFG"
+str                             ==>  "ABCdeFG"
+@end verbatim
+
+@node string-upcase string
+@subsection (string-upcase @emph{string})
+@anchor{string-upcase}
+
+@node string-upcase! string
+@subsection (string-upcase! @emph{string})
+@anchor{string-upcase-bang}
+
+@node substring-upcase! string start end
+@subsection (substring-upcase! @emph{string} @emph{start} @emph{end})
+@anchor{substring-upcase-bang}
+@code{string-upcase} returns a newly allocated copy of @emph{string} in
+which all lowercase letters are changed to uppercase.
+@code{string-upcase!} is the destructive version of
+@code{string-upcase}: it alters @emph{string} and returns an unspecified
+value. @code{substring-upcase!} destructively changes the case of the
+specified part of @emph{string}.
+
+@node Cutting and Pasting Strings
+@section Cutting and Pasting Strings
+@anchor{cutting-and-pasting-strings}
+@menu
+* string-split string separator::
+* string-join strings separator::
+* string-append string@dots{}::
+* substring string start end::
+* string-head string end::
+* string-tail string start::
+* string-pad-left string k [char]::
+* string-pad-right string k [char]::
+* string-trim string [char-set]::
+* string-trim-left string [char-set]::
+* string-trim-right string [char-set]::
+@end menu
+
+@node string-split string separator
+@subsection (string-split @emph{string} @emph{separator})
+@anchor{string-split}
+Splits @emph{string} into a list of substrings that are separated by
+@emph{separator}.
+
+@verbatim
+(string-split "1-2-3" "-")) ==> ("1" "2" "3")
+@end verbatim
+
+@node string-join strings separator
+@subsection (string-join @emph{strings} @emph{separator})
+@anchor{string-join}
+Joins the list of @emph{strings} into a single string by interposing
+@emph{separator}.
+
+@verbatim
+(string-join '("1" "2" "3") "-") ==> "1-2-3"
+@end verbatim
+
+@node string-append string@dots{}
+@subsection (string-append @emph{string}@dots{})
+@anchor{string-append}
+Returns a newly allocated string made from the concatenation of the
+given strings.
+
+@verbatim
+(string-append)                 ==>  undefined
+(string-append "*" "ace" "*")   ==>  "*ace*"
+(string-append "" "" "")        ==>  ""
+(eqv? str (string-append str))  ==>  #f ; newly allocated
+@end verbatim
+
+@node substring string start end
+@subsection (substring @emph{string} @emph{start} @emph{end})
+@anchor{substring}
+Returns a newly allocated string formed from the characters of
+@emph{string} beginning with index @emph{start} (inclusive) and ending
+with @emph{end} (exclusive).
+
+@verbatim
+(substring "" 0 0)              ==> ""
+(substring "arduous" 2 5)       ==> "duo"
+(substring "arduous" 2 8)       ERROR 8 not in correct range
+
+(define (string-copy s)
+  (substring s 0 (string-length s)))
+@end verbatim
+
+@node string-head string end
+@subsection (string-head @emph{string} @emph{end})
+@anchor{string-head}
+Returns a newly allocated copy of the initial substring of
+@emph{string}, up to but excluding @emph{end}. It could have been
+defined by:
+
+@verbatim
+(define (string-head string end)
+  (substring string 0 end))
+
+(string-head "uncommon" 2)      ==> "un"
+@end verbatim
+
+@node string-tail string start
+@subsection (string-tail @emph{string} @emph{start})
+@anchor{string-tail}
+Returns a newly allocated copy of the final substring of @emph{string},
+starting at index @emph{start} and going to the end of @emph{string}. It
+could have been defined by:
+
+@verbatim
+(define (string-tail string start)
+  (substring string start (string-length string)))
+
+(string-tail "uncommon" 2)      ==>  "common"
+@end verbatim
+
+@node string-pad-left string k [char]
+@subsection (string-pad-left @emph{string} @emph{k} [@emph{char}])
+@anchor{string-pad-left}
+
+@node string-pad-right string k [char]
+@subsection (string-pad-right @emph{string} @emph{k} [@emph{char}])
+@anchor{string-pad-right}
+These procedures return a newly allocated string created by padding
+@emph{string} out to length @emph{k}, using @emph{char}. If @emph{char}
+is not given, it defaults to @code{#\space}. If @emph{k} is less than
+the length of @emph{string}, the resulting string is a truncated form of
+@emph{string}. @code{string-pad-left} adds padding characters or
+truncates from the beginning of the string (lowest indices), while
+@code{string-pad-right} does so at the end of the string (highest
+indices).
+
+@verbatim
+(string-pad-left "hello" 4)             ==>  "ello"
+(string-pad-left "hello" 8)             ==>  "   hello"
+(string-pad-left "hello" 8 #\*)         ==>  "***hello"
+(string-pad-right "hello" 4)            ==>  "hell"
+(string-pad-right "hello" 8)            ==>  "hello   "
+(string-pad-right "hello" 8 #\*)        ==>  "hello***"
+@end verbatim
+
+@node string-trim string [char-set]
+@subsection (string-trim @emph{string} [@emph{char-set}])
+@anchor{string-trim}
+
+@node string-trim-left string [char-set]
+@subsection (string-trim-left @emph{string} [@emph{char-set}])
+@anchor{string-trim-left}
+
+@node string-trim-right string [char-set]
+@subsection (string-trim-right @emph{string} [@emph{char-set}])
+@anchor{string-trim-right}
+Returns a newly allocated string created by removing all characters that
+are not in @emph{char-set} from: @code{string-trim} both ends of
+@emph{string}; @code{string-trim-left} the beginning of @emph{string};
+or @code{string-trim-right} the end of @emph{string}. @emph{char-set}
+defaults to @code{char-set:not-whitespace}.
+
+@verbatim
+(string-trim "  in the end  ")          ==>  "in the end"
+(string-trim "              ")          ==>  ""
+(string-trim "100th" char-set:numeric)  ==>  "100"
+(string-trim-left "-.-+-=-" (char-set #\+))
+                                        ==>  "+-=-"
+(string-trim "but (+ x y) is" (char-set #\( #\)))
+                                        ==>  "(+ x y)"
+@end verbatim
+
+
+@deffn procedure string-prefix? string1 string2
+@deffnx procedure substring-prefix? string1 start1 end1 string2 start2 end2
+@deffnx procedure string-prefix-ci? string1 string2
+@deffnx procedure substring-prefix-ci? string1 start1 end1 string2 start2 end2
+@cindex prefix, of string
+These procedures return @code{#t} if the first string (substring) forms
+the prefix of the second; otherwise returns @code{#f}.  The @code{-ci}
+procedures don't distinguish uppercase and lowercase letters.
+
+@example
+@group
+(string-prefix? "abc" "abcdef")         @result{}  #t
+(string-prefix? "" any-string)          @result{}  #t
+@end group
+@end example
+@end deffn
+
+@deffn procedure string-suffix? string1 string2
+@deffnx procedure substring-suffix? string1 start1 end1 string2 start2 end2
+@deffnx procedure string-suffix-ci? string1 string2
+@deffnx procedure substring-suffix-ci? string1 start1 end1 string2 start2 end2
+@cindex suffix, of string
+These procedures return @code{#t} if the first string (substring) forms
+the suffix of the second; otherwise returns @code{#f}.  The @code{-ci}
+procedures don't distinguish uppercase and lowercase letters.
+
+@example
+@group
+(string-suffix? "ous" "bulbous")        @result{}  #t
+(string-suffix? "" any-string)          @result{}  #t
+@end group
+@end example
+@end deffn
+
+
+@node Regexp Support
+@section Regexp Support
+@anchor{regexp-support}
+There is some preliminary support for regular expressions.
+@menu
+* re-string-match-go regexp string::
+@end menu
+
+@node re-string-match-go regexp string
+@subsection (re-string-match-go @emph{regexp} @emph{string})
+@anchor{re-string-match-go}
+This matches regexp against the respective string, returning #f for no
+match, or a list of strings (see below) if the match succeeds.
+
+When a successful match occurs, the above procedure returns a list of
+strings. Each string corresponds to an instance of the
+regular-expression grouping operator `('. Additionally, the first string
+corresponds to the entire substring matching the regular expression.
+
+Note that this is different from the Scheme matching procedure.
+
+
+@c Local Variables:
+@c mode: texinfo
+@c End:

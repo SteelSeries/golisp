@@ -1,0 +1,69 @@
+@node Logical
+@chapter Logical
+@anchor{logical}
+
+@node boolean=? object1 object2
+@subsection (boolean=? @emph{object1} @emph{object2})
+@anchor{boolean-eqp}
+Returns whether @emph{object1} and @emph{object2} are both truthy or are
+both falsy.
+
+@node Binary
+@chapter Binary
+@anchor{binary}
+
+@node binary-and int-1 int-2
+@subsection (binary-and @emph{int-1} @emph{int-2})
+@anchor{binary-and}
+Performs a bitwise AND of @emph{int-1} and @emph{int-2}, returning the
+result.
+
+@verbatim
+(number->string (binary-and #xaa #x0f) 16) ==> "a"
+(number->string (binary-and #xaa #xf0) 16) ==> "a0"
+@end verbatim
+
+@node binary-or int-1 int-2
+@subsection (binary-or @emph{int-1} @emph{int-2})
+@anchor{binary-or}
+Performs a bitwise OR of @emph{int-1} and @emph{int-2}, returning the
+result.
+
+@verbatim
+(number->string (binary-or #xaa #x0f) 16) ==> "af"
+(number->string (binary-or #xaa #xf0) 16) ==> "fa"
+@end verbatim
+
+@node binary-not int
+@subsection (binary-not @emph{int})
+@anchor{binary-not}
+Performs a bitwise NOT of @emph{int}, returning the result.
+
+@verbatim
+(number->string (binary-not #x000000aa) 16) ==> "ffffff55"
+@end verbatim
+
+@node left-shift int count
+@subsection (left-shift @emph{int} @emph{count})
+@anchor{left-shift}
+Returns @emph{int} shifted left by @emph{count} bits. The original value is not changed.  Zeros are shifed in as required.
+
+@verbatim
+(number->string (left-shift (string->number "10101010" 2) 1) 2) ==> "101010100"
+(number->string (left-shift (string->number "10101010" 2) 3) 2) ==> "10101010000"
+@end verbatim
+
+@node right-shift int count
+@subsection (right-shift @emph{int} @emph{count})
+@anchor{right-shift}
+Returns @emph{int} shifted right by @emph{count} bits. The original value is not changed. Zeros are shifted in as required.
+
+@verbatim
+(number->string (right-shift (string->number "10000" 2) 1) 2) ==> "1000"
+(number->string (right-shift (string->number "10000" 2) 4) 2) ==> "1"
+@end verbatim
+
+
+@c Local Variables:
+@c mode: texinfo
+@c End:

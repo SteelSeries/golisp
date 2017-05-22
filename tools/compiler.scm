@@ -20,10 +20,14 @@
 ;;; Build a new function.
 
 (define (optimize-and-assemble-function f)
+;  (dump-fn f)
   (assemble-function (optimize-function f)))
 
 
 (define (create-compiled-function name env args code)
+  (if (and (list? code)
+		   (eqv? (length code) 0))
+	(error "setting code to empty"))
   (optimize-and-assemble-function (make-compiled-function name env args code)))
 
 ;;;-----------------------------------------------------------------------------
@@ -38,7 +42,7 @@
 	(format #f "~VA~A~A: " indent "" prefix i)))
 
 
-;  5: 16                              ; RETURN
+										;  5: 16                              ; RETURN
 
 ;;; Print all the instructions in a function.
 ;;; If the argument is not a function, just princ it,
@@ -46,38 +50,48 @@
 
 (define (show-fn fn . options)
   (let ((stream (if (nil? options)
-					*standard-output*
-					(car options)))
+				  *standard-output*
+				  (car options)))
 		(indent (if (or (nil? options) (nil? (cdr options)))
-				   0
-				   (cadr options))))
+				  0
+				  (cadr options))))
 	(if (not (compiled-function? fn))
-		(format stream "~8A" fn)
-		(begin
-		  (newline stream)
-		  (for-each (lambda (i) 
-					  (let* ((instr (vector-ref (compiled-code fn) i))
-							 (instr-length (vector-length instr)))
-						(format stream (format-code-index i indent))
-						(vector-for-each (lambda (arg)
-										   (show-fn arg stream (+ indent 8)))
-										 (subvector instr 0 (min (list instr-length 3))))
-						(format stream "~VA; ~A ~A ~A ~A"
-								(if (eqv? 20 (vector-first instr))
-								  37
-								  (+ (- 8 indent) (vector-ref #(0 16 8 0 0) instr-length))) ""
-								(car (rassoc (vector-ref instr 0) opcodes))
-								(if (> instr-length 1) (vector-ref instr 1) "")
-								(if (> instr-length 2) (vector-ref instr 2) "")
-								(if (> instr-length 3) (vector-ref instr 3) ""))
-						(newline stream)))
-					(iota (vector-length (compiled-code fn))))))))
+	  (format stream "~8A" fn)
+	  (let ((code (compiled-code fn)))
+		(newline stream)
+		(vector-for-each (lambda (i instr) 
+						   (let* ((instr-length (vector-length instr)))
+							 (format stream (format-code-index i indent))
+							 (vector-for-each (lambda (arg)
+												(show-fn arg stream (+ indent 8)))
+											  (subvector instr 0 (min (list instr-length 3))))
+							 (format stream "~VA; ~A ~A ~A ~A"
+									 (if (eqv? 20 (vector-first instr))
+										 37
+										 (+ (- 8 indent) (vector-ref #(0 16 8 0 0) instr-length))) ""
+										 (car (rassoc (vector-ref instr 0) opcodes))
+										 (if (> instr-length 1) (vector-ref instr 1) "")
+										 (if (> instr-length 2) (vector-ref instr 2) "")
+										 (if (> instr-length 3) (vector-ref instr 3) ""))
+							 (newline stream)))
+						 (list->vector (interval 0 (-1+ (vector-length code))))
+						 code)))))
+
+
+(define (dump-fn fn)
+  (format #t
+		  "=>Compiled function:~%=>  Name: ~A~%=>  Args: ~A~%=>  Env: ~A~%=>  Code: ~A~%"
+		  (compiled-name fn)
+		  (compiled-args fn)
+		  (compiled-env fn)
+		  (compiled-code fn)))
 
 
 ;;; Compile an expression and show the resulting code
 
 (define (comp-show x)
   (let ((fn (compile x)))
+;	(dump-fn fn)
 	(format #t "Result:~%")
 	(show-fn fn)
 	nil))
@@ -99,8 +113,8 @@
 		 nil)
 		((list? raw)
 		 (if (eqv? (car raw) 'make-frame)
-			 (apply make-frame (reconstitute-code (cdr raw)))
-			 (map reconstitute-code raw)))
+		   (apply make-frame (reconstitute-code (cdr raw)))
+		   (map reconstitute-code raw)))
 		((vector? raw)
 		 (vector-map reconstitute-code raw))
 		(else

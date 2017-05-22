@@ -1,0 +1,179 @@
+@node Extending GoLisp
+@chapter Extending GoLisp
+@anchor{extending-golisp}
+@menu
+* Defining primitives::
+* Defining primitives with argument type checking::
+* Defining special forms::
+* Data::
+@end menu
+
+@node Defining primitives
+@section Defining primitives
+@anchor{defining-primitives}
+The Go function @code{MakePrimitiveFunction} allows you to create
+primitive functions.
+
+@verbatim
+MakePrimitiveFunction(name string, argCount string,
+                      function func(*Data, *SymbolTableFrame)(*Data, error))
+@end verbatim
+
+The arguments are:
+
+@enumerate 
+@item
+The function name. This is the name of a symbol which will be used to
+reference the function.
+
+@item
+An argument count expectation. This is a string that specifies how many
+arguments the primitive expects. It can take several forms:
+
+@itemize
+@item
+A single, specific number. E.g. exactly two: @code{"2"}
+
+@item
+A minimum number. E.g. at least two: @code{">=2"}
+
+@item
+A range of values. E.g. between two and five, inclusive: @code{"(2,5)"}
+
+@item
+One of a selection of the above: E.g. @code{"2|3|>=5"}
+
+@item
+An unspecified number, any checking must be done in the primitive
+definition: @code{"*"}
+
+@end itemize
+
+@item
+The Go function which implements the primitive. This function
+@strong{must} have the signature
+
+@verbatim
+ func <Name>(args *Data, env *SymbolTableFrame) (*Data, error)
+@end verbatim
+
+@end enumerate
+
+The implementing function takes two parameters as seen above:
+
+@enumerate 
+@item
+A Lisp list containing the arguments
+
+@item
+The environment in which the primitive is being evaluated. This is used
+when calling @code{Eval} or @code{Apply}, as well as for any symbol
+lookups or bindings.
+
+@end enumerate
+
+Primitives use, like functions defined in LISP, applicative evaluation
+order. That means that all arguments are evaluated and the resulting
+values passed to the function. This frees you from having to evaluate
+the arguments and handle errors. You still have to verify the number of
+arguments (only if you used -1 as trhe argument cound in the
+@code{MakePrimitiveFunction} call) and their type, if applicable.
+
+@verbatim
+MakeSpecialForm(name string,
+                argCount int,
+                function func(*Data, *SymbolTableFrame) (*Data, error))
+@end verbatim
+
+An example:
+
+@verbatim
+MakePrimitiveFunction("!", "1", BooleanNot)
+
+func BooleanNot(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    val := BooleanValue(First(args))
+    return BooleanWithValue(!val), nil
+ }
+@end verbatim
+
+You can extend the goLisp runtime without changing any of it's code. You
+simply import the golisp package (typically aliased to @code{.} to make
+the code less noisy) and place calls to @code{MakePrimitiveFunction} in
+your package's @code{init} block.
+
+@node Defining primitives with argument type checking
+@section Defining primitives with argument type checking
+@anchor{defining-primitives-with-argument-type-checking}
+There is also the @code{MakeTypedPrimitiveFunction} function that takes
+an additional argument which is an array of @code{uint32}s, one element
+for each argument. If the defined function accepts an arbitrary number
+of arguments, the final type specification is used for the remainder.
+For example, if there are 3 argument type specifications and the
+function is passed 5 arguments, the final specification is used for the
+3rd, 4th, and 5th arguments.
+
+@verbatim
+MakeTypedPrimitiveFunction("mqtt/publish", "3", mqttPublishImpl, 
+                           []uint32\{StringType, IntegerType, StringType\})
+@end verbatim
+
+There is not currently a way to provide a type specification for a
+primitive's return value.
+
+@node Defining special forms
+@section Defining special forms
+@anchor{defining-special-forms}
+There is another, very similar function that you will typically not need
+unless you are hacking on the language itself (as opposed to adding
+builting functions):
+
+@verbatim
+MakeSpecialForm(name string,
+                argCount int,
+                function func(*Data, *SymbolTableFrame) (*Data, error))
+@end verbatim
+
+Arguments and the signature of the implementing function are identical
+to @code{MakePrimitiveFunction}. The only difference is that this
+defines a @emph{special form} which uses normal evaluation order. I.e.
+arguments are not evaluated before calling the function; the raw
+sexpressions are passed in. Thus the implementing function has full
+control over what gets evaluated and when. For example:
+
+@verbatim
+MakeSpecialForm("if", "2|3", IfImpl)
+
+func IfImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+    c, err := Eval(First(args), env)
+    if err != nil {
+        return
+    }
+
+    if BooleanValue(c) {
+        return Eval(Second(args), env)
+    } else {
+        return Eval(Third(args), env)
+    }
+}
+@end verbatim
+
+@node Data
+@section Data
+@anchor{data}
+The core lisp data element is the data type which logically contains a
+type tag and a value. The type tags are defined by the constants:
+@code{ConsCellType}, @code{NumberType}, @code{BooleanType},
+@code{StringType}, @code{SymbolType}, @code{FunctionType},
+@code{PrimitiveType}, @code{ObjectType}. As the language evolves this
+list (and the associated functions) will change. Refer to the file
+@code{data.go} for the definitive information.
+
+The types are described earlier. If you need to check the type of a
+piece of data you can fetch it's type using the
+@code{TypeOf(*Data) uint32} function and then compare it to a type tag
+constant. Additionally there are predicate functions for the most common
+types that have the general form:
+
+@c Local Variables:
+@c mode: texinfo
+@c End:

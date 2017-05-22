@@ -1,0 +1,413 @@
+@node Miscellaneous Datatypes
+@chapter Miscellaneous Datatypes
+@anchor{miscellaneous-datatypes}
+@menu
+* Booleans::
+* Symbols::
+* Bytearrays::
+@end menu
+
+@node Booleans
+@section Booleans
+@anchor{booleans}
+The ``boolean objects'' are ``true'' and ``false''. The boolean constant
+true is written as @code{@hashchar{}t}, and the boolean constant false is written
+as @code{@hashchar{}f}.
+
+The primary use for boolean objects is in the conditional expressions
+@code{if}, @code{cond}, @code{and}, and @code{or}; the behavior of these
+expressions is determined by whether objects are true or false. These
+expressions count only @code{@hashchar{}f} as false. They count everything else,
+including @code{@hashchar{}t}, pairs, symbols, numbers, strings, vectors, and
+procedures as true.
+
+Boolean constants evaluate to themselves, so you don't need to quote
+them.
+
+@verbatim
+ #t                                      ==>  #t
+ #f                                      ==>  #f
+ '#f                                     ==>  #f
+ t                                       ERROR Unbound variable
+@end verbatim
+
+@menu
+* false::
+* true::
+* boolean? object::
+* not object::
+* false? object::
+* boolean=? obj1 obj2::
+* boolean/and object@dots{}::
+* boolean/or object@dots{}::
+@end menu
+
+@node false
+@subsection false
+
+@node true
+@subsection true
+These variables are bound to the objects @code{@hashchar{}f} and @code{@hashchar{}t}
+respectively.
+
+Note that the symbol @code{true} is not equivalent to @code{@hashchar{}t}, and the
+symbol @code{false} is not equivalent to @code{@hashchar{}f}.
+
+@node boolean? object
+@subsection (boolean? @emph{object})
+@anchor{booleanp}
+Returns @code{@hashchar{}t} if @emph{object} is either @code{@hashchar{}t} or @code{@hashchar{}f};
+otherwise returns @code{@hashchar{}f}.
+
+@verbatim
+(boolean? #f)                           ==>  #t
+(boolean? 0)                            ==>  #f
+@end verbatim
+
+@node not object
+@subsection (not @emph{object})
+@anchor{notp}
+
+@node false? object
+@subsection (false? @emph{object})
+@anchor{falsep}
+These procedures return @code{@hashchar{}t} if @emph{object} is false; otherwise
+they return @code{@hashchar{}f}. In other words they @emph{invert} boolean values.
+These two procedures have identical semantics; their names are different
+to give different connotations to the test.
+
+@verbatim
+(not #t)                                ==>  #f
+(not 3)                                 ==>  #f
+(not (list 3))                          ==>  #f
+(not #f)                                ==>  #t
+@end verbatim
+
+@node boolean=? obj1 obj2
+@subsection (boolean=? @emph{obj1} @emph{obj2})
+@anchor{booleaneqp}
+This predicate is true iff @emph{obj1} and @emph{obj2} are either both
+true or both false.
+
+@node boolean/and object@dots{}
+@subsection (boolean/and @emph{object}@dots{})
+@anchor{booleanandp}
+This procedure returns @code{@hashchar{}t} if none of its arguments are @code{@hashchar{}f}.
+Otherwise it returns @code{@hashchar{}f}.
+
+@node boolean/or object@dots{}
+@subsection (boolean/or @emph{object}@dots{})
+@anchor{booleanorp}
+This procedure returns @code{@hashchar{}f} if all of its arguments are @code{@hashchar{}f}.
+Otherwise it returns @code{@hashchar{}t}.
+
+@node Symbols
+@section Symbols
+@anchor{symbols}
+Unlike MIT/GNU Scheme, GoLisp only provides one type of symbol:
+``interned''. Interned symbols are far more common than uninterned
+symbols, and there are more ways to create them. We decided that
+uninterned symbols were not necessary for our uses. Throughtout this
+document ``symbol'' means ``interned symbol''
+
+Symbols have an extremely useful property: any two symbols whose names
+are the same, in the sense of @code{string=?}, are the same object (i.e.
+they are @code{eq?} to one another). The term ``interned'' refers to the
+process of ``interning'' by which this is accomplished.
+
+The rules for writing an symbol are the same as the rules for writing an
+identifier. Any symbol that has been returned as part of a literal
+expression, or read using the @code{read} procedure and subsequently
+written out using the @code{write} procedure, will read back in as the
+identical symbol (in the sense of @code{eq?}).
+
+Usually it is also true that reading in an symbol that was previously
+written out produces the same symbol. An exception are symbols created
+by the procedures @code{string->symbol} and @code{intern}; they can
+create symbols for which this write/read invariance may not hold because
+the symbols' names contain special characters.
+@menu
+* symbol? object::
+* symbol->string symbol::
+* intern string::
+* string->symbol string::
+* gensym [prefix]::
+* symbol<? symbol1 symbol2::
+@end menu
+
+@node symbol? object
+@subsection (symbol? @emph{object})
+@anchor{symbol-object-1}
+Returns @code{@hashchar{}t} if @emph{object} is a symbol, otherwise returns
+@code{@hashchar{}f}.
+
+@verbatim
+(symbol? 'foo)                                  ==>  #t
+(symbol? (car '(a b)))                          ==>  #t
+(symbol? "bar")                                 ==>  #f
+@end verbatim
+
+@node symbol->string symbol
+@subsection (symbol->string @emph{symbol})
+@anchor{symbol-string-symbol}
+Returns the name of @emph{symbol} as a string. If @emph{symbol} was
+returned by @code{string->symbol}, the value of this procedure will be
+identical (in the sense of @code{string=?}) to the string that was
+passed to @code{string->symbol}. Unlike MIT/GNU Scheme, the result of
+@code{symbol->string} is not converted to lower case.
+
+@verbatim
+(symbol->string 'flying-fish)           ==>  "flying-fish"
+(symbol->string 'Martin)                ==>  "Martin"
+(symbol->string (string->symbol "Malvina"))
+                                        ==>  "Malvina"
+@end verbatim
+
+@node intern string
+@subsection (intern @emph{string})
+@anchor{intern-string}
+Returns the symbol whose name is @emph{string}. This is the preferred
+way to create symbols, as it guarantees the following independent of
+which case the implementation uses for symbols' names:
+
+@verbatim
+(eq? 'bitBlt (intern "bitBlt")) ==>     #t
+@end verbatim
+
+The user should take care that @emph{string} obeys the rules for
+identifiers, otherwise the resulting symbol cannot be read as itself.
+
+@node string->symbol string
+@subsection (string->symbol @emph{string})
+@anchor{string-symbol-string}
+Returns the interned symbol whose name is @emph{string}. Although you
+can use this procedure to create symbols with names containing special
+characters, it's usually a bad idea to create such symbols because they
+cannot be read as themselves. See @code{symbol->string}.
+
+@verbatim
+(eq? 'mISSISSIppi 'mississippi)         ==>  #t
+(string->symbol "mISSISSIppi")
+     ==>  the symbol with the name "mISSISSIppi"
+(eq? 'bitBlt (string->symbol "bitBlt")) ==>  #t
+(eq? 'JollyWog
+      (string->symbol
+        (symbol->string 'JollyWog)))    ==>  #t
+(string=? "K. Harper, M.D."
+           (symbol->string
+             (string->symbol
+               "K. Harper, M.D.")))     ==>  #t
+@end verbatim
+
+@node gensym [prefix]
+@subsection (gensym [@emph{prefix}])
+@anchor{gensym-prefix}
+Create a new, unique symbol made from the @emph{prefix} (or
+@code{GENSYM} if a prefix is omitted) and an increasing integer. This is
+useful when you are generating code and need a unique name (in a macro,
+for example).
+
+@verbatim
+(gensym)      ==> GENSYM1
+(gensym)      ==> GENSYM2
+(gensym)      ==> GENSYM3
+
+(gensym "hi") ==> hi1
+(gensym "ho") ==> ho1
+(gensym "hi") ==> hi2
+(gensym "ho") ==> ho2
+(gensym "ho") ==> ho3
+(gensym "hi") ==> hi3
+
+(gensym)      ==> GENSYM4
+@end verbatim
+
+@node symbol<? symbol1 symbol2
+@subsection (symbol<? @emph{symbol1} @emph{symbol2})
+@anchor{symbol-symbol1-symbol2}
+This procedure computes a total order on symbols. It is equivalent to
+
+@verbatim
+(string<? (symbol->string symbol1)
+          (symbol->string symbol2))
+@end verbatim
+
+@node Bytearrays
+@section Bytearrays
+@anchor{bytearrays}
+Bytearrays are an extension that GoLisp makes to Scheme arising from the
+need to implement byte level communication protocols for SteelSeries
+Engine 3.
+@menu
+* list->bytearray list of bytes and/or bytearrays::
+* bytearray->list bytearray::
+* replace-byte bytearray index value::
+* replace-byte! bytearray index value::
+* extract-byte bytearray index::
+* append-bytes bytearray byte@dots{}::
+* append-bytes bytearray list of bytes::
+* append-bytes bytearray bytearray@dots{}::
+* append-bytes! bytearray byte@dots{}::
+* append-bytes! bytearray list of bytes::
+* append-bytes! bytearray bytearray@dots{}::
+* take k bytearray::
+* drop k bytearray::
+* extract-bytes bytearray index length::
+@end menu
+
+@node list->bytearray list of bytes and/or bytearrays
+@subsection (list->bytearray @emph{list of bytes and/or bytearrays})
+@anchor{list-bytearray-list-of-bytes-andor-bytearrays}
+The list must be comprised of elements that are either numbers between 0
+and 255, inclusive, or existing bytearray objects. The result is an
+@emph{object} containing a @code{[]byte}.
+
+@verbatim
+(list->bytearray '(1 2 3 4))     ==> [1 2 3 4]
+(list->bytearray '(1 [2 3] 4))   ==> [1 2 3 4]
+(list->bytearray '([1 2] [3 4])) ==> [1 2 3 4]
+@end verbatim
+
+@node bytearray->list bytearray
+@subsection (bytearray->list @emph{bytearray})
+@anchor{bytearray-list-bytearray}
+This is the opposite of the previous function. The result is a list
+containing the numbers in the bytearray.
+
+@verbatim
+(bytearray->list [1 2 3 4]) ==> (1 2 3 4)
+@end verbatim
+
+@node replace-byte bytearray index value
+@subsection (replace-byte @emph{bytearray} @emph{index} @emph{value})
+@anchor{replace-byte-bytearray-index-value}
+Makes a copy of @emph{bytearray} and replaces the byte at @emph{index}
+with @emph{value}. The new bytearray with the replaced byte is returned.
+@emph{index} must be a valid index into the byte array (zero based), and
+@emph{value} must be a valid byte value, i.e. between 0 and 255,
+inclusive.
+
+@verbatim
+(define a [1 2 3 4])    ==> [1 2 3 4]
+(replace-byte a 2 100)  ==> [1 2 100 4]
+a                       ==> [1 2 3 4]
+@end verbatim
+
+@node replace-byte! bytearray index value
+@subsection (replace-byte! @emph{bytearray} @emph{index} @emph{value})
+@anchor{replace-byte-bytearray-index-value-1}
+Replaces the byte at @emph{index} with @emph{value}. @emph{index} must
+be a valid index into the byte array (zero based), and @emph{value} must
+be a valid byte value, i.e. between 0 and 255, inclusive. The original
+byte array is modified and the returned bytearray object is the one that
+is passed to the function.
+
+@verbatim
+(define a [1 2 3 4])    ==> [1 2 3 4]
+(replace-byte! a 2 100) ==> [1 2 100 4]
+a                       ==> [1 2 100 4]
+@end verbatim
+
+@node extract-byte bytearray index
+@subsection (extract-byte @emph{bytearray} @emph{index})
+@anchor{extract-byte-bytearray-index}
+Fetch and return the byte at @emph{index}. @emph{index} must be a valid
+index into the byte array (zero based).
+
+@verbatim
+(extract-byte [1 2 3 4] 2) ==> 3
+@end verbatim
+
+@node append-bytes bytearray byte@dots{}
+@subsection (append-bytes @emph{bytearray} @emph{byte}@dots{})
+@anchor{append-bytes-bytearray-byte}
+
+@node append-bytes bytearray list of bytes
+@subsection (append-bytes @emph{bytearray} @emph{list of bytes})
+@anchor{append-bytes-bytearray-list-of-bytes}
+
+@node append-bytes bytearray bytearray@dots{}
+@subsection (append-bytes @emph{bytearray} @emph{bytearray}@dots{})
+@anchor{append-bytes-bytearray-bytearray}
+Appends the rest of the arguments to a copy of the bytearray that is the
+first arg. The copy is returned. Things that can be appended are: a
+single byte, a sequence of bytes (as a sequence of separate arguments),
+a list of bytes, a bytearray object, a sequence of bytearray objects (as
+a sequence of separate arguments), and code that evaluates to a byte,
+list of bytes, or bytearray.
+
+@verbatim
+(append-bytes [1 2 3] 4)            ==> [1 2 3 4]
+(append-bytes [1 2 3] 4 5 6)        ==> [1 2 3 4 5 6]
+(append-bytes [1 2 3] '(4 5 6))     ==> [1 2 3 4 5 6]
+(append-bytes [1 2 3] [4 5 6])        ==> [1 2 3 4 5 6]
+(append-bytes [1 2 3] [4 5] [6])      ==> [1 2 3 4 5 6]
+(append-bytes [1 2 3] (list 4 5 6))  ==> [1 2 3 4 5 6]
+@end verbatim
+
+@node append-bytes! bytearray byte@dots{}
+@subsection (append-bytes! @emph{bytearray} @emph{byte}@dots{})
+@anchor{append-bytes-bytearray-byte-1}
+
+@node append-bytes! bytearray list of bytes
+@subsection (append-bytes! @emph{bytearray} @emph{list of bytes})
+@anchor{append-bytes-bytearray-list-of-bytes-1}
+
+@node append-bytes! bytearray bytearray@dots{}
+@subsection (append-bytes! @emph{bytearray} @emph{bytearray}@dots{})
+@anchor{append-bytes-bytearray-bytearray-1}
+As with @code{append-bytes}, but modifies and returns @emph{bytearray}
+rather than making a copy.
+
+@verbatim
+(define a [1 2 3])  ==> [1 2 3]
+(append-bytes a 4)  ==> [1 2 3 4]
+a                   ==> [1 2 3]
+(append-bytes! a 4) ==> [1 2 3 4]
+a                   ==> [1 2 3 4]
+@end verbatim
+
+@node take k bytearray
+@subsection (take @emph{k} @emph{bytearray})
+@anchor{take-k-bytearray}
+As with the list implementation of @code{take}, fetches and returns a
+new bytearray consisting of the bytes from @emph{bytearray} starting at
+index @emph{k}.
+
+@verbatim
+(take 1 [1 2 3] ==> [1])
+(take 3 [1 2 3] ==> [1 2 3])
+@end verbatim
+
+@node drop k bytearray
+@subsection (drop @emph{k} @emph{bytearray})
+@anchor{drop-k-bytearray}
+
+@verbatim
+(drop 1 [1 2 3] ==> [2 3])
+(drop 2 [1 2 3] ==> [3])
+@end verbatim
+
+As with the list implementation of @code{drop}, fetches and returns a
+new bytearray consisting of the bytes from @emph{bytearray} prior to
+index @emph{k}.
+
+@node extract-bytes bytearray index length
+@subsection (extract-bytes @emph{bytearray} @emph{index} @emph{length})
+@anchor{extract-bytes-bytearray-index-length}
+Returns a new bytearray consisting of @emph{length} bytes from
+@emph{bytearray}, starting at index @emph{index}. This is functionally
+equivalent to @code{(take length (drop index bytearray))} with bounds
+checking added.
+
+@verbatim
+(extract-bytes [1 2 3 4 5] 0 1) ==> [1]
+(extract-bytes [1 2 3 4 5] 0 3) ==> [1 2 3]
+(extract-bytes [1 2 3 4 5] 2 1) ==> [3]
+(extract-bytes [1 2 3 4 5] 2 3) ==> [3 4 5]
+@end verbatim
+
+
+@c Local Variables:
+@c mode: texinfo
+@c End:

@@ -1,0 +1,14 @@
+@node Acknowledgements, Overview, Top, Top
+@unnumbered Acknowledgements
+
+Thanks go to SteelSeries for supporting the early work on
+GoLisp. Chris Dargis, Tom Panfil, and Dave Tibbets contributed at
+various times. Derek Palmer (at hash Rocket at the time) did work to
+get it running on Linux. Special thanks go to SteelSeries software
+engineers Joel Hunsley and Michael Lelli for their extensive efforts.
+
+Much of this document is directly plagiarized from ``MIT/GNU Scheme Reference Language''.
+
+@c Local Variables:
+@c mode: texinfo
+@c End:

@@ -1,0 +1,724 @@
+@node Associations
+@chapter Associations
+@anchor{associations}
+@menu
+* Association Lists::
+@end menu
+
+@node Association Lists
+@section Association Lists
+@anchor{association-lists}
+``Association lists'' are one of Lisp's oldest association mechanisms.
+Because they are made from ordinary pairs, they are easy to build and
+manipulate, and very flexible in use. However, the average lookup time
+for an association list is linear in the number of associations. Frames
+are a more efficient
+
+An ``association list'', or ``alist'', is a data structure used very
+frequently in Scheme. An alist is a list of pairs, each of which is
+called an ``association''. The car of an association is called the
+``key'', and the cdr is called the ``value''. Having lists as pair
+values can cause confusion because the pair in the alist look like proper
+lists and not dotted pairs. Functions that look specifically for dotted
+pairs will not consider it an association list (e.g. @code{alist?})
+while those that don't will work fine (e.g. the @code{assoc} &
+@code{dissoc} functions). The latter simply look at the car and cdr of
+the pairs. not whether they are canonical dotted pairs (i.e. their cdr
+is not a pair).
+
+@verbatim
+'((a . (1 2)) (b . (3 4)))                   ==> ((a 1 2) (b 3 4))
+(alist? '((a . (1 2)) (b . (3 4))))          ==> #f
+(assoc 'b '((a . (1 2)) (b . (3 4))))        ==> (b 3 4)
+(cdr (assoc 'b '((a . (1 2)) (b . (3 4)))))  ==> (3 4)
+@end verbatim
+
+An advantage of the alist representation is that an alist can be
+incrementally augmented simply by adding new entries to the front.
+Moreover, because the searching procedures `assv' et al. search the
+alist in order, new entries can ``shadow'' old entries. If an alist is
+viewed as a mapping from keys to data, then the mapping can be not only
+augmented but also altered in a non-destructive manner by adding new
+entries to the front of the alist.
+@menu
+* alist? object::
+* acons key value [alist]::
+* pairlis keys values [alist]::
+* assq object alist::
+* assv object alist::
+* assoc object alist::
+* rassoc value alist::
+* del-assq object alist::
+* dissq object alist::
+* del-assv object alist::
+* dissv object alist::
+* del-assoc object alist::
+* dissoc object alist::
+@end menu
+
+@node alist? object
+@subsection (alist? @emph{object})
+@anchor{alistp}
+Returns @code{@hashchar{}t} if @emph{object} is an association list (including the
+empty list); otherwise returns @code{@hashchar{}f}. Any @emph{object} satisfying
+this predicate also satisfies @code{list?}.
+
+@node acons key value [alist]
+@subsection (acons @emph{key} @emph{value} [@emph{alist}])
+@anchor{acons}
+Returns the result of consing a pair @code{(key . value)} to
+@emph{alist}. If @emph{alist} is omitted, it defaults to the empty list.
+
+@verbatim
+(acons 'a 1)            ==> ((a . 1))
+(acons 'a 1 '((b . 2))) ==> ((a . 1) (b . 2))
+(acons 'b 1 '((b . 2))) ==> ((b . 1) (b . 2))
+@end verbatim
+
+@node pairlis keys values [alist]
+@subsection (pairlis @emph{keys} @emph{values} [@emph{alist}])
+@anchor{pairlis}
+Creates an association list from lists of @emph{keys} and @emph{values}
+by acons-ing onto @emph{alist}. If @emph{alist} is omitted, it defaults
+to the empty list. Note that the key and value lists are paired up in
+left to right order, but the order they are consed onto @emph{alist} is
+unspecified.
+
+@verbatim
+(pairlis '(a b) '(1 2))                    ==> ((b . 2) (a . 1)))
+(pairlis '(a b) '(1 2) '((c . 3) (d . 4))) ==> ((b . 2) (a . 1) (c . 3) (d . 4))))
+@end verbatim
+
+@node assq object alist
+@subsection (assq @emph{object} @emph{alist})
+@anchor{assq}
+
+@node assv object alist
+@subsection (assv @emph{object} @emph{alist})
+@anchor{assv}
+
+@node assoc object alist
+@subsection (assoc @emph{object} @emph{alist})
+@anchor{assoc}
+These procedures find the first pair in @emph{alist} whose car field is
+@emph{object}, and return that pair; the returned pair is always an
+@strong{element} of @emph{alist}, @strong{not} one of the pairs from
+which @emph{alist} is composed. If no pair in @emph{alist} has
+@emph{object} as its car, @code{@hashchar{}f} (n.b.: not the empty list) is
+returned. @code{assq} uses @code{eq?} to compare @emph{object} with the
+car fields of the pairs in @emph{alist}, while @code{assv} uses
+@code{eqv?} and @code{assoc} uses @code{equal?}.
+
+@verbatim
+(define e '((a . 1) (b . 2) (c . 3)))
+(assq 'a e)                             ==>  (a . 1)
+(assq 'b e)                             ==>  (b . 2)
+(assq 'd e)                             ==>  #f
+(assq (list 'a) '(((a)) ((b)) ((c))))   ==>  #f
+(assoc (list 'a) '(((a)) ((b)) ((c))))  ==>  ((a))
+(assv 5 '((2 . 3) (5 . 7) (11 . 13)))   ==>  (5 . 7)
+@end verbatim
+
+@node rassoc value alist
+@subsection (rassoc @emph{value} @emph{alist})
+@anchor{rassoc}
+Return the pair from @emph{alist} whose cdr is equal to @emph{value}.
+@code{@hashchar{}f} is returned is @emph{value} isn't found.
+
+@verbatim
+(rassoc 1 '((a . 1) (b . 2) (c . 3))) ==> (a . 1)
+(rassoc 3 '((a . 1) (b . 2)))         ==> #f
+@end verbatim
+
+@node del-assq object alist
+@subsection (del-assq @emph{object} @emph{alist})
+@anchor{del-assq}
+
+@node dissq object alist
+@subsection (dissq @emph{object} @emph{alist})
+@anchor{dissq}
+
+@node del-assv object alist
+@subsection (del-assv @emph{object} @emph{alist})
+@anchor{del-assv}
+
+@node dissv object alist
+@subsection (dissv @emph{object} @emph{alist})
+@anchor{dissv}
+
+@node del-assoc object alist
+@subsection (del-assoc @emph{object} @emph{alist})
+@anchor{del-assoc}
+
+@node dissoc object alist
+@subsection (dissoc @emph{object} @emph{alist})
+@anchor{dissoc}
+These procedures return a newly allocated copy of @emph{alist} in which
+all associations with keys equal to @emph{object} have been removed.
+Note that while the returned copy is a newly allocated list, the
+association pairs that are the elements of the list are shared with
+@emph{alist}, not copied. @code{del-assq}/@code{dissq} use @code{eq?} to
+compare @emph{object} with the keys, while @code{del-assv}/@code{dissv}
+use @code{eqv?} and @code{del-assoc}/@code{dissoc} use @code{equal?}.
+
+@verbatim
+(define a
+  '((butcher . "231 e22nd St.")
+    (baker . "515 w23rd St.")
+    (hardware . "988 Lexington Ave.")))
+
+(del-assq 'baker a)
+     ==>
+     ((butcher . "231 e22nd St.")
+      (hardware . "988 Lexington Ave."))
+@end verbatim
+
+@node Frames
+@chapter Frames
+@anchor{frames}
+GoLisp contains a frame system inspired by Self [4] and NewtonScript
+[5].
+
+A frame is a set of named slots that hold arbitrary values. Slot names
+must be symbols that end with a colon. For example: @code{color:}, or
+@code{height:}. When evaluated normally, these special symbols don't get
+looked up in the environment, they simply evaluate to themselves.
+
+@verbatim
+(define a a:)
+
+'a ==> a
+a  ==> a:
+
+'a: ==> a:
+a:  ==> a:
+@end verbatim
+
+@menu
+* Basic functions::
+* Parent slots::
+* Function slots::
+* Dynamic inheritence::
+* Json support::
+@end menu
+
+@node make-slotname symbol
+@subsection (make-slotname @emph{symbol})
+@anchor{make-slotname}
+This function takes a symbol or string and returns an interned slotname
+based on it, doing what is required.
+
+@verbatim
+(make-slotname 'name) ==> name:
+(make-slotname "name") ==> name:
+(make-slotname name:) ==> name:
+@end verbatim
+
+@node Basic functions
+@section Basic functions
+@anchor{basic-functions}
+@menu
+* make-frame slot-name slot-value @dots{} ::
+* @{ slot-name slot-value @dots{} @}::
+* clone frame::
+* has-slot? frame slot-name::
+* slot-name? frame::
+* get-slot frame slot-name::
+* slot-name frame::
+* get-slot-or-nil frame slot-name::
+* set-slot! frame slot-name new-value::
+* slot-name! frame new-value::
+* remove-slot! frame slot-name::
+* frame-keys frame::
+* frame-values frame::
+@end menu
+
+@node make-frame slot-name slot-value @dots{} 
+@subsection (make-frame @emph{slot-name} @emph{slot-value} @dots{} )
+@anchor{make-frame}
+Frames can be created using the @code{make-frame} function, passing it
+an alternating sequence of slot names and values:
+
+@verbatim
+(make-frame a: 1 b: 2)
+@end verbatim
+
+This results in a frame with two slots, named @code{a:} and @code{b:}
+with values @code{1} and @code{2}, respectively.
+
+@node @{ slot-name slot-value @dots{} @}
+@subsection @{ @emph{slot-name} @emph{slot-value} @dots{} @}
+@anchor{frame-literal}
+This is an alternative syntax for defining frame literals:
+
+@verbatim
+{a: 1 b: 2}
+@end verbatim
+
+Both are equivalent. Slot names and values in both cases are evaluated
+(this is one reason for the non-evaluating symbols: it avoiding having
+to quote literal slot names).
+
+@node clone frame
+@subsection (clone @emph{frame})
+@anchor{clone}
+Frames represent things. For example, you could use a frame that looks
+like @code{@{x: 1 y: 10@}} to represent a point. A system that would use
+point frames will typically need many independant points. The approach
+to this is to create a prototypical point data frame, and use the
+@code{clone} function to create individual, independant frames:
+
+@verbatim
+(define point {x: 1 y: 1})
+(define p1 (clone point))
+(set-slot! p1 x: 5)
+(get-slot p1 x:)    ==> 5
+(get-slot point x:) ==> 1
+@end verbatim
+
+@node has-slot? frame slot-name
+@subsection (has-slot? @emph{frame} @emph{slot-name})
+@anchor{has-slot}
+
+@node slot-name? frame
+@subsection (@emph{slot-name}? @emph{frame})
+@anchor{has-slot-sugar}
+The @code{has-slot?} function is used to query whether a frame contains
+(directly or in an ancestor) the particular slot:
+
+@verbatim
+(define f {a: 1 b: 2})
+(has-slot? f a:)      ==> #t
+(a:? f)               ==> #t
+(has-slot? f c:)      ==> #f
+(c:? f)               ==> #f
+@end verbatim
+
+@node get-slot frame slot-name
+@subsection (get-slot @emph{frame} @emph{slot-name})
+@anchor{get-slot}
+
+@node slot-name frame
+@subsection (@emph{slot-name} @emph{frame})
+@anchor{get-slot-sugar}
+The @code{get-slot} function is used to retrieve values from frame
+slots:
+
+@verbatim
+(define f {a: 1 b: 2})
+(get-slot f a:)       ==> 1
+(a: f)                ==> 1
+(get-slot f b:)       ==> 2
+(b: f)                ==> 2
+@end verbatim
+
+If the frame passed to @code{get-slot} contains a slot with the
+specified name, it's value is returned. If not, then parent frames are
+searched in a nondeterministic order until a slot with the specified
+name is found. If a matching slot is found, it's value is returned. If
+none is found an error is raised.
+
+@verbatim
+(define f {a: 1 b: 2})
+(define g {parent*: f c: 3})
+
+(get-slot g c:) ==> 3
+(get-slot g a:) ==> 1  ; from the frame f
+@end verbatim
+
+@node get-slot-or-nil frame slot-name
+@subsection (get-slot-or-nil @emph{frame} @emph{slot-name})
+@anchor{get-slot-or-nil}
+The same as above, except that if a matching slot is not found,
+@code{nil} is returned instead of raising an error.
+
+@node set-slot! frame slot-name new-value
+@subsection (set-slot! @emph{frame} @emph{slot-name} @emph{new-value})
+@anchor{set-slot}
+
+@node slot-name! frame new-value
+@subsection (@emph{slot-name}! @emph{frame} @emph{new-value})
+@anchor{set-slot-sugar}
+The @code{set-slot!} function is used to change values in frame slots:
+
+@verbatim
+(define f {a: 1 b: 2})
+(get-slot f a:)    ==> 1
+(set-slot! f a: 5) ==> 5
+(a:! f 5) ==> 5
+(get-slot f a:)    ==> 5
+@end verbatim
+
+Trying to set a slot that doesn't exist in the frame will result in a
+corresponding slot being created.
+
+@verbatim
+(define f {a: 1 b: 2})
+(set-slot! f c: 5) ==> 5
+f                  ==> {a: 1 b: 2 c: 5}
+@end verbatim
+
+@node remove-slot! frame slot-name
+@subsection (remove-slot! @emph{frame} @emph{slot-name})
+@anchor{remove-slot}
+The @code{remove-slot!} function is used to function is used to remove a
+slot from a frame. It only removes slots from the frame itself. not any
+of it's parents. @code{remove-slot!} return @code{@hashchar{}t} if the slot was
+removed, @code{@hashchar{}f} otherwise.
+
+@verbatim
+(define f {a: 1 b: 2})
+(remove-slot! f a:) ==> #t
+f                   ==> {b: 2}
+(remove-slot! f a:) ==> #f
+@end verbatim
+
+@node frame-keys frame
+@subsection (frame-keys @emph{frame})
+@anchor{frame-keys}
+Returns a list of the slot names in @emph{frame}. Note that the order of
+the result is nondeterministic.
+
+@verbatim
+(frame-keys {a: 1 b: 2}) ==> (a: b:)
+@end verbatim
+
+@node frame-values frame
+@subsection (frame-values @emph{frame})
+@anchor{frame-values}
+Returns a list of the slot values in @emph{frame}. Note that the order
+of the result is nondeterministic.
+
+@verbatim
+(frame-values {a: 1 b: 2}) ==> (1 2)
+@end verbatim
+
+@node Parent slots
+@section Parent slots
+@anchor{parent-slots}
+Frames can have slots that refer to other slots to provide prototype
+inheritance. These slots have names that have a @code{*} immediately
+preceeding the trailing @code{:}, for example @code{proto*:}. The names
+of the parent slots don't matter; it is the trailing @code{*:} in the
+name that marks them as parent slots. A frame can have any number of
+parent slots.
+
+When a slot is being searched for, if it isn't found in the specified
+slot, these @emph{parent} slots are recursively searched until the
+requested slot is found or the entire graph has been examined.
+
+@verbatim
+> (define y {a: 1})
+===> {a: 1}
+> (define x {b: 2 p*: y})
+===> {b: 2 p*: {...}}
+
+> (a: x)
+===> 1
+@end verbatim
+
+@strong{Note:} Parent slots are searched in arbitrary order.
+
+@node Function slots
+@section Function slots
+@anchor{function-slots}
+Now things get interesting. Slot values can be functions (typically
+@code{lambda} expressions) as well as data. Function slots can be
+executed by using the @code{send} function
+@menu
+* send frame slot-name arg@dots{}::
+* slot-name> frame arg@dots{}::
+* send-super slot-name arg@dots{}::
+* slot-name^ arg@dots{}::
+* apply-slot frame slot-name sexpr@dots{}::
+* apply-slot-super slot-name sexpr@dots{}::
+@end menu
+
+@node send frame slot-name arg@dots{}
+@subsection (send @emph{frame} @emph{slot-name} @emph{arg}@dots{})
+@anchor{send}
+
+@node slot-name> frame arg@dots{}
+@subsection (@emph{slot-name}> @emph{frame} @emph{arg}@dots{})
+@anchor{send-sugar}
+
+@verbatim
+(define f {
+  add: (lambda () (+ 1 2))
+})
+(send f add:) ==> 3
+(add:> f) ==> 3
+@end verbatim
+
+As expected, parameters are supported:
+
+@verbatim
+(define f {
+  add: (lambda (x) (+ 1 x))
+})
+(send f add: 2) ==> 3
+@end verbatim
+
+In the body of a function, slots can be refrenced like normal variables.
+To do so, simply omit the trailing colon:
+
+@verbatim
+(define f {
+  a: 3
+  add: (lambda (x) (+ a x))
+})
+(send f add: 2) ==> 5
+@end verbatim
+
+Likewise, functions in the frame (or parent frames) can be referred to
+directly by name.
+
+@verbatim
+(define f {
+  a: 5
+  b: 2
+  foo: (lambda (x) (+ x a))
+  bar: (lambda () (foo b))
+})
+(send f bar:) ==> 7
+@end verbatim
+
+Bindings defined in the local environment (e.g. by a @code{let} form)
+hide frame slots of the same name. In the following, @code{let}
+overrides the @code{a:} slot by introducing a local binding for
+@code{a}.
+
+@verbatim
+(let ((f {a: 42})
+      (g {
+         parent*: f  
+         foo: 
+           (lambda ()
+             (let ((a 10))
+             (+ 1 a)))
+      }))
+(send g foo:) ==> 11
+@end verbatim
+
+Of course the end game of all this is to be able to inherit functions
+from parent frames:
+
+@verbatim
+(define f {
+  a: 5
+  foo: (lambda (x) (+ x a))
+})
+(define g {
+  parent*: f
+  b: 2
+  bar: (lambda () (foo b))
+})
+(send g bar:) ==> 7
+@end verbatim
+
+Notice that we've been saying parent @strong{frames}, i.e. plural. Also
+note that parent slot names are arbitrary and for documentation purposes
+only. A frame can have any number of parents. When a slot is looked for,
+the explictily specified frame is searched first, recursively followed
+by parent frames in a nondeterministic order until a matching slot is
+found. If none are found, the result is nil.
+
+@verbatim
+(define e {a: 5})
+(define f {b: 2})
+(define g {
+  parent-e*: e
+  parent-f*: f
+  foo: (lambda (x) (+ x a))
+  bar: (lambda () (foo b))}))
+(send g bar:)       ==> 7
+(set-slot! g a: 10)
+(get-slot g a:)     ==> 10
+(get-slot e a:)     ==> 5
+@end verbatim
+
+When you set a slot with parent frames involved, if the slot is found in
+the explicit frame it's value is set and the new value is returned. If
+it doesn't exist in the explicit frame, it gets created there. This new
+slot now hides any slots in a parent with the same name.
+
+@node send-super slot-name arg@dots{}
+@subsection (send-super @emph{slot-name} @emph{arg}@dots{})
+@anchor{send-super}
+
+@node slot-name^ arg@dots{}
+@subsection (@emph{slot-name}^ @emph{arg}@dots{})
+@anchor{send-super-sugar}
+Like @code{send}, but sends to the first parent that has the named slot.
+@strong{@code{send-super} can only be used from within a function slot.}
+
+@node apply-slot frame slot-name sexpr@dots{}
+@subsection (apply-slot @emph{frame} @emph{slot-name} @emph{sexpr}@dots{})
+@anchor{apply-slot}
+Apply the function that results from evaluating the function in slot
+@emph{slot-name} of @emph{frame} to the argument list resulting from
+evaluating each @emph{sexpr}.
+
+Each initial @emph{sexpr} can evaluate to any type of object, but the
+final one (and there must be at least one @emph{sexpr}) must evaluate to
+a list.
+
+@verbatim
+(define f {
+  foo: 
+    (lambda (x y z) 
+      (+ 1 x y z))
+})
+(apply-slot f foo: 2 '(3 4)) ==> 10
+(apply-slot f foo: '(2 3 4)) ==> 10
+@end verbatim
+
+@node apply-slot-super slot-name sexpr@dots{}
+@subsection (apply-slot-super @emph{slot-name} @emph{sexpr}@dots{})
+@anchor{apply-slot-super}
+Like @code{apply-slot}, but sends to the first parent that has the named
+slot. @strong{@code{apply-slot-super} can only be used from within a
+function slot.}
+
+@node Dynamic inheritence
+@section Dynamic inheritence
+@anchor{dynamic-inheritence}
+Parent slots are slots like any other and can have their values changed
+at any time. This ability is somewhat unusual for those with a heavy OO
+background but can be very useful for changing behavior on the fly. A
+prime example of this is the implimentation of a state machine. The
+functions for each state can be placed in different frames and
+transitions can modify the slot contaiing that state behavior.
+
+Here's an example of this.
+
+@verbatim
+(define state {
+  name: ""
+  enter: (lambda ())
+  halt: (lambda ())
+  set-speed: (lambda (s))
+  halt: (lambda ())
+  transition-to: 
+    (lambda (s)
+      (set! state* s)
+      (enter))
+})
+
+(define stop-state {
+  name: "stop"
+  parent*: state
+  enter: 
+    (lambda ()
+      (set! speed 0)
+      (transition-to idle-state))
+})
+
+(define idle-state {
+  name: "idle"
+  parent*: state
+  set-speed: 
+    (lambda (s)
+      (set! speed s)
+      (transition-to start-state))
+})
+
+(define start-state {
+  name: "start"
+  parent*: state
+  halt: 
+    (lambda ()
+      (transition-tostop-state))
+  set-speed: 
+    (lambda (s)
+      (set! speed s)
+      (transition-to change-speed-state))
+})
+
+(define change-speed-state {
+  name: "change-speed"
+  parent*: state
+  halt: 
+    (lambda ()
+      (transition-to stop-state))
+  set-speed: 
+    (lambda (s)
+      (set! speed s))
+})
+
+(define motor {
+  speed: 0
+  state*: state
+  start: 
+    (lambda () 
+      (transition-to stop-state))
+})
+@end verbatim
+
+Now you can do things like the following:
+
+@verbatim
+(send motor start:)
+motor ==> {speed: 0 state*: {name: "idle" ...}}
+(send motor set-speed: 10)
+motor ==> {speed: 10 state*: {name: "start" ...}}
+(send motor set-speed: 20)
+motor ==> {speed: 20 state*: {name: "change-speed" ...}}
+(send motor set-speed: 15)
+motor ==> {speed: 15 state*: {name: "change-speed" ...}}
+(send motor halt:)
+motor ==> {speed: 0 state*: {name: "idle" ...}}
+@end verbatim
+
+@node Json support
+@section Json support
+@anchor{json-support}
+GoLisp has built-in support for converting between stringified Json and
+frames, according to the following rules:
+
+@itemize
+@item
+numbers and strings map directly in both directions
+
+@item
+frames recursively map to objects, and the reverse
+
+@item
+lists recursively map to arrays, and the reverse
+
+@item
+frame slots names map to string field names, and the reverse
+
+@item
+function slots @strong{do not} get mapped to json
+
+@item
+parent slots @strong{do not} get mapped to json
+
+@end itemize
+
+@menu
+* json->lisp string::
+* lisp->json frame::
+@end menu
+
+@node json->lisp string
+@subsection (json->lisp @emph{string})
+@anchor{json-to-lisp}
+
+@verbatim
+(json->lisp "{'key': [1, 2, 3]}") ==> {key: (1 2 3)}
+@end verbatim
+
+@node lisp->json frame
+@subsection (lisp->json @emph{frame})
+@anchor{lisp-to-json}
+
+@verbatim
+(lisp->json {key: (1 2 3)}) ==> "{'key': [1, 2, 3]}"
+@end verbatim
+
+
+@c Local Variables:
+@c mode: texinfo
+@c End:

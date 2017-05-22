@@ -1,0 +1,355 @@
+@node Concurrency
+@chapter Concurrency
+GoLisp has limited concurrency support that is built on top of
+goroutines and channels.
+@menu
+* Process management::
+* Atomic Operations::
+* Channels::
+@end menu
+
+@node Process management
+@section Process management
+@anchor{process-management}
+These functions make use of a @emph{process} object. This is an opaque
+piece of data that wraps a custom structure used by the concurrency
+code; it is returned from @code{fork} and @code{schedule} and is used by
+@code{proc-sleep}, @code{wake}, and @code{abandon} to interact with the
+underlying goroutine.
+@menu
+* fork function::
+* proc-sleep process millis::
+* wake process::
+* join process::
+* schedule millis function::
+* abandon process::
+* reset-timeout process::
+@end menu
+
+@node fork function
+@subsection (fork @emph{function})
+@anchor{fork-function}
+Executes @emph{function} in a separate goroutine. When @emph{function}
+ends, the goroutine terminates. @emph{function} takes a single argument
+which is the process object that is returned.
+
+@verbatim
+(define (run-once proc)
+  (write-line "start")
+  (sleep 1000)
+  (write-line "stop"))
+
+(fork run-once)
+
+> start
+[a second goes by]
+stop
+[run-once completes and the goroutine terminates]
+@end verbatim
+
+@node proc-sleep process millis
+@subsection (proc-sleep @emph{process} @emph{millis})
+@anchor{proc-sleep}
+Use @code{proc-sleep} in a forked function to sleep for @emph{millis}
+milliseconds. Using @code{proc-sleep} rather than @code{sleep} (which
+can be used) allows code in another process (that has a reference to the
+process object of the forked code) to preemptively terminate the sleep
+using the @code{wake} function.
+
+@code{proc-sleep} returns a boolean that indicates whether the sleep was
+terminated using @code{wake}.
+
+@node wake process
+@subsection (wake @emph{process})
+@anchor{wake}
+Preemptively terminate a @code{proc-sleep} in the code associated with
+@emph{process}.
+
+@verbatim
+> (define (run proc)
+    (do ((woken #f woken))
+        (woken (write-line "woken"))
+      (write-line "tick")
+      (set! woken (proc-sleep proc 10000))))
+
+> (define p (fork run))
+
+tick
+tick
+[times goes by, tick is printed every 10 seconds]
+> (wake p)
+woken
+[run completes and the goroutine terminates]
+@end verbatim
+
+@node join process
+@subsection (join @emph{process})
+@anchor{join}
+Blocks the calling function until the process completes or aborts with
+an error. The return value of the process is returned, or nil if the
+process ran into an error and aborted. Attempting to call @code{join} on
+a process twice raises an error.
+
+@verbatim
+(define (run proc) '(1 2 3))
+(define p (fork run))
+(join p) ==> (1 2 3)
+@end verbatim
+
+@node schedule millis function
+@subsection (schedule @emph{millis} @emph{function})
+@anchor{schedule}
+Schedule @emph{function} to be evaluated in a separate goroutine
+@emph{millis} milliseconds from now. @emph{function} takes a single
+argument which is the process object that is returned. The process
+object associated with that goroutine is returned immediately.
+
+@verbatim
+> (define (run-delayed proc)
+    (write-line "running"))
+
+> (schedule 10000 run-delayed)
+[10 seconds pass]
+running
+[run-delayed completes and the goroutine terminates]
+@end verbatim
+
+@node abandon process
+@subsection (abandon @emph{process})
+@anchor{abandon}
+Cancels the scheduled evaluation associated with @emph{process}.
+
+@verbatim
+> (define (run-delayed proc)
+    (write-line "running"))
+
+> (define p (schedule 10000 run-delayed))
+[5 seconds pass]
+> (abandon p)
+[the delay is cancelled and the goroutine terminates]
+@end verbatim
+
+@node reset-timeout process
+@subsection (reset-timeout @emph{process})
+@anchor{reset-timeout}
+Resets the timer on a scheduled process. Causing it to start over. You
+can use this function to postpone the evaluation of scheduled code.
+
+@verbatim
+> (define (run-delayed proc)
+    (write-line "running"))
+
+> (define p (schedule 10000 run-delayed))
+[less than 10 seconds pass]
+> (reset-timeout p)
+[10 seconds pass]
+running
+[run-delayed completes and the goroutine terminates]
+@end verbatim
+
+@node Atomic Operations
+@section Atomic Operations
+@anchor{atomic-operations}
+GoLisp has support for several kinds of atomic operations. These can be
+useful for protecting memory when working with GoLisp code with
+concurrent processes, or just Go code with multiple goroutines.
+
+These functions make use of a @emph{atomic} object. This is an opaque
+piece of data that wraps an integer; it is returned from @code{atomic}
+and is used by all the @code{atomic-*} primitives to interact with the
+underlying integer using only atomic operations.
+@menu
+* atomic [value]::
+* atomic-load atomic::
+* atomic-store! atomic new::
+* atomic-add! atomic delta::
+* atomic-swap! atomic new::
+* atomic-compare-and-swap! atomic old new::
+@end menu
+
+@node atomic [value]
+@subsection (atomic [@emph{value}])
+@anchor{atomic}
+Creates a new @emph{atomic} object and returns it. It can optionally be
+passed a starting value to initialize to. Otherwise, the starting value
+is 0.
+
+@verbatim
+> (atomic)   ==> <atomic object with value 0>
+> (atomic 5) ==> <atomic object with value 5>
+@end verbatim
+
+@node atomic-load atomic
+@subsection (atomic-load @emph{atomic})
+@anchor{atomic-load}
+Loads the current integer value of the @emph{atomic} object and returns
+it as an integer.
+
+@verbatim
+> (define a (atomic 5))
+> (atomic-load a) ==> 5
+@end verbatim
+
+@node atomic-store! atomic new
+@subsection (atomic-store! @emph{atomic} @emph{new})
+@anchor{atomic-store-bang}
+Stores a new integer value in a @emph{atomic} object.
+
+@verbatim
+> (define a (atomic 5))
+> (atomic-store! a 8)
+> (atomic-load a) ==> 8
+@end verbatim
+
+@node atomic-add! atomic delta
+@subsection (atomic-add! @emph{atomic} @emph{delta})
+@anchor{atomic-add-bang}
+Adds the @emph{delta} value to the one stored in the @emph{atomic}
+object. The new sum is also returned.
+
+@verbatim
+> (define a (atomic 5))
+> (atomic-add! a 4) ==> 9
+> (atomic-load a)   ==> 9
+@end verbatim
+
+@node atomic-swap! atomic new
+@subsection (atomic-swap! @emph{atomic} @emph{new})
+@anchor{atomic-swap-bang}
+Swaps the value currently in the @emph{atomic} object with a new value.
+The old value is returned.
+
+@verbatim
+> (define a (atomic 5))
+> (atomic-swap! a 4) ==> 5
+> (atomic-load a)    ==> 4
+@end verbatim
+
+@node atomic-compare-and-swap! atomic old new
+@subsection (atomic-compare-and-swap! @emph{atomic} @emph{old} @emph{new})
+@anchor{atomic-compare-and-swap-bang}
+The value in the @emph{atomic} object is compared to @emph{old}. If the
+value matches, the value in the @emph{atomic} object is swapped with the
+value in @emph{new} and true is returned. Otherwise, the values are not
+swapped and false is returned.
+
+@verbatim
+> (define a (atomic 5))
+> (atomic-compare-and-swap! a 5 4) ==> #t
+> (atomic-load a)                  ==> 4
+
+> (define b (atomic 5))
+> (atomic-compare-and-swap! b 9 4) ==> #f
+> (atomic-load b)                  ==> 5
+@end verbatim
+
+@node Channels
+@section Channels
+@anchor{channels}
+Channels are the main way you communicate between goroutines in Go.
+GoLisp has full support of channels.
+@menu
+* make-channel [buffer-size]::
+* channel-write channel value::
+* channel<- value::
+* channel-read channel::
+* <-channel::
+* channel-try-write channel value::
+* channel-try-read channel::
+* close-channel channel::
+@end menu
+
+@node make-channel [buffer-size]
+@subsection (make-channel [@emph{buffer-size}])
+@anchor{make-channel}
+Creates a new channel object with an optional buffer size. If
+@emph{buffer-size} is omitted or 0, the channel is unbuffered.
+
+@node channel-write channel value
+@subsection (channel-write @emph{channel} @emph{value})
+@anchor{channel-write}
+
+@node channel<- value
+@subsection (@emph{channel}<- @emph{value})
+@anchor{channel-write-sugar}
+Writes a value to a channel. If the channel is unbuffered or has a full
+buffer, this call locks until there either another process tries to read
+from the channel or room is made in the buffer.
+
+@node channel-read channel
+@subsection (channel-read @emph{channel})
+@anchor{channel-read}
+
+@node <-channel
+@subsection (<-@emph{channel})
+@anchor{channel-read-sugar}
+Reads a value from a channel. If the channel is unbuffered or has no
+buffered data, this call locks until there is data in the channel.
+@code{<-channel} returns two values. The first value is the data read
+from the channel. The second value is a boolean flag stating whether
+there is more data in the channel. If the channel is closed and there
+are no more items left in the buffer, a false flag is returned.
+Otherwise, a true flag is returned. If a flag of false is returned, the
+first value will also be nil.
+
+@verbatim
+> (define c (make-channel 1))
+> (channel-write c 1)
+> (c<- 1) ; alternate syntax for the previous line
+> (channel-read c) ==> (1 #t)
+> (<-c)            ==> (1 #t) ; alternate syntax for the previous line
+> (channel-read c) ; blocks until another process writes to c
+@end verbatim
+
+@node channel-try-write channel value
+@subsection (channel-try-write @emph{channel} @emph{value})
+@anchor{channel-try-write}
+Tries to write a value to a channel. If the channel is unbuffered with
+nobody waiting for a write or has a full buffer, it returns immediately
+a false value. Otherwise, it writes the value to the channel and returns
+a true value.
+
+@quotation
+(define c (make-channel 1) (channel-try-write c 1) ==> #t
+@end quotation
+@quotation
+(define c (make-channel)) (channel-try-write c 1) ==> #f
+@end quotation
+
+@node channel-try-read channel
+@subsection (channel-try-read @emph{channel})
+@anchor{channel-try-read}
+Tries to reads a value from a channel. This call returns three values.
+The first is whether data could be read or not. The second is the data
+that is read, or nil if none was. The last value is whether the channel
+has more data in it.
+
+@verbatim
+> (define c (make-channel 1))
+> (c<- 1)
+> (channel-try-read c) ==> (#t 1 #t)
+> (channel-try-read c) ==> (#f () #t)
+@end verbatim
+
+@node close-channel channel
+@subsection (close-channel @emph{channel})
+@anchor{close-channel}
+Closes the specified channel. The channel's buffered is cleared by any
+other goroutines trying to read from it then all other reads immediately
+return with the more flag set to false. Trying to write to a closed
+channel or trying to close a channel twice results in an error.
+
+@verbatim
+> (define c (make-channel 1))
+> (c<- 1)
+> (close-channel c)
+> (<-c) ==> (1 #t)
+> (<-c) ==> (() #f)
+> (<-c) ==> (() #f) ; repeats on subsequent calls
+> (channel-try-read c) ==> (#t () #f)
+@end verbatim
+
+
+@c Local Variables:
+@c mode: texinfo
+@c End:

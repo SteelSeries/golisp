@@ -1,0 +1,87 @@
+@node Time and Date
+@chapter Time and Date
+@anchor{time-and-date}
+All of these date and time function use the local time.
+
+@node time-now
+@subsection (time-now)
+Return the current local time as a list of the form
+@code{(hour minute second)}.
+
+@verbatim
+(time-now) ==> (19 53 50)
+@end verbatim
+
+@node seconds
+@subsection (seconds)
+Returns the number of seconds since midnight on the current day.
+
+@verbatim
+(seconds) ==> 71644
+@end verbatim
+
+@node millis
+@subsection (millis)
+Returns the number of milliseconds since midnight on the current day.
+
+@verbatim
+(millis) ==> 71646935
+@end verbatim
+
+@node date-today
+@subsection (date-today)
+Return today's date as a list of the form @code{(year month day)}.
+
+@verbatim
+(date-today) ==> (2016 12 19)
+@end verbatim
+
+@node date-in-days days
+@subsection (date-in-days @emph{days})
+@anchor{date-in-days}
+Return the date in @emph{days} days from today as a list of the form
+@code{(year month day)}.
+
+@verbatim
+(date-in-days 3) ==> (2016 12 22)
+@end verbatim
+
+@node day-of-week
+@subsection (day-of-week)
+Returns a symbol representing the current day of the week.
+
+@verbatim
+(day-of-week) ==> monday
+@end verbatim
+
+@node Timers
+@chapter Timers
+@anchor{timers}
+
+@node timer millis func
+@subsection (timer @emph{millis} @emph{func})
+@anchor{timer}
+Schedules @emph{func} (a function of zero arguments) to be evaluated
+after @emph{millis} milliseconds. Returns a timer object.
+
+@node stop-timer timer
+@subsection (stop-timer @emph{timer})
+@anchor{stop-timer}
+Stop and cancel the timer @emph{timer}.
+
+@node ticker millis func
+@subsection (ticker @emph{millis} @emph{func})
+@anchor{ticker}
+Schedules @emph{func} (a function of zero arguments) to be evaluated
+after @emph{millis} milliseconds and every @emph{millis} milliseconds
+thereafter until stopped. Returns a ticker object.
+
+@node stop-ticker ticker
+@subsection (stop-ticker @emph{ticker})
+@anchor{stop-ticker}
+Stop and cancel the ticker @emph{ticker}.
+
+
+@c Local Variables:
+@c mode: texinfo
+@c End:

@@ -91,11 +91,16 @@ func (self *SymbolTableFrame) StackTrace() []string {
 	} else {
 		previous = make([]string, 0)
 	}
-	current := make([]string, 0, self.CurrentCode.Len()+len(previous))
+	current := make([]string, 0, self.CurrentCode.Len()+len(previous)+self.Depth())
 	for e := self.CurrentCode.Front(); e != nil; e = e.Next() {
 		current = append(current, e.Value.(string))
 	}
-	return append(current, previous...)
+	current = append(current, "-------")
+	for _, p := range previous {
+		current = append(current, p)
+	}
+
+	return current
 }
 
 func (self *SymbolTableFrame) InternalDump(frameNumber int) {

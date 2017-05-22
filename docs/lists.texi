@@ -1,0 +1,1412 @@
+@node Lists
+@chapter Lists
+@anchor{lists}
+A ``pair'' (sometimes called a ``dotted pair'') is a data structure with
+two fields called the ``car'' and ``cdr'' fields (for historical
+reasons). Pairs are created by the procedure @code{cons}. The car and
+cdr fields are accessed by the procedures @code{car} and @code{cdr}. The
+car and cdr fields are assigned by the procedures @code{set-car!} and
+@code{set-cdr!}.
+
+Pairs are used primarily to represent ``lists''. A list can be defined
+recursively as either the empty list or a pair whose cdr is a list. More
+precisely, the set of lists is defined as the smallest set X such that
+
+@itemize
+@item
+The empty list is in X.
+
+@item
+If LIST is in X, then any pair whose cdr field contains LIST is also in
+X.
+
+@end itemize
+
+The objects in the car fields of successive pairs of a list are the
+``elements'' of the list. For example, a two-element list is a pair
+whose car is the first element and whose cdr is a pair whose car is the
+second element and whose cdr is the empty list. The ``length'' of a list
+is the number of elements, which is the same as the number of pairs. The
+``empty list'' is a special object of its own type (it is not a pair);
+it has no elements and its length is zero.
+
+The most general notation (external representation) for GoLisp pairs is
+the ``dotted'' notation @code{(C1 . C2)} where C1 is the value of the
+car field and C2 is the value of the cdr field. For example,
+@code{(4 . 5)} is a pair whose car is @code{4} and whose cdr is
+@code{5}. Note that @code{(4 . 5)} is the external representation of a
+pair, not an expression that evaluates to a pair.
+
+A more streamlined notation can be used for lists: the elements of the
+list are simply enclosed in parentheses and separated by spaces. The
+empty list is written @code{()}. For example, the following are
+equivalent notations for a list of symbols:
+
+@verbatim
+(a b c d e)
+(a . (b . (c . (d . (e . ())))))
+@end verbatim
+
+Whether a given pair is a list depends upon what is stored in the cdr
+field. When the @code{set-cdr!} procedure is used, an object can be a
+list one moment and not the next:
+
+@verbatim
+(define x (list 'a 'b 'c))
+(define y x)
+y                                       ==> (a b c)
+(list? y)                               ==> #t
+(set-cdr! x 4)                          ==> (a . 4)
+x                                       ==> (a . 4)
+(eqv? x y)                              ==> #t
+y                                       ==> (a . 4)
+(list? y)                               ==> #f
+(set-cdr! x x)                          ==> <Unprintable looping pair structure>
+(list? y)                               ==> #f
+@end verbatim
+
+A chain of pairs that doesn't end in the empty list is called an
+``improper list''. Note that an improper list is not a list. The list
+and dotted notations can be combined to represent improper lists, as the
+following equivalent notations show:
+
+@verbatim
+(a b c . d)
+(a . (b . (c . d)))
+@end verbatim
+
+Within literal expressions and representations of objects read by the
+@code{read} procedure, the forms @code{'DATUM}, @code{`DATUM},
+@code{,DATUM}, and @code{,@@DATUM} denote two-element lists whose first
+elements are the symbols @code{quote}, @code{quasiquote},
+@code{unquote}, and @code{unquote-splicing}, respectively. The second
+element in each case is DATUM. This convention is supported so that
+arbitrary GoLisp programs may be represented as lists. Among other
+things, this permits the use of the @code{read} procedure to parse
+Scheme programs.
+@menu
+* Pairs::
+* Construction of Lists::
+* Selecting List Components::
+* Cutting and Pasting Lists::
+* Filtering Lists::
+* Searching Lists::
+* Mapping of Lists::
+* Reduction of Lists::
+* Miscellaneous List Operations::
+@end menu
+
+@node Pairs
+@section Pairs
+@anchor{pairs}
+This section describes the simple operations that are available for
+constructing and manipulating arbitrary graphs constructed from pairs.
+@menu
+* pair? object::
+* cons obj1 obj2::
+* car pair::
+* cdr pair::
+* set-car! pair object::
+* set-cdr! pair object::
+* set-nth! n list new-value::
+* caar pair::
+* cadr pair::
+* cdar pair::
+* cddr pair::
+* caaar pair::
+* caadr pair::
+* cadar pair::
+* caddr pair::
+* cdaar pair::
+* cdadr pair::
+* cddar pair::
+* cdddr pair::
+* caaaar pair::
+* caaadr pair::
+* caadar pair::
+* caaddr pair::
+* cadaar pair::
+* cadadr pair::
+* caddar pair::
+* cadddr pair::
+* cdaaar pair::
+* cdaadr pair::
+* cdadar pair::
+* cdaddr pair::
+* cddaar pair::
+* cddadr pair::
+* cdddar pair::
+* cddddr pair::
+* general-car-cdr object path::
+* copy object::
+@end menu
+
+@node pair? object
+@subsection (pair? @emph{object})
+@anchor{pairp}
+Returns @code{@hashchar{}t} if @emph{object} is a pair; otherwise returns
+@code{@hashchar{}f}.
+
+@verbatim
+(pair? '(a . b))                        ==> #t
+(pair? '(a b c))                        ==> #t
+(pair? '())                             ==> #f
+(pair? '#(a b))                         ==> #f
+@end verbatim
+
+@node cons obj1 obj2
+@subsection (cons @emph{obj1} @emph{obj2})
+@anchor{cons}
+Returns a newly allocated pair whose car is @emph{obj1} and whose cdr is
+@emph{obj2}. The pair is guaranteed to be different (in the sense of
+@code{eqv?}) from every previously existing object.
+
+@verbatim
+(cons 'a '())                           ==> (a)
+(cons '(a) '(b c d))                    ==> ((a) b c d)
+(cons "a" '(b c))                       ==> ("a" b c)
+(cons 'a 3)                             ==> (a . 3)
+(cons '(a b) 'c)                        ==> ((a b) . c)
+@end verbatim
+
+@node car pair
+@subsection (car @emph{pair})
+@anchor{car}
+Returns the contents of the car field of @emph{pair}. Note that taking
+the @code{car} of the empty list results in the empty list.
+
+@verbatim
+(car '(a b c))                          ==> a
+(car '((a) b c d))                      ==> (a)
+(car '(1 . 2))                          ==> 1
+(car '())                               ==> ()
+@end verbatim
+
+@node cdr pair
+@subsection (cdr @emph{pair})
+@anchor{cdr}
+Returns the contents of the cdr field of @emph{pair}. Note that taking
+the @code{cdr} of the empty list results in the empty list.
+
+@verbatim
+(cdr '((a) b c d))                      ==> (b c d)
+(cdr '(1 . 2))                          ==> 2
+(cdr '())                               ==> ()
+@end verbatim
+
+@node set-car! pair object
+@subsection (set-car! @emph{pair} @emph{object})
+@anchor{set-car}
+Stores @emph{object} in the car field of @emph{pair}. The value returned
+by @code{set-car!} is unspecified.
+
+@verbatim
+(define (f) (list 'not-a-constant-list))
+(define (g) '(constant-list))
+(set-car! (f) 3)                        ==> unspecified
+(set-car! (g) 3)                        ERROR Illegal datum
+@end verbatim
+
+@node set-cdr! pair object
+@subsection (set-cdr! @emph{pair} @emph{object})
+@anchor{set-cdr}
+Stores @emph{object} in the cdr field of @emph{pair}. The value returned
+by @code{set-cdr!} is unspecified.
+
+@node set-nth! n list new-value
+@subsection (set-nth! @emph{n} @emph{list} @emph{new-value})
+@anchor{set-nth}
+Set the @code{car} pointer of the nth cons cell of @emph{list}.
+Numbering starts at 1.
+
+@verbatim
+(define a '(1 2 3 4))
+(set-nth! 3 a 0)
+a ==> (1 2 0 4)
+@end verbatim
+
+@node caar pair
+@subsection (caar @emph{pair})
+@anchor{caar}
+
+@node cadr pair
+@subsection (cadr @emph{pair})
+@anchor{cadr}
+
+@node cdar pair
+@subsection (cdar @emph{pair})
+@anchor{cdar}
+
+@node cddr pair
+@subsection (cddr @emph{pair})
+@anchor{cddr}
+
+@node caaar pair
+@subsection (caaar @emph{pair})
+@anchor{caaar}
+
+@node caadr pair
+@subsection (caadr @emph{pair})
+@anchor{caadr}
+
+@node cadar pair
+@subsection (cadar @emph{pair})
+@anchor{cadar}
+
+@node caddr pair
+@subsection (caddr @emph{pair})
+@anchor{caddr}
+
+@node cdaar pair
+@subsection (cdaar @emph{pair})
+@anchor{cdaar}
+
+@node cdadr pair
+@subsection (cdadr @emph{pair})
+@anchor{cdadr}
+
+@node cddar pair
+@subsection (cddar @emph{pair})
+@anchor{cddar}
+
+@node cdddr pair
+@subsection (cdddr @emph{pair})
+@anchor{cdddr}
+
+@node caaaar pair
+@subsection (caaaar @emph{pair})
+@anchor{caaaar}
+
+@node caaadr pair
+@subsection (caaadr @emph{pair})
+@anchor{caaadr}
+
+@node caadar pair
+@subsection (caadar @emph{pair})
+@anchor{caadar}
+
+@node caaddr pair
+@subsection (caaddr @emph{pair})
+@anchor{caaddr}
+
+@node cadaar pair
+@subsection (cadaar @emph{pair})
+@anchor{cadaar}
+
+@node cadadr pair
+@subsection (cadadr @emph{pair})
+@anchor{cadadr}
+
+@node caddar pair
+@subsection (caddar @emph{pair})
+@anchor{caddar}
+
+@node cadddr pair
+@subsection (cadddr @emph{pair})
+@anchor{cadddr}
+
+@node cdaaar pair
+@subsection (cdaaar @emph{pair})
+@anchor{cdaaar}
+
+@node cdaadr pair
+@subsection (cdaadr @emph{pair})
+@anchor{cdaadr}
+
+@node cdadar pair
+@subsection (cdadar @emph{pair})
+@anchor{cdadar}
+
+@node cdaddr pair
+@subsection (cdaddr @emph{pair})
+@anchor{cdaddr}
+
+@node cddaar pair
+@subsection (cddaar @emph{pair})
+@anchor{cddaar}
+
+@node cddadr pair
+@subsection (cddadr @emph{pair})
+@anchor{cddadr}
+
+@node cdddar pair
+@subsection (cdddar @emph{pair})
+@anchor{cdddar}
+
+@node cddddr pair
+@subsection (cddddr @emph{pair})
+@anchor{cddddr}
+These procedures are compositions of @code{car} and @code{cdr}; for
+example, @code{caddr} could be defined by
+
+@verbatim
+(define caddr (lambda (x) (car (cdr (cdr x)))))
+@end verbatim
+
+@node general-car-cdr object path
+@subsection (general-car-cdr @emph{object} @emph{path})
+@anchor{general-car-cdr}
+This procedure is a generalization of @code{car} and @code{cdr}.
+@emph{path} encodes a particular sequence of @code{car} and @code{cdr}
+operations, which @code{general-car-cdr} executes on @emph{object}.
+@emph{path} is a non-negative integer that encodes the operations in a
+bitwise fashion: a zero bit represents a @code{cdr} operation, and a one
+bit represents a @code{car}. The bits are executed LSB to MSB, and the
+most significant one bit, rather than being interpreted as an operation,
+signals the end of the sequence.
+
+For example, the following are equivalent:
+
+@verbatim
+(general-car-cdr OBJECT #b1011)
+(cdr (car (car OBJECT)))
+@end verbatim
+
+Here is a partial table of path/operation equivalents:
+
+@verbatim
+#b10    cdr
+#b11    car
+#b100   cddr
+#b101   cdar
+#b110   cadr
+#b111   caar
+#b1000  cdddr
+@end verbatim
+
+@node Construction of Lists
+@section Construction of Lists
+@anchor{construction-of-lists}
+@menu
+* list object@dots{}::
+* make-list k [element]::
+* cons* object object @dots{}::
+* make-initialized-list k init-proc::
+* list-copy list::
+* iota count [start [step]]::
+* interval hi::
+* interval lo hi::
+* interval lo hi step::
+* string->list string::
+* substring->list string start end::
+@end menu
+
+@node list object@dots{}
+@subsection (list @emph{object}@dots{})
+@anchor{list}
+Returns a list of its arguments.
+
+@verbatim
+(list 'a (+ 3 4) 'c)                    ==> (a 7 c)
+(list)                                  ==> ()
+@end verbatim
+
+These expressions are equivalent:
+
+@verbatim
+(list OBJ1 OBJ2 ... OBJN)
+(cons OBJ1 (cons OBJ2 ... (cons OBJN '()) ...))
+@end verbatim
+
+@node make-list k [element]
+@subsection (make-list k [element])
+@anchor{make-list}
+This procedure returns a newly allocated list of length @emph{k}, whose
+elements are all @emph{element}. If @emph{element} is not supplied, it
+defaults to the empty list.
+
+@verbatim
+(make-list 4 'c)                        ==> (c c c c)
+@end verbatim
+
+@node cons* object object @dots{}
+@subsection (cons* object object @dots{})
+@anchor{cons-star}
+@code{cons*} is similar to @code{list}, except that @code{cons*} conses
+together the last two arguments rather than consing the last argument
+with the empty list. If the last argument is not a list the result is an
+improper list. If the last argument is a list, the result is a list
+consisting of the initial arguments and all of the items in the final
+argument. If there is only one argument, the result is the argument.
+
+@verbatim
+(cons* 'a 'b 'c)                        ==> (a b . c)
+(cons* 'a 'b '(c d))                    ==> (a b c d)
+(cons* 'a)                              ==> a
+@end verbatim
+
+These expressions are equivalent:
+
+@verbatim
+(cons* OBJ1 OBJ2 ... OBJN-1 OBJN)
+(cons OBJ1 (cons OBJ2 ... (cons OBJN-1 OBJN) ...))
+@end verbatim
+
+@node make-initialized-list k init-proc
+@subsection (make-initialized-list k init-proc)
+@anchor{make-initialized-list}
+Returns a @emph{K}-element list. Element I of the list, where 0 <= I <
+@emph{k}, is produced by @code{(init-proc I)}. No guarantee is made
+about the dynamic order in which @emph{init-proc} is applied to these
+indices.
+
+@verbatim
+(make-initialized-list 4 (lambda (x) (* x x))) ==> (0 1 4 9)
+@end verbatim
+
+@node list-copy list
+@subsection (list-copy list)
+@anchor{list-copy}
+Returns a newly allocated copy of @emph{list}. This copies each of the
+pairs comprising @emph{list}. This could have been defined by
+
+@verbatim
+(define (list-copy list)
+  (if (null? list)
+      '()
+      (cons (car list)
+            (list-copy (cdr list)))))
+@end verbatim
+
+@node iota count [start [step]]
+@subsection (iota count [start [step]])
+@anchor{iota}
+Returns a list containing the elements
+
+@verbatim
+(START START+STEP ... START+(COUNT-1)*STEP)
+@end verbatim
+
+@emph{count} must be a non-negative integer, while @emph{start} and
+@emph{step} can be any numbers. The @emph{start} and @emph{step}
+parameters default to 0 and 1, respectively.
+
+@verbatim
+(iota 5)          ==>  (0 1 2 3 4)
+(iota 5 0 -0.1)   ==>  (0 -0.1 -0.2 -0.3 -0.4)
+@end verbatim
+
+@node interval hi
+@subsection (interval @emph{hi})
+@anchor{interval-hi}
+
+@node interval lo hi
+@subsection (interval @emph{lo} @emph{hi})
+@anchor{interval-lo-hi}
+
+@node interval lo hi step
+@subsection (interval @emph{lo} @emph{hi} @emph{step})
+@anchor{interval-lo-hi-step}
+The first form creates a list of numbers from 1 to @code{hi}, inclusive.
+@code{hi} @strong{must} be a positive integer.
+
+@verbatim
+(interval 5) ==> (1 2 3 4 5)
+(interval 2) ==> (1 2)
+@end verbatim
+
+The second form creates a list of numbers from @code{lo} to @code{hi},
+inclusive, stepping by 1. If @code{lo} > @code{hi}, a step of -1 is
+used.
+
+@verbatim
+(interval 1 5) ==> (1 2 3 4 5)
+(interval -2 2) ==> (-2 -1 0 1 2)
+(interval 5 1) ==> (5 4 3 2 1)
+(interval 2 -2) ==> (2 1 0 -1 -2)
+@end verbatim
+
+The third form creates a list of numbers from @code{lo} to @code{hi},
+inclusive (if possible), @code{step} apart. @code{step} @strong{must} be
+non-zero and it's sign must match the ordering of @code{lo} and
+@code{hi}. I.e. if @code{lo} > @code{hi}, @code{step} must be negative,
+otherwise positive.
+
+@verbatim
+(interval 1 5 2) ==> (1 3 5)
+(interval 1 8 2) ==> (1 3 5 7)
+(interval -2 2 2) ==> (-2 0 2)
+(interval 2 -2 -2) ==> (2 0 -2)
+(interval 5 1 -2) ==> (5 3 1)
+(interval -1 -8 -2) ==> (-1 -3 -5 -7)
+@end verbatim
+
+@node string->list string
+@subsection (string->list string)
+@anchor{string-to-list}
+
+@node substring->list string start end
+@subsection (substring->list string start end)
+@anchor{substring-to-list}
+@code{string->list} returns a newly allocated list of the character
+elements of @emph{string}. @code{substring->list} returns a newly
+allocated list of the character elements of the given substring. The
+inverse of @code{string->list} is @code{list->string}.
+
+@verbatim
+(string->list "abcd")                   ==> (#\a #\b #\c #\d)
+(substring->list "abcdef" 1 3)          ==> (#\b #\c)
+@end verbatim
+
+@node Selecting List Components
+@section Selecting List Components
+@anchor{selecting-list-components}
+@menu
+* list? object::
+* circular-list? object::
+* dotted-list? object::
+* length list::
+* length+ clist::
+* null? object::
+* nil? object::
+* notnull? object::
+* notnil? object::
+* list-ref list k::
+* nth k list::
+* first list::
+* second list::
+* third list::
+* fourth list::
+* fifth list::
+* sixth list::
+* seventh list::
+* eighth list::
+* ninth list::
+* tenth list::
+* last list::
+@end menu
+
+@node list? object
+@subsection (list? @emph{object})
+@anchor{listp}
+Returns @code{@hashchar{}t} if @emph{object} is a list, otherwise returns
+@code{@hashchar{}f}. By definition, all lists have finite length and are
+terminated by the empty list. This procedure returns an answer even for
+circular structures.
+
+Any @emph{object} satisfying this predicate will also satisfy exactly
+one of @code{pair?} or @code{null?}.
+
+@verbatim
+(list? '(a b c))                        ==> #t
+(list? '())                             ==> #t
+(list? '(a . b))                        ==> #f
+(let ((x (list 'a)))
+  (set-cdr! x x)
+  (list? x))                            ==> #f
+@end verbatim
+
+@node circular-list? object
+@subsection (circular-list? @emph{object})
+@anchor{circular-listp}
+Returns @code{@hashchar{}t} if @emph{object} is a circular list, otherwise returns
+@code{@hashchar{}f}.
+
+@verbatim
+(circular-list? (list 'a 'b 'c))        ==> #f
+(circular-list? (cons* 'a 'b 'c))       ==> #f
+(circular-list? (circular-list 'a 'b 'c)) ==> #t
+@end verbatim
+
+@node dotted-list? object
+@subsection (dotted-list? @emph{object})
+@anchor{dotted-listp}
+Returns @code{@hashchar{}t} if @emph{object} is an improper list, otherwise
+returns @code{@hashchar{}f}.
+
+@verbatim
+(dotted-list? (list 'a 'b 'c))          ==> #f
+(dotted-list? (cons* 'a 'b 'c))         ==> #t
+(dotted-list? (circular-list 'a 'b 'c)) ==> #f
+@end verbatim
+
+@node length list
+@subsection (length @emph{list})
+@anchor{length}
+Returns the length of @emph{list}. Signals an error if @emph{list} isn't
+a proper list.
+
+@verbatim
+(length '(a b c))                       ==> 3
+(length '(a (b) (c d e)))               ==> 3
+(length '())                            ==> 0
+(length (circular-list 'a 'b 'c))       ERROR
+@end verbatim
+
+@node length+ clist
+@subsection (length+ @emph{clist})
+@anchor{length-plus}
+Returns the length of @emph{clist}, if it is a proper list. Returns
+@code{@hashchar{}f} if @emph{clist} is a circular list. Otherwise signals an
+error.
+
+@verbatim
+(length+ (list 'a 'b 'c))               ==> 3
+(length+ (cons* 'a 'b 'c))              ERROR
+(length+ (circular-list 'a 'b 'c))      ==> #f
+@end verbatim
+
+@node null? object
+@subsection (null? @emph{object})
+@anchor{nullp}
+
+@node nil? object
+@subsection (nil? @emph{object})
+@anchor{nilp}
+Returns @code{@hashchar{}t} if @emph{object} is the empty list; otherwise returns
+@code{@hashchar{}f}.
+
+@verbatim
+(null? '(a . b))                        ==> #f
+(null? '(a b c))                        ==> #f
+(null? '())                             ==> #t
+@end verbatim
+
+@node notnull? object
+@subsection (notnull? @emph{object})
+@anchor{notnullp}
+
+@node notnil? object
+@subsection (notnil? @emph{object})
+@anchor{notnilp}
+Returns @code{@hashchar{}f} if @emph{object} is the empty list; otherwise returns
+@code{@hashchar{}t}.
+
+@verbatim
+(notnull? '(a . b))                        ==> #f
+(notnull? '(a b c))                        ==> #f
+(notnull? '())                             ==> #t
+@end verbatim
+
+@node list-ref list k
+@subsection (list-ref @emph{list} @emph{k})
+@anchor{list-ref-list-k}
+
+@node nth k list
+@subsection (nth @emph{k} @emph{list})
+@anchor{nth-k-list}
+Returns the @emph{k_th element of _list}, using zero-origin indexing.
+The ``valid indexes'' of a list are the non-negative integers less than
+the length of the list. The first element of a list has index @code{0},
+the second has index @code{1}, and so on. @code{nth} is provided for
+Common Lisp familiarity.
+
+@verbatim
+(list-ref '(a b c d) 2)                 ==> c
+@end verbatim
+
+@node first list
+@subsection (first @emph{list})
+@anchor{first-list}
+
+@node second list
+@subsection (second @emph{list})
+@anchor{second-list}
+
+@node third list
+@subsection (third @emph{list})
+@anchor{third-list}
+
+@node fourth list
+@subsection (fourth @emph{list})
+@anchor{fourth-list}
+
+@node fifth list
+@subsection (fifth @emph{list})
+@anchor{fifth-list}
+
+@node sixth list
+@subsection (sixth @emph{list})
+@anchor{sixth-list}
+
+@node seventh list
+@subsection (seventh @emph{list})
+@anchor{seventh-list}
+
+@node eighth list
+@subsection (eighth @emph{list})
+@anchor{eighth-list}
+
+@node ninth list
+@subsection (ninth @emph{list})
+@anchor{ninth-list}
+
+@node tenth list
+@subsection (tenth @emph{list})
+@anchor{tenth-list}
+Returns the specified element of @emph{list}. It is an error if
+@emph{list} is not long enough to contain the specified element (for
+example, if the argument to @code{seventh} is a list that contains only
+six elements).
+
+@node last list
+@subsection (last @emph{list})
+@anchor{last-list}
+Returns the last element in the list. An error is raised if @emph{list}
+is a circular list.
+
+@node Cutting and Pasting Lists
+@section Cutting and Pasting Lists
+@anchor{cutting-and-pasting-lists}
+@menu
+* sublist list start end::
+* list-head list k::
+* take k list::
+* list-tail list k::
+* drop k list::
+* append list@dots{}::
+* append! list@dots{}::
+* last-pair list::
+* except-last-pair list::
+* except-last-pair! list::
+@end menu
+
+@node sublist list start end
+@subsection (sublist @emph{list} @emph{start} @emph{end})
+@anchor{sublist-list-start-end}
+@emph{start} and @emph{end} must be integers satisfying
+
+@verbatim
+0 <= START <= END <= (length LIST)
+@end verbatim
+
+`sublist' returns a newly allocated list formed from the elements of
+@emph{list} beginning at index @emph{start} (inclusive) and ending at
+@emph{end} (exclusive).
+
+@node list-head list k
+@subsection (list-head @emph{list} @emph{k})
+@anchor{list-head-list-k}
+
+@node take k list
+@subsection (take @emph{k} @emph{list})
+@anchor{take-k-list}
+Returns a newly allocated list consisting of the first K elements of
+@emph{list}. @emph{k} must not be greater than the length of
+@emph{list}.
+
+We could have defined @code{list-head} this way:
+
+@verbatim
+      (define (list-head list k)
+        (sublist list 0 k))
+@end verbatim
+
+@node list-tail list k
+@subsection (list-tail @emph{list} @emph{k})
+@anchor{list-tail-list-k}
+
+@node drop k list
+@subsection (drop @emph{k} @emph{list})
+@anchor{drop-k-list}
+Returns the sublist of @emph{list} obtained by omitting the first
+@emph{k} elements. The result, if it is not the empty list, shares
+structure with @emph{list}. @emph{k} must not be greater than the length
+of @emph{list}.
+
+@node append list@dots{}
+@subsection (append @emph{list}@dots{})
+@anchor{append-list}
+Returns a list consisting of the elements of the first @emph{list}
+followed by the elements of the other @emph{list} arguments.
+
+@verbatim
+(append '(x) '(y))                      ==> (x y)
+(append '(a) '(b c d))                  ==> (a b c d)
+(append '(a (b)) '((c)))                ==> (a (b) (c))
+(append)                                ==> ()
+@end verbatim
+
+The resulting list is always newly allocated, except that it shares
+structure with the last @emph{list} argument. The last argument may
+actually be any object; an improper list results if the last argument is
+not a proper list.
+
+@verbatim
+(append '(a b) '(c . d))                ==> (a b c . d)
+(append '() 'a)                         ==> a
+@end verbatim
+
+@node append! list@dots{}
+@subsection (append! @emph{list}@dots{})
+@anchor{append-list-1}
+Returns a list that is the all the @emph{list} arguments concatenated
+together. The arguments are changed rather than copied. (Compare this
+with @code{append}, which copies arguments rather than destroying them.)
+For example:
+
+@verbatim
+(define x '(a b c))
+(define y '(d e f))
+(define z '(g h))
+(append! x y z)                         ==> (a b c d e f g h)
+x                                       ==> (a b c d e f g h)
+y                                       ==> (d e f g h)
+z                                       ==> (g h)
+@end verbatim
+
+@node last-pair list
+@subsection (last-pair @emph{list})
+@anchor{last-pair-list}
+Returns the last pair in @emph{list}, which may be an improper list.
+@code{last-pair} could have been defined this way:
+
+@verbatim
+(define last-pair
+  (lambda (x)
+    (if (pair? (cdr x))
+        (last-pair (cdr x))
+        x)))
+@end verbatim
+
+@node except-last-pair list
+@subsection (except-last-pair @emph{list})
+@anchor{except-last-pair-list}
+
+@node except-last-pair! list
+@subsection (except-last-pair! @emph{list})
+@anchor{except-last-pair-list-1}
+These procedures remove the last pair from @emph{list}. @emph{list} may
+be an improper list, except that it must consist of at least one pair.
+@code{except-last-pair} returns a newly allocated copy of @emph{list}
+that omits the last pair. @code{except-last-pair!} destructively removes
+the last pair from @emph{list} and returns @emph{list}. If the cdr of
+@emph{list} is not a pair, the empty list is returned by either
+procedure.
+
+@node Filtering Lists
+@section Filtering Lists
+@anchor{filtering-lists}
+@menu
+* filter predicate list::
+* remove predicate list::
+* partition predicate list::
+* chunk size step list::
+* chunk* size step list::
+* delq element list::
+* delv element list::
+* delete element list::
+@end menu
+
+@node filter predicate list
+@subsection (filter @emph{predicate} @emph{list})
+@anchor{filter-predicate-list}
+Returns a newly allocated copy of @emph{list} containing only the
+elements satisfying @emph{predicate}. @emph{predicate} must be a
+procedure of one argument.
+
+@verbatim
+(filter odd? '(1 2 3 4 5)) ==> (1 3 5)
+@end verbatim
+
+@node remove predicate list
+@subsection (remove @emph{predicate} @emph{list})
+@anchor{remove-predicate-list}
+Like @code{filter}, except that the returned list contains only those
+elements @strong{not} satisfying @emph{predicate}.
+
+@verbatim
+(remove odd? '(1 2 3 4 5)) ==> (2 4)
+@end verbatim
+
+@node partition predicate list
+@subsection (partition @emph{predicate} @emph{list})
+@anchor{partition-predicate-list}
+
+Separates the elements of @emph{list} with
+@emph{predicate}, and returns a list of two elements: the list of
+in-elements and the list of out-elements. The @emph{list} is not
+disordered--elements occur in the result lists in the same order as they
+occur in the argument @emph{list}. The dynamic order in which the
+various applications of @emph{predicate} are made is not specified. One
+of the returned lists may share a common tail with the argument
+@emph{list}.
+
+@verbatim
+(partition symbol? '(one 2 3 four five 6)) ==>
+    ((one four five) (2 3 6))
+@end verbatim
+
+@node chunk size step list
+@subsection (chunk @emph{size} [@emph{step}] @emph{list})
+@anchor{partition-size-step-list}
+
+@node chunk* size step list
+@subsection (chunk* @emph{size} [@emph{step}] @emph{list})
+@anchor{partition-size-step-list}
+
+Creates sublists of length @emph{size} from the elements of @emph{list},
+returning a list of those lists. In the case of @code{chunk*} only lists
+of @emph{size} are returned; any at the end that don't fit are
+discarded.  @code{chunk} return value includes that shorter final list
+(if present). Elements occur in the result lists in the same order as
+they occur in the argument @emph{list}.
+
+If the optional @emph{step} argument is ommitted it defaults to size,
+resulting in disjoint sublists. Each sublist starts at @emph{step}
+elements from the start of the previous. If @emph{step} > @emph{size}
+elements will be skipped between sublists. If @emph{step} < @emph{size}
+the sublists will overlap.
+
+@verbatim
+(chunk 2 '(one 2 3 four five 6))    ==> ((one 2) (3 four) (five 6))
+(chunk* 2 '(one 2 3 four five 6))    ==> ((one 2) (3 four) (five 6))
+
+(chunk* 2 '(one 2 3 four five 6 7))  ==> ((one 2) (3 four) (five 6) (7))
+(chunk* 2 '(one 2 3 four five 6 7))  ==> ((one 2) (3 four) (five 6))
+
+(chunk* 2 1 '(1 2 3 4 5 6 7 8 9 0)) ==> ((1 2) (2 3) (3 4) (4 5) (5 6)
+                                            (6 7) (7 8) (8 9))
+
+(chunk* 2 3 '(1 2 3 4 5 6 7 8 9 0)) ==> ((1 2) (4 5) (7 8))
+@end verbatim
+
+@node delq element list
+@subsection (delq element list)
+@anchor{delq-element-list}
+
+@node delv element list
+@subsection (delv element list)
+@anchor{delv-element-list}
+
+@node delete element list
+@subsection (delete element list)
+@anchor{delete-element-list}
+Returns a newly allocated copy of @emph{list} with all entries equal to
+@emph{element} removed. @code{delq} uses @code{eq?} to compare
+@emph{element} with the entries in @emph{list}, @code{delv} uses
+@code{eqv?}, and @code{delete} uses @code{equal?}.
+
+@node Searching Lists
+@section Searching Lists
+@anchor{searching-lists}
+@menu
+* find predicate list::
+* find-tail predicate list::
+* memq object list::
+* memv object list::
+* member object list::
+* memp predicate list::
+@end menu
+
+@node find predicate list
+@subsection (find @emph{predicate} @emph{list})
+@anchor{find-predicate-list}
+Returns the first element in @emph{list} for which @emph{predicate} is
+true; returns @code{@hashchar{}f} if it doesn't find such an element.
+@emph{predicate} must be a procedure of one argument.
+
+@verbatim
+(find even? '(3 1 4 1 5 9)) ==> 4
+@end verbatim
+
+Note that @code{find} has an ambiguity in its lookup semantics--if
+@code{find} returns @code{@hashchar{}f}, you cannot tell (in general) if it found
+a @code{@hashchar{}f} element that satisfied @emph{predicate}, or if it did not
+find any element at all. In many situations, this ambiguity cannot
+arise--either the list being searched is known not to contain any
+@code{@hashchar{}f} elements, or the list is guaranteed to have an element
+satisfying @emph{predicate}. However, in cases where this ambiguity can
+arise, you should use @code{find-tail} instead of @code{find} --
+@code{find-tail} has no such ambiguity:
+
+@verbatim
+(cond ((find-tail pred lis)
+        => (lambda (pair) ...)) ; Handle (CAR PAIR)
+      (else ...)) ; Search failed.
+@end verbatim
+
+@node find-tail predicate list
+@subsection (find-tail @emph{predicate} @emph{list})
+@anchor{find-tail-predicate-list}
+Returns the first pair of @emph{list} whose car satisfies
+@emph{predicate}; returns @code{@hashchar{}f} if there's no such pair.
+@code{find-tail} can be viewed as a general-predicate variant of
+@code{memv}.
+
+@node memq object list
+@subsection (memq @emph{object} @emph{list})
+@anchor{memq-object-list}
+
+@node memv object list
+@subsection (memv @emph{object} @emph{list})
+@anchor{memv-object-list}
+
+@node member object list
+@subsection (member @emph{object} @emph{list})
+@anchor{member-object-list}
+These procedures return the first pair of @emph{list} whose car is
+@emph{object}; the returned pair is always one from which @emph{list} is
+composed. If @emph{object} does not occur in @emph{list}, @code{@hashchar{}f}
+(n.b.: not the empty list) is returned. @code{memq} uses @code{eq?} to
+compare @emph{object} with the elements of @emph{list}, while
+@code{memv} uses @code{eqv?} and @code{member} uses @code{equal?}.
+
+@verbatim
+(memq 'a '(a b c))                      ==> (a b c)
+(memq 'b '(a b c))                      ==> (b c)
+(memq 'a '(b c d))                      ==> #f
+(memq (list 'a) '(b (a) c))             ==> #f
+(member (list 'a) '(b (a) c))           ==> ((a) c)
+(memq 101 '(100 101 102))               ==> (101 102)
+(memv 101 '(100 101 102))               ==> (101 102)
+@end verbatim
+
+Although they are often used as predicates, @code{memq}, @code{memv},
+and @code{member} do not have question marks in their names because they
+return useful values rather than just @code{@hashchar{}t} or @code{@hashchar{}f}.
+
+@node memp predicate list
+@subsection (memp @emph{predicate} @emph{list})
+@anchor{memp-predicate-list}
+Returns the first pair of @emph{list} for which @emph{predicate} returns
+@code{@hashchar{}t} when passed the car; the returned pair is always one from
+which @emph{list} is composed. If @emph{predicate} never returns
+@code{@hashchar{}t}, @code{@hashchar{}f} (n.b.: not the empty list) is returned.
+
+@node Mapping of Lists
+@section Mapping of Lists
+@anchor{mapping-of-lists}
+@menu
+* map procedure list@dots{}::
+* for-each procedure list @dots{}::
+@end menu
+
+@node map procedure list@dots{}
+@subsection (map @emph{procedure} @emph{list}@dots{})
+@anchor{map-procedure-list}
+@emph{procedure} must be a procedure taking as many arguments as there
+are @emph{lists}. If more than one @emph{list} is given, then they must
+all be the same length. @code{map} applies @emph{procedure} element-wise
+to the elements of the @emph{lists} and returns a list of the results,
+in order from left to right. The dynamic order in which @emph{procedure}
+is applied to the elements of the @emph{lists} is unspecified; use
+@code{for-each} to sequence side effects.
+
+@verbatim
+(map cadr '((a b) (d e) (g h)))           ==> (b e h)
+(map (lambda (n) (expt n n)) '(1 2 3 4))  ==> (1 4 27 256)
+(map + '(1 2 3) '(4 5 6))                 ==> (5 7 9)
+(let ((count 0))
+  (map (lambda (ignored)
+         (set! count (+ count 1))
+         count)
+       '(a b c)))                         ==> unspecified
+@end verbatim
+
+@node for-each procedure list @dots{}
+@subsection (for-each @emph{procedure} @emph{list} @dots{})
+@anchor{for-each-procedure-list}
+The arguments to @code{for-each} are like the arguments to @code{map},
+but @code{for-each} calls @emph{procedure} for its side effects rather
+than for its values. Unlike @code{map}, @code{for-each} is guaranteed to
+call @emph{procedure} on the elements of the @emph{lists} in order from
+the first element to the last, and the value returned by @code{for-each}
+is unspecified.
+
+@verbatim
+(let ((v (make-vector 5)))
+  (for-each (lambda (i)
+              (vector-set! v i (* i i)))
+            '(0 1 2 3 4))
+  v)                            ==> #(0 1 4 9 16)
+@end verbatim
+
+@node Reduction of Lists
+@section Reduction of Lists
+@anchor{reduction-of-lists}
+@menu
+* reduce procedure initial list::
+* reduce-left procedure initial list::
+* reduce-right procedure initial list::
+* fold-right procedure initial list::
+* fold-left procedure initial list::
+* any predicate list@dots{}::
+* every predicate list@dots{}::
+@end menu
+
+@node reduce procedure initial list
+@subsection (reduce @emph{procedure} @emph{initial} @emph{list})
+@anchor{reduce-procedure-initial-list}
+
+@node reduce-left procedure initial list
+@subsection (reduce-left @emph{procedure} @emph{initial} @emph{list})
+@anchor{reduce-left-procedure-initial-list}
+Combines all the elements of @emph{list} using the binary operation
+@emph{procedure}. For example, using @code{+} one can add up all the
+elements:
+
+@verbatim
+(reduce-left + 0 list-of-numbers)
+@end verbatim
+
+The argument @emph{initial} is used only if @emph{list} is empty; in
+this case @emph{initial} is the result of the call to
+@code{reduce-left}. If @emph{list} has a single argument, it is
+returned. Otherwise, the arguments are reduced in a left-associative
+fashion. For example:
+
+@verbatim
+(reduce-left + 0 '(1 2 3 4))            ==> 10
+(reduce-left + 0 '(1 2))                ==> 3
+(reduce-left + 0 '(1))                  ==> 1
+(reduce-left + 0 '())                   ==> 0
+(reduce-left + 0 '(foo))                ==> foo
+(reduce-left list '() '(1 2 3 4))       ==> (((1 2) 3) 4)
+@end verbatim
+
+@node reduce-right procedure initial list
+@subsection (reduce-right @emph{procedure} @emph{initial} @emph{list})
+@anchor{reduce-right-procedure-initial-list}
+Like @code{reduce-left} except that it is right-associative.
+
+@verbatim
+(reduce-right list '() '(1 2 3 4))      ==> (1 (2 (3 4)))
+@end verbatim
+
+@node fold-right procedure initial list
+@subsection (fold-right @emph{procedure} @emph{initial} @emph{list})
+@anchor{fold-right-procedure-initial-list}
+Combines all of the elements of @emph{list} using the binary operation
+@emph{procedure}. Unlike @code{reduce-left} and @code{reduce-right},
+@emph{initial} is always used:
+
+@verbatim
+(fold-right + 0 '(1 2 3 4))             ==> 10
+(fold-right + 0 '(foo))                 ERROR Illegal datum
+(fold-right list '() '(1 2 3 4))        ==> (1 (2 (3 (4 ()))))
+@end verbatim
+
+@code{fold-right} has interesting properties because it establishes a
+homomorphism between (@code{cons}, @code{()}) and (@emph{procedure},
+@emph{initial}). It can be thought of as replacing the pairs in the
+spine of the list with @emph{procedure} and replacing the @code{()} at
+the end with @emph{initial}. Many of the classical list-processing
+procedures can be expressed in terms of @code{fold-right}, at least for
+the simple versions that take a fixed number of arguments:
+
+@verbatim
+(define (copy-list list)
+  (fold-right cons '() list))
+
+(define (append list1 list2)
+  (fold-right cons list2 list1))
+
+(define (map p list)
+  (fold-right (lambda (x r) (cons (p x) r)) '() list))
+
+(define (reverse items)
+  (fold-right (lambda (x r) (append r (list x))) '() items))
+@end verbatim
+
+@node fold-left procedure initial list
+@subsection (fold-left @emph{procedure} @emph{initial} @emph{list})
+@anchor{fold-left-procedure-initial-list}
+Combines all the elements of @emph{list} using the binary operation
+@emph{procedure}. Elements are combined starting with @emph{initial} and
+then the elements of @emph{list} from left to right. Whereas
+@code{fold-right} is recursive in nature, capturing the essence of
+cdr-ing down a list and then computing a result (although all the
+reduce/fold functions are implemented iteratively in the runtime),
+@code{fold-left} is iterative in nature, combining the elements as the
+list is traversed.
+
+@verbatim
+(fold-left list '() '(1 2 3 4))         ==> ((((() 1) 2) 3) 4)
+
+(define (length list)
+  (fold-left (lambda (sum element) (+ sum 1)) 0 list))
+
+(define (reverse items)
+  (fold-left (lambda (x y) (cons y x)) () items))
+@end verbatim
+
+@node any predicate list@dots{}
+@subsection (any @emph{predicate} @emph{list}@dots{})
+@anchor{any-predicate-list}
+Applies @emph{predicate} across the @emph{lists}, returning true if
+@emph{predicate} returns true on any application.
+
+If there are n list arguments @emph{list1} @dots{} @emph{listn}, then
+@emph{predicate} must be a procedure taking n arguments and returning a
+boolean result.
+
+@code{any} applies @emph{predicate} to the first elements of the
+@emph{list} parameters. If this application returns a true value,
+@code{any} immediately returns that value. Otherwise, it iterates,
+applying @emph{predicate} to the second elements of the @emph{list}
+parameters, then the third, and so forth. The iteration stops when a
+true value is produced or one of the lists runs out of values; in the
+latter case, @code{any} returns @code{@hashchar{}f}. The application of
+@emph{predicate} to the last element of the @emph{lists} is a tail call.
+
+Note the difference between @code{find} and @code{any} -- @code{find}
+returns the element that satisfied the predicate; @code{any} returns the
+true value that the @emph{predicate} produced.
+
+Like @code{every}, @code{any}'s name does not end with a question mark
+-- this is to indicate that it does not return a simple boolean
+(@code{@hashchar{}t} or @code{@hashchar{}f}), but a general value.
+
+@verbatim
+(any integer? '(a 3 b 2.7))   ==> #t
+(any integer? '(a 3.1 b 2.7)) ==> #f
+(any < '(3 1 4 1 5)
+       '(2 7 1 8 2)) ==> #t
+@end verbatim
+
+@node every predicate list@dots{}
+@subsection (every @emph{predicate} @emph{list}@dots{})
+@anchor{every-predicate-list}
+Applies @emph{predicate} across the @emph{lists}, returning true if
+@emph{predicate} returns true on every application.
+
+If there are n list arguments @emph{list1} @dots{} @emph{listn}, then
+@emph{predicate} must be a procedure taking n arguments and returning a
+boolean result.
+
+@code{every} applies @emph{predicate} to the first elements of the
+@emph{list} parameters. If this application returns false, @code{every}
+immediately returns false. Otherwise, it iterates, applying
+@emph{predicate} to the second elements of the @emph{list} parameters,
+then the third, and so forth. The iteration stops when a false value is
+produced or one of the @emph{lists} runs out of values. In the latter
+case, @code{every} returns the true value produced by its final
+application of @emph{predicate}. The application of @emph{predicate} to
+the last element of the @emph{lists} is a tail call.
+
+If one of the @emph{lists} has no elements, @code{every} simply returns
+@code{@hashchar{}t}.
+
+Like @code{any}, @code{every}'s name does not end with a question mark
+-- this is to indicate that it does not return a simple boolean
+(@code{@hashchar{}t} or @code{@hashchar{}f}), but a general value.
+
+@node Miscellaneous List Operations
+@section Miscellaneous List Operations
+@anchor{miscellaneous-list-operations}
+@menu
+* circular-list object@dots{}::
+* reverse list::
+* sort sequence procedure::
+* flatten list::
+* flatten* list::
+* union list@dots{}::
+* intersection list@dots{}::
+* complement list@dots{}::
+@end menu
+
+@node circular-list object@dots{}
+@subsection (circular-list @emph{object}@dots{})
+@anchor{circular-list-object-1}
+This procedure is like @code{list}, except that the returned list is
+circular.
+
+@node reverse list
+@subsection (reverse @emph{list})
+@anchor{reverse-list}
+Returns a newly allocated list consisting of the top-level elements of
+@emph{list} in reverse order.
+
+@verbatim
+(reverse '(a b c))                  ==> (c b a)
+(reverse '(a (b c) d (e (f))))      ==> ((e (f)) d (b c) a)
+@end verbatim
+
+@node sort sequence procedure
+@subsection (sort @emph{sequence} @emph{procedure})
+@anchor{sort-sequence-procedure}
+@emph{sequence} must be either a list or a vector. @emph{procedure} must
+be a procedure of two arguments that defines a ``total ordering'' on the
+elements of @emph{sequence}. In other words, if X and Y are two distinct
+elements of @emph{sequence}, then it must be the case that
+
+@verbatim
+(and (PROCEDURE X Y)
+     (PROCEDURE Y X))
+     ==> #f
+@end verbatim
+
+If @emph{sequence} is a list (vector), @code{sort} returns a newly
+allocated list (vector) whose elements are those of @emph{sequence},
+except that they are rearranged to be sorted in the order defined by
+@emph{procedure}. So, for example, if the elements of @emph{sequence}
+are numbers, and @emph{procedure} is @code{<}, then the resulting
+elements are sorted in monotonically nondecreasing order. Likewise, if
+@emph{procedure} is @code{>}, the resulting elements are sorted in
+monotonically nonincreasing order. To be precise, if X and Y are any two
+adjacent elements in the result, where X precedes Y, it is the case that
+
+@verbatim
+(PROCEDURE Y X)
+     ==> #f
+@end verbatim
+
+There is also the function @code{vector-sort} that applies only to
+vectors, and will raise an erro if applied to a list.
+
+@node flatten list
+@subsection (flatten @emph{list})
+@anchor{flatten-list}
+Returns a list with the contents of all top level nested lists placed
+directly in the result. This is best illustrated with some examples:
+
+@verbatim
+(flatten '(a b c d)) ==> (a b c d)
+(flatten '(a (b c) d)) ==> (a b c d)
+(flatten '(a (b (c d)))) ==> (a b (c d))
+@end verbatim
+
+@node flatten* list
+@subsection (flatten* @emph{list})
+@anchor{flatten-list-1}
+Returns a list with the contents of all nested lists placed directly in
+the result. This is also best illustrated with some examples:
+
+@verbatim
+(flatten* '(a b c d)) ==> (a b c d)
+(flatten* '(a (b c) d)) ==> (a b c d)
+(flatten* '(a (b (c d)))) ==> (a b c d)
+@end verbatim
+
+@node union list@dots{}
+@subsection (union @emph{list}@dots{})
+@anchor{union-list}
+Returns a list that contains all items in the argument @emph{list}s.
+Each item appears only once in the result regardless of whether it was
+repeated in any @emph{list}.
+
+@verbatim
+(union '(1 2 3) '(4 5))      ==> (1 2 3 4 5)
+(union '(1 2 3) '(3 4 5))    ==> (1 2 3 4 5)
+(union '(1 2 3 2) '(4 4 5))  ==> (1 2 3 4 5)
+@end verbatim
+
+@node intersection list@dots{}
+@subsection (intersection @emph{list}@dots{})
+@anchor{intersection-list}
+Returns a list that contains only items that are in all @emph{list}
+arguments.
+
+@verbatim
+(intersection '(1 2 3) '(3 4 5)) ==> (3)
+(intersection '() '(3 4 5))      ==> ()
+@end verbatim
+
+@node complement list@dots{}
+@subsection (complement @emph{list}@dots{})
+@anchor{complement-list}
+Returns a list that contains only items that were in the first
+@emph{list} argument, but not in any of the subsequent argument
+@emph{list}s.
+
+@verbatim
+(complement '(1 2 3 4 5) '(1 3 5))      ==> (2 4)
+(complement '() '(1 2))                 ==> ()
+(complement '(1 2 3 4 5) '(1 2) '(3 4)) ==> (5)
+@end verbatim
+
+
+@c Local Variables:
+@c mode: texinfo
+@c End:

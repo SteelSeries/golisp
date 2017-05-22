@@ -8,13 +8,65 @@
 ;;; GoLisp compiler - compiler
 
 
-(define opcode-symbols '(ZERO ONE TWO TRUE FALSE NIL LVAR LSET GVAR GSET POP CONST JUMP FJUMP TJUMP SAVE RETURN CALLJ ARGS ARGSDOT FN PRIM FUNC SET_CC CC CAR CDR CADR NOT NILP LIST1 RANDOM PLUS MINUS TIMES DIVIDE LT GT LTEQ GTEQ CONS LIST2 EQV NEQV EQ NEQ EQUAL NEQUAL LIST3 NAMEBANG HALT))
+(define opcode-symbols '(ZERO			; 0
+						 ONE			; 1
+						 TWO			; 2
+						 TRUE			; 3
+						 FALSE			; 4
+						 NIL			; 5
+						 LVAR			; 6
+						 LSET			; 7
+						 GVAR			; 8
+						 GSET			; 9
+						 POP			; 10
+						 CONST			; 11
+						 JUMP			; 12
+						 FJUMP			; 13
+						 TJUMP			; 14
+						 SAVE			; 15
+						 RETURN			; 16
+						 CALLJ			; 17
+						 ARGS			; 18
+						 ARGSDOT		; 19
+						 FN				; 20
+						 PRIM			; 21
+						 FUNC			; 22
+						 SET_CC			; 23
+						 CC				; 24
+						 CAR			; 25
+						 CDR			; 26
+						 CADR			; 27
+						 NOT			; 28
+						 NILP			; 29
+						 LIST1			; 30
+						 RANDOM			; 31
+						 PLUS			; 32
+						 MINUS			; 33
+						 TIMES			; 34
+						 DIVIDE			; 35
+						 LT				; 36
+						 GT				; 37
+						 LTEQ			; 38
+						 GTEQ			; 39
+						 CONS			; 40
+						 LIST2			; 41
+						 EQV			; 42
+						 NEQV			; 43
+						 EQ				; 44
+						 NEQ			; 45
+						 EQUAL			; 46
+						 NEQUAL			; 47
+						 LIST3			; 48
+						 NAMEBANG		; 49
+						 HALT))			; 50
 
-(define opcodes (do ((syms opcode-symbols (cdr syms))
-					 (index 0 (1+ index))
-					 (code-list '() (acons (car syms) index code-list)))
-					((nil? syms)
-					 code-list)))
+(define (make-opcodes syms code mapping)
+  (if (nil? syms)
+	  mapping
+	  (make-opcodes (cdr syms) (1+ code) (acons (car syms) code mapping))))
+
+(define opcodes (make-opcodes opcode-symbols 0 '()))
+
 
 (define *label-num* 0)
 
@@ -22,15 +74,13 @@
 
 (define (comp x env val? more?)
   (log-it "COMP expr: ~A~%     env: ~A" x env)
-  (cond ((frame? x)
-		 )
-		((member x (list #t #f nil 0 1 2))
-			(comp-const x val? more?))
+  (cond ((member x (list #t #f nil 0 1 2))
+		 (comp-const x val? more?))
 		((symbol? x)
 		 (log-it "- symbol")
 		 (if (naked? x)
-			 (comp-const x val? more?)
-			 (comp-var x env val? more?)))
+		   (comp-const x val? more?)
+		   (comp-var x env val? more?)))
 		((atom? x)
 		 (log-it "- atom")
 		 (comp-const x val? more?))
@@ -44,18 +94,18 @@
 			(arg-count x 1)
 			(gen 'CONST (second x)))
 		   ((begin)
-			 (log-it "- begin")
-			 (comp-begin (rest x) env val? more?))
+			(log-it "- begin")
+			(comp-begin (rest x) env val? more?))
 		   ((define)
 			(log-it "- define")
 			(let ((formals (cadr x))
 				  (body (cddr x)))
 			  (if (symbol? formals)
-				  (comp (cons* 'set! formals body) env val? more?)
-				  (let ((name (first formals))
-						(params (rest formals)))
-					(comp (list 'name! (list 'set! name (cons* 'lambda params body)) (list 'quote name)) env val? more?)
-					))))
+				(comp (cons* 'set! formals body) env val? more?)
+				(let ((name (first formals))
+					  (params (rest formals)))
+				  (comp (list 'name! (list 'set! name (cons* 'lambda params body)) (list 'quote name)) env val? more?)
+				  ))))
 		   ((set!)
 			(log-it "- set!")
 			(arg-count x 2)
@@ -244,10 +294,11 @@
 ;;; Compile an application of a function to arguments
 
 (define (comp-funcall f args env val? more?)
-  (let* ((prim (primitive-op? f env (length args)))
-		 (f-value (eval f)))
-	(log-it "Compiling a function call: ~A - ~A" f f-value)
-	(cond (prim							; function compilable to a primitive instruction
+  (let* ((prim (primitive-op? f env (length args))))
+	(log-it "Compiling a function call: ~A~%" f)
+
+	;; a function compilable to a primitive instruction 
+	(cond (prim							
 		   (log-it "Compiling prim")
 		   (if (and (false? val?)
 					(false? (prim-side-effects prim)))
@@ -264,17 +315,32 @@
 						(gen 'POP))
 					  (unless more?
 						(gen 'RETURN))))))
-		  
-		  ((special-form? f-value)		; a special form
+
+		  ;; a lambda with no args
+		  ;; ((lambda () body) ==> (begin body)
+		  ((and (list? f)
+				(eqv? (car f) 'lambda)		
+				(nil? (cadr f)))
+		   (log-it "Compiling a no arg lambda")
+		   (unless (nil? args)
+			 (error "Too many arguments supplied"))
+		   (comp-begin (cddr f) env val? more?))
+
+		   ;; a special form
+		  ((and (list? f)
+				(special-form? (eval (car f))))
 		   (log-it "Compiling special form call")
 		   (seq (map (lambda (arg)
 					   (gen 'CONST arg))
 					 args)
-				;(comp f env #t #t)
+										;(comp f env #t #t)
 				(gen 'PRIM f (length args))
 				(when (false? val?)
 				  (gen 'POP))))
-		  ((primitive? f-value)		; a primitive (implemented directly in Go)
+
+		  ;; a primitive (implemented directly in Go)
+		  ((and (list? f)
+				(primitive? (eval (car f))))		
 		   (log-it "Compiling primitive function call")
 		   (seq (comp-list args env)
 				;; (comp f env #t #t)
@@ -283,7 +349,10 @@
 				  (gen 'POP))
 				(unless more?
 				  (gen 'RETURN))))
-		  ((function? f-value)			; a interpreted function
+
+		  ;; an interpreted function
+		  ((and (list? f)
+				(function? (eval (car f))))			
 		   (log-it "Compiling an interpreted function call")
 		   (seq (comp-list args env)
 				;; (comp f env #t #t)
@@ -292,13 +361,9 @@
 				  (gen 'POP))
 				(unless more?
 				  (gen 'RETURN))))
-		  ((and (starts-with? f 'lambda) ; a lambda expression
-				(nil? (second f)))
-		   ;; ((lambda () body) ==> (begin body)
-		   (unless (nil? args)
-			 (error "Too many arguments supplied"))
-		   (comp-begin (cddr f) env val? more?))
-		  (more?						; compiled function call with code following: need to save the continuation point
+
+		  ;; a compiled function call with code following: need to save the continuation point
+		  (more?						
 		   (log-it "Compiling an compiled function call")
 		   (let ((k (gen-label 'K)))
 			 (seq (gen 'SAVE k)
@@ -308,7 +373,9 @@
 				  (list k)
 				  (when (false? val?)
 					(gen 'POP)))))
-		  (else							; compiled function call at the end - as rename plus goto
+
+		  ;; a compiled function call at the end - as rename plus goto
+		  (else							
 		   (log-it "Compiling a tail recursive compiled function call")
 		   (seq (comp-list args env)
 				(comp f env #t #t)

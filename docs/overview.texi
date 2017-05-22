@@ -1,0 +1,1203 @@
+@node Overview, Special Forms, Acknowledgements, Top
+@chapter Overview
+
+GoLisp is a relatively complete implementation of the core
+of a Scheme flavored Lisp. It supports a Scheme style of lexical
+scoping, and includes a sizable number of core built-in functions. A
+macro facility is included, as well. Other than some of the more
+esoteric functions being missing, it should be usable for running code
+from SICP.
+
+The core of GoLisp is implemented in Go. The original reason for
+building GoLisp was for use as an embeddable scripting environment for
+our Go application in order to write declarative descriptions of
+device communication prototcols. It is very easy to run Lisp code from
+Go, either by loading Lisp source files, or by evaluating a string of
+Lisp code. Furthermore, you can easily add primitive functions,
+written in Go, in your application without having to edit any of the
+GoLisp code.
+
+Over time GoLisp has been used for a wider variety of purposes. Using
+it as the implementation language for a Smarthome system on Raspberry
+Pi class hardware was the impetus behind writing a more efficient
+interpretor and a compiler.
+
+GoLisp includes both an interpreter and bytecode compiler (and matching
+execution engine). Interpretted, compiled, and primitive functions can
+be intermixed relatively freely. There are some things that only work in
+interpreted code. Over time these exceptions will be
+removed. @xref{compiler}
+
+These are the significant semantic characteristics of the Scheme
+language:
+
+@table @asis
+@item Variables are statically scoped
+@cindex static scoping (defn)
+@cindex scope (see region)
+Scheme is a @dfn{statically scoped} programming language, which means that
+each use of a variable is associated with a lexically apparent binding
+of that variable.  Algol is another statically scoped language.
+
+@item Types are latent
+@cindex latent types (defn)
+@cindex manifest types (defn)
+@cindex weak types (defn)
+@cindex strong types (defn)
+@cindex dynamic types (defn)
+@cindex static types (defn)
+@cindex types, latent (defn)
+@cindex types, manifest (defn)
+Scheme has @dfn{latent} types as opposed to @dfn{manifest} types, which
+means that Scheme associates types with values (or objects) rather than
+with variables.  Other languages with latent types (also referred to as
+@dfn{weakly} typed or @dfn{dynamically} typed languages) include APL,
+Snobol, and other dialects of Lisp.  Languages with manifest types
+(sometimes referred to as @dfn{strongly} typed or @dfn{statically} typed
+languages) include Algol 60, Pascal, and C.
+
+@item Objects have unlimited extent
+@cindex extent, of objects
+All objects created during a Scheme computation, including procedures
+and continuations, have unlimited extent; no Scheme object is ever
+destroyed.  The system doesn't run out of memory because the garbage
+collector reclaims the storage occupied by an object when the object
+cannot possibly be needed by a future computation.  Other languages in
+which most objects have unlimited extent include APL and other Lisp
+dialects.
+
+@item Proper tail recursion
+@cindex proper tail recursion (defn)
+@cindex tail recursion (defn)
+@cindex recursion (see tail recursion)
+Scheme is @dfn{properly tail-recursive}, which means that iterative
+computation can occur in constant space, even if the iterative
+computation is described by a syntactically recursive procedure.  With a
+tail-recursive implementation, you can express iteration using the
+ordinary procedure-call mechanics; special iteration expressions are
+provided only for syntactic convenience.
+
+@item Procedures are objects
+Scheme procedures are objects, which means that you can create them
+dynamically, store them in data structures, return them as the results
+of other procedures, and so on.  Other languages with such procedure
+objects include Common Lisp and ML.
+
+@item Continuations are explicit
+In most other languages, continuations operate behind the scenes.  In
+Scheme, continuations are objects; you can use continuations for
+implementing a variety of advanced control constructs, including
+non-local exits, backtracking, and coroutines.
+
+@item Arguments are passed by value
+Arguments to Scheme procedures are passed by value, which means that
+Scheme evaluates the argument expressions before the procedure gains
+control, whether or not the procedure needs the result of the
+evaluations.  ML, C, and APL are three other languages that pass
+arguments by value.  In languages such as SASL and Algol 60, argument
+expressions are not evaluated unless the values are needed by the
+procedure.
+@end table
+
+@findex read
+Scheme uses a parenthesized-list Polish notation to describe programs
+and (other) data.  The syntax of Scheme, like that of most Lisp
+dialects, provides for great expressive power, largely due to its
+simplicity.  An important consequence of this simplicity is the
+susceptibility of Scheme programs and data to uniform treatment by other
+Scheme programs.  As with other Lisp dialects, the @code{read} primitive
+parses its input; that is, it performs syntactic as well as lexical
+decomposition of what it reads.
+
+@menu
+* Notational Conventions::      
+* Scheme Concepts::             
+* Lexical Conventions::         
+* Expressions::                 
+@end menu
+
+@node Notational Conventions, Scheme Concepts, Overview, Overview
+@section Notational Conventions
+@cindex notational conventions
+@cindex conventions, notational
+
+This section details the notational conventions used throughout the rest
+of this document.
+
+@menu
+* Errors::                      
+* Examples::                    
+* Entry Format::                
+@end menu
+
+@node Errors, Examples, Notational Conventions, Notational Conventions
+@subsection Errors
+@cindex errors, notational conventions
+
+@cindex signal an error (defn)
+@cindex must be, notational convention
+@findex error
+When this manual uses the phrase ``an error will be signalled,'' it
+means that Scheme will call @code{error}, which normally halts execution
+of the program and prints an error message.
+
+When this manual uses the phrase ``it is an error,'' it means that the
+specified action is not valid in Scheme, but the system may or may not
+signal the error.  When this manual says that something ``must be,'' it
+means that violating the requirement is an error.
+
+@node Examples, Entry Format, Errors, Notational Conventions
+@subsection Examples
+@cindex examples
+
+@cindex => notational convention
+@cindex result of evaluation, in examples
+@cindex evaluation, in examples
+@cindex specified result, in examples
+This manual gives many examples showing the evaluation of expressions.
+The examples have a common format that shows the expression being
+evaluated on the left hand side, an ``arrow'' in the middle, and the
+value of the expression written on the right.  For example:
+
+@example
+(+ 1 2)          @result{}  3
+@end example
+
+Sometimes the arrow and value will be moved under the expression, due to
+lack of space.  Occasionally we will not care what the value is, in
+which case both the arrow and the value are omitted.
+
+@cindex error--> notational convention
+@cindex error, in examples
+If an example shows an evaluation that results in an error, an error
+message is shown, prefaced by @samp{@error{}}:
+
+@example
+(+ 1 'foo)                      @error{} Illegal datum
+@end example
+
+@cindex -| notational convention
+@cindex printed output, in examples
+An example that shows printed output marks it with @samp{@print{}}:
+
+@example
+@group
+(begin (write 'foo) 'bar)
+     @print{} foo
+     @result{} bar
+@end group
+@end example
+
+@cindex unspecified result (defn)
+@cindex result, unspecified (defn)
+When this manual indicates that the value returned by some expression is
+@dfn{unspecified}, it means that the expression will evaluate to some
+object without signalling an error, but that programs should not depend
+on the value in any way.
+
+@node Entry Format,  , Examples, Notational Conventions
+@subsection Entry Format
+@cindex entry format
+@cindex format, entry
+
+Each description of an MIT/GNU Scheme variable, special form, or
+procedure begins with one or more header lines in this format:
+
+@deffn @var{category} @var{template}
+@end deffn
+
+@noindent
+where @var{category} specifies the kind of item (``variable'',
+``special form'', or ``procedure'').  The form of @var{template} is
+interpreted depending on @var{category}.
+
+@table @asis
+@item Variable
+@var{Template} consists of the variable's name.
+@cindex variable, entry category
+
+@item Special Form
+@var{Template} starts with the syntactic keyword of the special form,
+followed by a description of the special form's syntax.  The description
+is written using the following conventions.
+@cindex special form, entry category
+
+@findex else
+@findex cond
+Named components are italicized in the printed manual, and uppercase in
+the Info file.  ``Noise'' keywords, such as the @code{else} keyword in
+the @code{cond} special form, are set in a fixed width font in the
+printed manual; in the Info file they are not distinguished.
+Parentheses indicate themselves.
+
+@cindex ellipsis, in entries
+@cindex ... in entries
+A horizontal ellipsis (@dots{}) is describes repeated components.
+Specifically,
+
+@display
+@var{thing} @dots{}
+@end display
+
+@noindent
+indicates @emph{zero} or more occurrences of @var{thing}, while
+
+@display
+@var{thing} @var{thing} @dots{}
+@end display
+
+@noindent
+indicates @emph{one} or more occurrences of @var{thing}.
+
+@cindex bracket, in entries
+@cindex [ in entries
+@cindex ] in entries
+@cindex optional component, in entries
+Brackets, @code{[ ]}, enclose optional components.
+
+@cindex body, of special form (defn)
+@findex lambda
+Several special forms (e.g.@: @code{lambda}) have an internal component
+consisting of a series of expressions; usually these expressions are
+evaluated sequentially under conditions that are specified in the
+description of the special form.  This sequence of expressions is commonly
+referred to as the @dfn{body} of the special form.
+
+@item Procedure
+@var{Template} starts with the name of the variable to which the
+procedure is bound, followed by a description of the procedure's
+arguments.  The arguments are described using ``lambda list'' notation
+(@pxref{Lambda Expressions}), except that brackets are used to denote
+optional arguments, and ellipses are used to denote ``rest'' arguments.
+@cindex procedure, entry format
+
+The names of the procedure's arguments are italicized in the printed
+manual, and uppercase in the Info file.
+
+When an argument names a Scheme data type, it indicates that the
+argument must be that type of data object.  For example,
+
+@deffn procedure cdr pair
+@end deffn
+
+@noindent
+indicates that the standard Scheme procedure @code{cdr} takes one argument,
+which must be a pair.
+
+Many procedures signal an error when an argument is of the wrong type;
+usually this error is a condition of type
+@code{condition-type:wrong-type-argument}.
+@findex condition-type:wrong-type-argument
+
+In addition to the standard data-type names (@var{pair}, @var{list},
+@var{boolean}, @var{string}, etc.), the following names as arguments
+also imply type restrictions:
+
+@itemize @bullet
+@item
+@var{object}: any object
+@item
+@var{thunk}: a procedure of no arguments
+@item
+@var{x}, @var{y}: real numbers
+@item
+@var{q}, @var{n}: integers
+@item
+@var{k}: an exact non-negative integer
+@end itemize
+@end table
+
+Some examples:
+
+@deffn procedure list object @dots{}
+@end deffn
+
+@noindent
+indicates that the standard Scheme procedure @code{list} takes zero or
+more arguments, each of which may be any Scheme object.
+
+@deffn procedure write-char char [output-port]
+@end deffn
+
+@noindent
+indicates that the standard Scheme procedure @code{write-char} must be
+called with a character, @var{char}, and may also be called with a
+character and an output port.
+
+@node Scheme Concepts, Lexical Conventions, Notational Conventions, Overview
+@section Scheme Concepts
+@cindex scheme concepts
+
+@menu
+* Variable Bindings::           
+* Environment Concepts::        
+* Initial and Current Environments::  
+* Static Scoping::              
+* True and False::              
+* External Representations::    
+* Disjointness of Types::       
+* Storage Model::               
+@end menu
+
+@node Variable Bindings, Environment Concepts, Scheme Concepts, Scheme Concepts
+@subsection Variable Bindings
+@cindex variable binding
+@cindex binding, of variable
+
+@cindex bound variable (defn)
+@cindex value, of variable (defn)
+@cindex name, of value (defn)
+@cindex location, of variable
+Any identifier that is not a syntactic keyword may be used as a variable
+(@pxref{Identifiers}).  A variable may name a location where a value can
+be stored.  A variable that does so is said to be @dfn{bound} to the
+location.  The value stored in the location to which a variable is bound
+is called the variable's @dfn{value}.  (The variable is sometimes said
+to @dfn{name} the value or to be @dfn{bound to} the value.)
+
+@cindex unassigned variable (defn)
+@cindex error, unassigned variable
+A variable may be bound but still not have a value; such a variable is
+said to be @dfn{unassigned}.  Referencing an unassigned variable is an
+error.  When this error is signalled, it is a condition of type
+@code{condition-type:unassigned-variable}; sometimes the compiler does
+not generate code to signal the error.  Unassigned variables are useful
+only in combination with side effects (@pxref{Assignments}).
+@findex condition-type:unassigned-variable
+
+@node Environment Concepts, Initial and Current Environments, Variable Bindings, Scheme Concepts
+@subsection Environment Concepts
+
+@cindex environment (defn)
+@cindex unbound variable (defn)
+@cindex error, unbound variable (defn)
+An @dfn{environment} is a set of variable bindings.  If an environment
+has no binding for a variable, that variable is said to be @dfn{unbound}
+in that environment.  Referencing an unbound variable signals a
+condition of type @code{condition-type:unbound-variable}.
+@findex condition-type:unbound-variable
+
+@cindex extension, of environment (defn)
+@cindex environment, extension (defn)
+@cindex shadowing, of variable binding (defn)
+@cindex parent, of environment (defn)
+@cindex child, of environment (defn)
+@cindex inheritance, of environment bindings (defn)
+A new environment can be created by @dfn{extending} an existing
+environment with a set of new bindings.  Note that ``extending an
+environment'' does @strong{not} modify the environment; rather, it
+creates a new environment that contains the new bindings and the old
+ones.  The new bindings @dfn{shadow} the old ones; that is, if an
+environment that contains a binding for @code{x} is extended with a new
+binding for @code{x}, then only the new binding is seen when @code{x} is
+looked up in the extended environment.  Sometimes we say that the
+original environment is the @dfn{parent} of the new one, or that the new
+environment is a @dfn{child} of the old one, or that the new environment
+@dfn{inherits} the bindings in the old one.
+
+@findex let
+@findex let*
+@findex letrec
+@findex do
+@findex define
+Procedure calls extend an environment, as do @code{let}, @code{let*},
+@code{letrec}, and @code{do} expressions.  Internal definitions
+(@pxref{Internal Definitions}) also extend an environment.  (Actually,
+all the constructs that extend environments can be expressed in terms of
+procedure calls, so there is really just one fundamental mechanism for
+environment extension.)  A top-level definition (@pxref{Top-Level
+Definitions}) may add a binding to an existing environment.
+
+@node Initial and Current Environments, Static Scoping, Environment Concepts, Scheme Concepts
+@subsection Initial and Current Environments
+
+@cindex initial environment (defn)
+@cindex environment, initial (defn)
+MIT/GNU Scheme provides an @dfn{initial environment} that contains all
+of the variable bindings described in this manual.  Most environments
+are ultimately extensions of this initial environment.  In Scheme, the
+environment in which your programs execute is actually a child
+(extension) of the environment containing the system's bindings.  Thus,
+system names are visible to your programs, but your names do not
+interfere with system programs.
+
+@cindex current environment (defn)
+@cindex environment, current (defn)
+@cindex REP loop (defn)
+@cindex REP loop, environment of
+@findex user-initial-environment
+@findex ge
+The environment in effect at some point in a program is called the
+@dfn{current environment} at that point.  In particular, every
+@acronym{REP} loop has a current environment.  (@acronym{REP} stands for
+``read-eval-print''; the @acronym{REP} loop is the Scheme program that
+reads your input, evaluates it, and prints the result.)  The environment
+of the top-level @acronym{REP} loop (the one you are in when Scheme
+starts up) starts as @code{user-initial-environment}, although it can be
+changed by the @code{ge} procedure.  When a new @acronym{REP} loop is
+created, its environment is determined by the program that creates it.
+
+@node Static Scoping, True and False, Initial and Current Environments, Scheme Concepts
+@subsection Static Scoping
+@cindex scoping, static
+@cindex static scoping
+
+@cindex dynamic binding, versus static scoping
+Scheme is a statically scoped language with block structure.  In this
+respect, it is like Algol and Pascal, and unlike most other dialects of
+Lisp except for Common Lisp.
+
+@cindex binding expression (defn)
+@cindex expression, binding (defn)
+The fact that Scheme is statically scoped (rather than
+dynamically bound) means that the environment that is extended (and
+becomes current) when a procedure is called is the environment in which
+the procedure was created (i.e.@: in which the procedure's defining
+lambda expression was evaluated), not the environment in which the
+procedure is called.  Because all the other Scheme @dfn{binding
+expressions} can be expressed in terms of procedures, this determines
+how all bindings behave.
+
+Consider the following definitions, made at the top-level @acronym{REP}
+loop (in the initial environment):
+
+@example
+@group
+(define x 1)
+(define (f x) (g 2))
+(define (g y) (+ x y))
+(f 5)                                       @result{}  3 @r{; not} 7
+@end group
+@end example
+
+Here @code{f} and @code{g} are bound to procedures created in the
+initial environment.  Because Scheme is statically scoped, the call to
+@code{g} from @code{f} extends the initial environment (the one in which
+@code{g} was created) with a binding of @code{y} to @code{2}.  In this
+extended environment, @code{y} is @code{2} and @code{x} is @code{1}.
+(In a dynamically bound Lisp, the call to @code{g} would extend the
+environment in effect during the call to @code{f}, in which @code{x} is
+bound to @code{5} by the call to @code{f}, and the answer would be
+@code{7}.)
+
+@cindex lexical scoping (defn)
+@cindex scoping, lexical (defn)
+@cindex region, of variable binding (defn)
+@cindex variable, binding region (defn)
+@findex lambda
+Note that with static scoping, you can tell what binding a variable
+reference refers to just from looking at the text of the program; the
+referenced binding cannot depend on how the program is used.  That is,
+the nesting of environments (their parent-child relationship)
+corresponds to the nesting of binding expressions in program text.
+(Because of this connection to the text of the program, static scoping
+is also called @dfn{lexical} scoping.)  For each place where a variable
+is bound in a program there is a corresponding @dfn{region} of the
+program text within which the binding is effective.  For example, the
+region of a binding established by a @code{lambda} expression is the
+entire body of the @code{lambda} expression.  The documentation of each
+binding expression explains what the region of the bindings it makes is.
+A use of a variable (that is, a reference to or assignment of a
+variable) refers to the innermost binding of that variable whose region
+contains the variable use.  If there is no such region, the use refers
+to the binding of the variable in the global environment (which is an
+ancestor of all other environments, and can be thought of as a region in
+which all your programs are contained).
+
+@node True and False, External Representations, Static Scoping, Scheme Concepts
+@subsection True and False
+
+@cindex boolean object
+@cindex true, boolean object
+@cindex false, boolean object
+@findex #t
+@findex #f
+In Scheme, the boolean values true and false are denoted by @code{#t}
+and @code{#f}.  However, any Scheme value can be treated as a boolean
+for the purpose of a conditional test.  This manual uses the word
+@dfn{true} to refer to any Scheme value that counts as true, and the
+word @dfn{false} to refer to any Scheme value that counts as false.  In
+conditional tests, all values count as true except for @code{#f}, which
+counts as false (@pxref{Conditionals}).
+
+@node External Representations, Disjointness of Types, True and False, Scheme Concepts
+@subsection External Representations
+
+@cindex external representation (defn)
+@cindex representation, external (defn)
+An important concept in Scheme is that of the
+@dfn{external representation} of an object as a sequence of characters.
+For example, an external representation of the integer 28 is the
+sequence of characters @samp{28}, and an external representation of a
+list consisting of the integers 8 and 13 is the sequence of characters
+@samp{(8 13)}.
+
+The external representation of an object is not necessarily unique.  The
+integer 28 also has representations @samp{#e28.000} and @samp{#x1c}, and
+the list in the previous paragraph also has the representations @samp{(
+08 13 )} and @samp{(8 . (13 . ( )))}.
+
+Many objects have standard external representations, but some, such as
+procedures and circular data structures, do not have standard
+representations (although particular implementations may define
+representations for them).
+
+An external representation may be written in a program to obtain the
+corresponding object (@pxref{Quoting}).
+
+@findex read
+@findex write
+External representations can also be used for input and output.  The
+procedure @code{read} parses external representations, and the procedure
+@code{write} generates them.  Together, they provide an elegant and
+powerful input/output facility.
+
+Note that the sequence of characters @samp{(+ 2 6)} is @emph{not} an
+external representation of the integer 8, even though it @emph{is} an
+expression that evaluates to the integer 8; rather, it is an external
+representation of a three-element list, the elements of which are the
+symbol @code{+} and the integers @code{2} and @code{6}.  Scheme's syntax
+has the property that any sequence of characters that is an expression
+is also the external representation of some object.  This can lead to
+confusion, since it may not be obvious out of context whether a given
+sequence of characters is intended to denote data or program, but it is
+also a source of power, since it facilitates writing programs such as
+interpreters and compilers that treat programs as data or data as
+programs.
+
+@node Disjointness of Types, Storage Model, External Representations, Scheme Concepts
+@subsection Disjointness of Types
+
+Every object satisfies at most one of the following predicates (but see
+@ref{True and False}, for an exception):
+
+@example
+@group
+bit-string?     environment?    port?           symbol?
+boolean?        null?           procedure?      vector?
+cell?           number?         promise?        weak-pair?
+char?           pair?           string?
+condition?
+@end group
+@end example
+
+@node Storage Model,  , Disjointness of Types, Scheme Concepts
+@subsection Storage Model
+
+This section describes a model that can be used to understand Scheme's
+use of storage.
+
+@cindex location
+@findex string-set!
+Variables and objects such as pairs, vectors, and strings implicitly
+denote locations or sequences of locations.  A string, for example,
+denotes as many locations as there are characters in the string.  (These
+locations need not correspond to a full machine word.)  A new value may
+be stored into one of these locations using the @code{string-set!}
+procedure, but the string continues to denote the same locations as
+before.
+  
+@findex car
+@findex vector-ref
+@findex string-ref
+@findex eqv?
+An object fetched from a location, by a variable reference or by a
+procedure such as @code{car}, @code{vector-ref}, or @code{string-ref},
+is equivalent in the sense of @code{eqv?} to the object last stored in
+the location before the fetch.
+
+Every location is marked to show whether it is in use.  No variable or
+object ever refers to a location that is not in use.  Whenever this
+document speaks of storage being allocated for a variable or object,
+what is meant is that an appropriate number of locations are chosen from
+the set of locations that are not in use, and the chosen locations are
+marked to indicate that they are now in use before the variable or
+object is made to denote them.
+
+@cindex constant
+@cindex mutable
+@cindex immutable
+@findex symbol->string
+In many systems it is desirable for constants (i.e.@: the values of
+literal expressions) to reside in read-only memory.  To express this, it
+is convenient to imagine that every object that denotes locations is
+associated with a flag telling whether that object is mutable or
+immutable.  The constants and the strings returned by
+@code{symbol->string} are then the immutable objects, while all objects
+created by other procedures are mutable.  It is an error to attempt to
+store a new value into a location that is denoted by an immutable
+object.  Note that the MIT/GNU Scheme compiler takes advantage of this
+property to share constants, but that these constants are not immutable.
+Instead, two constants that are @code{equal?} may be @code{eq?} in
+compiled code.
+
+@node Lexical Conventions, Expressions, Scheme Concepts, Overview
+@section Lexical Conventions
+@cindex lexical conventions
+@cindex conventions, lexical
+
+This section describes Scheme's lexical conventions.
+
+@menu
+* Whitespace::                  
+* Delimiters::                  
+* Identifiers::                 
+* Uppercase and Lowercase::     
+* Naming Conventions::          
+* Comments::                    
+* Additional Notations::        
+@end menu
+
+@node Whitespace, Delimiters, Lexical Conventions, Lexical Conventions
+@subsection Whitespace
+
+@cindex whitespace, in programs (defn)
+@cindex token, in programs (defn)
+@dfn{Whitespace} characters are spaces, newlines, tabs, and page breaks.
+Whitespace is used to improve the readability of your programs and to
+separate tokens from each other, when necessary.  (A @dfn{token} is an
+indivisible lexical unit such as an identifier or number.)  Whitespace
+is otherwise insignificant.  Whitespace may occur between any two
+tokens, but not within a token.  Whitespace may also occur inside a
+string, where it is significant.
+
+@node Delimiters, Identifiers, Whitespace, Lexical Conventions
+@subsection Delimiters
+
+@cindex delimiter, in programs (defn)
+All whitespace characters are @dfn{delimiters}.  In addition, the
+following characters act as delimiters:
+
+@example
+(  )  ;  "  '  `  |
+@end example
+
+Finally, these next characters act as delimiters, despite the fact that
+Scheme does not define any special meaning for them:
+
+@example
+[  ]  @{  @}
+@end example
+
+For example, if the value of the variable @code{name} is
+@code{"max"}:
+
+@example
+(list"Hi"name(+ 1 2))                   @result{}  ("Hi" "max" 3)
+@end example
+
+@node Identifiers, Uppercase and Lowercase, Delimiters, Lexical Conventions
+@subsection Identifiers
+
+@cindex identifier (defn)
+An @dfn{identifier} is a sequence of one or more non-delimiter
+characters.  Identifiers are used in several ways in Scheme
+programs:
+
+@itemize @bullet
+@item
+An identifier can be used as a variable or as a syntactic keyword.
+@cindex variable, identifier as
+@cindex syntactic keyword, identifier as
+
+@item
+When an identifier appears as a literal or within a literal, it denotes
+a symbol.
+@cindex literal, identifier as
+@end itemize
+
+Scheme accepts most of the identifiers that other programming languages
+allow.  MIT/GNU Scheme allows all of the identifiers that standard
+Scheme does, plus many more.
+
+MIT/GNU Scheme defines a potential identifier to be a sequence of
+non-delimiter characters that does not begin with either of the
+characters @samp{#} or @samp{,}.  Any such sequence of characters that
+is not a syntactically valid number (@pxref{Numbers}) is considered to
+be a valid identifier.  Note that, although it is legal for @samp{#} and
+@samp{,} to appear in an identifier (other than in the first character
+position), it is poor programming practice.
+
+Here are some examples of identifiers:
+
+@example
+@group
+lambda             q
+list->vector       soup
++                  V17a
+<=?                a34kTMNs
+the-word-recursion-has-many-meanings
+@end group
+@end example
+
+@node Uppercase and Lowercase, Naming Conventions, Identifiers, Lexical Conventions
+@subsection Uppercase and Lowercase
+@cindex uppercase
+@cindex lowercase
+
+@cindex alphabetic case-insensitivity of programs (defn)
+@cindex case-insensitivity of programs (defn)
+@cindex sensitivity, to case in programs (defn)
+@cindex insensitivity, to case in programs (defn)
+Scheme doesn't distinguish uppercase and lowercase forms of a letter
+except within character and string constants; in other words, Scheme is
+@dfn{case-insensitive}.  For example, @samp{Foo} is the same identifier
+as @samp{FOO}, and @samp{#x1AB} is the same number as @samp{#X1ab}.  But
+@samp{#\a} and @samp{#\A} are different characters.
+
+@node Naming Conventions, Comments, Uppercase and Lowercase, Lexical Conventions
+@subsection Naming Conventions
+@cindex naming conventions
+@cindex conventions, naming
+
+@cindex predicate (defn)
+@cindex ? in predicate names
+A @dfn{predicate} is a procedure that always returns a boolean value
+(@code{#t} or @code{#f}).  By convention, predicates usually have names
+that end in @samp{?}.
+
+@cindex mutation procedure (defn)
+@cindex ! in mutation procedure names
+A @dfn{mutation procedure} is a procedure that alters a data structure.
+By convention, mutation procedures usually have names that end in
+@samp{!}.
+
+@node Comments, Additional Notations, Naming Conventions, Lexical Conventions
+@subsection Comments
+
+@cindex comment, in programs (defn)
+@cindex semicolon, as external representation
+@cindex ; as external representation
+The beginning of a comment is indicated with a semicolon (@code{;}).
+Scheme ignores everything on a line in which a semicolon appears, from
+the semicolon until the end of the line.  The entire comment, including
+the newline character that terminates it, is treated as
+whitespace.
+
+@cindex extended comment, in programs (defn)
+@cindex comment, extended, in programs (defn)
+@cindex #| as external representation
+An alternative form of comment (sometimes called an @dfn{extended
+comment}) begins with the characters @samp{#|} and ends with the
+characters @samp{|#}.  This alternative form is an MIT/GNU Scheme extension.
+As with ordinary comments, all of the characters in an extended comment,
+including the leading @samp{#|} and trailing @samp{|#}, are treated as
+whitespace.  Comments of this form may extend over multiple lines, and
+additionally may be nested (unlike the comments of the programming
+language C, which have a similar syntax).
+
+@example
+@group
+;;; This is a comment about the FACT procedure.  Scheme
+;;; ignores all of this comment.  The FACT procedure computes
+;;; the factorial of a non-negative integer.
+@end group
+
+@group
+#|
+This is an extended comment.
+Such comments are useful for commenting out code fragments.
+|#
+@end group
+
+@group
+(define fact
+  (lambda (n)
+    (if (= n 0)                      ;This is another comment:
+        1                            ;Base case: return 1
+        (* n (fact (- n 1))))))
+@end group
+@end example
+
+@node Additional Notations,  , Comments, Lexical Conventions
+@subsection Additional Notations
+
+@cindex characters, special, in programs
+@cindex special characters, in programs
+The following list describes additional notations used in Scheme.
+@xref{Numbers}, for a description of the notations used for numbers.
+
+@table @code
+@item + - .
+The plus sign, minus sign, and period are used in numbers, and may also
+occur in an identifier.  A delimited period (not occurring within a
+number or identifier) is used in the notation for pairs and to indicate
+a ``rest'' parameter in a formal parameter list
+(@pxref{Lambda Expressions}).
+
+@item ( )
+Parentheses are used for grouping and to notate lists (@pxref{Lists}).
+
+@item "
+The double quote delimits strings (@pxref{Strings}).
+
+@item \
+The backslash is used in the syntax for character constants
+(@pxref{Characters}) and as an escape character within string constants
+(@pxref{Strings}).
+
+@item ;
+The semicolon starts a comment.
+
+@item '
+The single quote indicates literal data; it suppresses evaluation
+(@pxref{Quoting}).
+
+@item `
+The backquote indicates almost-constant data (@pxref{Quoting}).
+
+@item ,
+The comma is used in conjunction with the backquote (@pxref{Quoting}).
+
+@item ,@@
+A comma followed by an at-sign is used in conjunction with the backquote
+(@pxref{Quoting}).
+
+@item #
+The sharp (or pound) sign has different uses, depending on the character
+that immediately follows it:
+
+@item #t #f
+These character sequences denote the boolean constants
+(@pxref{Booleans}).
+
+@item #\
+This character sequence introduces a character constant
+(@pxref{Characters}).
+
+@item #(
+This character sequence introduces a vector constant (@pxref{Vectors}).
+A close parenthesis, @samp{)}, terminates a vector constant.
+
+@item #e #i #b #o #d #l #s #x
+These character sequences are used in the notation for numbers
+(@pxref{Numbers}).
+
+@item #|
+This character sequence introduces an extended comment.  The comment is
+terminated by the sequence @samp{|#}.  This notation is an MIT/GNU Scheme
+extension.
+
+@item #!
+This character sequence is used to denote a small set of named
+constants.  Currently there are only two of these, @code{#!optional} and
+@code{#!rest}, both of which are used in the @code{lambda} special form
+to mark certain parameters as being ``optional'' or ``rest'' parameters.
+This notation is an MIT/GNU Scheme extension.
+@findex #!optional
+@findex #!rest
+@findex lambda
+
+@item #*
+This character sequence introduces a bit string (@pxref{Bit Strings}).
+This notation is an MIT/GNU Scheme extension.
+
+@item #[
+This character sequence is used to denote objects that do not have a
+readable external representation (@pxref{Custom Output}).  A close
+bracket, @samp{]}, terminates the object's notation.  This notation is
+an MIT/GNU Scheme extension.
+
+@item #@@
+This character sequence is a convenient shorthand used to refer to
+objects by their hash number (@pxref{Custom Output}).  This notation is
+an MIT/GNU Scheme extension.
+
+@item #=
+@itemx ##
+These character sequences introduce a notation used to show circular
+structures in printed output, or to denote them in input.  The notation
+works much like that in Common Lisp, and is an MIT/GNU Scheme extension.
+@end table
+
+@node Expressions,  , Lexical Conventions, Overview
+@section Expressions
+
+@cindex expression (defn)
+A Scheme @dfn{expression} is a construct that returns a value.  An
+expression may be a @emph{literal}, a @emph{variable reference}, a
+@emph{special form}, or a @emph{procedure call}.
+
+@menu
+* Literal Expressions::         
+* Variable References::         
+* Special Form Syntax::         
+* Procedure Call Syntax::       
+@end menu
+
+@node Literal Expressions, Variable References, Expressions, Expressions
+@subsection Literal Expressions
+
+@cindex literal expression (defn)
+@cindex constant expression (defn)
+@cindex expression, literal (defn)
+@cindex expression, constant (defn)
+@dfn{Literal} constants may be written by using an external
+representation of the data.  In general, the external representation
+must be @emph{quoted} (@pxref{Quoting}); but some external
+representations can be used without quotation.
+
+@example
+@group
+"abc"                                   @result{}  "abc"
+145932                                  @result{}  145932
+#t                                      @result{}  #t
+#\a                                     @result{}  #\a
+@end group
+@end example
+
+The external representation of numeric constants, string constants,
+character constants, and boolean constants evaluate to the constants
+themselves.  Symbols, pairs, lists, and vectors require quoting.
+
+@node Variable References, Special Form Syntax, Literal Expressions, Expressions
+@subsection Variable References
+
+@cindex variable reference (defn)
+@cindex reference, variable (defn)
+@cindex unbound variable
+@cindex unassigned variable
+An expression consisting of an identifier (@pxref{Identifiers}) is a
+@dfn{variable reference}; the identifier is the name of the variable
+being referenced.  The value of the variable reference is the value
+stored in the location to which the variable is bound.  An error is
+signalled if the referenced variable is unbound or unassigned.
+
+@example
+@group
+(define x 28)
+x                                       @result{}  28
+@end group
+@end example
+
+@node Special Form Syntax, Procedure Call Syntax, Variable References, Expressions
+@subsection Special Form Syntax
+
+@example
+(@var{keyword} @var{component} @dots{})
+@end example
+
+@cindex expression, special form (defn)
+@cindex special form (defn)
+@cindex form, special (defn)
+@cindex keyword, of special form (defn)
+@cindex syntactic keyword (defn)
+A parenthesized expression that starts with a @dfn{syntactic keyword} is
+a @dfn{special form}.  Each special form has its own syntax, which is
+described later in the manual.
+
+Note that syntactic keywords and variable bindings share the same
+namespace.  A local variable binding may shadow a syntactic keyword, and
+a local syntactic-keyword definition may shadow a variable binding.
+
+The following list contains all of the syntactic keywords that are
+defined when MIT/GNU Scheme is initialized:
+
+@multitable @columnfractions .33 .33 .33
+@item access
+@tab and
+@tab begin
+@item case
+@tab cond
+@tab cons-stream
+@item declare
+@tab define
+@item define-integrable
+@tab define-structure
+@tab define-syntax
+@item delay
+@tab do
+@tab er-macro-transformer
+@item fluid-let
+@tab if
+@tab lambda
+@item let
+@tab let*
+@tab let*-syntax
+@item let-syntax
+@tab letrec
+@tab letrec-syntax
+@item local-declare
+@tab named-lambda
+@tab non-hygienic-macro-transformer
+@item or
+@tab quasiquote
+@tab quote
+@item rsc-macro-transformer
+@tab sc-macro-transformer
+@tab set!
+@item syntax-rules
+@tab the-environment
+@end multitable
+
+@node Procedure Call Syntax,  , Special Form Syntax, Expressions
+@subsection Procedure Call Syntax
+
+@example
+(@var{operator} @var{operand} @dots{})
+@end example
+
+@cindex expression, procedure call (defn)
+@cindex procedure call (defn)
+@cindex operator, of procedure call (defn)
+@cindex operand, of procedure call (defn)
+A @dfn{procedure call} is written by simply enclosing in parentheses
+expressions for the procedure to be called (the @dfn{operator}) and the
+arguments to be passed to it (the @dfn{operands}).  The @var{operator}
+and @var{operand} expressions are evaluated and the resulting procedure
+is passed the resulting arguments.  @xref{Lambda Expressions}, for a
+more complete description of this.
+
+@cindex combination (defn)
+Another name for the procedure call expression is @dfn{combination}.
+This word is more specific in that it always refers to the expression;
+``procedure call'' sometimes refers to the @emph{process} of calling a
+procedure.
+
+@cindex order, of argument evaluation
+@cindex evaluation order, of arguments
+@cindex argument evaluation order
+Unlike some other dialects of Lisp, Scheme always evaluates the operator
+expression and the operand expressions with the same evaluation rules,
+and the order of evaluation is unspecified.
+
+@example
+@group
+(+ 3 4)                                 @result{}  7
+((if #f = *) 3 4)                       @result{}  12
+@end group
+@end example
+
+@findex +
+@findex *
+@findex lambda
+A number of procedures are available as the values of variables in the
+initial environment; for example, the addition and multiplication
+procedures in the above examples are the values of the variables
+@code{+} and @code{*}.  New procedures are created by evaluating
+@code{lambda} expressions.
+
+@cindex syntactic keyword
+If the @var{operator} is a syntactic keyword, then the expression is not
+treated as a procedure call: it is a special form.
+
+
+@node Data types
+@chapter Data types
+@anchor{data-types}
+
+@strong{Booleans} represent true and false. Boolean literals are
+@code{@hashchar{}t} and @code{@hashchar{}f} for true and false, respectively. The only thing
+that is considered to be logically false is @code{@hashchar{}f}. Everything else
+is logically true, inluding 0 and the empty list, which may surprise
+some.
+
+@strong{Integers} are sixtyfour bit signed integers. Both decimal,
+hexadecimal, and binary formats are supported. E.g. @code{26},
+@code{@hashchar{}x1a}, @code{@hashchar{}x1A}, @code{@hashchar{}b00011001}.
+
+@strong{Floats} are Go @code{float32} numbers. Accordingly they are
+signed. All arithmetic functions with the exception of modulus work as
+expected for both integers and floats. Numbers are coerced to floats as
+required, specifically if any arguments are float, all are converted to
+float and the result will be a float.
+
+@strong{Characters} are single characters. This is differen than strings
+with length 1.
+
+@strong{Strings} are any sequence of characters other than @code{"}
+enclosed by a pair of @code{"}, e.g. @code{"string"}. If you need to
+have @code{"} in a string, use @code{@backslashchar{}"}.
+
+@strong{Symbols} are simple identifiers, e.g. @code{function-name}.
+Symbols follow the follow 3 simple rules:
+
+@itemize
+
+@item can only contain graphic characters (i.e. no control characters)
+
+@item can not contain any of the characters: @code{();,"`&[]@{@}@backslashchar{}}
+
+@item can not begin with a number or single quote
+
+@item can not contain whitespace
+
+@end itemize
+
+Typically, @code{-} is used to separate words in a symbol, @code{_} is
+used in special symbols (such as system use) to separate words and as a
+prefix and suffix. The characters @code{?}, @code{!}, and @code{*} are
+typically used as the final character of a function name to denote:
+
+@strong{?} a predicate, e.g. @code{nil?}
+
+@strong{!} a mutating function (changes the argument rather than
+returning a modified copy), e.g. @code{set-car!}
+
+@strong{*} a variant of the primary function, e.g. @code{flatten} (which
+does a one level flattening of a list) and @code{flatten*} (which is a
+recursive @code{flatten})
+
+If a symbol ends with @code{:} it is what is called a @emph{naked
+symbol}. It has no value other than itself. If it is evaluated, the
+result is the symbol itself. This feature is utilized by frames.
+
+@strong{Cons Cells}, aka @strong{Lists} are the central data type in
+classic Lisp used both as dotted pairs @code{(a . b)} and general lists
+@code{(a b)}. For an overview of cons cells and how to use them see [1],
+[3], or @code{http://cs.gmu.edu/simsean/lisp/cons/}. Note that dotted
+pairs @emph{require} spaces around the period; @code{(a.b)} is a list
+containing the symbol @code{a.b}, not a cons cell with car of @code{a}
+and cdr of @code{b}.
+
+@strong{Bytearrays} are simply objects that encapsulate @code{[]byte}
+objects. The difference is that there is syntactic support for them. Use
+square braces surrounding a list of numbers between 0 and 255,
+inclusive. For example: @code{[1 2 3 4 5]}. That format will parse to an
+@code{object} containing a the Go bytearray (i.e. @code{[]byte}).
+Bytearrays evaluate to themselves. There are also functions for doing
+bytearray manipulation.
+
+@strong{Channels} are simple objects that encapsulate Go `channel'
+objects.
+
+@strong{Vectors} are a more efficient alternative to lists when the
+number of elements are known ahead of time and static. A vector can be
+grown, but it's done explicitly with a function. Many enumeration and
+access functions that accept a list (or lists) can be passed a vector
+(or vectors) instead.
+
+@strong{Ports} provide access to files for reading and writing.
+
+@strong{Frames} are sets of named slots that hold arbitrary values,
+including functions. Frames can @emph{inherit} from other frames in a
+prototypical manner. They are inspired by the languages Self [4] and
+Newtonscript [5].
+
+@strong{Functions} are user defined procedures. They are covered in
+detail later.
+
+@strong{Macros} are user defined syntactic extensions. Note that GoLisp
+macros are not yet hygenic, so use caution.
+
+You can create an manipulate all of the above types in GoLisp. There are
+two more types that are usable in GoLisp, but can only be created in Go.
+
+@strong{Primitives} are just as they are in Lisp or Smalltalk: functions
+written in the implementation language, in this case Go, and exposed as
+functions in Lisp. The combinaion of primitives and objects allow you to
+integrate with the underlying Go program. @strong{Special Forms} are
+almost identical to primitives, except that they use normal evaluation
+order instead of applicative order which functions and primitives use.
+
+@strong{Objects} allow you to encapsulate a Go object (struct) in a Lisp
+data object. There is no way to do this from Lisp itself, but is useful
+when writing primitive functions (see below). The objects can be used as
+any other object, but are opaque outside of primitives built to use
+them.
+
+
+
+@c Local Variables:
+@c mode: texinfo
+@c End:
