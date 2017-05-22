@@ -10,7 +10,6 @@ import (
 	. "bitbucket.org/dastels/golisp"
 	"flag"
 	"fmt"
-	"github.com/golang/glog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -42,20 +41,24 @@ func test() {
 	}
 
 	testCommand := fmt.Sprintf("(%s \"%s\"%s)", testFunction, testName, verboseFlag)
-	ProcessFile(os.ExpandEnv("$GOLISPHOME/tools/testing.scm"))
+	_, err := ProcessFile(os.ExpandEnv("$GOLISPHOME/tools/testing.scm"))
+	if err != nil {
+		fmt.Printf("Error loading testing.scm\n")
+		return
+	}
 	ParseAndEval(testCommand)
 }
 
 func loadFile(path string) error {
 	absPath, err := filepath.Abs(path)
 	if err != nil {
-		glog.Errorf(" - Error: %s\n", err)
+		fmt.Printf(" - Error: %s\n", err)
 		return err
 	}
 	if !(filepath.Base(absPath) == ".") && !(filepath.Base(absPath) == "..") {
 		extension := filepath.Ext(path)
 		if extension == ".scm" || extension == ".lsp" {
-			glog.Infof("  Loading %s", path)
+			fmt.Printf("  Loading %s", path)
 			// ---------------------------
 			// compiler based code
 			// loadCommand := fmt.Sprintf("(compiling-load %s)", absPath)
@@ -63,8 +66,10 @@ func loadFile(path string) error {
 			// ---------------------------
 			_, err = ProcessFile(absPath)
 			if err != nil {
-				glog.Errorf(" - Error: %s\n", err)
+				fmt.Printf(" - Error: %s\n", err)
 				return err
+			} else {
+				fmt.Printf("\n")
 			}
 		}
 	}
@@ -88,7 +93,7 @@ func main() {
 		sym := Global.Intern(symbolAndValue[0])
 		val, err := ParseAndEval(symbolAndValue[1])
 		if err != nil {
-			glog.Error("Error with cmd line definition value")
+			fmt.Printf("Error with cmd line definition value\n")
 			return
 		}
 		Global.BindTo(sym, val)
@@ -96,13 +101,13 @@ func main() {
 
 	walkErr := filepath.Walk(os.ExpandEnv("$GOLISPHOME/lisp"), walkFunc)
 	if walkErr != nil {
-		glog.Error("Error loading code\n")
+		fmt.Printf("Error loading code\n")
 		return
 	}
 
 	_, err := ProcessFile(os.ExpandEnv("$GOLISPHOME/tools/compiler.scm"))
 	if err != nil {
-		glog.Errorf("Error loading compiler: %s\n", err)
+		fmt.Printf("Error loading compiler: %s\n", err)
 		return
 	}
 
@@ -117,25 +122,25 @@ func main() {
 			} else {
 				name, err := filepath.Abs(flag.Arg(i))
 				if err != nil {
-					glog.Errorf(" - Error: %s\n", err)
+					fmt.Printf(" - Error: %s\n", err)
 					return
 				}
 				f, err := os.Open(name)
 				if err != nil {
-					glog.Error(err)
+					fmt.Printf("%s\n", err)
 					return
 				}
 				defer f.Close()
 				fi, err := f.Stat()
 				if err != nil {
-					glog.Error(err)
+					fmt.Printf("%s\n", err)
 					return
 				}
 				switch mode := fi.Mode(); {
 				case mode.IsDir():
 					walkErr = filepath.Walk(flag.Arg(i), walkFunc)
 					if walkErr != nil {
-						glog.Error("Error loading code\n")
+						fmt.Printf("Error loading code\n")
 						return
 					}
 				case mode.IsRegular():
@@ -154,7 +159,7 @@ func main() {
 			// ---------------------------
 			result, err := ParseAndEval(codeToEval)
 			if err != nil {
-				glog.Errorf("Error: %s\n", err)
+				fmt.Printf("Error: %s\n", err)
 			} else {
 				fmt.Printf("==> %s\n", String(result))
 			}
@@ -165,7 +170,7 @@ func main() {
 		if runRepl || !(FunctionP(mainValue) || codeToEval != "") {
 			Repl()
 		} else if codeToEval == "" {
-			glog.Info("Calling main")
+			fmt.Printf("Calling main\n")
 			args := make([]*Data, 0, len(flag.Args()))
 			for _, arg := range programArgs {
 				args = append(args, StringWithValue(arg))
@@ -179,7 +184,7 @@ func main() {
 			argList := Cons(InternalMakeList(Intern("quote"), ArrayToList(args)), nil)
 			result, err := FunctionValue(mainValue).Apply(argList, Global)
 			if err != nil {
-				glog.Errorf("Error: %s\n", err)
+				fmt.Printf("Error: %s\n", err)
 			} else {
 				fmt.Printf("==> %s\n", String(result))
 			}
