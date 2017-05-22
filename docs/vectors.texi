@@ -1,0 +1,377 @@
+@node Vectors
+@chapter Vectors
+@anchor{vectors}
+Vectors are heterogeneous structures whose elements are indexed by
+non-negative integers. A vector typically occupies less space than a
+list of the same length, and the average time required to access a
+randomly chosen element is typically less for the vector than for the
+list.
+
+The length of a vector is the number of elements that it contains. This
+number is a non-negative integer that is fixed when the vector is
+created. The valid indexes of a vector are the non-negative integers
+less than the length of the vector. The first element in a vector is
+indexed by zero, and the last element is indexed by one less than the
+length of the vector.
+
+Vectors are written using the notation @code{#(object ...)}. For
+example, a vector of length 3 containing the number zero in element 0,
+the list @code{(2 2 2 2)} in element 1, and the string @code{"Anna"} in
+element 2 can be written as
+
+@verbatim
+ #(0 (2 2 2 2) "Anna")
+@end verbatim
+
+Note that this is the external representation of a vector, not an
+expression evaluating to a vector. Like list constants, vector constants
+must be quoted:
+
+@verbatim
+'#(0(2222)"Anna") ==> #(0 (2222) "Anna")
+@end verbatim
+
+A number of the vector procedures operate on subvectors. A subvector is
+a segment of a vector that is specified by two non-negative integers,
+start and end. Start is the index of the first element that is included
+in the subvector, and end is one greater than the index of the last
+element that is included in the subvector. Thus if start and end are the
+same, they refer to a null subvector, and if start is zero and end is
+the length of the vector, they refer to the entire vector. The valid
+indexes of a subvector are the integers between start inclusive and end
+exclusive.
+@menu
+* Construction of Vectors::
+* Enumerating over Vectors::
+* Selecting Vector Components::
+* Cutting Vectors::
+* Modifying Vectors::
+@end menu
+
+@node Construction of Vectors
+@section Construction of Vectors
+@anchor{construction-of-vectors}
+@menu
+* make-vector k [object]::
+* vector object@dots{}::
+* vector-copy vector::
+* list->vector list::
+* vector->list vector::
+* subvector->list vector start end::
+* make-initialized-vector k initialization::
+* vector-grow vector k::
+@end menu
+
+@node make-vector k [object]
+@subsection (make-vector @emph{k} [@emph{object}])
+@anchor{make-vector}
+Returns a newly allocated vector of k elements. If @emph{object} is
+specified, @code{make-vector} initializes each element of the vector to
+the @emph{object}. Otherwise the initial elements of the result are
+unspecified.
+
+@node vector object@dots{}
+@subsection (vector @emph{object}@dots{})
+@anchor{vector}
+Returns a newly allocated vector whose elements are the given
+@emph{objects}. @code{vector} is analogous to @code{list}.
+
+@verbatim
+(vector 'a 'b 'c) ==> #(a b c)
+@end verbatim
+
+@node vector-copy vector
+@subsection (vector-copy @emph{vector})
+@anchor{vector-copy}
+Returns a newly allocated vector that is a copy of @emph{vector}.
+
+@node list->vector list
+@subsection (list->vector @emph{list})
+@anchor{list-to-vector}
+Returns a newly allocated vector initialized to the elements of
+@emph{list}.
+
+@verbatim
+(list->vector '(dididit dah)) ==> #(dididit dah)
+@end verbatim
+
+@node vector->list vector
+@subsection (vector->list @emph{vector})
+@anchor{vector-to-list}
+Returns a newly allocated list initialized to the elements of
+@emph{vector}.
+
+@verbatim
+(vector->list '#(dididit dah)) ==> (dididit dah)
+@end verbatim
+
+@node subvector->list vector start end
+@subsection (subvector->list @emph{vector} @emph{start} @emph{end})
+@anchor{subvector-to-list}
+@code{vector->list} returns a newly allocated list of the elements of
+@emph{vector}. @code{subvector->list} returns a newly allocated list of
+the elements of the given subvector. The inverse of @code{vector->list}
+is @code{list->vector}.
+
+@node make-initialized-vector k initialization
+@subsection (make-initialized-vector @emph{k} @emph{initialization})
+@anchor{make-initialized-vector}
+Similar to @code{make-vector}, except that the elements of the result
+are determined by calling the procedure @emph{initialization} on the
+indices. For example:
+
+@verbatim
+(make-initialized-vector 5 (lambda (x) (* x x))) ==> #(0 1 4 9 16)
+@end verbatim
+
+@node vector-grow vector k
+@subsection (vector-grow @emph{vector} @emph{k})
+@anchor{vector-grow}
+@emph{k} must be greater than or equal to the length of @emph{vector}.
+Returns a newly allocated vector of length @emph{k}. The first
+@code{(vector-length vector)} elements of the result are initialized
+from the corresponding elements of @emph{vector}. The remaining elements
+of the result are unspecified.
+
+@node Enumerating over Vectors
+@section Enumerating over Vectors
+@anchor{enumerating-over-vectors}
+@menu
+* vector-map procedure vector@dots{}::
+@end menu
+
+@node vector-map procedure vector@dots{}
+@subsection (vector-map @emph{procedure} @emph{vector}@dots{})
+@anchor{vector-map-procedure-vector}
+@emph{procedure} must be a procedure with arity the same as the number
+or @emph{vector}s. @code{vector-map} applies @emph{procedure}
+element-wise to the corresponding elements of each @emph{vector} and
+returns a newly allocated vector of the results, in order from left to
+right. The dynamic order in which procedure is applied to the elements
+of vector is unspecified.
+
+@verbatim
+(vector-map cadr '#((ab)(de)(gh)))            ==> #(b e h)
+(vector-map (lambda (n) (* n n)) '#(1 2 3 4)) ==> #(1 4 9 16)
+(vector-map + '#(1 2 3) '#(4 5 6))            ==> #(5 7 9)
+@end verbatim
+
+@node Selecting Vector Components
+@section Selecting Vector Components
+@anchor{selecting-vector-components}
+@menu
+* vector-length vector::
+* vector-ref vector k::
+* vector-set! vector k object::
+* vector-first vector::
+* vector-second vector::
+* vector-third vector::
+* vector-fourth vector::
+* vector-fifth vector::
+* vector-sixth vector::
+* vector-seventh vector::
+* vector-eighth vector::
+* vector-ninth vector::
+* vector-tenth vector::
+* vector-last vector::
+* vector-binary-search vector key<? unwrap-key key::
+@end menu
+
+@node vector-length vector
+@subsection (vector-length @emph{vector})
+@anchor{vector-length}
+Returns the number of elements in @emph{vector}.
+
+@node vector-ref vector k
+@subsection (vector-ref @emph{vector} @emph{k})
+@anchor{vector-ref}
+Returns the contents of element @emph{k} of @emph{vector}. @emph{k} must
+be a valid index of @emph{vector}.
+
+@verbatim
+(vector-ref '#(1 1 2 3 5 8 13 21) 5)    ==>  8
+@end verbatim
+
+@node vector-set! vector k object
+@subsection (vector-set! @emph{vector} @emph{k} @emph{object})
+@anchor{vector-set-vector-k-object}
+Stores @emph{object} in element @emph{k} of @emph{vector} and returns an
+unspecified value. @emph{K} must be a valid index of @emph{vector}.
+
+@verbatim
+(let ((vec (vector 0 '(2 2 2 2) "Anna")))
+  (vector-set! vec 1 '("Sue" "Sue"))
+  vec)
+            ==>  #(0 ("Sue" "Sue") "Anna")
+@end verbatim
+
+@node vector-first vector
+@subsection (vector-first @emph{vector})
+@anchor{vector-first}
+
+@node vector-second vector
+@subsection (vector-second @emph{vector})
+@anchor{vector-second}
+
+@node vector-third vector
+@subsection (vector-third @emph{vector})
+@anchor{vector-third}
+
+@node vector-fourth vector
+@subsection (vector-fourth @emph{vector})
+@anchor{vector-fourth}
+
+@node vector-fifth vector
+@subsection (vector-fifth @emph{vector})
+@anchor{vector-fifth}
+
+@node vector-sixth vector
+@subsection (vector-sixth @emph{vector})
+@anchor{vector-sixth}
+
+@node vector-seventh vector
+@subsection (vector-seventh @emph{vector})
+@anchor{vector-seventh}
+
+@node vector-eighth vector
+@subsection (vector-eighth @emph{vector})
+@anchor{vector-eighth}
+
+@node vector-ninth vector
+@subsection (vector-ninth @emph{vector})
+@anchor{vector-ninth}
+
+@node vector-tenth vector
+@subsection (vector-tenth @emph{vector})
+@anchor{vector-tenth}
+These procedures access the first several elements of @emph{vector} in
+the obvious way. It is an error if the implicit index of one of these
+procedures is not a valid index of @emph{vector}.
+
+@node vector-last vector
+@subsection (vector-last @emph{vector})
+@anchor{vector-last-vector}
+Returns the last element of @emph{vector}.
+
+@node vector-binary-search vector key<? unwrap-key key
+@subsection (vector-binary-search @emph{vector} @emph{key<?} @emph{unwrap-key} @emph{key})
+@anchor{vector-binary-search}
+Searches @emph{vector} for an element with a key matching @emph{key},
+returning the element if one is found or @emph{#f} if none. The search
+operation takes time proportional to the logarithm of the length of
+@emph{vector}. @emph{unwrap-key} must be a procedure that maps each
+element of @emph{vector} to a key. @emph{key<?} must be a procedure that
+implements a total ordering on the keys of the elements.
+
+@verbatim
+(define (translate number)
+  (vector-binary-search '#((1 . i)
+                           (2 . ii)
+                           (3 . iii)
+                           (6 . vi))
+                        < car number))
+(translate 2)  ==>  (2 . ii)
+(translate 4)  ==>  #f
+@end verbatim
+
+@node Cutting Vectors
+@section Cutting Vectors
+@anchor{cutting-vectors}
+@menu
+* subvector vector start end::
+* vector-head vector end::
+* vector-tail vector start::
+@end menu
+
+@node subvector vector start end
+@subsection (subvector @emph{vector} @emph{start} @emph{end})
+@anchor{subvector}
+Returns a newly allocated vector that contains the elements of
+@emph{vector} between index @emph{start} (inclusive) and @emph{end}
+(exclusive).
+
+@node vector-head vector end
+@subsection (vector-head @emph{vector} @emph{end})
+@anchor{vector-head}
+Equivalent to
+
+@verbatim
+(subvector vector 0 end)
+@end verbatim
+
+@node vector-tail vector start
+@subsection (vector-tail @emph{vector} @emph{start})
+@anchor{vector-tail}
+Equivalent to
+
+@verbatim
+(subvector vector start (vector-length vector))
+@end verbatim
+
+@node Modifying Vectors
+@section Modifying Vectors
+@anchor{modifying-vectors}
+@menu
+* vector-fill! vector object::
+* subvector-fill! vector start end object::
+* subvector-move-left! vector1 start1 end1 vector2 start2::
+* subvector-move-right! vector1 start1 end1 vector2 start2::
+* vector-sort! vector procedure::
+@end menu
+
+@node vector-fill! vector object
+@subsection (vector-fill! @emph{vector} @emph{object})
+@anchor{vector-fill-bang}
+
+@node subvector-fill! vector start end object
+@subsection (subvector-fill! @emph{vector} @emph{start} @emph{end} @emph{object})
+@anchor{subvector-fill-bang}
+Stores @emph{object} in every element of the vector (subvector) and
+returns an unspecified value.
+
+@node subvector-move-left! vector1 start1 end1 vector2 start2
+@subsection (subvector-move-left! @emph{vector1} @emph{start1} @emph{end1} @emph{vector2} @emph{start2})
+@anchor{subvector-move-left-bang}
+
+@node subvector-move-right! vector1 start1 end1 vector2 start2
+@subsection (subvector-move-right! @emph{vector1} @emph{start1} @emph{end1} @emph{vector2} @emph{start2})
+@anchor{subvector-move-right-bang}
+Destructively copies the elements of @emph{vector1}, starting with index
+@emph{start1} (inclusive) and ending with @emph{end1} (exclusive), into
+@emph{vector2} starting at index @emph{start2} (inclusive).
+@emph{vector1}, @emph{start1}, and @emph{end1} must specify a valid
+subvector, and @emph{start2} must be a valid index for @emph{vector2}.
+The length of the source subvector must not exceed the length of
+@emph{vector2} minus the index @emph{start2}.
+
+The elements are copied as follows (note that this is only important
+when @emph{vector1} and @emph{vector2} are @code{eqv?}):
+
+@code{subvector-move-left!}: The copy starts at the left end and moves
+toward the right (from smaller indices to larger). Thus if
+@emph{vector1} and @emph{vector2} are the same, this procedure moves the
+elements toward the left inside the vector.
+
+@code{subvector-move-right!}: The copy starts at the right end and moves
+toward the left (from larger indices to smaller). Thus if @emph{vector1}
+and @emph{vector2} are the same, this procedure moves the elements
+toward the right inside the vector.
+
+@node vector-sort! vector procedure
+@subsection (vector-sort! @emph{vector} @emph{procedure})
+@anchor{vector-sort-bang}
+@emph{procedure} must be a procedure of two arguments that defines a
+@emph{total ordering} on the elements of @emph{vector}. The elements of
+@emph{vector} are rearranged so that they are sorted in the order
+defined by @emph{procedure}. The elements are rearranged in place, that
+is, VECTOR is destructively modified so that its elements are in the new
+order.
+
+@code{vector-sort!} returns @emph{vector} as its value.
+
+See also the definition of @code{sort}.
+
+
+@c Local Variables:
+@c mode: texinfo
+@c End:

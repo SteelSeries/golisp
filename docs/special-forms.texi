@@ -1,0 +1,1200 @@
+@node Special Forms
+@chapter Special Forms
+@anchor{special-forms}
+A special form is an expression that follows special evaluation rules.
+This section describes the basic GoLisp special forms.
+@menu
+* Lambda Expressions::
+* Lexical Binding::
+* Definitions::
+* Type Signatures::
+* Top-Level Definitions::
+* Internal Definitions::
+* Assignments::
+* Quoting::
+* Macros::
+* Sequencing::
+* Conditionals::
+* Iteration::
+* Eval/Apply::
+@end menu
+
+@node Lambda Expressions
+@section Lambda Expressions
+@anchor{lambda-expressions}
+@menu
+* lambda formals sexpr@dots{}::
+@end menu
+
+@node lambda formals sexpr@dots{}
+@deffn {} (lambda @emph{formals} @emph{sexpr}@dots{})
+@anchor{lambda}
+A @strong{lambda} expression evaluates to a procedure. The environment
+in effect when the @strong{lambda} expression is evaluated is remembered
+as part of the procedure; it is called the @emph{closing environment}.
+When the procedure is later called with some arguments, the closing
+environment is extended by binding the variables in the formal parameter
+list to fresh locations, and the locations are filled with the arguments
+according to rules about to be given. The new environment created by
+this process is referred to as the @emph{invocation environment}.
+
+Once the invocation environment has been constructed, the @emph{sexprs}
+in the body of the @strong{lambda} expression are evaluated sequentially
+in that environment. This means that the region of the variables bound
+by the @strong{lambda} expression is all of the @emph{sexprs} in the
+body. The result of evaluating the last @emph{sexpr} in the body is
+returned as the result of the procedure call.
+
+@emph{formals}, the formal parameter list, is often referred to as a
+@emph{lambda list}.
+
+The process of matching up formal parameters with arguments is somewhat
+involved, but simpler than Scheme. There are two types of parameters,
+and the matching treats each in sequence:
+
+@strong{Required}
+
+All of the @emph{required} parameters are matched against the arguments
+first. If there are fewer arguments than required parameters, a
+@code{wrong number of arguments} error is signalled; this error is also
+signalled if there are more arguments than required parameters and there
+are no further parameters.
+
+@strong{Rest}
+
+Finally, if there is a @emph{rest} parameter (there can only be one),
+any remaining arguments are made into a list, and the @emph{rest}
+parameter is bound to it. (If there are no remaining arguments, the
+@emph{rest} parameter is bound to the empty list.)
+
+In Scheme, unlike some other Lisp implementations, the list to which a
+@emph{rest} parameter is bound is always freshly allocated. It has
+infinite extent and may be modified without affecting the procedure's
+caller.
+
+A period, i.e. ``.'', is used to separate the @emph{rest} parameter (if
+there is one) from the @emph{required} parameters. The ``.''
+@strong{must} be surrounded by spaces.
+
+@code{(a b c)}: @code{a}, @code{b}, and @code{c} are all required. The
+procedure must be passed exactly three arguments.
+
+@code{(a b . c)}: @code{a} and @code{b} are required and @code{c} is
+rest. The procedure may be passed two or more arguments.
+
+Some examples of @strong{lambda} expressions:
+
+@verbatim
+(lambda (x) (+ x x))            ==>  <function: unnamed>
+
+((lambda (x) (+ x x)) 4)        ==>  8
+
+(define reverse-subtract
+  (lambda (x y)
+    (- y x)))
+(reverse-subtract 7 10)         ==>  3
+
+(define foo
+  (let ((x 4))
+    (lambda (y) (+ x y))))
+(foo 6)                         ==>  10
+@end verbatim
+
+@node Lexical Binding
+@section Lexical Binding
+@anchor{lexical-binding}
+The three binding constructs @code{let}, @code{let*}, and @code{letrec},
+give Scheme block structure. The syntax of the three constructs is
+identical, but they differ in the regions they establish for their
+variable bindings. In a @code{let} expression, the initial values are
+computed before any of the variables become bound. In a @code{let*}
+expression, the evaluations and bindings are sequentially interleaved.
+And in a @code{letrec} expression, all the bindings are in effect while
+the initial values are being computed (thus allowing mutually recursive
+definitions).
+@menu
+* let variable init@dots{} sexpr@dots{}::
+* let* variable init@dots{} sexpr@dots{}::
+* letrec variable init@dots{} sexpr@dots{}::
+@end menu
+
+@node let variable init@dots{} sexpr@dots{}
+@subsection (let ((@emph{variable} @emph{init})@dots{})
+@emph{sexpr}@dots{})
+@anchor{let}
+The @emph{inits} are evaluated in the current environment (in some
+unspecified order), the @emph{variables} are bound to fresh locations
+holding the results, the @emph{sexprs} are evaluated sequentially in the
+extended environment, and the value of the last @emph{sexpr} is
+returned. Each binding of a @emph{variable} has the sequence of
+@emph{sexpr} as its region.
+
+GoLisp allows any of the @emph{inits} to be omitted, in which case the
+corresponding @emph{variables} are unassigned.
+
+Note that the following are equivalent:
+
+@verbatim
+(let ((variable init)...) expression...)
+((lambda (variable...) expression...) init...)
+@end verbatim
+
+Some examples:
+
+@verbatim
+(let ((x 2) (y 3))
+  (* x y))                              ==>  6
+
+(let ((x 2) (y 3))
+  (let ((foo (lambda (z) (+ x y z)))
+        (x 7))
+    (foo 4)))                           ==>  9
+@end verbatim
+
+@node let* variable init@dots{} sexpr@dots{}
+@subsection (let* ((@emph{variable} @emph{init})@dots{})
+@emph{sexpr}@dots{})
+@anchor{letstar}
+@code{let*} is similar to @code{let}, but the bindings are performed
+sequentially from left to right, and the region of a binding is that
+part of the `let*' expression to the right of the binding. Thus the
+second binding is done in an environment in which the first binding is
+visible, and so on.
+
+Note that the following are equivalent:
+
+@verbatim
+(let* ((variable1 init1)
+       (variable2 init2)
+       ...
+       (variablen initn))
+   expression...)
+
+(let ((variable1 init1))
+  (let ((variable2 init2))
+    ...
+      (let ((variablen initn))
+        expression...)
+    ...))
+@end verbatim
+
+An example:
+
+@verbatim
+(let ((x 2) (y 3))
+  (let* ((x 7)
+         (z (+ x y)))
+    (* z x)))                           ==>  70
+@end verbatim
+
+@c @node letrec variable init@dots{} sexpr@dots{}
+@c @subsection (letrec ((@emph{variable} @emph{init})@dots{})
+@c @emph{sexpr}@dots{})
+@c @anchor{letrec-variable-init-sexpr}
+@c The @emph{variables} are bound to fresh locations holding unassigned
+@c values, the @emph{inits} are evaluated in the extended environment (in
+@c some unspecified order), each @emph{variable} is assigned to the result
+@c of the corresponding @emph{init}, the @emph{expressions} are evaluated
+@c sequentially in the extended environment, and the value of the last
+@c @emph{expression} is returned. Each binding of a @emph{variable} has the
+@c entire @code{letrec} expression as its region, making it possible to
+@c define mutually recursive procedures.
+
+@c Any of the @emph{inits} may be omitted, in which case the corresponding
+@c @emph{variable} is unassigned.
+
+@c @verbatim
+@c (letrec ((even? (lambda (n)
+@c                   (if (zero? n)
+@c                       #t
+@c                       (odd? (- n 1)))))
+@c          (odd? (lambda (n)
+@c                  (if (zero? n)
+@c                      #f
+@c                      (even? (- n 1))))))
+@c (even? 88))                                 ==>  #t
+@c @end verbatim
+
+@c One restriction on @code{letrec} is very important: it shall be possible
+@c to evaluated each @emph{init} without assigning or referring to the
+@c value of any @emph{variable}. If this restriction is violated, then it
+@c is an error. The restriction is necessary because Scheme passes
+@c arguments by value rather than by name. In the most common uses of
+@c @code{letrec}, all the @emph{inits} are @strong{lambda} expressions and
+@c the restriction is satisfied automatically.
+
+@node Definitions
+@section Definitions
+@menu
+* define variable [sexpr]::
+* define formals [doc-string] sexpr@dots{}::
+* doc func::
+@end menu
+
+@node define variable [sexpr]
+@subsection (define @emph{variable} [@emph{sexpr}])
+@anchor{define}
+
+@node define formals [doc-string] sexpr@dots{}
+@subsection (define @emph{formals} [@emph{doc-string}]
+@emph{sexpr}@dots{})
+@anchor{define-func}
+Definitions are valid in some but not all contexts where expressions are
+allowed. Definitions may only occur at the top level of a program and at
+the beginning of a lambda body (that is, the body of a @code{lambda},
+@code{let}, @code{let*}, @code{letrec}, or procedure @code{define}
+expression). A definition that occurs at the top level of a program is
+called a @emph{top-level definition}, and a definition that occurs at
+the beginning of a body is called an @emph{internal definition}.
+
+The second form is used as a shorthand to define a procedure. The first
+``required parameter'' in @emph{formals} is not a parameter but the
+@emph{name} of the resulting procedure; thus @emph{formals} must have at
+least one required parameter.
+
+Hence the following are identical.
+
+@verbatim
+(define inc (lambda (x) (+ x 1)))
+(define (inc x) (+ x 1))
+@end verbatim
+
+Using this form of define, a function that accepts a completely option
+set of arguments can be made:
+
+@verbatim
+(define (f . args) args)
+
+(f) ==> ()
+(f 1) ==> (1)
+(f 1 2 3) ==> (1 2 3)
+@end verbatim
+
+Please note: You can not currently define a lambda with completely
+optional arguments.
+
+Finally, you can also provide a documentation string between the
+@emph{formals} and the body. For example:
+
+@verbatim
+(define (inc x) 
+  "Increment the argument." 
+  (+ x 1))
+@end verbatim
+
+@node doc func
+@subsection (doc @emph{func})
+@anchor{doc}
+This retrieves the documentation for the function @emph{func}.
+
+@node Type Signatures
+@section Type Signatures
+@anchor{type-signatures}
+GoLisp provides basic, and optional, type checking for the arguments and
+return values of user defined functions. Additionally, primtive
+functions also have type checking on arguments, as appropriate.
+@menu
+* typedef fname arg-types@dots{} [-> return-type]::
+* type func::
+@end menu
+
+@node typedef fname arg-types@dots{} [-> return-type]
+@subsection (typedef @emph{fname} @emph{arg-types}@dots{} [-> @emph{return-type}])
+@anchor{typedef}
+This is similar to defining a function: @emph{fname} is the name of a
+function that will be defined later (typicaly the next form) and
+@emph{arg-types} correspond to its arguments). But with @code{typedef}
+these are argument type specification, not argument names.
+
+Argunment type specifications can take two forms: @emph{type} which can
+be a string or symbol, or a set of types separated by a pipe (E.g.
+@code{"integer|string"}) with no spaces. The latter must be a string.
+
+When a function is passed a type that does not match its specified
+type(s) an error is raised, similar to:
+
+@verbatim
+> (typedef less-than number number)
+> (define (less-than x y) (\textless{} x y))
+> (less-than 1 4.3)
+==> #t
+> (less-than 1 'a)
+Error in evaluation: 
+Evaling (less-than 1 'a). less-than argument 1 has the wrong type, 
+                          expected float or integer but was given symbol
+@end verbatim
+
+A type specification can also include a type specification of the result
+of the function. Note that the @code{->} is required. If a return type
+is not provided, @code{anytype} is the default.
+
+@verbatim
+> (typedef less-than number number -> boolean)
+> (define (less-than x y) (if (< x y) 'yes 'no))
+> (less-than 1 4.3)
+Error in evaluation: 
+Evaling (less-than 1 4.3). less-than returns the wrong type, 
+                           expected boolean but returned symbol
+@end verbatim
+
+The following types are supported:
+
+@itemize
+@item list
+@item vector
+@item sequence (equivalent to list|vector)
+@item integer
+@item float
+@item number (equivalent to integer|float)
+@item boolean
+@item string
+@item character
+@item symbol
+@item stringy (equivalent to string|symbol)
+@item function
+@item macro
+@item primitive
+@item procedure (equivalent to function|primitive)
+@item boxedobject
+@item frame
+@item environment
+@item port
+@item anytype (equivalent to all the above typed combined)
+@end itemize
+
+Note that the @emph{list} type just requires a ConsCell; if a proper
+list or other specific type is required, then either
+@code{http://daveastels.typed.com/blog/code-contracts-in-golisp}
+pre-conditions or explicit tests will be needed.
+
+Putting all this together, a complete definition of a function would
+look like:
+
+@verbatim
+(typedef inc number -> number)
+(define (inc x) 
+  "Increment the argument." 
+  (+ x 1))
+@end verbatim
+
+@node type func
+@subsection (type @emph{func})
+@anchor{type}
+This retrieves the type signature for the function @emph{func}.
+
+@verbatim
+(type inc)
+==> (number -> number)
+@end verbatim
+
+@node Top-Level Definitions
+@section Top-Level Definitions
+@anchor{top-level-definitions}
+A top-level definition,
+
+@verbatim
+(define variable sexpr)
+@end verbatim
+
+has essentially the same effect as this assignment expression, if
+@emph{variable} is bound:
+
+@verbatim
+(set! variable expression)
+@end verbatim
+
+If @emph{variable} is not bound, however, @code{define} binds
+@emph{variable} to a new location in the current environment before
+performing the assignment (it is an error to perform a @code{set!} on an
+unbound variable).
+
+@verbatim
+(define add3
+  (lambda (x) (+ x 3)))                ==>  unspecified
+(add3 3)                                ==>  6
+
+(define first car)                      ==>  unspecified
+(first '(1 2))                          ==>  1
+
+(define bar)                            ==>  unspecified
+bar                                     error--> Unassigned variable
+@end verbatim
+
+@node Internal Definitions
+@section Internal Definitions
+@anchor{internal-definitions}
+An @emph{internal definition} is a definition that occurs at the
+beginning of a @emph{body} (that is, the body of a @code{lambda},
+@code{let}, @code{let*}, @code{letrec}, or procedure @code{define}
+expression), rather than at the top level of a program. The variable
+defined by an internal definition is local to the @emph{body}. That is,
+@emph{variable} is bound rather than assigned, and the region of the
+binding is the entire @emph{body}. For example,
+
+@verbatim
+(let ((x 5))
+  (define foo (lambda (y) (bar x y)))
+  (define bar (lambda (a b) (+ (* a b) a)))
+  (foo (+ x 3)))                        ==>  45
+@end verbatim
+
+A @emph{body} containing internal definitions can always be converted
+into a completely equivalent @code{letrec} expression. For example, the
+@code{let} expression in the above example is equivalent to
+
+@verbatim
+(let ((x 5))
+  (letrec ((foo (lambda (y) (bar x y)))
+           (bar (lambda (a b) (+ (* a b) a))))
+    (foo (+ x 3))))
+@end verbatim
+
+@node Assignments
+@section Assignments
+@anchor{assignments}
+@menu
+* set! variable object::
+@end menu
+
+@node set! variable object
+@subsection (set! @emph{variable} @emph{object})
+@anchor{set}
+@emph{expression} is evaluated and the resulting value is stored in the
+location to which @emph{variable} is bound. The value of the @code{set!}
+expression is unspecified.
+
+@emph{variable} must be bound either in some region enclosing the
+@code{set!} expression, or at the top level. However, @strong{variable}
+is permitted to be unassigned when the `set!' form is entered.
+
+@verbatim
+(define x 2)                            ==>  unspecified
+(+ x 1)                                 ==>  3
+(set! x 4)                              ==>  unspecified
+(+ x 1)                                 ==>  5
+@end verbatim
+
+@node Quoting
+@section Quoting
+@anchor{quoting}
+This section describes the expressions that are used to modify or
+prevent the evaluation of objects.
+@menu
+* quote datum::
+* quasiquote template::
+@end menu
+
+@node quote datum
+@subsection (quote @emph{datum})
+@anchor{quote}
+@strong{(quote @emph{datum})} evaluates to @emph{datum}. @emph{datum}
+may be any external representation of a GoLisp object. Use @code{quote}
+to include literal constants in Scheme code.
+
+@verbatim
+(quote a)                               ==>  a
+(quote #(a b c))                        ==>  #(a b c)
+(quote (+ 1 2))                         ==>  (+ 1 2)
+@end verbatim
+
+@code{(quote datum)} may be abbreviated as @code{'datum}. The two
+notations are equivalent in all respects.
+
+@verbatim
+'a                                      ==>  a
+'#(a b c)                               ==>  #(a b c)
+'(+ 1 2)                                ==>  (+ 1 2)
+'(quote a)                              ==>  (quote a)
+''a                                     ==>  (quote a)
+@end verbatim
+
+Numeric constants, string constants, character constants, and boolean
+constants evaluate to themselves, so they don't need to be quoted.
+
+@verbatim
+'"abc"                                  ==>  "abc"
+"abc"                                   ==>  "abc"
+'145932                                 ==>  145932
+145932                                  ==>  145932
+'#t                                     ==>  #t
+#t                                      ==>  #t
+@end verbatim
+
+@node quasiquote template
+@subsection (quasiquote @emph{template})
+@anchor{quasiquote}
+``Backquote'' or ``quasiquote'' expressions are useful for constructing
+a list or vector structure when most but not all of the desired
+structure is known in advance. If no commas appear within the
+@emph{template}, the result of evaluating is equivalent (in the sense of
+@code{equal?}) to the result of evaluating @code{'template}. If a comma
+appears within the @emph{template}, however, the expression following
+the comma is evaluated (``unquoted'') and its result is inserted into
+the structure instead of the comma and the expression. If a comma
+appears followed immediately by an at-sign (@@), then the following
+expression shall evaluate to a list; the opening and closing parentheses
+of the list are then ``stripped away'' and the elements of the list are
+inserted in place of the comma at-sign expression sequence.
+
+@verbatim
+`(list ,(+ 1 2) 4)                       ==>  (list 3 4)
+
+(let ((name 'a)) `(list ,name ',name))   ==>  (list a 'a)
+
+`(a ,(+ 1 2) ,@(map abs '(4 -5 6)) b)    ==>  (a 3 4 5 6 b)
+
+`((foo ,(- 10 3)) ,@(cdr '(c)) . ,(car '(cons)))
+                                         ==>  ((foo 7) . cons)
+
+`#(10 5 ,(sqrt 4) ,@(map sqrt '(16 9)) 8)
+                                         ==>  #(10 5 2 4 3 8)
+
+`,(+ 2 3)                                ==>  5
+@end verbatim
+
+Quasiquote forms may be nested. Substitutions are made only for unquoted
+components appearing at the same nesting level as the outermost
+backquote. The nesting level increases by one inside each successive
+quasiquotation, and decreases by one inside each unquotation.
+
+@verbatim
+`(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f)
+     ==>  (a `(b ,(+ 1 2) ,(foo 4 d) e) f)
+
+(let ((name1 'x)
+      (name2 'y))
+  `(a `(b ,,name1 ,',name2 d) e))       ==>  (a `(b ,x ,'y d) e)
+@end verbatim
+
+The above notations and @code{(quasiquote template)} are identical in
+all respects. is identical to and is identical to .
+
+@verbatim
+(quasiquote (list (unquote (+ 1 2)) 4))
+           ==>  (list 3 4)
+
+'(quasiquote (list (unquote (+ 1 2)) 4))
+           ==>  `(list ,(+ 1 2) 4)
+           _i.e.,_ (quasiquote (list (unquote (+ 1 2)) 4))
+@end verbatim
+
+Unpredictable behavior can result if any of the symbols
+@code{quasiquote}, @code{unquote}, or @code{unquote-splicing} appear in
+a @emph{template} in ways otherwise than as described above.
+
+@node Macros
+@section Macros
+@anchor{macros}
+@menu
+* define-macro formals template::
+* defmacro formals template::
+* expand name [object@dots{}]::
+@end menu
+
+@node define-macro formals template
+@subsection (define-macro (@emph{formals}) @emph{template})
+@anchor{define-macro}
+
+@node defmacro formals template
+@subsection (defmacro (@emph{formals}) @emph{template})
+@anchor{defmacro}
+@emph{The former is from standard Scheme and is the preferred name. The
+latter is retained for backward compatibility with earlier versions of
+GoLisp.}
+
+Create a named macro:
+
+@emph{formals} is the same as in a procedure definition: a name followed
+by formal parameters, if any. @strong{NOTE} that the arguments to a
+macro invocation are @strong{not} evaluated, but are passed as is to the
+macro to do with as it wishes.
+
+@emph{template} the template expression that is processed when the macro
+is invoked. The result of evaluating the processed template expression
+becomes the value of the macro's invocation. @emph{template} is
+typically (even always) a quasiquoted expression using the formal
+parameter names for purposes of unquotiing in order to fill in the
+template.
+
+@verbatim
+(define-macro (double x)
+   `(+ ,x ,x))
+
+(double 5) ==> 10
+@end verbatim
+
+@node expand name [object@dots{}]
+@subsection (expand @emph{name} [@emph{object}@dots{}])
+@anchor{expand}
+Expands the macro named by @emph{name}, passing the evaluated sequence
+of @emph{object} as arguments. @strong{NOTE:} whereas invoking the macro
+(in the same way you invoke a function) expands and evaluates,
+@code{expand} (as you would expect) only expands the macro, resulting in
+the expanded template sexpr. This can then be evaluated as desired.
+
+@verbatim
+(define-macro (double x)
+   `(+ ,x ,x))
+
+(expand double 5) ==> (+ 5 5)
+@end verbatim
+
+@node Sequencing
+@section Sequencing
+@anchor{sequencing}
+The @code{begin} special form is used to evaluate expressions in a
+particular order.
+@menu
+* begin expression @dots{}::
+* -> value sexprsymbol@dots{}::
+* => value sexprsymbol@dots{}::
+@end menu
+
+@node begin expression @dots{}
+@subsection (begin @emph{expression} @dots{})
+@anchor{begin}
+The @emph{expressions} are evaluated sequentially from left to right,
+and the value of the last @emph{expression} is returned. This expression
+type is used to sequence side effects such as input and output. Keep in
+mind, @code{begin} does @strong{not} create a nested lexical
+environment.
+
+@verbatim
+(define x 0)
+(begin (set! x 5)
+       (+ x 1))                 ==>  6
+
+(begin (display "4 plus 1 equals ")
+       (display (+ 4 1)))
+                                -|  4 plus 1 equals 5
+                                ==>  unspecified
+@end verbatim
+
+Often the use of @code{begin} is unnecessary, because many special forms
+already support sequences of expressions (that is, they have an implicit
+@code{begin}). Some of these special forms are:
+
+@itemize
+@item
+case
+
+@item
+cond
+
+@item
+define ;”procedure define” only
+
+@item
+do
+
+@item
+lambda
+
+@item
+let
+
+@item
+let*
+
+@item
+letrec
+
+@end itemize
+
+@node -> value sexprsymbol@dots{}
+@subsection (-> @emph{value} @emph{sexprsymbol}@dots{})
+@anchor{chain}
+This creates a function chain. @emph{value} (evaluated first) is used as
+the last (or only) argument to the first @emph{sexpr}. The result of
+each @emph{sexpr} is used as the last/only argument of the next, and the
+result of the final @emph{sexpr} is the value of the @code{->} form. If
+a @emph{sexpr} would take a single argument (which would be provided by
+the @emph{value} or the result of the previous @emph{sexpr}, just the
+function name can be used.
+
+The form @code{(-> 0 a b c)} is equivalent to @code{(c (b (a 0)))}.
+
+@verbatim
+(-> 1 (+ 3) (- 6))     ==> 2     ; (- 6 (+ 3 1))
+(-> 1 (+ 3) (- 6) str) ==> "2"   ; (str (- 6 (+ 3 1)))
+@end verbatim
+
+The major advantage of this form is avoiding having to create a sequence
+on intermediate values/bindings purely to support the data flow.
+@code{->} lets you create a pipeline that you can put one value into and
+get the final result out the other end.
+
+@node => value sexprsymbol@dots{}
+@subsection (=> @emph{value} @emph{sexprsymbol}@dots{})
+@anchor{parallel-chain}
+This operates similarly to @code{->} with two differences:
+
+@enumerate 
+@item
+@emph{value} (evaluated @strong{once} at the beginning) is used as the
+last/only argument to @strong{each} function, and they are independent and
+do not pass results one to another.
+
+@item
+@emph{value} is the result of the form.
+
+@end enumerate
+
+The expression
+
+@verbatim
+(=> 1 a b c)
+@end verbatim
+
+is equivalent to
+
+@verbatim
+(begin
+  (a 1)
+  (b 1)
+  (c 1)
+  1)
+@end verbatim
+
+and
+
+@verbatim
+(=> (+ x 1) a b c)
+@end verbatim
+
+is the same as
+
+@verbatim
+(let ((y (+ x 1)))
+  (a y)
+  (b y)
+  (c y)
+  y)
+@end verbatim
+
+@node Conditionals
+@section Conditionals
+@anchor{conditionals}
+The behavior of the ``conditional expressions'' is determined by whether
+objects are true or false. The conditional expressions count only
+@code{@hashchar{}f} as false. They count everything else, including @code{@hashchar{}t},
+pairs, symbols, numbers, strings, vectors, and procedures as true.
+
+In the descriptions that follow, we say that an object has ``a true
+value'' or ``is true'' when the conditional expressions treat it as
+true, and we say that an object has ``a false value'' or ``is false''
+when the conditional expressions treat it as false.
+@menu
+* cond clause@dots{}::
+* case key clause@dots{}::
+* and expression@dots{}::
+* or expression@dots{}::
+* if predicate consequent [alternative]::
+* when predicate expression@dots{}::
+* unless predicate expression@dots{}::
+@end menu
+
+@node cond clause@dots{}
+@subsection (cond @emph{clause}@dots{})
+@anchor{cond}
+Each @emph{clause} has this form:
+
+@verbatim
+(predicate expression...)
+@end verbatim
+
+where @emph{predicate} is any expression. The last @emph{clause} may be
+an ``@code{else} clause'', which has the form:
+
+@verbatim
+(else expression...)
+@end verbatim
+
+A @code{cond} expression does the following:
+
+@enumerate 
+@item
+Evaluates the @emph{predicate} expressions of successive @emph{clauses}
+in order, until one of the @emph{predicates} evaluates to a true value.
+
+@item
+When a @emph{predicate} evaluates to a true value, @code{cond} evaluates
+the @emph{expressions} in the associated @emph{clause} in left to right
+order, and returns the result of evaluating the last @emph{expression}
+in the @emph{clause} as the result of the entire @code{cond} expression.
+If the selected @emph{clause} contains only the @emph{predicate} and no
+@emph{expressions}, @code{cond} returns the value of the
+@emph{predicate} as the result.
+
+@item
+If all @emph{predicates} evaluate to false values, and there is no
+@code{else} clause, the result of the conditional expression is
+unspecified; if there is an @code{else} clause, @code{cond} evaluates
+its @emph{expressions} (left to right) and returns the value of the last
+one.
+
+@verbatim
+(cond ((> 3 2) 'greater)
+      ((< 3 2) 'less))                  ==>  greater
+
+(cond ((> 3 3) 'greater)
+      ((< 3 3) 'less)
+      (else 'equal))                    ==>  equal
+@end verbatim
+
+@end enumerate
+
+Normally, programs should not depend on the value of a @code{cond}
+expression that has no @code{else} clause. However, some Scheme
+programmers prefer to write @code{cond} expressions in which at least
+one of the @emph{predicates} is always true. In this style, the final
+@emph{clause} is equivalent to an @code{else} clause.
+
+GoLisp (and Scheme) supports an alternative clause syntax:
+
+@verbatim
+(predicate => recipient)
+@end verbatim
+
+where @emph{recipient} is an expression. If @emph{predicate} evaluates
+to a true value, then @emph{recipient} is evaluated. Its value must be a
+procedure of one argument; this procedure is then invoked on the value
+of the @emph{predicate}.
+
+@verbatim
+(cond ((assv 'b '((a 1) (b 2))) => cadr)
+      (else #f))                        ==>  2
+@end verbatim
+
+@node case key clause@dots{}
+@subsection (case @emph{key} @emph{clause}@dots{})
+@anchor{case}
+@emph{key} may be any expression. Each @emph{clause} has this form:
+
+@verbatim
+((object...) expression...)
+@end verbatim
+
+No @emph{object} is evaluated, and all the @emph{objects} must be
+distinct. The last @emph{clause} may be an ``@strong{else} clause'',
+which has the form:
+
+@verbatim
+(else expression...)
+@end verbatim
+
+A @code{case} expression does the following:
+
+@enumerate 
+@item
+Evaluates @emph{key} and compares the result with each @emph{object}.
+
+@item
+If the result of evaluating @emph{key} is equivalent (in the sense of
+@code{eqv?}) to an @emph{object}, @code{case} evaluates the
+@emph{expressions} in the corresponding @emph{clause} from left to right
+and returns the result of evaluating the last @emph{expression} in the
+@emph{clause} as the result of the @code{case} expression.
+
+@item
+If the result of evaluating @emph{key} is different from every
+@emph{object}, and if there's an @code{else} clause, @code{case}
+evaluates its @emph{expressions} and returns the result of the last one
+as the result of the @code{case} expression. If there's no @code{else}
+clause, @code{case} returns an unspecified result. Programs should not
+depend on the value of a @code{case} expression that has no @code{else}
+clause.
+
+@end enumerate
+
+For example,
+
+@verbatim
+(case (* 2 3)
+   ((2 3 5 7) 'prime)
+   ((1 4 6 8 9) 'composite)) ==>  composite
+
+(case (car '(c d))
+   ((a) 'a)
+   ((b) 'b))                 ==>  unspecified
+
+(case (car '(c d))
+   ((a e i o u) 'vowel)
+   ((w y) 'semivowel)
+   (else 'consonant))        ==>  consonant
+@end verbatim
+
+@node and expression@dots{}
+@subsection (and @emph{expression}@dots{})
+@anchor{and}
+The @emph{expressions} are evaluated from left to right, and the value
+of the first @emph{expression} that evaluates to a false value is
+returned. Any remaining @emph{expressions} are not evaluated. If all the
+@emph{expressions} evaluate to true values, the value of the last
+@emph{expression} is returned. If there are no @emph{expressions} then
+@code{@hashchar{}t} is returned.
+
+@verbatim
+(and (= 2 2) (> 2 1)) ==>  #t
+(and (= 2 2) (< 2 1)) ==>  #f
+(and 1 2 'c '(f g))   ==>  (f g)
+(and)                 ==>  #t
+@end verbatim
+
+@node or expression@dots{}
+@subsection (or @emph{expression}@dots{})
+@anchor{or}
+The @emph{expressions} are evaluated from left to right, and the value
+of the first @emph{expression} that evaluates to a true value is
+returned. Any remaining @emph{expressions} are not evaluated. If all
+@emph{expressions} evaluate to false values, the value of the last
+@emph{expression} is returned. If there are no @emph{expressions} then
+@code{@hashchar{}f} is returned.
+
+@verbatim
+(or (= 2 2) (> 2 1))            ==>  #t
+(or (= 2 2) (< 2 1))            ==>  #t
+(or #f #f #f)                   ==>  #f
+(or (memq 'b '(a b c)) (/ 3 0)) ==>  (b c)
+@end verbatim
+
+@node if predicate consequent [alternative]
+@subsection (if @emph{predicate} @emph{consequent} [@emph{alternative}])
+@anchor{if}
+@code{if} is a macro based on @code{cond}.
+
+@emph{predicate}, @emph{consequent}, and @emph{alternative} are
+expressions. An @code{if} expression is evaluated as follows: first,
+@emph{predicate} is evaluated. If it yields a true value, then
+@emph{consequent} is evaluated and its value is returned. Otherwise
+@emph{alternative} is evaluated and its value is returned. If
+@emph{predicate} yields a false value and no @emph{alternative} is
+specified, then the result of the expression is unspecified.
+
+An @code{if} expression evaluates either @emph{consequent} or
+@emph{alternative}, never both. Programs should not depend on the value
+of an @code{if} expression that has no @emph{alternative}.
+
+@verbatim
+(if (> 3 2) 'yes 'no)                   ==>  yes
+(if (> 2 3) 'yes 'no)                   ==>  no
+(if (> 3 2)
+    (- 3 2)
+    (+ 3 2))                            ==>  1
+@end verbatim
+
+@node when predicate expression@dots{}
+@subsection (when @emph{predicate} @emph{expression}@dots{})
+@anchor{when}
+@code{when} is a macro based on @code{cond}.
+
+If @emph{predicate} evaluates to logically @code{true}, the sequence of
+@emph{expresions} is evaluated and the result of the last one is the
+result of the @code{when} form, otherwise @code{nil} is the result.
+
+@verbatim
+(when (> x 5)
+  (write-line "greater")
+  (+ x 2))
+@end verbatim
+
+The above is equivalent to the following, but is simpler and clearer.
+
+@verbatim
+(if (> x 5)
+    (begin (write-line "greater")
+           (+ x 2)))
+@end verbatim
+
+@node unless predicate expression@dots{}
+@subsection (unless @emph{predicate} @emph{expression}@dots{})
+@anchor{unless}
+@code{unless} is a macro based on @code{cond}.
+
+If @emph{predicate} evaluates to logically @code{false}, the sequence of
+@emph{expresions} is evaluated and the result of the last one is the
+result of the @code{unless} form, otherwise @code{nil} is the result.
+
+@verbatim
+(unless (> x 5)
+  (write-line "greater")
+  (+ x 2))
+@end verbatim
+
+The above is equivalent to the following, but is much simpler and
+clearer.
+
+@verbatim
+(if (> x 5)
+    ()
+    (begin (write-line "greater")
+           (+ x 2)))
+@end verbatim
+
+@node Iteration
+@section Iteration
+@anchor{iteration}
+The ``iteration expressions'' are: ``named @code{let}'' and @code{do}.
+They are also binding expressions, but are more commonly referred to as
+iteration expressions.
+@menu
+* let name variable init@dots{} _expression@dots{}::
+* do variable init step@dots{} test expression@dots{} command@dots{}::
+@end menu
+
+@node let name variable init@dots{} _expression@dots{}
+@subsection (let @emph{name} ((@emph{variable} @emph{init})@dots{})
+_expression@dots{})
+@anchor{named-let}
+GoLisp permits a variant on the syntax of @emph{let} called ``named
+@code{let}'' which provides a more general looping construct than
+@code{do}, and may also be used to express recursions (but prefer
+proper tail-ecursive functions)
+
+Named @code{let} has the same syntax and semantics as ordinary
+@code{let} except that @emph{name} is bound within the
+@emph{expressions} to a procedure whose formal arguments are the
+@emph{variables} and whose body is the @emph{expressions}. Thus the
+execution of the @emph{expressions} may be repeated by invoking the
+procedure named by @emph{name}.
+
+GoLisp allows any of the @emph{inits} to be omitted, in which case the
+corresponding @emph{variables} are unassigned.
+
+Note: the following expressions are equivalent:
+
+@verbatim
+(let name ((variable init)...)
+  expression...)
+
+((letrec ((name
+           (lambda (variable...)
+             expression...)))
+   name)
+ init...)
+@end verbatim
+
+Here is an example:
+
+@verbatim
+(let loop
+     ((numbers '(3 -2 1 6 -5))
+      (nonneg '())
+      (neg '()))
+  (cond ((null? numbers)
+         (list nonneg neg))
+        ((>= (car numbers) 0)
+         (loop (cdr numbers)
+               (cons (car numbers) nonneg)
+               neg))
+        (else
+         (loop (cdr numbers)
+               nonneg
+               (cons (car numbers) neg)))))
+
+     ==>  ((6 1 3) (-5 -2))
+@end verbatim
+
+@node do variable init step@dots{} test expression@dots{} command@dots{}
+@subsection (do ((@emph{variable} @emph{init} @emph{step})@dots{}) (@emph{test} @emph{expression}@dots{}) @emph{command}@dots{})
+@anchor{do }
+@code{do} is an iteration construct. It specifies a set of variables to
+be bound, how they are to be initialized at the start, and how they are
+to be updated on each iteration. When a termination condition is met,
+the loop exits with a specified result value.
+
+@code{do} expressions are evaluated as follows: The @emph{init}
+expressions are evaluated (in some unspecified order), the
+@emph{variables} are bound to fresh locations, the results of the
+@emph{init} expressions are stored in the bindings of the
+@emph{variables}, and then the iteration phase begins.
+
+Each iteration begins by evaluating @emph{test}; if the result is false,
+then the @emph{command} expressions are evaluated in order for effect,
+the @emph{step} expressions are evaluated in some unspecified order, the
+@emph{variables} are bound to fresh locations, the results of the
+@emph{steps} are stored in the bindings of the @emph{variables}, and the
+next iteration begins.
+
+If @emph{test} evaluates to a true value, then the @emph{expressions}
+are evaluated from left to right and the value of the last
+@emph{expression} is returned as the value of the @code{do} expression.
+If no @emph{expressions} are present, then the value of the @code{do}
+expression is the empty list (i.e. @code{nil}).
+
+The region of the binding of a @emph{variable} consists of the entire
+@code{do} expression except for the @emph{inits}. It is an error for a
+@emph{variable} to appear more than once in the list of @code{do}
+variables.
+
+A @emph{step} may be omitted, in which case the effect is the same as if
+@code{(variable init variable)} had been written instead of
+@code{(variable init)}.
+
+@verbatim
+(do ((vec (make-vector 5))
+      (i 0 (+ i 1)))
+     ((= i 5) vec)
+   (vector-set! vec i i))        ==>  #(0 1 2 3 4)
+
+(let ((x '(1 3 5 7 9)))
+   (do ((x x (cdr x))
+        (sum 0 (+ sum (car x))))
+       ((null? x) sum)))         ==>  25
+@end verbatim
+
+@node Eval/Apply
+@section Eval/Apply
+@anchor{evalapply}
+@menu
+* apply function object@dots{}::
+* eval expression::
+* definition-of function::
+@end menu
+
+@node apply function object@dots{}
+@subsection (apply @emph{function} @emph{object}@dots{})
+@anchor{apply}
+Apply the function that results from evaluating @emph{function} to the
+argument list resulting from evaluating each @emph{object}.
+
+Each initial @emph{object} can be any type of object, but the final one
+(and there must be at least one @emph{object}) must be a list.
+
+@verbatim
+(apply + 1 2 '(3 4)) ==> 10
+(apply + '(1 2 3 4)) ==> 10
+@end verbatim
+
+@node eval expression
+@subsection (eval @emph{expression})
+@anchor{eval}
+Evaluate @emph{expression} in the current environment.
+
+@verbatim
+(eval '(+ 1 2 3 4)) ==> 10
+@end verbatim
+
+@node definition-of function
+@subsection (definition-of @emph{function})
+@anchor{definition-of}
+Fetch the definition of @emph{function}. This returns an expression that
+can be evaluated to define it. One use of this is to copy definitions to
+a source file.
+
+@verbatim
+(define (square x)
+  (* x x))
+
+(definition-of square) ==> (define (square x) (* x x))
+
+(define square (lambda (x)
+                 (* x x)))
+
+(definition-of square) ==> (define square (lambda (x) (* x x)))
+@end verbatim
+
+
+@c Local Variables:
+@c mode: texinfo
+@c End:

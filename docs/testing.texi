@@ -1,0 +1,224 @@
+@node Testing
+@chapter Testing
+@anchor{testing}
+Golisp has a builtin testing framework, completely written in GoLisp.
+@menu
+* Structure::
+* Assertions::
+* Usage::
+@end menu
+
+@node Structure
+@section Structure
+@anchor{structure}
+Contests and it-clauses divide up the testing of a system under test
+into fixtures and focused sets of assertions.
+@menu
+* context tag-string fixture it@dots{}::
+* it tag assertion@dots{}::
+@end menu
+
+@node context tag-string fixture it@dots{}
+@subsection (context @emph{tag-string} @emph{fixture} @emph{it}@dots{})
+@anchor{context-tag-string-fixture-it}
+@emph{tag-string} is a string used to identify the context in the test
+run's output. This should describe what the context focusses on.
+@emph{fixture} is a sequence of expressions that typically add
+definitions (symbol bindings) to the environment created by
+@code{context}. Each @emph{it} expression (defined using @code{it})
+performs speific tests relevant to the context.
+
+@node it tag assertion@dots{}
+@subsection (it @emph{tag} @emph{assertion}@dots{})
+@anchor{it-tag-assertion}
+This defines a cohesive block of assertions. The context's fixture code
+will be run in a new environment for each @emph{it} block, thus
+isolating each it.
+
+@node Assertions
+@section Assertions
+@anchor{assertions}
+Assertions are used to make provable (via execution) statements about
+the system under test.
+@menu
+* assert-true expression::
+* assert-false expression::
+* assert-eq actual expected::
+* assert-neq actual expected::
+* assert-nil expression::
+* assert-not-nil expression::
+* assert-error expression::
+* assert-nerror expression::
+@end menu
+
+@node assert-true expression
+@subsection (assert-true @emph{expression})
+@anchor{assert-true-expression}
+Passes if @emph{expression} evaluates to a truthy value, fails
+otherwise.
+
+@node assert-false expression
+@subsection (assert-false @emph{expression})
+@anchor{assert-false-expression}
+Passes if @emph{expression} evaluates to a falsy value, fails otherwise.
+
+@node assert-eq actual expected
+@subsection (assert-eq @emph{actual} @emph{expected})
+@anchor{assert-eq-actual-expected}
+Passes if the result of evaluating @emph{actual} is equal (using
+@code{(equal? actual expected)}) to the result of evaluating
+@emph{expected}, fails otherwise.
+
+@node assert-neq actual expected
+@subsection (assert-neq @emph{actual} @emph{expected})
+@anchor{assert-neq-actual-expected}
+Passes if the result of evaluating @emph{actual} is @strong{not} equal
+(using @code{(not (equal? actual expected))}to the result of evaluating
+@emph{expected}, fails otherwise.
+
+@node assert-nil expression
+@subsection (assert-nil @emph{expression})
+@anchor{assert-nil-expression}
+Passes if @emph{expression} evaluates to nil, fails otherwise.
+
+@node assert-not-nil expression
+@subsection (assert-not-nil @emph{expression})
+@anchor{assert-not-nil-expression}
+Passes if @emph{expression} evaluates to anything @strong{other than}
+nil, fails otherwise.
+
+@node assert-error expression
+@subsection (assert-error @emph{expression})
+@anchor{assert-error-expression}
+Passes if evaluating @emph{expression} results in an error being
+signalled, fails if it evaluates without problems.
+
+@node assert-nerror expression
+@subsection (assert-nerror @emph{expression})
+@anchor{assert-nerror-expression}
+Passes if evaluating @emph{expression} does not result in an error being
+signalled, fails if it the evaluation signals an error.
+
+@node Usage
+@section Usage
+@anchor{usage}
+Generally you should create a test file for each feature you are
+testing. The file is a plain lisp file and can contain any lisp code,
+including global variable and function definitions.
+
+For example, here is the test file for scoping:
+
+@verbatim
+(context "environments"
+
+  ((define a 5)
+   (define (foo a)
+     (lambda (x)
+      (+ a x))))
+
+  (it "can access a in the global env"
+      (assert-eq a 5))
+
+  (it "gets a from the function's local env"
+      (assert-eq ((foo 1) 5) 6)
+      (assert-eq ((foo 2) 5) 7)
+      (assert-eq ((foo 10) 7) 17)))
+@end verbatim
+
+Running a test results in a stream of status output for each test,
+followed at the very end by a summary. Running the above results in the
+following:
+
+@verbatim
+environments
+
+  can access a in the global env
+    (assert-eq a 5)
+
+  gets a from the function's local env
+    (assert-eq ((foo 1) 5) 6)
+    (assert-eq ((foo 2) 5) 7)
+    (assert-eq ((foo 10) 7) 17)
+
+Ran 4 tests in 0.003 seconds
+4 passes, 0 failures, 0 errors
+@end verbatim
+
+If we introduce a failure, the output would be:
+
+@verbatim
+environments
+
+  can access a in the global env
+    (assert-eq a 5)
+
+  gets a from the function's local env
+    (assert-eq ((foo 1) 5) 6)
+    (assert-eq ((foo 2) 5) 8)
+      - expected 8, but was 7
+    (assert-eq ((foo 10) 7) 17)
+
+Ran 4 tests in 0.002 seconds
+3 passes, 1 failures, 0 errors
+
+Failures:
+  environments gets a from the function's local env:
+    (assert-eq ((foo 2) 5) 8)
+      - expected 8, but was 7
+@end verbatim
+
+Errors are also reported. Errors are problems that occur while
+evaluating the clauses, that aren't failures. Essentially they indicate
+bugs of some sort.
+
+@verbatim
+environments
+
+  can access a in the global env
+    (assert-eq a 5)
+
+  gets a from the function's local env
+    (assert-eq ((foo 1) 5) 6)
+    ERROR: Quotent: (7 0) -> Divide by zero.
+
+Ran 3 tests in 0.002 seconds
+2 passes, 0 failures, 1 errors
+
+Errors:
+  environments gets a from the function's local env:
+    ERROR: Quotent: (7 0) -> Divide by zero.
+@end verbatim
+
+The above output was generated by the testing framwork running in
+verbose mode. You can also run in quiet mode which only outputs the
+summary:
+
+@verbatim
+Ran 4 tests in 0.003 seconds
+4 passes, 0 failures, 0 errors
+@end verbatim
+
+You run tests by running the golisp repl in test mode, providing either
+a directory or filename. If you provide a directory all files in it that
+match @code{*_test.scm} will be run. If you provide a filename, only
+that file will be run.
+
+@verbatim
+$golisp -t tests/scope_test.scm
+
+Ran 4 tests in 0.002 seconds
+4 passes, 0 failures, 0 errors
+
+
+$golisp -t tests
+
+Ran 935 tests in 0.273 seconds
+935 passes, 0 failures, 0 errors
+@end verbatim
+
+Adding the @code{-v} flag will produce the detailed output above.
+
+
+@c Local Variables:
+@c mode: texinfo
+@c End:

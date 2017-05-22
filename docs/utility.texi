@@ -1,0 +1,85 @@
+@node Utility
+@chapter Utility
+@anchor{utility}
+GoLisp provides a handful of utility functions.
+
+@node random-byte
+@subsection (random-byte)
+Returns a psuedo-random unsigned integer between 0 and 255, inclusive.
+
+@verbatim
+(random-byte) ==> 13
+(random-byte) ==> 207
+@end verbatim
+
+@node random
+@subsection (random)
+The return value is a pseudorandom integer in the range [0,
+2,147,483,647]
+
+@node random modulus
+@subsection (random @emph{modulus})
+@emph{Modulus} must be a positive real number. If @emph{modulus} is an
+integer, @code{random} returns a pseudo-random number between zero
+(inclusive) and @emph{modulus} (exclusive). If @emph{modulus} is the
+float 1.0, the returned number is a float in the range [0.0, 1.0). Other
+float values of @emph{modulus} are rejected.
+
+@node sleep millis
+@subsection (sleep @emph{millis})
+@anchor{sleep}
+Sleep for @emph{millis} milliseconds.
+
+@verbatim
+(sleep 1000)  ;; resumes execution 1 second later
+@end verbatim
+
+@node time expression@dots{}
+@subsection (time @emph{expression}@dots{})
+@anchor{time}
+Evaluates each @emph{expression} and reports the number of milliseconds
+taken to do so.
+
+@node write-line object@dots{}
+@subsection (write-line @emph{object}@dots{})
+@anchor{write-line}
+Writes the concatenation of the string forms of @emph{objects} followed
+by a newline.
+
+@verbatim
+> (write-line "Hello, " 42 " world")
+Hello, 42 world
+===> ()
+@end verbatim
+
+@node str object@dots{}
+@subsection (str @emph{object}@dots{})
+@anchor{str}
+If you provide multiple arguments to @code{str} it creates a string from
+concatenating the string forms of all the @emph{objects}.
+
+@verbatim
+(str 1 "." 2) ==> "1.2"
+@end verbatim
+
+@node copy object
+@subsection (copy @emph{object})
+@anchor{copy}
+Make a copy of the result of evaluating @emph{object}, IFF it's mutable.
+This is limited to lists and association lists. All other values are
+immutable. Copying an immutable item will return the item, whereas
+copying a list or association list will make a deep copy of the
+structure, and return it.
+
+@node exec command arg@dots{}
+@subsection (exec @emph{command} @emph{arg}@dots{})
+@anchor{exec}
+Makes an operating system call. @code{command} is the command to execute
+and the @code{arg}s are the arguments passed on the command line to
+@code{command}. @code{command} must be a string, and the @code{arg}s can
+be anything.
+
+
+@c Local Variables:
+@c mode: texinfo
+@c End:

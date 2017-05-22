@@ -1,0 +1,52 @@
+@node Characters
+@chapter Characters
+@anchor{characters}
+GoLisp has minimal support for characters: just that required for basic
+string manipulation. this may be expanded in the future.
+@menu
+* External Representation of Characters::
+@end menu
+
+@node External Representation of Characters
+@section External Representation of Characters
+@anchor{external-representation-of-characters}
+Characters are written using the notation @code{@hashchar{}CHARACTER} or
+@code{@hashchar{}@backslashchar{}CHARACTER-NAME}. For example:
+
+@verbatim
+#\a                     ; lowercase letter
+#\A                     ; uppercase letter
+#\(                     ; left parenthesis
+#\space                 ; the space character
+#\newline               ; the newline character
+@end verbatim
+
+Case is significant in @code{@hashchar{}@backslashchar{}CHARACTER}, but not in
+@code{@hashchar{}@backslashchar{}CHARACTER-NAME}. If CHARACTER in @code{@hashchar{}@backslashchar{}CHARACTER} is a letter,
+@emph{CHARACTER} must be followed by a delimiter character such as a
+space or closing parenthesis, bracket, or brace. Characters written in
+the @code{@hashchar{}@backslashchar{}} notation are self-evaluating; you don't need to quote
+them.
+
+The following @emph{CHARACTER-NAME}s are supported, shown here with
+their ASCII equivalents:
+
+@verbatim
+Character Name          ASCII Name
+ --------------          ----------
+
+ altmode                 ESC
+ backspace               BS
+ esc                     ESC
+ linefeed                LF
+ page                    FF
+ return                  CR
+ rubout                  DEL
+ space
+ tab                     HT
+@end verbatim
+
+
+@c Local Variables:
+@c mode: texinfo
+@c End:

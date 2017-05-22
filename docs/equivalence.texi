@@ -1,0 +1,209 @@
+@node Equivalence Predicates
+@chapter Equivalence Predicates
+@anchor{equivalence-predicates}
+A ``predicate'' is a procedure that always returns a boolean value
+(@code{@hashchar{}t} or @code{@hashchar{}f}). An ``equivalence predicate'' is the
+computational analogue of a mathematical equivalence relation (it is
+symmetric, reflexive, and transitive). Of the equivalence predicates
+described in this section, @code{eq?} is the finest or most
+discriminating, and @code{equal?} is the coarsest. @code{eqv?} is
+slightly less discriminating than @code{eq?}.
+
+@node eqv? obj1 obj2
+@subsection (eqv? @emph{obj1} @emph{obj2})
+@anchor{eqvp}
+The @code{eqv?} procedure defines a useful equivalence relation on
+objects. Briefly, it returns @code{@hashchar{}t} if @emph{obj1} and @emph{obj2}
+should normally be regarded as the same object.
+
+The @code{eqv?} procedure returns @code{@hashchar{}t} if:
+
+@itemize
+@item
+@emph{obj1} and @emph{obj2} are both @code{@hashchar{}t} or both @code{@hashchar{}f}.
+
+@item
+@emph{obj1} and @emph{obj2} are both interned symbols and
+
+@verbatim
+(string=? (symbol->string obj1)
+          (symbol->string obj2))
+      ==> #t
+@end verbatim
+
+@item
+@emph{obj1} and @emph{obj2} are both numbers, are numerically equal
+according to the @code{=} procedure.
+
+@item
+both @emph{obj1} and @emph{obj2} are the empty list.
+
+@item
+@emph{obj1} and @emph{obj2} are procedures whose location tags are
+equal.
+
+@item
+@emph{obj1} and @emph{obj2} are pairs, vectors, strings, byte arrays,
+records, cells, or weak pairs that denote the same locations in the
+store.
+
+@end itemize
+
+The @code{eqv?} procedure returns @code{@hashchar{}f} if:
+
+@itemize
+@item
+@emph{obj1} and @emph{obj2} are of different types.
+
+@item
+one of @emph{obj1} and @emph{obj2} is @code{@hashchar{}t} but the other is
+@code{@hashchar{}f}.
+
+@item
+@emph{obj1} and @emph{obj2} are symbols but
+
+@verbatim
+(string=? (symbol->string obj1)
+          (symbol->string obj2))
+     ==> #f
+@end verbatim
+
+@item
+@emph{obj1} and @emph{obj2} are numbers for which the @code{=} procedure
+returns @code{@hashchar{}f}.
+
+@item
+one of @emph{obj1} and @emph{obj2} is the empty list but the other is
+not.
+
+@item
+@emph{obj1} and @emph{obj2} are procedures which have distinct
+underlying representations.
+
+@item
+@emph{obj1} and @emph{obj2} are pairs, vectors, strings, byte arrays, or
+frames that denote distinct locations.
+
+@end itemize
+
+Some examples:
+
+@verbatim
+(eqv? 'a 'a)                 ==>  #t
+(eqv? 'a 'b)                 ==>  #f
+(eqv? 2 2)                   ==>  #t
+(eqv? '() '())               ==>  #t
+(eqv? 100000000 100000000)   ==>  #t
+(eqv? (cons 1 2) (cons 1 2)) ==>  #f
+(eqv? (lambda () 1)
+      (lambda () 2))         ==>  #f
+(eqv? #f 'nil)               ==>  #f
+(let ((p (lambda (x) x)))
+  (eqv? p p))                ==>  #t
+@end verbatim
+
+The following examples illustrate how GoLisp behaves in cases where MIT
+Scheme's rules do not fully specify the behavior of `eqv?'.
+
+@verbatim
+(eqv? "" "")                 ==>  #f
+(eqv? '#() '#())             ==>  #f
+(eqv? (lambda (x) x)
+      (lambda (x) x))        ==>  #f
+(eqv? (lambda (x) x)
+      (lambda (y) y))        ==>  #f
+@end verbatim
+
+Objects of distinct types must never be regarded as the same object.
+
+Since it is an error to modify constant objects (those returned by
+literal expressions), the implementation may share structure between
+constants where appropriate. Thus the value of @code{eqv?} on constants
+is sometimes unspecified, however, the following cases hold.
+
+@verbatim
+(let ((x '(a)))
+  (eqv? x x))                ==>  #t
+(eqv? '(a) '(a))             ==>  #f
+(eqv? "a" "a")               ==>  #f
+(eqv? '(b) (cdr '(a b)))     ==>  #f
+@end verbatim
+
+@node eq? obj1 obj2
+@subsection (eq? @emph{obj1} @emph{obj2})
+@anchor{eqp}
+@code{eq?} is similar to @code{eqv?} except that in some cases it is
+capable of discerning distinctions finer than those detectable by
+@code{eqv?}.
+
+@code{eq?} and @code{eqv?} are guaranteed to have the same behavior on
+symbols, booleans, the empty list, pairs, records, and non-empty strings
+and vectors. @code{eq?}'s behavior on numbers and characters is
+implementation-dependent, but it will always return either true or
+false, and will return true only when @code{eqv?} would also return
+true. @code{eq?} may also behave differently from @code{eqv?} on empty
+vectors and empty strings.
+
+@verbatim
+(eq? 'a 'a)                  ==>  #t
+(eq? '(a) '(a))              ==>  #f
+(eq? (list 'a) (list 'a))    ==>  #f
+(eq? "a" "a")                ==>  #t
+(eq? "" "")                  ==>  #t
+(eq? '() '())                ==>  #t
+(eq? 2 2)                    ==>  #t
+(eq? car car)                ==>  #t
+(let ((n (+ 2 3)))
+  (eq? n n))                 ==>  #t
+(let ((x '(a)))
+  (eq? x x))                 ==>  #t
+(let ((x '#()))
+  (eq? x x))                 ==>  #t
+(let ((p (lambda (x) x)))
+  (eq? p p))                 ==>  #t
+@end verbatim
+
+@code{eq?} of two vectors compares the vector contents using @code{eq?},
+so two vectors are @code{eq?} only when their contents are also
+@code{eq?}.
+
+@node equal? obj1 obj2
+@subsection (equal? @emph{obj1} @emph{obj2})
+@anchor{equalp}
+@code{equal?} recursively compares the contents of pairs, vectors, and
+strings, applying @code{eqv?} on other objects such as numbers, symbols,
+and booleans. A rule of thumb is that objects are generally
+@code{equal?} if they print the same. @code{equal?} may fail to
+terminate if its arguments are circular data structures.
+
+@verbatim
+(equal? 'a 'a)               ==>  #t
+(equal? '(a) '(a))           ==>  #t
+(equal? '#(a) '#(a))         ==>  #t
+(equal? '(a (b) c)
+        '(a (b) c))          ==>  #t
+(equal? "abc" "abc")         ==>  #t
+(equal? 2 2)                 ==>  #t
+(equal? (make-vector 5 'a)
+        (make-vector 5 'a))  ==>  #t
+(equal? (lambda (x) x)
+        (lambda (y) y))      ==>  #f
+@end verbatim
+
+@node neqv? object object
+@subsection (neqv? @emph{object} @emph{object})
+@anchor{neqvp}
+
+@node neq? object object
+@subsection (neq? @emph{object} @emph{object})
+@anchor{neqp}
+
+@node nequal? object object
+@subsection (nequal? @emph{object} @emph{object})
+@anchor{nequalp}
+Each is the logical negation of the corresponding equivalence predicate.
+
+
+@c Local Variables:
+@c mode: texinfo
+@c End:
