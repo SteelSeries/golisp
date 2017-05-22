@@ -56,9 +56,6 @@
              (assert-eq (partition even? '(1 2 3 4 5 6 7 8 9)) '((2 4 6 8) (1 3 5 7 9))))
 
          (it "partition-errors"
-             (assert-error (partition -1 '(1 2))) ;1st arg has to be non -ive if it's an int
-             (assert-error (partition "hi" '(1 2)))  ;1st arg has to be int or function
-             (assert-error (partition 1 "1 2")) ;2nd arg must be a list
              (assert-error (partition odd? "1 2"))) ;2nd arg must be a list
 
          (it "append"
