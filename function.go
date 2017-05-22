@@ -275,7 +275,7 @@ func (self *Function) ApplyOveriddingEnvironment(args *Data, argEnv *SymbolTable
 
 func (self *Function) ExtendEnv(args *Data, argEnv *SymbolTableFrame, frame *FrameMap) (localEnv *SymbolTableFrame, err error) {
 	localEnv = NewSymbolTableFrameBelowWithFrame(self.Env, frame, self.Name)
-	//localEnv.Previous = argEnv
+	localEnv.Previous = argEnv
 	selfSym := Intern("self")
 	if frame != nil {
 		localEnv.BindLocallyTo(selfSym, FrameWithValue(frame))
