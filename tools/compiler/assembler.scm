@@ -14,34 +14,38 @@
 ;;; Turn a list of instructions into a vector
 
 (define (assemble-function fn)
-  (log-it "assemble ~A" fn)
+  (log-it "assemble-function")
+;  (dump-fn fn)
   (let* ((code (compiled-code fn))
 		 (first-pass-result (asm-first-pass code))
 		 (len (first first-pass-result))
 		 (labels (second first-pass-result))
-		 (second-pass-result (asm-second-pass code len labels)))
-	(compiled-code! fn second-pass-result)
-	fn))
+		 (second-pass-result (asm-second-pass code len labels))
+		 (bytecode (convert-to-bytecode second-pass-result)))
+	(log-it "Bytecode: ~A~%" bytecode)
+	(compiled-code! fn bytecode)))
 
 
 ;;; Return the labels and the total code length
 
+(define (harvest-labels code len labels)
+  (cond ((nil? code)
+		 (list len labels))
+		((label? (car code))
+		 (harvest-labels (cdr code) len (acons (car code) len labels)))
+		(else
+		 (harvest-labels (cdr code) (1+ len) labels))))
+
+
 (define (asm-first-pass code)
   (log-it "asm-first-pass")
-  (let ((len 0)
-		(labels nil))
-	(for-each (lambda (instr)
-				(if (label? instr)
-					(set! labels (acons instr len labels))
-					(set! len (1+ len))))
-			  code)
-	(list len labels)))
+  (harvest-labels code 0 '()))
 
 
 ;;; Put code into code-vector, adjusting for labels
 
 (define (asm-second-pass code len labels)
-  (log-it "asm-second-pass")
+  (log-it "asm-second-pass: ~A" code)
   (let ((addr 0)
 		(code-vector (make-vector len)))
 	(for-each (lambda (instr)
@@ -55,12 +59,13 @@
 				  (vector-set! code-vector addr instr)
 				  (set! addr (1+ addr))))
 			  code)
-	(convert-to-bytecode code-vector)))
+	code-vector))
 
 
 ;;; Convert the assembly code into bytecode vectors
 
 (define (convert-to-bytecode code)
+  (log-it "Converting to bytecode")
   (vector-map (lambda (instr)
 				(let ((bytecode (assoc (car instr) opcodes)))
 				  (if (false? bytecode)

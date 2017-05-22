@@ -18,23 +18,22 @@
 
 
 (define (optimize-function fn)
-  (let ((new-code (optimize (compiled-code fn))))
-	(compiled-code! fn new-code)
-	fn))
+  (compiled-code! fn (optimize (compiled-code fn))))
 
 
 (define (optimize code)
-    (if **optimize**
-	  (if (try-to-optimize code code)
-		  (optimize code)
-		  code)
-	  code))
+  (log-it "Optimizing code: ~A" code)
+  (if (and **optimize**
+		   (try-to-optimize code code))
+	(optimize code)
+	code))
 
 
 ;;; Try to optimize
 
 (define (try-to-optimize code all-code)
 ;  (format #t "Trying to optimize ~A~%" code)
+  (log-it "Trying to optimize code: ~A" code)
   (cond ((nil? code)
 		 #f)
 		((optimize-1 code all-code)
@@ -149,7 +148,7 @@
   ;; (JUMP L1) ...dead code... L2 ==> (JUMP L1) L2
   (let ((next-label (memp label? (cdr code))))
 	(when (and next-label
-			   (neqv? next-label (second code)))
+			   (neqv? (first next-label) (arg1 instr)))
 	  (set-rest! code next-label)))
   
   (cond
@@ -167,7 +166,7 @@
 
 
 (define-optimizer (TJUMP FJUMP) (instr code all-code)
-  ;; (FJUMP L1) ... L1 (JUMP L2) ==> (FJUMP L2 ... L1 (JUMP L2)
+  ;; (FJUMP L1) ... L1 (JUMP L2) ==> (FJUMP L2) ... L1 (JUMP L2)
   (if (is (target instr code) 'JUMP)
 	(begin
 	  (set-second! instr (arg1 (target instr code)))
