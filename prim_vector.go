@@ -51,6 +51,7 @@ func RegisterVectorPrimitives() {
 	MakePrimitiveFunction("subvector-move-right!", "5", SubVectorMoveRightImpl)
 	MakePrimitiveFunction("vector-sort", "2", VectorSortImpl)
 	MakePrimitiveFunction("vector-sort!", "2", VectorSortInPlaceImpl)
+	MakeTypedPrimitiveFunction("vector-reverse", "1", vectorReverseImpl, []uint32{VectorType})
 }
 
 func MakeVectorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -980,5 +981,10 @@ func VectorSortInPlaceImpl(args *Data, env *SymbolTableFrame) (result *Data, err
 	}
 
 	result = v
+	return
+}
+
+func vectorReverseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	result = VectorReverse(First(args))
 	return
 }

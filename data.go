@@ -691,6 +691,25 @@ func Reverse(d *Data) (result *Data) {
 	return l
 }
 
+func VectorReverse(d *Data) (result *Data) {
+	if d == nil {
+		return nil
+	}
+
+	if !VectorP(d) {
+		return d
+	}
+
+	v := VectorValue(d)
+	limit := len(v) - 1
+	l := make([]*Data, limit+1)
+	for index, val := range v {
+		l[limit-index] = val
+	}
+
+	return VectorWithValue(l)
+}
+
 func Flatten(d *Data) (result *Data, err error) {
 	if d == nil {
 		return nil, nil
