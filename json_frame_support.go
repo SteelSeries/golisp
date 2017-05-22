@@ -27,12 +27,12 @@ func JsonToLispWithFrames(json interface{}) (result *Data) {
 
 	arrayValue, ok := json.([]interface{})
 	if ok {
-		var ary *Data
-		for _, val := range arrayValue {
+		ary := make([]*Data, len(arrayValue))
+		for index, val := range arrayValue {
 			value := JsonToLispWithFrames(val)
-			ary = Cons(value, ary)
+			ary[index] = value
 		}
-		return Reverse(ary)
+		return VectorWithValue(ary)
 	}
 
 	numValue, ok := json.(float64)
