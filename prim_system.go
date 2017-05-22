@@ -39,7 +39,7 @@ func RegisterSystemPrimitives() {
 	MakeTypedPrimitiveFunction("exec", ">=1", ExecImpl, []uint32{StringType, AnyType})
 	MakeTypedPrimitiveFunction("get-env", "1", getEnvImpl, []uint32{StringType | SymbolType})
 	MakeTypedPrimitiveFunction("set-env", "2", setEnvImpl, []uint32{StringType | SymbolType, StringType | SymbolType})
-	MakeTypedPrimitiveFunction("unset-env", "1", setEnvImpl, []uint32{StringType | SymbolType})
+	MakeTypedPrimitiveFunction("unset-env", "1", unsetEnvImpl, []uint32{StringType | SymbolType})
 	MakeSpecialForm("on-error", "2|3", OnErrorImpl)
 	MakeSpecialForm("time", "1", TimeImpl)
 	MakeSpecialForm("profile", "1|2", ProfileImpl)
