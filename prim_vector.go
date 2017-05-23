@@ -13,55 +13,49 @@ import (
 )
 
 func RegisterVectorPrimitives() {
-	MakePrimitiveFunction("make-vector", "1|2", MakeVectorImpl)
-	MakePrimitiveFunction("vector", ">=1", VectorImpl)
-	MakePrimitiveFunction("vector-copy", "1", VectorCopyImpl)
-	MakePrimitiveFunction("list->vector", "1", ListToVectorImpl)
-	MakePrimitiveFunction("vector->list", "1", VectorToListImpl)
-	MakePrimitiveFunction("make-initialized-vector", "2", MakeInitializedVectorImpl)
-	MakePrimitiveFunction("vector-grow", "2", VectorGrowImpl)
-	MakePrimitiveFunction("vector-map", ">=2", VectorMapImpl)
-	MakePrimitiveFunction("vector-for-each", ">=2", VectorForEachImpl)
-	MakePrimitiveFunction("vector-reduce", "3", VectorReduceImpl)
-	MakePrimitiveFunction("vector-filter", "2", VectorFilterImpl)
-	MakePrimitiveFunction("vector-remove", "2", VectorRemoveImpl)
-	MakePrimitiveFunction("vector?", "1", VectorPImpl)
-	MakePrimitiveFunction("vector-length", "1", VectorLengthImpl)
-	MakePrimitiveFunction("vector-ref", "2", VectorRefImpl)
-	MakePrimitiveFunction("vector-set!", "3", VectorSetImpl)
-	MakePrimitiveFunction("vector-first", "1", VectorFirstImpl)
-	MakePrimitiveFunction("vector-second", "1", VectorSecondImpl)
-	MakePrimitiveFunction("vector-third", "1", VectorThirdImpl)
-	MakePrimitiveFunction("vector-fourth", "1", VectorFourthImpl)
-	MakePrimitiveFunction("vector-fifth", "1", VectorFifthImpl)
-	MakePrimitiveFunction("vector-sixth", "1", VectorSixthImpl)
-	MakePrimitiveFunction("vector-seventh", "1", VectorSeventhImpl)
-	MakePrimitiveFunction("vector-eighth", "1", VectorEighthImpl)
-	MakePrimitiveFunction("vector-ninth", "1", VectorNinthImpl)
-	MakePrimitiveFunction("vector-tenth", "1", VectorTenthImpl)
-	MakePrimitiveFunction("vector-last", "1", VectorLastImpl)
-	MakePrimitiveFunction("vector-binary-search", "4", VectorBinarySearchImpl)
-	MakePrimitiveFunction("vector-find", "2", VectorFindImpl)
-	MakePrimitiveFunction("subvector", "3", SubVectorImpl)
-	MakePrimitiveFunction("vector-head", "2", VectorHeadImpl)
-	MakePrimitiveFunction("vector-tail", "2", VectorTailImpl)
-	MakePrimitiveFunction("vector-fill!", "2", VectorFillImpl)
-	MakePrimitiveFunction("subvector-fill!", "4", SubVectorFillImpl)
-	MakePrimitiveFunction("subvector-move-left!", "5", SubVectorMoveLeftImpl)
-	MakePrimitiveFunction("subvector-move-right!", "5", SubVectorMoveRightImpl)
-	MakePrimitiveFunction("vector-sort", "2", VectorSortImpl)
-	MakePrimitiveFunction("vector-sort!", "2", VectorSortInPlaceImpl)
+	MakeTypedPrimitiveFunction("make-vector", "1|2", makeVectorImpl, []uint32{IntegerType, AnyType})
+	MakeTypedPrimitiveFunction("vector", ">=1", vectorImpl, []uint32{AnyType})
+	MakeTypedPrimitiveFunction("vector-copy", "1", vectorCopyImpl, []uint32{VectorType})
+	MakeTypedPrimitiveFunction("list->vector", "1", listToVectorImpl, []uint32{ConsCellType})
+	MakeTypedPrimitiveFunction("vector->list", "1", vectorToListImpl, []uint32{VectorType})
+	MakeTypedPrimitiveFunction("make-initialized-vector", "2", makeInitializedVectorImpl, []uint32{IntegerType, FunctionType | CompiledFunctionType | PrimitiveType})
+	MakeTypedPrimitiveFunction("vector-grow", "2", vectorGrowImpl, []uint32{VectorType, IntegerType})
+	MakeTypedPrimitiveFunction("vector-map", ">=2", vectorMapImpl, []uint32{FunctionType | CompiledFunctionType | PrimitiveType, VectorType})
+	MakeTypedPrimitiveFunction("vector-for-each", ">=2", vectorForEachImpl, []uint32{FunctionType | CompiledFunctionType | PrimitiveType, VectorType})
+	MakeTypedPrimitiveFunction("vector-reduce", "3", vectorReduceImpl, []uint32{FunctionType | CompiledFunctionType | PrimitiveType, AnyType, VectorType})
+	MakeTypedPrimitiveFunction("vector-filter", "2", vectorFilterImpl, []uint32{FunctionType | CompiledFunctionType | PrimitiveType, VectorType})
+	MakeTypedPrimitiveFunction("vector-remove", "2", vectorRemoveImpl, []uint32{FunctionType | CompiledFunctionType | PrimitiveType, VectorType})
+	MakeTypedPrimitiveFunction("vector?", "1", vectorPImpl, []uint32{AnyType})
+	MakeTypedPrimitiveFunction("vector-length", "1", vectorLengthImpl, []uint32{VectorType})
+	MakeTypedPrimitiveFunction("vector-ref", "2", vectorRefImpl, []uint32{VectorType, IntegerType})
+	MakeTypedPrimitiveFunction("vector-set!", "3", vectorSetImpl, []uint32{VectorType, IntegerType, AnyType})
+	MakeTypedPrimitiveFunction("vector-first", "1", vectorFirstImpl, []uint32{VectorType})
+	MakeTypedPrimitiveFunction("vector-second", "1", vectorSecondImpl, []uint32{VectorType})
+	MakeTypedPrimitiveFunction("vector-third", "1", vectorThirdImpl, []uint32{VectorType})
+	MakeTypedPrimitiveFunction("vector-fourth", "1", vectorFourthImpl, []uint32{VectorType})
+	MakeTypedPrimitiveFunction("vector-fifth", "1", vectorFifthImpl, []uint32{VectorType})
+	MakeTypedPrimitiveFunction("vector-sixth", "1", vectorSixthImpl, []uint32{VectorType})
+	MakeTypedPrimitiveFunction("vector-seventh", "1", vectorSeventhImpl, []uint32{VectorType})
+	MakeTypedPrimitiveFunction("vector-eighth", "1", vectorEighthImpl, []uint32{VectorType})
+	MakeTypedPrimitiveFunction("vector-ninth", "1", vectorNinthImpl, []uint32{VectorType})
+	MakeTypedPrimitiveFunction("vector-tenth", "1", vectorTenthImpl, []uint32{VectorType})
+	MakeTypedPrimitiveFunction("vector-last", "1", vectorLastImpl, []uint32{VectorType})
+	MakeTypedPrimitiveFunction("vector-binary-search", "4", vectorBinarySearchImpl, []uint32{VectorType, FunctionType | CompiledFunctionType | PrimitiveType, FunctionType | CompiledFunctionType | PrimitiveType, AnyType})
+	MakeTypedPrimitiveFunction("vector-find", "2", vectorFindImpl, []uint32{FunctionType | CompiledFunctionType | PrimitiveType, VectorType})
+	MakeTypedPrimitiveFunction("subvector", "3", subVectorImpl, []uint32{VectorType, IntegerType, IntegerType})
+	MakeTypedPrimitiveFunction("vector-head", "2", vectorHeadImpl, []uint32{VectorType, IntegerType})
+	MakeTypedPrimitiveFunction("vector-tail", "2", vectorTailImpl, []uint32{VectorType, IntegerType})
+	MakeTypedPrimitiveFunction("vector-fill!", "2", vectorFillImpl, []uint32{VectorType, AnyType})
+	MakeTypedPrimitiveFunction("subvector-fill!", "4", subVectorFillImpl, []uint32{VectorType, IntegerType, IntegerType, AnyType})
+	MakeTypedPrimitiveFunction("subvector-move-left!", "5", subVectorMoveLeftImpl, []uint32{VectorType, IntegerType, IntegerType, VectorType, IntegerType})
+	MakeTypedPrimitiveFunction("subvector-move-right!", "5", subVectorMoveRightImpl, []uint32{VectorType, IntegerType, IntegerType, VectorType, IntegerType})
+	MakeTypedPrimitiveFunction("vector-sort", "2", vectorSortImpl, []uint32{VectorType, FunctionType | CompiledFunctionType | PrimitiveType})
+	MakeTypedPrimitiveFunction("vector-sort!", "2", vectorSortInPlaceImpl, []uint32{VectorType, FunctionType | CompiledFunctionType | PrimitiveType})
 	MakeTypedPrimitiveFunction("vector-reverse", "1", vectorReverseImpl, []uint32{VectorType})
 }
 
-func MakeVectorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	k := First(args)
-	if !IntegerP(k) {
-		err = ProcessError(fmt.Sprintf("make-vector needs an integer as its first argument, but got %s.", String(k)), env)
-		return
-	}
-
-	size := IntegerValue(k)
+func makeVectorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	size := IntegerValue(First(args))
 
 	var value *Data = nil
 	if Length(args) == 2 {
@@ -73,68 +67,33 @@ func MakeVectorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 		vals[i] = value
 	}
 
-	result = VectorWithValue(vals)
-	return
+	return VectorWithValue(vals), nil
 }
 
-func VectorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	result = VectorWithValue(ToArray(args))
-	return
+func vectorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return VectorWithValue(ToArray(args)), nil
 }
 
-func VectorCopyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	vect := First(args)
-	if !VectorP(vect) {
-		err = ProcessError(fmt.Sprintf("vector-copy needs a vector as its argument, but got %s.", String(vect)), env)
-		return
-	}
-
-	v := VectorValue(vect)
+func vectorCopyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	v := VectorValue(First(args))
 	newV := make([]*Data, 0, len(v))
 	for _, e := range v {
 		newV = append(newV, e)
 	}
-	result = VectorWithValue(newV)
-	return
+	return VectorWithValue(newV), nil
 }
 
-func ListToVectorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	l := First(args)
-	if !ListP(l) {
-		err = ProcessError(fmt.Sprintf("list->vector needs a list as its argument, but got %s.", String(l)), env)
-		return
-	}
-
-	result = VectorWithValue(ToArray(l))
-	return
+func listToVectorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return VectorWithValue(ToArray(First(args))), nil
 }
 
-func VectorToListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	v := First(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("vector->list needs a vector as its argument, but got %s.", String(v)), env)
-		return
-	}
-
-	result = ArrayToList(VectorValue(v))
-	return
+func vectorToListImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return ArrayToList(VectorValue(First(args))), nil
 }
 
-func MakeInitializedVectorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	k := First(args)
-	if !IntegerP(k) {
-		err = ProcessError(fmt.Sprintf("make-initialized-vector needs an integer as its first argument, but got %s.", String(k)), env)
-		return
-	}
-
-	size := IntegerValue(k)
-
+func makeInitializedVectorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	size := IntegerValue(First(args))
 	f := Second(args)
-	if !FunctionOrPrimitiveP(f) {
-		err = ProcessError(fmt.Sprintf("make-initialized-vector needs a function as its second argument, but got %s.", String(f)), env)
-		return
-	}
-
 	vals := make([]*Data, size)
 	for i := int64(0); i < size; i++ {
 		vals[i], err = Apply(f, InternalMakeList(IntegerWithValue(i)), env)
@@ -143,25 +102,12 @@ func MakeInitializedVectorImpl(args *Data, env *SymbolTableFrame) (result *Data,
 		}
 	}
 
-	result = VectorWithValue(vals)
-	return
+	return VectorWithValue(vals), nil
 }
 
-func VectorGrowImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	v := First(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("vector-grow needs a vector as its first argument, but got %s.", String(v)), env)
-		return
-	}
-	originalValues := VectorValue(v)
-
-	k := Second(args)
-	if !IntegerP(k) {
-		err = ProcessError(fmt.Sprintf("vector-grow needs an integer as its second argument, but got %s.", String(k)), env)
-		return
-	}
-
-	size := IntegerValue(k)
+func vectorGrowImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	originalValues := VectorValue(First(args))
+	size := IntegerValue(Second(args))
 
 	if int(size) <= len(originalValues) {
 		err = ProcessError(fmt.Sprintf("vector-grow needs a new size that is larger than the size of its vector argument (%d), but got %d.", len(originalValues), size), env)
@@ -173,26 +119,16 @@ func VectorGrowImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 		vals[i] = val
 	}
 
-	result = VectorWithValue(vals)
-	return
+	return VectorWithValue(vals), nil
 }
 
-func VectorMapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func vectorMapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
-	if !FunctionOrPrimitiveP(f) {
-		err = ProcessError(fmt.Sprintf("vector-map needs a function as its first argument, but got %s.", String(f)), env)
-		return
-	}
-
 	var collections [][]*Data = make([][]*Data, 0, Length(args)-1)
 	var loopCount int64 = math.MaxInt64
 	var col *Data
 	for a := Cdr(args); NotNilP(a); a = Cdr(a) {
 		col = Car(a)
-		if !VectorP(col) {
-			err = ProcessError(fmt.Sprintf("vector-map needs vectors as its other arguments, but got %s.", String(col)), env)
-			return
-		}
 		if NilP(col) || col == nil {
 			return
 		}
@@ -220,26 +156,16 @@ func VectorMapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 		vals[index] = v
 	}
 
-	result = VectorWithValue(vals)
-	return
+	return VectorWithValue(vals), nil
 }
 
-func VectorForEachImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func vectorForEachImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
-	if !FunctionOrPrimitiveP(f) {
-		err = ProcessError(fmt.Sprintf("vector-for-each needs a function as its first argument, but got %s.", String(f)), env)
-		return
-	}
-
 	var collections [][]*Data = make([][]*Data, 0, Length(args)-1)
 	var loopCount int64 = math.MaxInt64
 	var col *Data
 	for a := Cdr(args); NotNilP(a); a = Cdr(a) {
 		col = Car(a)
-		if !VectorP(col) {
-			err = ProcessError(fmt.Sprintf("vector-for-each needs vectors as its other arguments, but got %s.", String(col)), env)
-			return
-		}
 		if NilP(col) || col == nil {
 			return
 		}
@@ -267,28 +193,16 @@ func VectorForEachImpl(args *Data, env *SymbolTableFrame) (result *Data, err err
 	return
 }
 
-func VectorReduceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func vectorReduceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
-	if !FunctionOrPrimitiveP(f) {
-		err = ProcessError("vector-reduce needs a function as its first argument", env)
-		return
-	}
-
 	initial := Second(args)
-	col := Third(args)
+	v := VectorValue(Third(args))
 
-	if !VectorP(col) {
-		err = ProcessError("vector-reduce needs a vector as its third argument", env)
-		return
-	}
-
-	v := VectorValue(col)
-
-	if Length(col) == 0 {
+	if len(v) == 0 {
 		return initial, nil
 	}
 
-	if Length(col) == 1 {
+	if len(v) == 1 {
 		return v[0], nil
 	}
 
@@ -303,20 +217,11 @@ func VectorReduceImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 	return
 }
 
-func VectorFilterImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func vectorFilterImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
-	if !FunctionOrPrimitiveP(f) {
-		err = ProcessError(fmt.Sprintf("vector-filter needs a function as its first argument, but got %s.", String(f)), env)
-		return
-	}
+	vals := VectorValue(Second(args))
 
-	v := Second(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("vector-filter needs a vector as its second argument, but got %s.", String(v)), env)
-		return
-	}
-	vals := VectorValue(v)
-
+	var v *Data
 	var d []*Data = make([]*Data, 0, len(vals))
 	for _, val := range vals {
 		v, err = ApplyWithoutEval(f, InternalMakeList(val), env)
@@ -336,20 +241,11 @@ func VectorFilterImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 	return VectorWithValue(d), nil
 }
 
-func VectorRemoveImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func vectorRemoveImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
-	if !FunctionOrPrimitiveP(f) {
-		err = ProcessError(fmt.Sprintf("vector-remove needs a function as its first argument, but got %s.", String(f)), env)
-		return
-	}
+	vals := VectorValue(Second(args))
 
-	v := Second(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("vector-remove needs a vector as its second argument, but got %s.", String(v)), env)
-		return
-	}
-	vals := VectorValue(v)
-
+	var v *Data
 	var d []*Data = make([]*Data, 0, len(vals))
 	for _, val := range vals {
 		v, err = ApplyWithoutEval(f, InternalMakeList(val), env)
@@ -369,289 +265,145 @@ func VectorRemoveImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 	return VectorWithValue(d), nil
 }
 
-func VectorPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	v := First(args)
-	return BooleanWithValue(VectorP(v)), nil
+func vectorPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return BooleanWithValue(VectorP(First(args))), nil
 }
 
-func VectorLengthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	v := First(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("vector-length needs a vector as its argument, but got %s.", String(v)), env)
-		return
-	}
-
-	result = IntegerWithValue(int64(Length(v)))
-	return
+func vectorLengthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return IntegerWithValue(int64(Length(First(args)))), nil
 }
 
-func VectorRefImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	v := First(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("vector-ref needs a vector as its first argument, but got %s.", String(v)), env)
-		return
-	}
-	values := VectorValue(v)
-
-	k := Second(args)
-	if !IntegerP(k) {
-		err = ProcessError(fmt.Sprintf("vector-ref needs an integer as its second argument, but got %s.", String(k)), env)
-		return
-	}
-	index := int(IntegerValue(k))
+func vectorRefImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	values := VectorValue(First(args))
+	index := int(IntegerValue(Second(args)))
 
 	if index >= len(values) {
 		err = ProcessError(fmt.Sprintf("vector-ref needs an index less than the vector length, but got %d.", index), env)
 		return
 	}
 
-	result = values[index]
-
-	return
+	return values[index], nil
 }
 
-func VectorSetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	v := First(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("vector-set! needs a vector as its first argument, but got %s.", String(v)), env)
-		return
-	}
-
-	k := Second(args)
-	if !IntegerP(k) {
-		err = ProcessError(fmt.Sprintf("vector-set! needs an integer as its second argument, but got %s.", String(k)), env)
-		return
-	}
-
-	values := VectorValue(v)
-	kval := int(IntegerValue(k))
+func vectorSetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	values := VectorValue(First(args))
+	kval := int(IntegerValue(Second(args)))
 	newValue := Third(args)
 
 	values[kval] = newValue
-	result = StringWithValue("OK")
-	return
+	return StringWithValue("OK"), nil
 }
 
-func VectorFirstImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	v := First(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("vector-first needs a vector as its argument, but got %s.", String(v)), env)
-		return
-	}
-
-	values := VectorValue(v)
+func vectorFirstImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	values := VectorValue(First(args))
 	if len(values) > 0 {
-		result = values[0]
+		return values[0], nil
 	} else {
-		err = ProcessError(fmt.Sprintf("vector-first needs a vector with length of at least 1, but got %d.", len(values)), env)
-		return
+		return nil, ProcessError(fmt.Sprintf("vector-first needs a vector with length of at least 1, but got %d.", len(values)), env)
 	}
-
-	return
 }
 
-func VectorSecondImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	v := First(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("vector-second needs a vector as its argument, but got %s.", String(v)), env)
-		return
-	}
-
-	values := VectorValue(v)
+func vectorSecondImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	values := VectorValue(First(args))
 	if len(values) > 1 {
-		result = values[1]
+		return values[1], nil
 	} else {
-		err = ProcessError(fmt.Sprintf("vector-second needs a vector with length of at least 2, but got %d.", len(values)), env)
-		return
+		return nil, ProcessError(fmt.Sprintf("vector-second needs a vector with length of at least 2, but got %d.", len(values)), env)
 	}
-
-	return
 }
 
-func VectorThirdImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	v := First(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("vector-third needs a vector as its argument, but got %s.", String(v)), env)
-		return
-	}
-
-	values := VectorValue(v)
+func vectorThirdImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	values := VectorValue(First(args))
 	if len(values) > 2 {
-		result = values[2]
+		return values[2], nil
 	} else {
-		err = ProcessError(fmt.Sprintf("vector-third needs a vector with length of at least 3, but got %d.", len(values)), env)
-		return
+		return nil, ProcessError(fmt.Sprintf("vector-third needs a vector with length of at least 3, but got %d.", len(values)), env)
 	}
-
-	return
 }
 
-func VectorFourthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	v := First(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("vector-fourth needs a vector as its argument, but got %s.", String(v)), env)
-		return
-	}
-
-	values := VectorValue(v)
+func vectorFourthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	values := VectorValue(First(args))
 	if len(values) > 3 {
-		result = values[3]
+		return values[3], nil
 	} else {
-		err = ProcessError(fmt.Sprintf("vector-fourth needs a vector with length of at least 4, but got %d.", len(values)), env)
-		return
+		return nil, ProcessError(fmt.Sprintf("vector-fourth needs a vector with length of at least 4, but got %d.", len(values)), env)
 	}
-
-	return
 }
 
-func VectorFifthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	v := First(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("vector-fifth needs a vector as its argument, but got %s.", String(v)), env)
-		return
-	}
-
-	values := VectorValue(v)
+func vectorFifthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	values := VectorValue(First(args))
 	if len(values) > 4 {
-		result = values[4]
+		return values[4], nil
 	} else {
-		err = ProcessError(fmt.Sprintf("vector-fifth needs a vector with length of at least 5, but got %d.", len(values)), env)
-		return
+		return nil, ProcessError(fmt.Sprintf("vector-fifth needs a vector with length of at least 5, but got %d.", len(values)), env)
 	}
-
-	return
 }
 
-func VectorSixthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	v := First(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("vector-sixth needs a vector as its argument, but got %s.", String(v)), env)
-		return
-	}
-
-	values := VectorValue(v)
+func vectorSixthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	values := VectorValue(First(args))
 	if len(values) > 5 {
-		result = values[5]
+		return values[5], nil
 	} else {
-		err = ProcessError(fmt.Sprintf("vector-sixth needs a vector with length of at least 6, but got %d.", len(values)), env)
-		return
+		return nil, ProcessError(fmt.Sprintf("vector-sixth needs a vector with length of at least 6, but got %d.", len(values)), env)
 	}
-
-	return
 }
 
-func VectorSeventhImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	v := First(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("vector-seventh needs a vector as its argument, but got %s.", String(v)), env)
-		return
-	}
-
-	values := VectorValue(v)
+func vectorSeventhImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	values := VectorValue(First(args))
 	if len(values) > 6 {
-		result = values[6]
+		return values[6], nil
 	} else {
-		err = ProcessError(fmt.Sprintf("vector-seventh needs a vector with length of at least 7, but got %d.", len(values)), env)
-		return
+		return nil, ProcessError(fmt.Sprintf("vector-seventh needs a vector with length of at least 7, but got %d.", len(values)), env)
 	}
-
-	return
 }
 
-func VectorEighthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	v := First(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("vector-eighth needs a vector as its argument, but got %s.", String(v)), env)
-		return
-	}
-
-	values := VectorValue(v)
+func vectorEighthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	values := VectorValue(First(args))
 	if len(values) > 7 {
-		result = values[7]
+		return values[7], nil
 	} else {
-		err = ProcessError(fmt.Sprintf("vector-eigth needs a vector with length of at least 8, but got %d.", len(values)), env)
-		return
+		return nil, ProcessError(fmt.Sprintf("vector-eigth needs a vector with length of at least 8, but got %d.", len(values)), env)
 	}
-
-	return
 }
 
-func VectorNinthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	v := First(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("vector-ninth needs a vector as its argument, but got %s.", String(v)), env)
-		return
-	}
-
-	values := VectorValue(v)
+func vectorNinthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	values := VectorValue(First(args))
 	if len(values) > 8 {
-		result = values[8]
+		return values[8], nil
 	} else {
-		err = ProcessError(fmt.Sprintf("vector-ninth needs a vector with length of at least 9, but got %d.", len(values)), env)
-		return
+		return nil, ProcessError(fmt.Sprintf("vector-ninth needs a vector with length of at least 9, but got %d.", len(values)), env)
 	}
-
-	return
 }
 
-func VectorTenthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	v := First(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("vector-tenth needs a vector as its argument, but got %s.", String(v)), env)
-		return
-	}
-
-	values := VectorValue(v)
+func vectorTenthImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	values := VectorValue(First(args))
 	if len(values) > 9 {
-		result = values[9]
+		return values[9], nil
 	} else {
-		err = ProcessError(fmt.Sprintf("vector-tenth needs a vector with length of at least 10, but got %d.", len(values)), env)
-		return
+		return nil, ProcessError(fmt.Sprintf("vector-tenth needs a vector with length of at least 10, but got %d.", len(values)), env)
 	}
-
-	return
 }
 
-func VectorLastImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	v := First(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("vector-last needs a vector as its argument, but got %s.", String(v)), env)
-		return
-	}
-
-	values := VectorValue(v)
+func vectorLastImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	values := VectorValue(First(args))
 	if len(values) > 0 {
-		result = values[len(values)-1]
+		return values[len(values)-1], nil
 	} else {
-		err = ProcessError(fmt.Sprintf("vector-last needs a vector that isn't empty, but got %d.", len(values)), env)
+		return nil, ProcessError(fmt.Sprintf("vector-last needs a vector that isn't empty, but got %d.", len(values)), env)
 	}
+}
 
+func vectorBinarySearchImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return
 }
 
-func VectorBinarySearchImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	return
-}
-
-func VectorFindImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func vectorFindImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
-	if !FunctionOrPrimitiveP(f) {
-		err = ProcessError("vector-find needs a function as its first argument", env)
-		return
-	}
-
-	v := Second(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("vector-find needs a vector as its second argument, but got %s.", String(v)), env)
-		return
-	}
-
 	var found *Data
-	for _, val := range VectorValue(v) {
+	for _, val := range VectorValue(Second(args)) {
 		found, err = ApplyWithoutEval(f, InternalMakeList(val), env)
 		if !BooleanP(found) {
-			err = ProcessError("vector-find needs a predicate function as its first argument.", env)
-			return
+			return nil, ProcessError("vector-find needs a predicate function as its first argument.", env)
 		}
 		if BooleanValue(found) {
 			return val, nil
@@ -661,98 +413,45 @@ func VectorFindImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 	return LispFalse, nil
 }
 
-func SubVectorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	v := First(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("subvector needs a vector as its argument, but got %s.", String(v)), env)
-		return
-	}
-	values := VectorValue(v)
-
-	start := Second(args)
-	if !IntegerP(start) {
-		err = ProcessError(fmt.Sprintf("subvector needs an integer as its starting index, but got %s.", String(start)), env)
-		return
-	}
-	startIndex := int(IntegerValue(start))
-
+func subVectorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	values := VectorValue(First(args))
+	startIndex := int(IntegerValue(Second(args)))
 	if startIndex < 0 || startIndex >= len(values) {
-		err = ProcessError(fmt.Sprintf("subvector starting index is out of bounds (0-%d), got %d.", len(values)-1, startIndex), env)
-		return
+		return nil, ProcessError(fmt.Sprintf("subvector starting index is out of bounds (0-%d), got %d.", len(values)-1, startIndex), env)
 	}
 
-	end := Third(args)
-	if !IntegerP(end) {
-		err = ProcessError(fmt.Sprintf("subvector needs an integer as its ending index, but got %s.", String(end)), env)
-		return
-	}
-	endIndex := int(IntegerValue(end))
-
+	endIndex := int(IntegerValue(Third(args)))
 	if endIndex < startIndex || endIndex > len(values) {
-		err = ProcessError(fmt.Sprintf("subvector ending index is out of bounds (%d-%d), got %d.", startIndex, len(values), startIndex), env)
-		return
+		return nil, ProcessError(fmt.Sprintf("subvector ending index is out of bounds (%d-%d), got %d.", startIndex, len(values), startIndex), env)
 	}
 
-	result = VectorWithValue(values[startIndex:endIndex])
-	return
+	return VectorWithValue(values[startIndex:endIndex]), nil
 }
 
-func VectorHeadImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	v := First(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("vector-head needs a vector as its argument, but got %s.", String(v)), env)
-		return
-	}
-	values := VectorValue(v)
-
-	end := Second(args)
-	if !IntegerP(end) {
-		err = ProcessError(fmt.Sprintf("vector-head needs an integer as its ending index, but got %s.", String(end)), env)
-		return
-	}
-	endIndex := int(IntegerValue(end))
+func vectorHeadImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	values := VectorValue(First(args))
+	endIndex := int(IntegerValue(Second(args)))
 
 	if endIndex < 0 || endIndex > len(values) {
-		err = ProcessError(fmt.Sprintf("vector-head ending index is out of bounds (0-%d), got %d.", len(values), endIndex), env)
-		return
+		return nil, ProcessError(fmt.Sprintf("vector-head ending index is out of bounds (0-%d), got %d.", len(values), endIndex), env)
 	}
 
-	result = VectorWithValue(values[:endIndex])
-	return
+	return VectorWithValue(values[:endIndex]), nil
 }
 
-func VectorTailImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	v := First(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("vector-tail needs a vector as its argument, but got %s.", String(v)), env)
-		return
-	}
-	values := VectorValue(v)
-
-	start := Second(args)
-	if !IntegerP(start) {
-		err = ProcessError(fmt.Sprintf("vector-tail needs an integer as its starting index, but got %s.", String(start)), env)
-		return
-	}
-	startIndex := int(IntegerValue(start))
+func vectorTailImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	values := VectorValue(First(args))
+	startIndex := int(IntegerValue(Second(args)))
 
 	if startIndex < 0 || startIndex > len(values) {
-		err = ProcessError(fmt.Sprintf("vector-tail starting index is out of bounds (0-%d), got %d.", len(values), startIndex), env)
-		return
+		return nil, ProcessError(fmt.Sprintf("vector-tail starting index is out of bounds (0-%d), got %d.", len(values), startIndex), env)
 	}
 
-	result = VectorWithValue(values[startIndex:])
-	return
+	return VectorWithValue(values[startIndex:]), nil
 }
 
-func VectorFillImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	v := First(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("vector-fill! needs a vector as its argument, but got %s.", String(v)), env)
-		return
-	}
-	values := VectorValue(v)
-
+func vectorFillImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	values := VectorValue(First(args))
 	newValue := Second(args)
 
 	for i, _ := range values {
@@ -762,36 +461,17 @@ func VectorFillImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 	return
 }
 
-func SubVectorFillImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	v := First(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("subvector-fill! needs a vector as its argument, but got %s.", String(v)), env)
-		return
-	}
-	values := VectorValue(v)
-
-	start := Second(args)
-	if !IntegerP(start) {
-		err = ProcessError(fmt.Sprintf("subvector-fill! needs an integer as its starting index, but got %s.", String(start)), env)
-		return
-	}
-	startIndex := int(IntegerValue(start))
+func subVectorFillImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	values := VectorValue(First(args))
+	startIndex := int(IntegerValue(Second(args)))
 
 	if startIndex < 0 || startIndex >= len(values) {
-		err = ProcessError(fmt.Sprintf("subvector-fill! starting index is out of bounds (0-%d), got %d.", len(values)-1, startIndex), env)
-		return
+		return nil, ProcessError(fmt.Sprintf("subvector-fill! starting index is out of bounds (0-%d), got %d.", len(values)-1, startIndex), env)
 	}
 
-	end := Third(args)
-	if !IntegerP(end) {
-		err = ProcessError(fmt.Sprintf("subvector-fill! needs an integer as its ending index, but got %s.", String(end)), env)
-		return
-	}
-	endIndex := int(IntegerValue(end))
-
+	endIndex := int(IntegerValue(Third(args)))
 	if endIndex < startIndex || endIndex > len(values) {
-		err = ProcessError(fmt.Sprintf("subvector-fill! ending index is out of bounds (%d-%d), got %d.", startIndex, len(values), startIndex), env)
-		return
+		return nil, ProcessError(fmt.Sprintf("subvector-fill! ending index is out of bounds (%d-%d), got %d.", startIndex, len(values), startIndex), env)
 	}
 
 	newValue := Fourth(args)
@@ -799,178 +479,94 @@ func SubVectorFillImpl(args *Data, env *SymbolTableFrame) (result *Data, err err
 	for i := startIndex; i < endIndex; i = i + 1 {
 		values[i] = newValue
 	}
+
 	return
 }
 
-func SubVectorMoveLeftImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	v := First(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("subvector-move-left! needs a vector as its first vector argument, but got %s.", String(v)), env)
-		return
-	}
-	values := VectorValue(v)
-
-	start := Second(args)
-	if !IntegerP(start) {
-		err = ProcessError(fmt.Sprintf("subvector-move-left! needs an integer as its starting index, but got %s.", String(start)), env)
-		return
-	}
-	startIndex := int(IntegerValue(start))
+func subVectorMoveLeftImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	values := VectorValue(First(args))
+	startIndex := int(IntegerValue(Second(args)))
 
 	if startIndex < 0 || startIndex >= len(values) {
-		err = ProcessError(fmt.Sprintf("subvector-move-left! starting index is out of bounds (0-%d), got %d.", len(values)-1, startIndex), env)
-		return
+		return nil, ProcessError(fmt.Sprintf("subvector-move-left! starting index is out of bounds (0-%d), got %d.", len(values)-1, startIndex), env)
 	}
 
-	end := Third(args)
-	if !IntegerP(end) {
-		err = ProcessError(fmt.Sprintf("subvector-move-left! needs an integer as its ending index, but got %s.", String(end)), env)
-		return
-	}
-	endIndex := int(IntegerValue(end))
-
+	endIndex := int(IntegerValue(Third(args)))
 	if endIndex < startIndex || endIndex > len(values) {
-		err = ProcessError(fmt.Sprintf("subvector-move-left! ending index is out of bounds (%d-%d), got %d.", startIndex, len(values), startIndex), env)
-		return
+		return nil, ProcessError(fmt.Sprintf("subvector-move-left! ending index is out of bounds (%d-%d), got %d.", startIndex, len(values), startIndex), env)
 	}
 
-	v2 := Fourth(args)
-	if !VectorP(v2) {
-		err = ProcessError(fmt.Sprintf("subvector-move-left! needs a vector as its second vector argument, but got %s.", String(v2)), env)
-		return
-	}
-	values2 := VectorValue(v2)
+	values2 := VectorValue(Fourth(args))
 
-	start2 := Fifth(args)
-	if !IntegerP(start2) {
-		err = ProcessError(fmt.Sprintf("subvector-move-left! needs an integer as its second starting index, but got %s.", String(start2)), env)
-		return
-	}
-	startIndex2 := int(IntegerValue(start2))
+	startIndex2 := int(IntegerValue(Fifth(args)))
 
 	if startIndex < 0 || startIndex >= len(values2) {
-		err = ProcessError(fmt.Sprintf("subvector-move-left! starting index is out of bounds (0-%d), got %d.", len(values)-1, startIndex), env)
-		return
+		return nil, ProcessError(fmt.Sprintf("subvector-move-left! starting index is out of bounds (0-%d), got %d.", len(values)-1, startIndex), env)
 	}
 
 	sourceLength := endIndex - startIndex
 	tailSize2 := len(values2) - startIndex2
 	if sourceLength > tailSize2 {
-		err = ProcessError(fmt.Sprintf("subvector-move-left! source subvector is longer than the available space in the destination (0-%d), got %d.", tailSize2, sourceLength), env)
-		return
+		return nil, ProcessError(fmt.Sprintf("subvector-move-left! source subvector is longer than the available space in the destination (0-%d), got %d.", tailSize2, sourceLength), env)
 	}
 
 	for i, i2 := startIndex, startIndex2; i < endIndex; i, i2 = i+1, i2+1 {
 		values2[i2] = values[i]
 	}
 
-	result = v2
+	return Fourth(args), nil
 	return
 }
 
-func SubVectorMoveRightImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	v := First(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("subvector-move-right! needs a vector as its first vector argument, but got %s.", String(v)), env)
-		return
-	}
-	values := VectorValue(v)
-
-	start := Second(args)
-	if !IntegerP(start) {
-		err = ProcessError(fmt.Sprintf("subvector-move-right! needs an integer as its starting index, but got %s.", String(start)), env)
-		return
-	}
-	startIndex := int(IntegerValue(start))
+func subVectorMoveRightImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	values := VectorValue(First(args))
+	startIndex := int(IntegerValue(Second(args)))
 
 	if startIndex < 0 || startIndex >= len(values) {
-		err = ProcessError(fmt.Sprintf("subvector-move-right! starting index is out of bounds (0-%d), got %d.", len(values)-1, startIndex), env)
-		return
+		return nil, ProcessError(fmt.Sprintf("subvector-move-right! starting index is out of bounds (0-%d), got %d.", len(values)-1, startIndex), env)
 	}
 
-	end := Third(args)
-	if !IntegerP(end) {
-		err = ProcessError(fmt.Sprintf("subvector-move-right! needs an integer as its ending index, but got %s.", String(end)), env)
-		return
-	}
-	endIndex := int(IntegerValue(end))
-
+	endIndex := int(IntegerValue(Third(args)))
 	if endIndex < startIndex || endIndex > len(values) {
-		err = ProcessError(fmt.Sprintf("subvector-move-right! ending index is out of bounds (%d-%d), got %d.", startIndex, len(values), startIndex), env)
-		return
+		return nil, ProcessError(fmt.Sprintf("subvector-move-right! ending index is out of bounds (%d-%d), got %d.", startIndex, len(values), startIndex), env)
 	}
 
-	v2 := Fourth(args)
-	if !VectorP(v2) {
-		err = ProcessError(fmt.Sprintf("subvector-move-right! needs a vector as its second vector argument, but got %s.", String(v2)), env)
-		return
-	}
-	values2 := VectorValue(v2)
+	values2 := VectorValue(Fourth(args))
 
-	start2 := Fifth(args)
-	if !IntegerP(start2) {
-		err = ProcessError(fmt.Sprintf("subvector-move-right! needs an integer as its second starting index, but got %s.", String(start2)), env)
-		return
-	}
-	startIndex2 := int(IntegerValue(start2))
+	startIndex2 := int(IntegerValue(Fifth(args)))
 
 	if startIndex < 0 || startIndex >= len(values2) {
-		err = ProcessError(fmt.Sprintf("subvector-move-right! starting index is out of bounds (0-%d), got %d.", len(values)-1, startIndex), env)
-		return
+		return nil, ProcessError(fmt.Sprintf("subvector-move-right! starting index is out of bounds (0-%d), got %d.", len(values)-1, startIndex), env)
 	}
 
 	sourceLength := endIndex - startIndex
 	tailSize2 := len(values2) - startIndex2
 	if sourceLength > tailSize2 {
-		err = ProcessError(fmt.Sprintf("subvector-move-right! source subvector is longer than the available space in the destination (0-%d), got %d.", tailSize2, sourceLength), env)
-		return
+		return nil, ProcessError(fmt.Sprintf("subvector-move-right! source subvector is longer than the available space in the destination (0-%d), got %d.", tailSize2, sourceLength), env)
 	}
 
 	for i, i2 := endIndex-1, startIndex2+sourceLength-1; i >= startIndex; i, i2 = i-1, i2-1 {
 		values2[i2] = values[i]
 	}
 
-	result = v2
-	return
+	return Fourth(args), nil
 }
 
-func VectorSortImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	v := First(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("vector-sort needs a vector as its argument, but got %s.", String(v)), env)
-		return
-	}
-	values := VectorValue(v)
+func vectorSortImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	values := VectorValue(First(args))
 
 	proc := Second(args)
-	if !FunctionOrPrimitiveP(proc) {
-		err = ProcessError(fmt.Sprintf("vector-sort requires a function or primitive as it's second argument, but got %s.", String(proc)), env)
-		return
-	}
-
 	sorted, err := MergeSort(values, proc, env)
 	if err != nil {
 		return
 	}
 
-	result = VectorWithValue(sorted)
-	return
+	return VectorWithValue(sorted), nil
 }
 
-func VectorSortInPlaceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	v := First(args)
-	if !VectorP(v) {
-		err = ProcessError(fmt.Sprintf("vector-sort! needs a vector as its argument, but got %s.", String(v)), env)
-		return
-	}
-	values := VectorValue(v)
-
+func vectorSortInPlaceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	values := VectorValue(First(args))
 	proc := Second(args)
-	if !FunctionOrPrimitiveP(proc) {
-		err = ProcessError(fmt.Sprintf("vector-sort! requires a function or primitive as it's second argument, but got %s.", String(proc)), env)
-		return
-	}
-
 	sorted, err := MergeSort(values, proc, env)
 	if err != nil {
 		return
@@ -980,8 +576,7 @@ func VectorSortInPlaceImpl(args *Data, env *SymbolTableFrame) (result *Data, err
 		values[i] = val
 	}
 
-	result = v
-	return
+	return First(args), nil
 }
 
 func vectorReverseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
