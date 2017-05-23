@@ -89,7 +89,7 @@ func (s *PrintingSuite) TestMacro(c *C) {
 }
 
 func (s *PrintingSuite) TestPrimitive(c *C) {
-	f := &PrimitiveFunction{Name: "prim", NumberOfArgs: "1", Body: ListToBytesImpl}
+	f := &PrimitiveFunction{Name: "prim", Body: ListToBytesImpl}
 	sexpr := PrimitiveWithNameAndFunc("prim", f)
 	c.Assert(String(sexpr), Equals, "<prim: prim>")
 }
