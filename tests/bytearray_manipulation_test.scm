@@ -3,11 +3,12 @@
 (context "The bytearray system"
 
          ()
-         
+
          (it "list-to-bytearray"
                    ;; Bytes
                    (assert-eq (list->bytearray '(1 2 3 4 5)) [1 2 3 4 5])
                    (assert-eq (list->bytearray '(255 64 83 2)) [255 64 83 2])
+                   (assert-eq (list->bytearray (list (1+ 254) 64 83 2)) [255 64 83 2])
 
                    ;; Bytearrays
                    (assert-eq (list->bytearray '([0 1 2] [3 4 5] [64 83 112])) [0 1 2 3 4 5 64 83 112])
@@ -25,6 +26,7 @@
          (it "bytearray->list"
                    (assert-eq (bytearray->list []) (list))
                    (assert-eq (bytearray->list [1 2 3 4 5]) '(1 2 3 4 5))
+                   (assert-eq (bytearray->list [(1+ 254) 2 3 4 5]) '(255 2 3 4 5))
 
                    (assert-error (bytearray->list 'a))
                    (assert-error (bytearray->list '(1 2 3)))
@@ -34,7 +36,7 @@
                    (assert-eq (replace-byte [1 2 3 4 5] 0 8) [8 2 3 4 5])
                    (assert-eq (replace-byte [255 64 83 2] 3 112) [255 64 83 112])
                    ;; Make sure the original is not modified
-                   (begin 
+                   (begin
                      (define a [1 2 3 4 5])
                      (replace-byte a 0 8)
                      (assert-eq a [1 2 3 4 5]))

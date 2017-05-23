@@ -13,8 +13,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/golang/glog"
-
 	. "github.com/SteelSeries/golisp"
 )
 
