@@ -119,7 +119,7 @@ func (self *PrimitiveFunction) checkArgumentCount(argCount int) bool {
 				return true
 			}
 		case ARGS_RANGE:
-			if term.Range[0] <= argCount && argCount <= term.Range[0] {
+			if term.Range[0] <= argCount && argCount <= term.Range[1] {
 				return true
 			}
 		}
