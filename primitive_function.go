@@ -21,8 +21,13 @@ const (
 )
 
 type ArgRestriction struct {
-	Type  int
-	Range []int
+	Type        int
+	Restriction interface{}
+}
+
+type RangeRestriction struct {
+	Hi int
+	Lo int
 }
 
 type PrimitiveFunction struct {
@@ -74,12 +79,12 @@ func (self *PrimitiveFunction) parseNumArgs(argCount string) {
 		var intTerm int
 		n, _ := fmt.Sscanf(term, "%d", &intTerm)
 		if n == 1 {
-			argRestrictions = append(argRestrictions, ArgRestriction{Type: ARGS_EQ, Range: []int{intTerm}})
+			argRestrictions = append(argRestrictions, ArgRestriction{Type: ARGS_EQ, Restriction: intTerm})
 			continue
 		}
 		n, _ = fmt.Sscanf(term, ">=%d", &intTerm)
 		if n == 1 {
-			argRestrictions = append(argRestrictions, ArgRestriction{Type: ARGS_GTE, Range: []int{intTerm}})
+			argRestrictions = append(argRestrictions, ArgRestriction{Type: ARGS_GTE, Restriction: intTerm})
 			continue
 		}
 		var lo int
@@ -87,7 +92,7 @@ func (self *PrimitiveFunction) parseNumArgs(argCount string) {
 		n, _ = fmt.Sscanf(term, "(%d,%d)", &lo, &hi)
 		if n == 2 {
 			//lo <= argCount && argCount <= hi
-			argRestrictions = append(argRestrictions, ArgRestriction{Type: ARGS_RANGE, Range: []int{lo, hi}})
+			argRestrictions = append(argRestrictions, ArgRestriction{Type: ARGS_RANGE, Restriction: RangeRestriction{Lo: lo, Hi: hi}})
 			continue
 		}
 	}
@@ -102,11 +107,12 @@ func (self *PrimitiveFunction) argsString() string {
 		case ARGS_ANY:
 			return "*"
 		case ARGS_EQ:
-			parts[i] = fmt.Sprintf("%d", term.Range[0])
+			parts[i] = fmt.Sprintf("%d", term.Restriction.(int))
 		case ARGS_GTE:
-			parts[i] = fmt.Sprintf(">=%d", term.Range[0])
+			parts[i] = fmt.Sprintf(">=%d", term.Restriction.(int))
 		case ARGS_RANGE:
-			parts[i] = fmt.Sprintf("(%d,%d)", term.Range[0], term.Range[1])
+			argRange := term.Restriction.(RangeRestriction)
+			parts[i] = fmt.Sprintf("(%d,%d)", argRange.Lo, argRange.Hi)
 		}
 	}
 	return strings.Join(parts, "|")
@@ -122,15 +128,16 @@ func (self *PrimitiveFunction) checkArgumentCount(argCount int) bool {
 		case ARGS_ANY:
 			return true
 		case ARGS_EQ:
-			if argCount == term.Range[0] {
+			if argCount == term.Restriction.(int) {
 				return true
 			}
 		case ARGS_GTE:
-			if argCount >= term.Range[0] {
+			if argCount >= term.Restriction.(int) {
 				return true
 			}
 		case ARGS_RANGE:
-			if term.Range[0] <= argCount && argCount <= term.Range[1] {
+			argRange := term.Restriction.(RangeRestriction)
+			if argRange.Lo <= argCount && argCount <= argRange.Hi {
 				return true
 			}
 		}
