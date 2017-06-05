@@ -13,10 +13,12 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 	"time"
 )
 
 var symbolCounts map[string]int = make(map[string]int)
+var symbolCountsMutex sync.Mutex
 
 func RegisterSystemPrimitives() {
 	MakePrimitiveFunction("sleep", "1", SleepImpl)
@@ -203,13 +205,12 @@ func gensymHelper(primitiveName string, args *Data, env *SymbolTableFrame) (pref
 		prefix = StringValue(arg)
 	}
 
+	symbolCountsMutex.Lock()
+
 	count = symbolCounts[prefix]
-	if count == 0 {
-		count = 1
-	} else {
-		count += 1
-	}
-	symbolCounts[prefix] = count
+	symbolCounts[prefix] = count + 1
+
+	symbolCountsMutex.Unlock()
 	return
 }
 
