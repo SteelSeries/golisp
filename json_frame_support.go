@@ -112,7 +112,7 @@ func LispWithFramesToJson(d *Data) (result interface{}) {
 	if ObjectP(d) && ObjectType(d) == "[]byte" {
 		ary := make([]interface{}, 0, Length(d))
 		for _, b := range *(*[]byte)(ObjectValue(d)) {
-			ary = append(ary, b)
+			ary = append(ary, float64(b))
 		}
 		return ary
 	}
