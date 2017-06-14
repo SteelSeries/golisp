@@ -161,7 +161,7 @@ func parseBytearray(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 	if allIntegers(cells) {
 		sexpr = listToBytearray(cells)
 	} else {
-		sexpr = InternalMakeList(Intern("list-to-bytearray"), QuoteIt(ArrayToList(cells)))
+		sexpr = InternalMakeList(Intern("list->bytearray"), Cons(Intern("list"), ArrayToList(cells)))
 	}
 	return
 }

@@ -38,8 +38,7 @@ func ListToBytesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 
 	bytes := make([]byte, 0, int(Length(list)))
 	for c := list; NotNilP(c); c = Cdr(c) {
-		var n *Data
-		n, err = Eval(Car(c), env)
+		n := Car(c)
 		if !IntegerP(n) && !(ObjectP(n) && ObjectType(n) == "[]byte") {
 			err = ProcessError(fmt.Sprintf("Byte arrays can only contain numbers, but found %v.", n), env)
 			return
