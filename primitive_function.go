@@ -13,58 +13,126 @@ import (
 	"sync/atomic"
 )
 
+const (
+	ARGS_ANY = iota
+	ARGS_EQ
+	ARGS_GTE
+	ARGS_RANGE
+)
+
+type ArgRestriction struct {
+	Type  int
+	Range []int
+}
+
 type PrimitiveFunction struct {
-	Name         string
-	Special      bool
-	NumberOfArgs string
-	Body         func(d *Data, env *SymbolTableFrame) (*Data, error)
-	IsRestricted bool
+	Name            string
+	Special         bool
+	ArgRestrictions []ArgRestriction
+	ArgTypes        []uint32
+	Body            func(d *Data, env *SymbolTableFrame) (*Data, error)
+	IsRestricted    bool
 }
 
 func MakePrimitiveFunction(name string, argCount string, function func(*Data, *SymbolTableFrame) (*Data, error)) {
-	f := &PrimitiveFunction{Name: name, Special: false, NumberOfArgs: argCount, Body: function, IsRestricted: false}
-	Global.BindToProtected(Intern(name), PrimitiveWithNameAndFunc(name, f))
+	f := &PrimitiveFunction{Name: name, Special: false, Body: function, IsRestricted: false}
+	f.parseNumArgs(argCount)
+	sym := Intern(name)
+	Global.BindToProtected(sym, PrimitiveWithNameAndFunc(name, f))
 }
 
 func MakeRestrictedPrimitiveFunction(name string, argCount string, function func(*Data, *SymbolTableFrame) (*Data, error)) {
-	f := &PrimitiveFunction{Name: name, Special: false, NumberOfArgs: argCount, Body: function, IsRestricted: true}
-	Global.BindToProtected(Intern(name), PrimitiveWithNameAndFunc(name, f))
+	f := &PrimitiveFunction{Name: name, Special: false, Body: function, IsRestricted: true}
+	f.parseNumArgs(argCount)
+	sym := Intern(name)
+	Global.BindToProtected(sym, PrimitiveWithNameAndFunc(name, f))
 }
 
 func MakeSpecialForm(name string, argCount string, function func(*Data, *SymbolTableFrame) (*Data, error)) {
-	f := &PrimitiveFunction{Name: name, Special: true, NumberOfArgs: argCount, Body: function, IsRestricted: false}
-	Global.BindToProtected(Intern(name), PrimitiveWithNameAndFunc(name, f))
+	f := &PrimitiveFunction{Name: name, Special: true, Body: function, IsRestricted: false}
+	f.parseNumArgs(argCount)
+	sym := Intern(name)
+	Global.BindToProtected(sym, PrimitiveWithNameAndFunc(name, f))
 }
 
 func MakeRestrictedSpecialForm(name string, argCount string, function func(*Data, *SymbolTableFrame) (*Data, error)) {
-	f := &PrimitiveFunction{Name: name, Special: true, NumberOfArgs: argCount, Body: function, IsRestricted: true}
-	Global.BindToProtected(Intern(name), PrimitiveWithNameAndFunc(name, f))
+	f := &PrimitiveFunction{Name: name, Special: true, Body: function, IsRestricted: true}
+	f.parseNumArgs(argCount)
+	sym := Intern(name)
+	Global.BindToProtected(sym, PrimitiveWithNameAndFunc(name, f))
 }
 
-func (self *PrimitiveFunction) String() string {
-	return fmt.Sprintf("<prim: %s, %v>", self.Name, self.Body)
-}
+func (self *PrimitiveFunction) parseNumArgs(argCount string) {
+	var argRestrictions []ArgRestriction
 
-func (self *PrimitiveFunction) checkArgumentCount(argCount int) bool {
-	if self.NumberOfArgs == "*" {
-		return true
-	}
+	for _, term := range strings.Split(argCount, "|") {
+		if term == "*" {
+			self.ArgRestrictions = []ArgRestriction{{Type: ARGS_ANY}}
+			return
+		}
 
-	for _, term := range strings.Split(self.NumberOfArgs, "|") {
 		var intTerm int
 		n, _ := fmt.Sscanf(term, "%d", &intTerm)
-		if n == 1 && argCount == intTerm {
-			return true
+		if n == 1 {
+			argRestrictions = append(argRestrictions, ArgRestriction{Type: ARGS_EQ, Range: []int{intTerm}})
+			continue
 		}
 		n, _ = fmt.Sscanf(term, ">=%d", &intTerm)
-		if n == 1 && argCount >= intTerm {
-			return true
+		if n == 1 {
+			argRestrictions = append(argRestrictions, ArgRestriction{Type: ARGS_GTE, Range: []int{intTerm}})
+			continue
 		}
 		var lo int
 		var hi int
 		n, _ = fmt.Sscanf(term, "(%d,%d)", &lo, &hi)
-		if n == 2 && lo <= argCount && argCount <= hi {
+		if n == 2 {
+			//lo <= argCount && argCount <= hi
+			argRestrictions = append(argRestrictions, ArgRestriction{Type: ARGS_RANGE, Range: []int{lo, hi}})
+			continue
+		}
+	}
+
+	self.ArgRestrictions = argRestrictions
+}
+
+func (self *PrimitiveFunction) argsString() string {
+	parts := make([]string, len(self.ArgRestrictions))
+	for i, term := range self.ArgRestrictions {
+		switch term.Type {
+		case ARGS_ANY:
+			return "*"
+		case ARGS_EQ:
+			parts[i] = fmt.Sprintf("%d", term.Range[0])
+		case ARGS_GTE:
+			parts[i] = fmt.Sprintf(">=%d", term.Range[0])
+		case ARGS_RANGE:
+			parts[i] = fmt.Sprintf("(%d,%d)", term.Range[0], term.Range[1])
+		}
+	}
+	return strings.Join(parts, "|")
+}
+
+func (self *PrimitiveFunction) String() string {
+	return fmt.Sprintf("<prim: %s, %v>", self.Name, &self.Body)
+}
+
+func (self *PrimitiveFunction) checkArgumentCount(argCount int) bool {
+	for _, term := range self.ArgRestrictions {
+		switch term.Type {
+		case ARGS_ANY:
 			return true
+		case ARGS_EQ:
+			if argCount == term.Range[0] {
+				return true
+			}
+		case ARGS_GTE:
+			if argCount >= term.Range[0] {
+				return true
+			}
+		case ARGS_RANGE:
+			if term.Range[0] <= argCount && argCount <= term.Range[0] {
+				return true
+			}
 		}
 	}
 	return false
@@ -77,7 +145,7 @@ func (self *PrimitiveFunction) Apply(args *Data, env *SymbolTableFrame) (result 
 	}
 
 	if !self.checkArgumentCount(Length(args)) {
-		err = fmt.Errorf("Wrong number of args to %s. Expected %s but got %d.\n", self.Name, self.NumberOfArgs, Length(args))
+		err = ProcessError(fmt.Sprintf("Wrong number of args to %s, expected %s but got %d.", self.Name, self.argsString(), Length(args)), env)
 		return
 	}
 
