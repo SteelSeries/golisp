@@ -8,9 +8,10 @@
 package golisp
 
 import (
-	"gopkg.in/fatih/set.v0"
 	"strings"
 	"sync"
+
+	"gopkg.in/fatih/set.v0"
 )
 
 type FrameMapData map[string]*Data
@@ -21,19 +22,15 @@ type FrameMap struct {
 }
 
 func (self *FrameMap) hasSlotLocally(key string) bool {
-	self.Mutex.RLock()
 	_, ok := self.Data[key]
-	self.Mutex.RUnlock()
 	return ok
 }
 
 func (self *FrameMap) localSlots() []string {
-	self.Mutex.RLock()
 	slots := make([]string, 0, len(self.Data))
 	for k, _ := range self.Data {
 		slots = append(slots, k)
 	}
-	self.Mutex.RUnlock()
 	return slots
 }
 
@@ -42,39 +39,22 @@ func isParentKey(key string) bool {
 }
 
 func (self *FrameMap) hasParentSlots() bool {
-	self.Mutex.RLock()
 	for k, _ := range self.Data {
 		if isParentKey(k) {
-			self.Mutex.RUnlock()
 			return true
 		}
 	}
-	self.Mutex.RUnlock()
 
 	return false
 }
 
-func (self *FrameMap) parentSlots() []string {
-	self.Mutex.RLock()
-	slots := make([]string, 0, len(self.Data))
-	for k, _ := range self.Data {
-		if isParentKey(k) {
-			slots = append(slots, k)
-		}
-	}
-	self.Mutex.RUnlock()
-	return slots
-}
-
 func (self *FrameMap) Parents() []*FrameMap {
 	parents := make([]*FrameMap, 0, 0)
-	self.Mutex.RLock()
 	for k, v := range self.Data {
 		if isParentKey(k) && v != nil {
 			parents = append(parents, FrameValue(v))
 		}
 	}
-	self.Mutex.RUnlock()
 	return parents
 }
 
@@ -96,7 +76,10 @@ func (self *FrameMap) hasSlotHelper(key string, v *set.Set) bool {
 	}
 
 	for _, p := range self.Parents() {
-		if p.hasSlotHelper(key, v) {
+		p.Mutex.RLock()
+		hasSlot := p.hasSlotHelper(key, v)
+		p.Mutex.RUnlock()
+		if hasSlot {
 			return true
 		}
 	}
@@ -104,9 +87,12 @@ func (self *FrameMap) hasSlotHelper(key string, v *set.Set) bool {
 	return false
 }
 
-func (self *FrameMap) HasSlot(key string) bool {
+func (self *FrameMap) HasSlot(key string) (ret bool) {
 	visited := set.New()
-	return self.hasSlotHelper(key, visited)
+	self.Mutex.RLock()
+	ret = self.hasSlotHelper(key, visited)
+	self.Mutex.RUnlock()
+	return
 }
 
 //------------------------------------------------------------
@@ -118,15 +104,15 @@ func (self *FrameMap) getHelper(key string, v *set.Set) *Data {
 
 	v.Add(self)
 
-	self.Mutex.RLock()
 	val, ok := self.Data[key]
-	self.Mutex.RUnlock()
 	if ok {
 		return val
 	}
 
 	for _, p := range self.Parents() {
+		p.Mutex.RLock()
 		val := p.getHelper(key, v)
+		p.Mutex.RUnlock()
 		if val != nil {
 			return val
 		}
@@ -135,18 +121,22 @@ func (self *FrameMap) getHelper(key string, v *set.Set) *Data {
 	return nil
 }
 
-func (self *FrameMap) Get(key string) *Data {
+func (self *FrameMap) Get(key string) (ret *Data) {
 	visited := set.New()
-	return self.getHelper(key, visited)
+	self.Mutex.RLock()
+	ret = self.getHelper(key, visited)
+	self.Mutex.RUnlock()
+	return
 }
 
 //------------------------------------------------------------
 
 func (self *FrameMap) Remove(key string) bool {
+	self.Mutex.Lock()
 	if !self.hasSlotLocally(key) {
+		self.Mutex.Unlock()
 		return false
 	}
-	self.Mutex.Lock()
 	delete(self.Data, key)
 	self.Mutex.Unlock()
 	return true

@@ -179,6 +179,8 @@ func getSuperFunction(selector string, env *SymbolTableFrame) *Data {
 		return nil
 	}
 
+	f.Mutex.RLock()
+	defer f.Mutex.RUnlock()
 	for _, p := range f.Parents() {
 		fun := p.Get(selector)
 		if fun != nil {

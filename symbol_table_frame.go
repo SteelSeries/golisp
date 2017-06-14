@@ -48,22 +48,13 @@ var internedSymbols symbolsTable = symbolsTable{make(map[string]*Data, 256), syn
 
 func Intern(name string) (sym *Data) {
 	internedSymbols.Mutex.RLock()
-	lock := READ_LOCK
-	defer func() {
-		if lock == READ_LOCK {
-			internedSymbols.Mutex.RUnlock()
-		} else {
-			internedSymbols.Mutex.Unlock()
-		}
-	}()
-
 	sym = internedSymbols.Symbols[name]
+	internedSymbols.Mutex.RUnlock()
 	if sym == nil {
-		internedSymbols.Mutex.RUnlock()
 		internedSymbols.Mutex.Lock()
-		lock = WRITE_LOCK
 		sym = SymbolWithName(name)
 		internedSymbols.Symbols[name] = sym
+		internedSymbols.Mutex.Unlock()
 	}
 	return
 }
@@ -147,9 +138,8 @@ func NewSymbolTableFrameBelow(p *SymbolTableFrame, name string) *SymbolTableFram
 	env := &SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding), Frame: f, CurrentCode: list.New(), IsRestricted: restricted}
 	if p == nil || p == Global {
 		TopLevelEnvironments.Mutex.Lock()
-		defer TopLevelEnvironments.Mutex.Unlock()
-
 		TopLevelEnvironments.Environments[name] = env
+		TopLevelEnvironments.Mutex.Unlock()
 	}
 	return env
 }
@@ -162,9 +152,8 @@ func NewSymbolTableFrameBelowWithFrame(p *SymbolTableFrame, f *FrameMap, name st
 	env := &SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding, 10), Frame: f, CurrentCode: list.New(), IsRestricted: restricted}
 	if p == nil || p == Global {
 		TopLevelEnvironments.Mutex.Lock()
-		defer TopLevelEnvironments.Mutex.Unlock()
-
 		TopLevelEnvironments.Environments[name] = env
+		TopLevelEnvironments.Mutex.Unlock()
 	}
 	return env
 }
@@ -175,21 +164,21 @@ func (self *SymbolTableFrame) HasFrame() bool {
 
 func (self *SymbolTableFrame) BindingNamed(name string) (b *Binding, present bool) {
 	self.Mutex.RLock()
-	defer self.Mutex.RUnlock()
 	b, present = self.Bindings[name]
+	self.Mutex.RUnlock()
 	return
 }
 
 func (self *SymbolTableFrame) SetBindingAt(name string, b *Binding) {
 	self.Mutex.Lock()
-	defer self.Mutex.Unlock()
 	self.Bindings[name] = b
+	self.Mutex.Unlock()
 }
 
 func (self *SymbolTableFrame) DeleteBinding(name string) {
 	self.Mutex.Lock()
-	defer self.Mutex.Unlock()
 	delete(self.Bindings, name)
+	self.Mutex.Unlock()
 }
 
 func (self *SymbolTableFrame) findSymbol(name string) (symbol *Data, found bool) {
