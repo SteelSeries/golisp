@@ -79,6 +79,60 @@ func evaluateBody(value *Data, sexprs *Data, env *SymbolTableFrame) (result *Dat
 }
 
 func DefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func condImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	var condition *Data
+	for c := args; NotNilP(c); c = Cdr(c) {
+		clause := Car(c)
+		if !ListP(clause) {
+			err = ProcessError("Cond expect a sequence of clauses that are lists", env)
+			return
+		}
+		if IsEqual(Car(clause), Intern("else")) {
+			return evaluateBody(nil, Cdr(clause), env)
+		} else {
+			condition, err = Eval(Car(clause), env)
+			if err != nil {
+				return
+			}
+			if BooleanValue(condition) {
+				return evaluateBody(condition, Cdr(clause), env)
+			}
+		}
+	}
+	return
+}
+
+func caseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	var keyValue *Data
+
+	keyValue, err = Eval(Car(args), env)
+	if err != nil {
+		return
+	}
+
+	for clauseCell := Cdr(args); NotNilP(clauseCell); clauseCell = Cdr(clauseCell) {
+		clause := Car(clauseCell)
+		if !ListP(clause) {
+			err = ProcessError("Case expectes a sequence of clauses that are lists", env)
+			return
+		}
+		if IsEqual(Car(clause), Intern("else")) {
+			return evaluateBody(nil, Cdr(clause), env)
+		} else if ListP(Car(clause)) {
+			for v := Car(clause); NotNilP(v); v = Cdr(v) {
+				if IsEqual(Car(v), keyValue) {
+					return evaluateBody(nil, Cdr(clause), env)
+				}
+			}
+		} else {
+			err = ProcessError("Case the condition part of clauses to be lists or 'else", env)
+			return
+		}
+	}
+
+	return
+}
+
 	var value *Data
 	thing := Car(args)
 	if SymbolP(thing) {
@@ -241,6 +295,82 @@ func bindLetLocals(bindingForms *Data, rec bool, localEnv *SymbolTableFrame, eva
 		localEnv.BindLocallyTo(name, value)
 	}
 	return
+}
+
+func letCommon(args *Data, env *SymbolTableFrame, star bool, rec bool) (result *Data, err error) {
+	if !ListP(Car(args)) {
+		err = ProcessError("Let requires a list of bindings as it's first argument", env)
+		return
+	}
+
+	localEnv := NewSymbolTableFrameBelow(env, "let")
+	localEnv.Previous = env
+	var evalEnv *SymbolTableFrame
+	if star || rec {
+		evalEnv = localEnv
+	} else {
+		evalEnv = env
+	}
+	err = bindLetLocals(Car(args), rec, localEnv, evalEnv)
+	if err != nil {
+		return
+	}
+
+	for cell := Cdr(args); NotNilP(cell); cell = Cdr(cell) {
+		sexpr := Car(cell)
+		result, err = Eval(sexpr, localEnv)
+		if err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+func namedLetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	name := First(args)
+	bindings := Second(args)
+	if !ListP(bindings) {
+		err = ProcessError("A named let requires a list of bindings as it's second argument", env)
+		return
+	}
+	body := Cddr(args)
+
+	vars := make([]*Data, 0, Length(bindings))
+	initials := make([]*Data, 0, Length(bindings))
+	for remainingBindings := bindings; NotNilP(remainingBindings); remainingBindings = Cdr(remainingBindings) {
+		binding := Car(remainingBindings)
+		if !SymbolP(Car(binding)) {
+			err = ProcessError("The first element of a binding must be a symbol", env)
+			return
+		}
+		vars = append(vars, Car(binding))
+		initials = append(initials, Cadr(binding))
+	}
+	varsList := ArrayToList(vars)
+	initialsList := ArrayToList(initials)
+	localEnv := NewSymbolTableFrameBelow(env, StringValue(name))
+	localEnv.Previous = env
+	localEnv.BindLocallyTo(name, nil)
+	namedLetProc := FunctionWithNameParamsDocBodyAndParent(StringValue(name), varsList, "", body, localEnv)
+	localEnv.BindLocallyTo(name, namedLetProc)
+	return FunctionValue(namedLetProc).Apply(initialsList, env)
+}
+
+func letImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if SymbolP(Car(args)) {
+		return namedLetImpl(args, env)
+	} else {
+		return letCommon(args, env, false, false)
+	}
+}
+
+func letStarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return letCommon(args, env, true, false)
+}
+
+func letRecImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return letCommon(args, env, false, true)
 }
 
 func rebindDoLocals(bindingForms *Data, env *SymbolTableFrame) (err error) {
