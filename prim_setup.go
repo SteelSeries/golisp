@@ -11,6 +11,8 @@ var DebugTrace = false
 var LispTrace = false
 var quasiquoteLevel = 1
 
+var CompilingSymbol = Intern("***COMPILING***")
+
 func init() {
 	InitLisp()
 }
@@ -24,6 +26,7 @@ func InitEnvironments() {
 	Global = NewSymbolTableFrameBelow(nil, "SystemGlobal")
 	Global.BindTo(Intern("nil"), EmptyCons())
 	Global.BindTo(Intern("system-global-environment"), EnvironmentWithValue(Global))
+	Global.BindTo(CompilingSymbol, LispFalse)
 }
 
 func InitBuiltins() {

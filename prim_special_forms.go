@@ -50,6 +50,7 @@ func RegisterSpecialFormPrimitives() {
 	MakeSpecialForm("definition-of", "1", DefinitionOfImpl)
 	MakeSpecialForm("doc", "1", DocImpl)
 	MakeSpecialForm("type", "1", TypeImpl)
+	MakeSpecialForm("define-compiler-macro", ">=1", defCompilerMacroImpl)
 
 	initTypeMap()
 }
@@ -180,6 +181,31 @@ func DefmacroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 	env.BindLocallyTo(thing, value)
 	return value, nil
+}
+
+func defCompilerMacroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	// if BooleanValue(Global.ValueOf(CompilingSymbol)) {
+	var value *Data
+	thing := Car(args)
+	if ListP(thing) || DottedListP(thing) {
+		name := Car(thing)
+		params := Cdr(thing)
+		thing = name
+		if !SymbolP(name) {
+			err = ProcessError("Compiler macro name has to be a symbol", env)
+			return
+		}
+		body := Cadr(args)
+		value = CompilerMacroWithNameParamsBodyAndParent(StringValue(name), params, body, env)
+	} else {
+		err = ProcessError("Invalid compiler macro definition", env)
+		return
+	}
+	env.BindLocallyTo(thing, value)
+	return value, nil
+	// }
+	// fmt.Printf("Attempt to define compiled macro '%s' when not compiling\n", String(First(args)))
+	// return
 }
 
 func bindLetLocals(bindingForms *Data, rec bool, localEnv *SymbolTableFrame, evalEnv *SymbolTableFrame) (err error) {
