@@ -30,13 +30,14 @@ func (self *Macro) String() string {
 	return fmt.Sprintf("<macro: %s>", self.Name)
 }
 
-func (self *Macro) makeLocalBindings(args *Data, argEnv *SymbolTableFrame, localEnv *SymbolTableFrame, eval bool) (err error) {
+func (self *Macro) makeLocalBindings(args *Data, argEnv *SymbolTableFrame, localEnv *SymbolTableFrame) (err error) {
+	l := Length(args)
 	if self.VarArgs {
-		if Length(args) < self.RequiredArgCount {
+		if l < self.RequiredArgCount {
 			return errors.New(fmt.Sprintf("%s expected at least %d parameters, received %d.", self.Name, self.RequiredArgCount, Length(args)))
 		}
 	} else {
-		if Length(args) != self.RequiredArgCount {
+		if l != self.RequiredArgCount {
 			return errors.New(fmt.Sprintf("%s expected %d parameters, received %d.", self.Name, self.RequiredArgCount, Length(args)))
 		}
 	}
@@ -45,14 +46,7 @@ func (self *Macro) makeLocalBindings(args *Data, argEnv *SymbolTableFrame, local
 	var accumulatingParam *Data = nil
 	accumulatedArgs := make([]*Data, 0)
 	for p, a := self.Params, args; NotNilP(a); a = Cdr(a) {
-		if eval {
-			argValue, err = Eval(Car(a), argEnv)
-			if err != nil {
-				return
-			}
-		} else {
-			argValue = Car(a)
-		}
+		argValue = Car(a)
 		if SymbolP(p) {
 			accumulatingParam = p
 		}
@@ -74,7 +68,7 @@ func (self *Macro) makeLocalBindings(args *Data, argEnv *SymbolTableFrame, local
 
 func (self *Macro) Expand(args *Data, argEnv *SymbolTableFrame) (result *Data, err error) {
 	localEnv := NewSymbolTableFrameBelow(self.Env, self.Name)
-	err = self.makeLocalBindings(args, argEnv, localEnv, false)
+	err = self.makeLocalBindings(args, argEnv, localEnv)
 	if err != nil {
 		return
 	}
@@ -82,7 +76,7 @@ func (self *Macro) Expand(args *Data, argEnv *SymbolTableFrame) (result *Data, e
 	return Eval(self.Body, localEnv)
 }
 
-func (self *Macro) internalApply(args *Data, argEnv *SymbolTableFrame, eval bool) (result *Data, err error) {
+func (self *Macro) internalApply(args *Data, argEnv *SymbolTableFrame) (result *Data, err error) {
 	expandedMacro, err := self.Expand(args, argEnv)
 	if err != nil {
 		return
@@ -92,9 +86,9 @@ func (self *Macro) internalApply(args *Data, argEnv *SymbolTableFrame, eval bool
 }
 
 func (self *Macro) Apply(args *Data, argEnv *SymbolTableFrame) (result *Data, err error) {
-	return self.internalApply(args, argEnv, false)
+	return self.internalApply(args, argEnv)
 }
 
 func (self *Macro) ApplyWithoutEval(args *Data, argEnv *SymbolTableFrame) (result *Data, err error) {
-	return self.internalApply(args, argEnv, false)
+	return self.internalApply(args, argEnv)
 }

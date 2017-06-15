@@ -11,97 +11,106 @@ import (
 	"fmt"
 )
 
+var quasiquoteSymbol = Intern("quasiquote")
+var unquoteSymbol = Intern("unquote")
+var unquoteSplicingSymbol = Intern("unquote-splicing")
+
 func RegisterMacroPrimitives() {
-	MakeSpecialForm("quote", "1", QuoteImpl)
+	// MakeSpecialForm("quote", "1", QuoteImpl)
 	MakeSpecialForm("quasiquote", "1", QuasiquoteImpl)
 	MakeSpecialForm("unquote", "1", UnquoteImpl)
 	MakeSpecialForm("unquote-splicing", "1", UnquoteSplicingImpl)
 	MakeSpecialForm("expand", ">=1", ExpandImpl)
 }
 
-func QuoteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	if Car(args) == nil {
-		return EmptyCons(), nil
-	} else {
-		return Car(args), nil
-	}
-}
-
 func processQuasiquoted(sexpr *Data, level int, env *SymbolTableFrame) (result *Data, err error) {
 	if !ListP(sexpr) {
 		return Cons(sexpr, nil), nil
-	} else if SymbolP(Car(sexpr)) && StringValue(Car(sexpr)) == "quasiquote" {
-		processed, err := processQuasiquoted(Cadr(sexpr), level+1, env)
-		if err != nil {
-			return nil, err
-		}
-		return Cons(Cons(Intern("quasiquote"), processed), nil), nil
-	} else if SymbolP(Car(sexpr)) && StringValue(Car(sexpr)) == "unquote" {
-		if level == 1 {
-			processed, err := processQuasiquoted(Cadr(sexpr), level, env)
-			if err != nil {
-				return nil, err
-			}
-			r, err := Eval(Car(processed), env)
-			if err != nil {
-				return nil, err
-			}
-			return Cons(r, nil), nil
-		} else {
-			processed, err := processQuasiquoted(Cadr(sexpr), level-1, env)
-			if err != nil {
-				return nil, err
-			}
-			return Cons(Cons(Intern("unquote"), processed), nil), nil
-		}
-	} else if SymbolP(Car(sexpr)) && StringValue(Car(sexpr)) == "unquote-splicing" {
-		if level == 1 {
-			processed, err := processQuasiquoted(Cadr(sexpr), level, env)
-			if err != nil {
-				return nil, err
-			}
-			r, err := Eval(Car(processed), env)
-			if err != nil {
-				return nil, err
-			}
-			if NilP(r) {
-				return nil, nil
-			} else {
-				return r, nil
-			}
-		} else {
-			processed, err := processQuasiquoted(Cadr(sexpr), level-1, env)
-			if err != nil {
-				return nil, err
-			}
-			return Cons(Cons(Intern("unquote-splicing"), processed), nil), nil
-		}
 	} else {
-		parts := make([]*Data, 0, Length(Cdr(sexpr)))
-		for _, exp := range ToArray(sexpr) {
-			processed, err := processQuasiquoted(exp, level, env)
+		firstExpr := First(sexpr)
+		isSymbolicCar := SymbolP(firstExpr)
+
+		if isSymbolicCar && firstExpr == quasiquoteSymbol {
+			processed, err := processQuasiquoted(Second(sexpr), level+1, env)
 			if err != nil {
 				return nil, err
 			}
-			if processed != nil {
-				parts = append(parts, processed)
+			return Cons(Cons(quasiquoteSymbol, processed), nil), nil
+		} else if isSymbolicCar && firstExpr == unquoteSymbol {
+			if level == 1 {
+				processed, err := processQuasiquoted(Second(sexpr), level, env)
+				if err != nil {
+					return nil, err
+				}
+				r, err := Eval(First(processed), env)
+				if err != nil {
+					return nil, err
+				}
+				return Cons(r, nil), nil
+			} else {
+				processed, err := processQuasiquoted(Second(sexpr), level-1, env)
+				if err != nil {
+					return nil, err
+				}
+				return Cons(Cons(unquoteSymbol, processed), nil), nil
 			}
+		} else if isSymbolicCar && firstExpr == unquoteSplicingSymbol {
+			if level == 1 {
+				processed, err := processQuasiquoted(Second(sexpr), level, env)
+				if err != nil {
+					return nil, err
+				}
+				r, err := Eval(First(processed), env)
+				if err != nil {
+					return nil, err
+				}
+				if NilP(r) {
+					return nil, nil
+				} else {
+					return r, nil
+				}
+			} else {
+				processed, err := processQuasiquoted(Second(sexpr), level-1, env)
+				if err != nil {
+					return nil, err
+				}
+				return Cons(Cons(unquoteSplicingSymbol, processed), nil), nil
+			}
+		} else {
+			parts := make([]*Data, 0, Length(Cdr(sexpr)))
+			for _, exp := range ToArray(sexpr) {
+				processed, err := processQuasiquoted(exp, level, env)
+				if err != nil {
+					return nil, err
+				}
+				if processed != nil {
+					parts = append(parts, processed)
+				}
+			}
+			flat, err := Flatten(ArrayToList(parts))
+			if err != nil {
+				return nil, err
+			}
+			return Cons(flat, nil), nil
 		}
-		flat, err := Flatten(ArrayToList(parts))
-		if err != nil {
-			return nil, err
-		}
-		return Cons(flat, nil), nil
 	}
 	return
 }
 
+// func QuoteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+// 	// if First(args) == nil {
+// 	// 	return EmptyCons(), nil
+// 	// } else {
+// 	return First(args), nil
+// 	// }
+// }
+
 func QuasiquoteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	r, err := processQuasiquoted(Car(args), 1, env)
+	r, err := processQuasiquoted(First(args), 1, env)
 	if err != nil {
 		return nil, err
 	}
-	return Car(r), nil
+	return First(r), nil
 }
 
 func UnquoteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -115,7 +124,7 @@ func UnquoteSplicingImpl(args *Data, env *SymbolTableFrame) (result *Data, err e
 }
 
 func ExpandImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	n, err := Eval(Car(args), env)
+	n, err := Eval(First(args), env)
 	if err != nil {
 		return
 	}
