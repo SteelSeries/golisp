@@ -155,33 +155,30 @@ func (self *SymbolTableFrame) DumpHeader() {
 	fmt.Printf("%s\n", self.CurrentCodeString())
 }
 
+func addTopLevelIfRequired(env *SymbolTableFrame) *SymbolTableFrame {
+	if env.Parent == nil || env.Parent == Global {
+		TopLevelEnvironments.Mutex.Lock()
+		defer TopLevelEnvironments.Mutex.Unlock()
+
+		TopLevelEnvironments.Environments[env.Name] = env
+	}
+	return env
+}
+
 func NewSymbolTableFrameBelow(p *SymbolTableFrame, name string) *SymbolTableFrame {
 	var f *FrameMap = nil
 	if p != nil {
 		f = p.Frame
 	}
-	env := &SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding), Frame: f, CurrentCode: list.New()}
-	if p == nil || p == Global {
-		TopLevelEnvironments.Mutex.Lock()
-		defer TopLevelEnvironments.Mutex.Unlock()
 
-		TopLevelEnvironments.Environments[name] = env
-	}
-	return env
+	return addTopLevelIfRequired(&SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding), Frame: f, CurrentCode: list.New()})
 }
 
 func NewSymbolTableFrameBelowWithFrame(p *SymbolTableFrame, f *FrameMap, name string) *SymbolTableFrame {
 	if f == nil {
 		f = p.Frame
 	}
-	env := &SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding, 10), Frame: f, CurrentCode: list.New()}
-	if p == nil || p == Global {
-		TopLevelEnvironments.Mutex.Lock()
-		defer TopLevelEnvironments.Mutex.Unlock()
-
-		TopLevelEnvironments.Environments[name] = env
-	}
-	return env
+	return addTopLevelIfRequired(&SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding, 10), Frame: f, CurrentCode: list.New()})
 }
 
 func (self *SymbolTableFrame) HasFrame() bool {
