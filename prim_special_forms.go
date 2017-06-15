@@ -39,18 +39,23 @@ func initTypeMap() {
 }
 
 func RegisterSpecialFormPrimitives() {
-	MakeSpecialForm("define", ">=1", DefineImpl)
-	MakeSpecialForm("typedef", ">=1", TypeDefImpl)
-	MakeSpecialForm("defmacro", ">=1", DefmacroImpl)
-	MakeSpecialForm("define-macro", ">=1", DefmacroImpl)
-	MakeSpecialForm("do", ">=2", DoImpl)
-	MakeSpecialForm("apply", ">=1", ApplyImpl)
-	MakeSpecialForm("->", ">=1", ChainImpl)
-	MakeSpecialForm("=>", ">=1", TapImpl)
-	MakeSpecialForm("definition-of", "1", DefinitionOfImpl)
-	MakeSpecialForm("doc", "1", DocImpl)
-	MakeSpecialForm("type", "1", TypeImpl)
+	MakeSpecialForm("cond", "*", condImpl)
+	MakeSpecialForm("case", ">=1", caseImpl)
+	MakeSpecialForm("define", ">=1", defineImpl)
+	MakeSpecialForm("typedef", ">=1", typeDefImpl)
+	MakeSpecialForm("defmacro", ">=1", defMacroImpl)
+	MakeSpecialForm("define-macro", ">=1", defMacroImpl)
 	MakeSpecialForm("define-compiler-macro", ">=1", defCompilerMacroImpl)
+	MakeSpecialForm("do", ">=2", doImpl)
+	MakeSpecialForm("apply", ">=1", applyImpl)
+	MakeSpecialForm("->", ">=1", chainImpl)
+	MakeSpecialForm("=>", ">=1", tapImpl)
+	MakeSpecialForm("definition-of", "1", definitionOfImpl)
+	MakeSpecialForm("doc", "1", docImpl)
+	MakeSpecialForm("type", "1", typeImpl)
+	MakeSpecialForm("let", ">=1", letImpl)
+	MakeSpecialForm("let*", ">=1", letStarImpl)
+	MakeSpecialForm("letrec", ">=1", letRecImpl)
 
 	initTypeMap()
 }
@@ -78,7 +83,6 @@ func evaluateBody(value *Data, sexprs *Data, env *SymbolTableFrame) (result *Dat
 	return
 }
 
-func DefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 func condImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var condition *Data
 	for c := args; NotNilP(c); c = Cdr(c) {
@@ -133,9 +137,11 @@ func caseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return
 }
 
+func defineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var value *Data
 	thing := Car(args)
 	if SymbolP(thing) {
+		//		fmt.Printf("Defining var: %s\n", String(thing))
 		value, err = Eval(Cadr(args), env)
 		if err != nil {
 			return
@@ -144,6 +150,7 @@ func caseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		name := Car(thing)
 		params := Cdr(thing)
 		thing = name
+		//		fmt.Printf("Defining function: %s\n", String(name))
 		if !SymbolP(name) {
 			err = ProcessError("Function name has to be a symbol", env)
 			return
@@ -182,7 +189,7 @@ func typeSpecToTypeMask(typeSpec string, env *SymbolTableFrame) (mask uint32, er
 	return
 }
 
-func TypeDefImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func typeDefImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	thing := First(args)
 	if !SymbolP(thing) {
 		err = ProcessError(fmt.Sprintf("typeDef expected a symbol name but received %s", String(Car(thing))), env)
@@ -216,7 +223,7 @@ func TypeDefImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return
 }
 
-func DefmacroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func defMacroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var value *Data
 	thing := Car(args)
 	if ListP(thing) || DottedListP(thing) {
@@ -400,7 +407,7 @@ func rebindDoLocals(bindingForms *Data, env *SymbolTableFrame) (err error) {
 	return
 }
 
-func DoImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func doImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	bindings := Car(args)
 	if !ListP(bindings) {
 		err = ProcessError("Do requires a list of bindings as it's first argument", env)
@@ -456,7 +463,7 @@ func DoImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return
 }
 
-func ApplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func applyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f, err := Eval(Car(args), env)
 	if err != nil {
 		return
@@ -493,7 +500,7 @@ func ApplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return ApplyWithoutEval(f, argList, env)
 }
 
-func ChainImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func chainImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var value *Data
 
 	value, err = Eval(Car(args), env)
@@ -518,7 +525,7 @@ func ChainImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return
 }
 
-func TapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func tapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var value *Data
 
 	value, err = Eval(Car(args), env)
@@ -543,7 +550,7 @@ func TapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return
 }
 
-func DefinitionOfImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func definitionOfImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var name *Data = nil
 	if SymbolP(Car(args)) {
 		name = Car(args)
@@ -568,7 +575,7 @@ func DefinitionOfImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 	}
 }
 
-func DocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func docImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var name *Data = First(args)
 	if !SymbolP(name) {
 		err = ProcessError(fmt.Sprintf("doc requires a symbol naming a function, but received %s.", String(name)), env)
@@ -592,7 +599,7 @@ func DocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 }
 
-func TypeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func typeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var name *Data = First(args)
 	if !SymbolP(name) {
 		err = ProcessError(fmt.Sprintf("type requires a symbol naming a function, but received %s.", String(name)), env)

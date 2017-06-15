@@ -10,38 +10,38 @@ package golisp
 import ()
 
 func RegisterEnvironmentPrimitives() {
-	MakePrimitiveFunction("environment?", "1", EnvironmentPImpl)
-	MakeTypedPrimitiveFunction("environment-has-parent?", "1", EnvironmentParentPImpl, []uint32{EnvironmentType})
-	MakeTypedPrimitiveFunction("environment-parent", "1", EnvironmentParentImpl, []uint32{EnvironmentType})
-	MakeTypedPrimitiveFunction("environment-bound-names", "1", EnvironmentBoundNamesImpl, []uint32{EnvironmentType})
-	MakeTypedPrimitiveFunction("environment-macro-names", "1", EnvironmentMacroNamesImpl, []uint32{EnvironmentType})
-	MakeTypedPrimitiveFunction("environment-bindings", "1", EnvironmentBindingsImpl, []uint32{EnvironmentType})
-	MakeTypedPrimitiveFunction("environment-reference-type", "2", EnvironmentReferenceTypeImpl, []uint32{EnvironmentType, SymbolType})
-	MakeTypedPrimitiveFunction("environment-bound?", "2", EnvironmentBoundPImpl, []uint32{EnvironmentType, SymbolType})
-	MakeTypedPrimitiveFunction("environment-assigned?", "2", EnvironmentAssignedPImpl, []uint32{EnvironmentType, SymbolType})
-	MakeTypedPrimitiveFunction("environment-lookup", "2", EnvironmentLookupImpl, []uint32{EnvironmentType, SymbolType})
-	MakeTypedPrimitiveFunction("environment-lookup-macro", "2", EnvironmentLookupMacroImpl, []uint32{EnvironmentType, SymbolType})
-	MakeTypedPrimitiveFunction("environment-assignable?", "2", EnvironmentAssignablePImpl, []uint32{EnvironmentType, SymbolType})
-	MakeTypedPrimitiveFunction("environment-assign!", "3", EnvironmentAssignBangImpl, []uint32{EnvironmentType, SymbolType})
-	MakeTypedPrimitiveFunction("environment-definable?", "2", EnvironmentDefinablePImpl, []uint32{EnvironmentType, SymbolType})
-	MakeTypedPrimitiveFunction("environment-define", "3", EnvironmentDefineImpl, []uint32{EnvironmentType, SymbolType, AnyType})
-	MakePrimitiveFunction("system-global-environment", "0", SystemGlobalEnvironmentImpl)
-	MakePrimitiveFunction("the-environment", "0", TheEnvironmentImpl)
-	MakeTypedPrimitiveFunction("procedure-environment", "1", ProcedureEnvironmentImpl, []uint32{FunctionType})
-	MakeTypedPrimitiveFunction("make-top-level-environment", "1|2|3", MakeTopLevelEnvironmentImpl, []uint32{StringType | ConsCellType, ConsCellType})
-	MakeTypedPrimitiveFunction("find-top-level-environment", "1", FindTopLevelEnvironmentImpl, []uint32{StringType | SymbolType})
+	MakePrimitiveFunction("environment?", "1", environmentPImpl)
+	MakeTypedPrimitiveFunction("environment-has-parent?", "1", environmentParentPImpl, []uint32{EnvironmentType})
+	MakeTypedPrimitiveFunction("environment-parent", "1", environmentParentImpl, []uint32{EnvironmentType})
+	MakeTypedPrimitiveFunction("environment-bound-names", "1", environmentBoundNamesImpl, []uint32{EnvironmentType})
+	MakeTypedPrimitiveFunction("environment-macro-names", "1", environmentMacroNamesImpl, []uint32{EnvironmentType})
+	MakeTypedPrimitiveFunction("environment-bindings", "1", environmentBindingsImpl, []uint32{EnvironmentType})
+	MakeTypedPrimitiveFunction("environment-reference-type", "2", environmentReferenceTypeImpl, []uint32{EnvironmentType, SymbolType})
+	MakeTypedPrimitiveFunction("environment-bound?", "2", environmentBoundPImpl, []uint32{EnvironmentType, SymbolType})
+	MakeTypedPrimitiveFunction("environment-assigned?", "2", environmentAssignedPImpl, []uint32{EnvironmentType, SymbolType})
+	MakeTypedPrimitiveFunction("environment-lookup", "2", environmentLookupImpl, []uint32{EnvironmentType, SymbolType})
+	MakeTypedPrimitiveFunction("environment-lookup-macro", "2", environmentLookupMacroImpl, []uint32{EnvironmentType, SymbolType})
+	MakeTypedPrimitiveFunction("environment-assignable?", "2", environmentAssignablePImpl, []uint32{EnvironmentType, SymbolType})
+	MakeTypedPrimitiveFunction("environment-assign!", "3", environmentAssignBangImpl, []uint32{EnvironmentType, SymbolType})
+	MakeTypedPrimitiveFunction("environment-definable?", "2", environmentDefinablePImpl, []uint32{EnvironmentType, SymbolType})
+	MakeTypedPrimitiveFunction("environment-define", "3", environmentDefineImpl, []uint32{EnvironmentType, SymbolType, AnyType})
+	MakePrimitiveFunction("system-global-environment", "0", systemGlobalEnvironmentImpl)
+	MakePrimitiveFunction("the-environment", "0", theEnvironmentImpl)
+	MakeTypedPrimitiveFunction("procedure-environment", "1", procedureEnvironmentImpl, []uint32{FunctionType})
+	MakeTypedPrimitiveFunction("make-top-level-environment", "1|2|3", makeTopLevelEnvironmentImpl, []uint32{StringType | ConsCellType, ConsCellType})
+	MakeTypedPrimitiveFunction("find-top-level-environment", "1", findTopLevelEnvironmentImpl, []uint32{StringType | SymbolType})
 }
 
-func EnvironmentPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func environmentPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return BooleanWithValue(EnvironmentP(Car(args))), nil
 }
 
-func EnvironmentParentPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func environmentParentPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	e := EnvironmentValue(First(args))
 	return BooleanWithValue(e.Parent != nil), nil
 }
 
-func EnvironmentParentImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func environmentParentImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	e := EnvironmentValue(First(args))
 	if e.Parent == nil {
 		return
@@ -50,7 +50,7 @@ func EnvironmentParentImpl(args *Data, env *SymbolTableFrame) (result *Data, err
 	}
 }
 
-func EnvironmentBoundNamesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func environmentBoundNamesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	e := EnvironmentValue(First(args))
 	keys := make([]*Data, 0, 0)
 	for _, val := range e.Bindings {
@@ -59,7 +59,7 @@ func EnvironmentBoundNamesImpl(args *Data, env *SymbolTableFrame) (result *Data,
 	return ArrayToList(keys), nil
 }
 
-func EnvironmentMacroNamesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func environmentMacroNamesImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	e := EnvironmentValue(First(args))
 	keys := make([]*Data, 0, 0)
 	for _, val := range e.Bindings {
@@ -70,7 +70,7 @@ func EnvironmentMacroNamesImpl(args *Data, env *SymbolTableFrame) (result *Data,
 	return ArrayToList(keys), nil
 }
 
-func EnvironmentBindingsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func environmentBindingsImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	e := EnvironmentValue(First(args))
 	keys := make([]*Data, 0, 0)
 	for _, val := range e.Bindings {
@@ -83,7 +83,7 @@ func EnvironmentBindingsImpl(args *Data, env *SymbolTableFrame) (result *Data, e
 	return ArrayToList(keys), nil
 }
 
-func EnvironmentReferenceTypeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func environmentReferenceTypeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	localEnv := EnvironmentValue(First(args))
 	binding, found := localEnv.FindBindingFor(Second(args))
 	if !found {
@@ -98,13 +98,13 @@ func EnvironmentReferenceTypeImpl(args *Data, env *SymbolTableFrame) (result *Da
 	return
 }
 
-func EnvironmentBoundPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func environmentBoundPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	localEnv := EnvironmentValue(First(args))
 	_, found := localEnv.FindBindingFor(Second(args))
 	return BooleanWithValue(found), nil
 }
 
-func EnvironmentAssignedPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func environmentAssignedPImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	localEnv := EnvironmentValue(First(args))
 	binding, found := localEnv.FindBindingFor(Second(args))
 	if found {
@@ -123,7 +123,7 @@ func EnvironmentAssignedPImpl(args *Data, env *SymbolTableFrame) (result *Data, 
 	return
 }
 
-func EnvironmentLookupImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func environmentLookupImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	localEnv := EnvironmentValue(First(args))
 	binding, found := localEnv.FindBindingFor(Second(args))
 	if found {
@@ -142,7 +142,7 @@ func EnvironmentLookupImpl(args *Data, env *SymbolTableFrame) (result *Data, err
 	}
 }
 
-func EnvironmentLookupMacroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func environmentLookupMacroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	localEnv := EnvironmentValue(First(args))
 	binding, found := localEnv.FindBindingFor(Second(args))
 	if found && MacroP(binding.Val) {
@@ -153,13 +153,13 @@ func EnvironmentLookupMacroImpl(args *Data, env *SymbolTableFrame) (result *Data
 	return
 }
 
-func EnvironmentAssignablePImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func environmentAssignablePImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	localEnv := EnvironmentValue(First(args))
 	_, found := localEnv.FindBindingFor(Second(args))
 	return BooleanWithValue(found), nil
 }
 
-func EnvironmentAssignBangImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func environmentAssignBangImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	localEnv := EnvironmentValue(First(args))
 	binding, found := localEnv.FindBindingFor(Second(args))
 	if found {
@@ -169,20 +169,20 @@ func EnvironmentAssignBangImpl(args *Data, env *SymbolTableFrame) (result *Data,
 	return
 }
 
-func EnvironmentDefinablePImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func environmentDefinablePImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return LispTrue, nil
 }
 
-func EnvironmentDefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func environmentDefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	EnvironmentValue(First(args)).BindLocallyTo(Second(args), Third(args))
 	return Third(args), nil
 }
 
-func SystemGlobalEnvironmentImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func systemGlobalEnvironmentImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return EnvironmentWithValue(Global), nil
 }
 
-func TheEnvironmentImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func theEnvironmentImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if env == Global || env.Parent == Global {
 		return EnvironmentWithValue(env), nil
 	} else {
@@ -191,11 +191,11 @@ func TheEnvironmentImpl(args *Data, env *SymbolTableFrame) (result *Data, err er
 	}
 }
 
-func ProcedureEnvironmentImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func procedureEnvironmentImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return EnvironmentWithValue(FunctionValue(First(args)).Env), nil
 }
 
-func MakeTopLevelEnvironmentImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func makeTopLevelEnvironmentImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var name string
 
 	if StringP(Car(args)) {
@@ -242,7 +242,7 @@ func MakeTopLevelEnvironmentImpl(args *Data, env *SymbolTableFrame) (result *Dat
 	return EnvironmentWithValue(newEnv), nil
 }
 
-func FindTopLevelEnvironmentImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func findTopLevelEnvironmentImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	TopLevelEnvironments.Mutex.RLock()
 	defer TopLevelEnvironments.Mutex.RUnlock()
 	e := TopLevelEnvironments.Environments[StringValue(First(args))]
