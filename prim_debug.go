@@ -119,7 +119,8 @@ func funcOrNil(fname string, env *SymbolTableFrame) *Data {
 }
 
 func DebugRepl(env *SymbolTableFrame) {
-	env.DumpHeader()
+	//	env.DumpHeader()
+	fmt.Printf("%s\n", env.Name)
 	prompt := "D> "
 	lastInput := ""
 	for true {
@@ -257,7 +258,8 @@ func ProcessError(errorMessage string, env *SymbolTableFrame) error {
 		DebugRepl(env)
 		return nil
 	} else {
-		stackTrace := env.StackTrace()
-		return errors.New(fmt.Sprintf("%s\nStack trace:\n%s", errorMessage, strings.Join(stackTrace, "\n")))
+		// stackTrace := env.StackTrace()
+		// return errors.New(fmt.Sprintf("%s\nStack trace:\n%s", errorMessage, strings.Join(stackTrace, "\n")))
+		return errors.New(fmt.Sprintf("%s\n", errorMessage))
 	}
 }

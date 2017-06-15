@@ -53,7 +53,7 @@ func Repl() {
 					if err != nil {
 						fmt.Printf("Error in evaluation: %s\n", err)
 						if DebugOnError {
-							DebugRepl(DebugErrorEnv)
+							DebugRepl(Global)
 						}
 					} else {
 						fmt.Printf("==> %s\n", String(d))
