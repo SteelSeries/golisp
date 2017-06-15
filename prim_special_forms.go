@@ -39,8 +39,6 @@ func initTypeMap() {
 }
 
 func RegisterSpecialFormPrimitives() {
-	MakeSpecialForm("cond", "*", condImpl)
-	MakeSpecialForm("case", ">=1", caseImpl)
 	MakeSpecialForm("define", ">=1", defineImpl)
 	MakeSpecialForm("typedef", ">=1", typeDefImpl)
 	MakeSpecialForm("defmacro", ">=1", defMacroImpl)
@@ -58,83 +56,6 @@ func RegisterSpecialFormPrimitives() {
 	MakeSpecialForm("letrec", ">=1", letRecImpl)
 
 	initTypeMap()
-}
-
-func evaluateBody(value *Data, sexprs *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var f *Data
-	if value != nil && StringValue(First(sexprs)) == "=>" {
-		f, err = Eval(Second(sexprs), env)
-		if err != nil {
-			return
-		}
-		if !FunctionOrPrimitiveP(f) {
-			err = ProcessError(fmt.Sprintf("The alternate Cond clause syntax requires a function to follow => but was given %s.", String(f)), env)
-			return
-		}
-		return ApplyWithoutEval(f, InternalMakeList(value), env)
-	} else {
-		for e := sexprs; NotNilP(e); e = Cdr(e) {
-			result, err = Eval(Car(e), env)
-			if err != nil {
-				return
-			}
-		}
-	}
-	return
-}
-
-func condImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var condition *Data
-	for c := args; NotNilP(c); c = Cdr(c) {
-		clause := Car(c)
-		if !ListP(clause) {
-			err = ProcessError("Cond expect a sequence of clauses that are lists", env)
-			return
-		}
-		if IsEqual(Car(clause), Intern("else")) {
-			return evaluateBody(nil, Cdr(clause), env)
-		} else {
-			condition, err = Eval(Car(clause), env)
-			if err != nil {
-				return
-			}
-			if BooleanValue(condition) {
-				return evaluateBody(condition, Cdr(clause), env)
-			}
-		}
-	}
-	return
-}
-
-func caseImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var keyValue *Data
-
-	keyValue, err = Eval(Car(args), env)
-	if err != nil {
-		return
-	}
-
-	for clauseCell := Cdr(args); NotNilP(clauseCell); clauseCell = Cdr(clauseCell) {
-		clause := Car(clauseCell)
-		if !ListP(clause) {
-			err = ProcessError("Case expectes a sequence of clauses that are lists", env)
-			return
-		}
-		if IsEqual(Car(clause), Intern("else")) {
-			return evaluateBody(nil, Cdr(clause), env)
-		} else if ListP(Car(clause)) {
-			for v := Car(clause); NotNilP(v); v = Cdr(v) {
-				if IsEqual(Car(v), keyValue) {
-					return evaluateBody(nil, Cdr(clause), env)
-				}
-			}
-		} else {
-			err = ProcessError("Case the condition part of clauses to be lists or 'else", env)
-			return
-		}
-	}
-
-	return
 }
 
 func defineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {

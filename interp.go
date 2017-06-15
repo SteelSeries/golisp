@@ -17,6 +17,9 @@ var quoteSym = Intern("quote")
 var beginSym = Intern("begin")
 var setSym = Intern("set!")
 var ifSym = Intern("if")
+var condSym = Intern("cond")
+var caseSym = Intern("case")
+var elseSym = Intern("else")
 var lambdaSym = Intern("lambda")
 var namedLambdaSym = Intern("named-lambda")
 
@@ -147,6 +150,66 @@ INTERP:
 				x = Fourth(x)
 			}
 			goto INTERP
+		} else if head == condSym {
+			if !ListP(Cdr(x)) {
+				err = ProcessError("Cond expect a list of clauses of condition-action clauses", env)
+				return
+			}
+			var condition *Data
+			for c := Cdr(x); NotNilP(c); c = Cdr(c) {
+				clause := Car(c)
+				if !ListP(clause) {
+					err = ProcessError("Cond expect a sequence of clauses that are lists", env)
+					return
+				}
+				if IsEqual(Car(clause), elseSym) {
+					x = Cons(beginSym, Cdr(clause))
+					goto INTERP
+				} else {
+					condition, err = Eval(Car(clause), env)
+					if err != nil {
+						return nil, err
+					}
+					if BooleanValue(condition) {
+						x = Cons(beginSym, Cdr(clause))
+						goto INTERP
+					}
+				}
+			}
+		} else if head == caseSym {
+			if !ListP(Cdr(x)) {
+				err = ProcessError("Cond expect a list of clauses of condition-action clauses", env)
+				return
+			}
+
+			var keyValue *Data
+			keyValue, err = Eval(Cadr(x), env)
+			if err != nil {
+				return
+			}
+
+			for clauseCell := Cddr(x); NotNilP(clauseCell); clauseCell = Cdr(clauseCell) {
+				clause := Car(clauseCell)
+				if !ListP(clause) {
+					err = ProcessError("Case expectes a sequence of clauses that are lists", env)
+					return
+				}
+				if IsEqual(Car(clause), elseSym) {
+					x = Cons(beginSym, Cdr(clause))
+					goto INTERP
+				} else if ListP(Car(clause)) {
+					for v := Car(clause); NotNilP(v); v = Cdr(v) {
+						if IsEqual(Car(v), keyValue) {
+							x = Cons(beginSym, Cdr(clause))
+							goto INTERP
+						}
+					}
+				} else {
+					err = ProcessError("Case the condition part of clauses to be lists or 'else", env)
+					return
+				}
+			}
+
 		} else if head == lambdaSym {
 			//			fmt.Printf("lambda\n")
 			formals := Cadr(x)
@@ -211,7 +274,7 @@ INTERP:
 				if err != nil {
 					return nil, err
 				}
-				x = Cons(Intern("begin"), f.Body)
+				x = Cons(beginSym, f.Body)
 				goto INTERP
 			} else if CompiledFunctionP(proc) {
 				f := CompiledFunctionValue(proc)
