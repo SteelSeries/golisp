@@ -8,18 +8,18 @@
 ;;; GoLisp compiler driver
 
 
+;;;-----------------------------------------------------------------------------
+
+
 (define (make-path filename)
   (string-join (list (get-env "GOLISPHOME") "tools" "compiler" filename) "/"))
 
-(define ***COMPILER-ENVIRONMENT*** nil)
-
-(when (nil? ***COMPILER-ENVIRONMENT***)
-  (set! ***COMPILER-ENVIRONMENT*** (make-top-level-environment "Compiler" ))
-  (load-in-environment (make-path "utils.scm") ***COMPILER-ENVIRONMENT***)
-  (load-in-environment (make-path "compiler.scm") ***COMPILER-ENVIRONMENT***)
-  (load-in-environment (make-path "assembler.scm") ***COMPILER-ENVIRONMENT***)
-  (load-in-environment (make-path "optimizer.scm") ***COMPILER-ENVIRONMENT***)
-  (load-in-environment (make-path "macros.scm") ***COMPILER-ENVIRONMENT***))
+(define ***COMPILER-ENVIRONMENT*** (make-top-level-environment "Compiler" ))
+(load-in-environment (make-path "utils.scm") ***COMPILER-ENVIRONMENT***)
+(load-in-environment (make-path "compiler.scm") ***COMPILER-ENVIRONMENT***)
+(load-in-environment (make-path "assembler.scm") ***COMPILER-ENVIRONMENT***)
+(load-in-environment (make-path "optimizer.scm") ***COMPILER-ENVIRONMENT***)
+(load-in-environment (make-path "macros.scm") ***COMPILER-ENVIRONMENT***)
 
 
 ;;; Compile an expression as if it were in a parameterless lambda.
