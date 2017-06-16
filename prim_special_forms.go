@@ -404,7 +404,17 @@ func applyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	ary := ToArray(Cdr(args))
+	ary := make([]*Data, 0, Length(args)-1)
+
+	var v *Data
+	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
+		v, err = Eval(Car(c), env)
+		if err != nil {
+			return
+		}
+		ary = append(ary, v)
+	}
+
 	var argList *Data
 	if ListP(ary[len(ary)-1]) {
 		if len(ary) > 1 {
