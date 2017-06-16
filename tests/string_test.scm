@@ -233,6 +233,9 @@
 
 
 (context "String comparison"
+
+		 ()
+		 
          (it "can test string equality"
              (assert-true (string=? "a" "a"))
              (assert-false (string=? "a" "b"))
@@ -268,6 +271,9 @@
              (assert-true (string-ci>=? "a" "A"))))
 
 (context "Substring comparison"
+
+		 ()
+		 
          (it "can test string equality"
              (assert-true (substring=? "-a-" 1 2 "-a-" 1 2))
              (assert-false (substring=? "-a-" 1 2 "-b-" 1 2))

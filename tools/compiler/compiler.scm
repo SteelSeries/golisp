@@ -84,8 +84,8 @@
 		((atom? x)
 		 (log-it "- atom")
 		 (comp-const x val? more?))
-		((macro? (eval (first x)))
-		 (log-it "- macro")
+		((macro? (eval (car x) ***COMPILER-ENVIRONMENT***))
+		 (log-it "- macro: ~A" (car x))
 		 (comp (apply expand x) env val? more?))
 		(else
 		 (case (car x)
@@ -296,6 +296,7 @@
 (define (comp-funcall f args env val? more?)
   (let* ((prim (primitive-op? f env (length args))))
 	(log-it "Compiling a function call: ~A~%" f)
+;	(log-it "(car f) is ~A" (eval (car f)))
 
 	;; a function compilable to a primitive instruction 
 	(cond (prim							
@@ -327,8 +328,7 @@
 		   (comp-begin (cddr f) env val? more?))
 
 		   ;; a special form
-		  ((and (list? f)
-				(special-form? (eval (car f))))
+		  ((special-form? (eval f))
 		   (log-it "Compiling special form call")
 		   (seq (map (lambda (arg)
 					   (gen 'CONST arg))
@@ -339,8 +339,7 @@
 				  (gen 'POP))))
 
 		  ;; a primitive (implemented directly in Go)
-		  ((and (list? f)
-				(primitive? (eval (car f))))		
+		  ((primitive? (eval f))		
 		   (log-it "Compiling primitive function call")
 		   (seq (comp-list args env)
 				;; (comp f env #t #t)
@@ -351,8 +350,7 @@
 				  (gen 'RETURN))))
 
 		  ;; an interpreted function
-		  ((and (list? f)
-				(function? (eval (car f))))			
+		  ((function? (eval f))			
 		   (log-it "Compiling an interpreted function call")
 		   (seq (comp-list args env)
 				;; (comp f env #t #t)
@@ -470,15 +468,7 @@
 		 (cons (first dotted-list)
 			   (make-true-list (rest dotted-list))))))
 
-;;; Compile an expression as if it were in a parameterless lambda.
-
-(define (compile x)
-  (set! *label-num* 0)
-  (log-it "COMPILER: ~A" x)
-  (comp-lambda '() (list x) nil))
-
-
-;;; Return a one-element i s t of the specified instruction.
+;;; Return a one-element list of the specified instruction & args.
 
 (define (gen opcode . args)
   (log-it "GEN: ~A ~A" opcode args)
@@ -549,4 +539,86 @@
 		(list (position frame env)
 			  (position symbol frame))
 		#f)))
+
+
+;;; Build a new function.
+
+(define (optimize-and-assemble-function f)
+;  (dump-fn f)
+  (assemble-function (optimize-function f)))
+
+
+(define (create-compiled-function name env args code)
+  (if (and (list? code)
+		   (eqv? (length code) 0))
+	(error "setting code to empty"))
+  (optimize-and-assemble-function (make-compiled-function name env args code)))
+
+;;;-----------------------------------------------------------------------------
+;;; Print a compiled function
+
+;;; Format the code index to be right aligned, indented appropriately
+
+(define (format-code-index i indent)
+  (let ((prefix (cond ((< i 10) "  ")
+					  ((< i 100) " ")
+					  (else ""))))
+	(format #f "~VA~A~A: " indent "" prefix i)))
+
+
+										;  5: 16                              ; RETURN
+
+;;; Print all the instructions in a function.
+;;; If the argument is not a function, just princ it,
+;;; but in a column at least 8 spaces wide.
+
+(define (show-fn fn . options)
+  (let ((stream (if (nil? options)
+				  *standard-output*
+				  (car options)))
+		(indent (if (or (nil? options) (nil? (cdr options)))
+				  0
+				  (cadr options))))
+	(if (not (compiled-function? fn))
+	  (format stream "~8A" fn)
+	  (let ((code (compiled-code fn)))
+		(newline stream)
+		(vector-for-each (lambda (i instr) 
+						   (let* ((instr-length (vector-length instr)))
+							 (format stream (format-code-index i indent))
+							 (vector-for-each (lambda (arg)
+												(show-fn arg stream (+ indent 8)))
+											  (subvector instr 0 (min (list instr-length 3))))
+							 (format stream "~VA; ~A ~A ~A ~A"
+									 (if (eqv? 20 (vector-first instr))
+										 37
+										 (+ (- 8 indent) (vector-ref #(0 16 8 0 0) instr-length)))
+									 ""
+									 (car (rassoc (vector-ref instr 0) opcodes))
+									 (if (> instr-length 1) (vector-ref instr 1) "")
+									 (if (> instr-length 2) (vector-ref instr 2) "")
+									 (if (> instr-length 3) (vector-ref instr 3) ""))
+							 (newline stream)))
+						 (list->vector (interval 0 (-1+ (vector-length code))))
+						 code)))))
+
+
+(define (dump-fn fn)
+  (format #t
+		  "=>Compiled function:~%=>  Name: ~A~%=>  Args: ~A~%=>  Env: ~A~%=>  Code: ~A~%"
+		  (compiled-name fn)
+		  (compiled-args fn)
+		  (compiled-env fn)
+		  (compiled-code fn)))
+
+
+;;; Compile an expression and show the resulting code
+
+(define (comp-show x)
+  (let ((fn (compile x)))
+;	(dump-fn fn)
+	(format #t "Result:~%")
+	(eval (list show-fn fn))
+	nil))
+
 

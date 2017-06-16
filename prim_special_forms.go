@@ -39,48 +39,30 @@ func initTypeMap() {
 }
 
 func RegisterSpecialFormPrimitives() {
-	MakeSpecialForm("define", ">=1", DefineImpl)
-	MakeSpecialForm("typedef", ">=1", TypeDefImpl)
-	MakeSpecialForm("defmacro", ">=1", DefmacroImpl)
-	MakeSpecialForm("define-macro", ">=1", DefmacroImpl)
-	MakeSpecialForm("do", ">=2", DoImpl)
-	MakePrimitiveFunction("apply", ">=1", ApplyImpl)
-	MakeSpecialForm("->", ">=1", ChainImpl)
-	MakeSpecialForm("=>", ">=1", TapImpl)
-	MakeSpecialForm("definition-of", "1", DefinitionOfImpl)
-	MakeSpecialForm("doc", "1", DocImpl)
-	MakeSpecialForm("type", "1", TypeImpl)
+	MakeSpecialForm("define", ">=1", defineImpl)
+	MakeSpecialForm("typedef", ">=1", typeDefImpl)
+	MakeSpecialForm("defmacro", ">=1", defMacroImpl)
+	MakeSpecialForm("define-macro", ">=1", defMacroImpl)
+	MakeSpecialForm("define-compiler-macro", ">=1", defCompilerMacroImpl)
+	MakeSpecialForm("do", ">=2", doImpl)
+	MakeSpecialForm("apply", ">=1", applyImpl)
+	MakeSpecialForm("->", ">=1", chainImpl)
+	MakeSpecialForm("=>", ">=1", tapImpl)
+	MakeSpecialForm("definition-of", "1", definitionOfImpl)
+	MakeSpecialForm("doc", "1", docImpl)
+	MakeSpecialForm("type", "1", typeImpl)
+	MakeSpecialForm("let", ">=1", letImpl)
+	MakeSpecialForm("let*", ">=1", letStarImpl)
+	MakeSpecialForm("letrec", ">=1", letRecImpl)
 
 	initTypeMap()
 }
 
-func evaluateBody(value *Data, sexprs *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var f *Data
-	if value != nil && StringValue(First(sexprs)) == "=>" {
-		f, err = Eval(Second(sexprs), env)
-		if err != nil {
-			return
-		}
-		if !FunctionOrPrimitiveP(f) {
-			err = ProcessError(fmt.Sprintf("The alternate Cond clause syntax requires a function to follow => but was given %s.", String(f)), env)
-			return
-		}
-		return ApplyWithoutEval(f, InternalMakeList(value), env)
-	} else {
-		for e := sexprs; NotNilP(e); e = Cdr(e) {
-			result, err = Eval(Car(e), env)
-			if err != nil {
-				return
-			}
-		}
-	}
-	return
-}
-
-func DefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func defineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var value *Data
 	thing := Car(args)
 	if SymbolP(thing) {
+		//		fmt.Printf("Defining var: %s\n", String(thing))
 		value, err = Eval(Cadr(args), env)
 		if err != nil {
 			return
@@ -89,6 +71,7 @@ func DefineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		name := Car(thing)
 		params := Cdr(thing)
 		thing = name
+		//		fmt.Printf("Defining function: %s\n", String(name))
 		if !SymbolP(name) {
 			err = ProcessError("Function name has to be a symbol", env)
 			return
@@ -127,7 +110,7 @@ func typeSpecToTypeMask(typeSpec string, env *SymbolTableFrame) (mask uint32, er
 	return
 }
 
-func TypeDefImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func typeDefImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	thing := First(args)
 	if !SymbolP(thing) {
 		err = ProcessError(fmt.Sprintf("typeDef expected a symbol name but received %s", String(Car(thing))), env)
@@ -161,7 +144,7 @@ func TypeDefImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return
 }
 
-func DefmacroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func defMacroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var value *Data
 	thing := Car(args)
 	if ListP(thing) || DottedListP(thing) {
@@ -180,6 +163,31 @@ func DefmacroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 	_, err = env.BindLocallyTo(thing, value)
 	return value, err
+}
+
+func defCompilerMacroImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	// if BooleanValue(Global.ValueOf(CompilingSymbol)) {
+	var value *Data
+	thing := Car(args)
+	if ListP(thing) || DottedListP(thing) {
+		name := Car(thing)
+		params := Cdr(thing)
+		thing = name
+		if !SymbolP(name) {
+			err = ProcessError("Compiler macro name has to be a symbol", env)
+			return
+		}
+		body := Cadr(args)
+		value = CompilerMacroWithNameParamsBodyAndParent(StringValue(name), params, body, env)
+	} else {
+		err = ProcessError("Invalid compiler macro definition", env)
+		return
+	}
+	env.BindLocallyTo(thing, value)
+	return value, nil
+	// }
+	// fmt.Printf("Attempt to define compiled macro '%s' when not compiling\n", String(First(args)))
+	// return
 }
 
 func bindLetLocals(bindingForms *Data, rec bool, localEnv *SymbolTableFrame, evalEnv *SymbolTableFrame) (err error) {
@@ -223,6 +231,82 @@ func bindLetLocals(bindingForms *Data, rec bool, localEnv *SymbolTableFrame, eva
 	return
 }
 
+func letCommon(args *Data, env *SymbolTableFrame, star bool, rec bool) (result *Data, err error) {
+	if !ListP(Car(args)) {
+		err = ProcessError("Let requires a list of bindings as it's first argument", env)
+		return
+	}
+
+	localEnv := NewSymbolTableFrameBelow(env, "let")
+	localEnv.Previous = env
+	var evalEnv *SymbolTableFrame
+	if star || rec {
+		evalEnv = localEnv
+	} else {
+		evalEnv = env
+	}
+	err = bindLetLocals(Car(args), rec, localEnv, evalEnv)
+	if err != nil {
+		return
+	}
+
+	for cell := Cdr(args); NotNilP(cell); cell = Cdr(cell) {
+		sexpr := Car(cell)
+		result, err = Eval(sexpr, localEnv)
+		if err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+func namedLetImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	name := First(args)
+	bindings := Second(args)
+	if !ListP(bindings) {
+		err = ProcessError("A named let requires a list of bindings as it's second argument", env)
+		return
+	}
+	body := Cddr(args)
+
+	vars := make([]*Data, 0, Length(bindings))
+	initials := make([]*Data, 0, Length(bindings))
+	for remainingBindings := bindings; NotNilP(remainingBindings); remainingBindings = Cdr(remainingBindings) {
+		binding := Car(remainingBindings)
+		if !SymbolP(Car(binding)) {
+			err = ProcessError("The first element of a binding must be a symbol", env)
+			return
+		}
+		vars = append(vars, Car(binding))
+		initials = append(initials, Cadr(binding))
+	}
+	varsList := ArrayToList(vars)
+	initialsList := ArrayToList(initials)
+	localEnv := NewSymbolTableFrameBelow(env, StringValue(name))
+	localEnv.Previous = env
+	localEnv.BindLocallyTo(name, nil)
+	namedLetProc := FunctionWithNameParamsDocBodyAndParent(StringValue(name), varsList, "", body, localEnv)
+	localEnv.BindLocallyTo(name, namedLetProc)
+	return FunctionValue(namedLetProc).Apply(initialsList, env)
+}
+
+func letImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	if SymbolP(Car(args)) {
+		return namedLetImpl(args, env)
+	} else {
+		return letCommon(args, env, false, false)
+	}
+}
+
+func letStarImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return letCommon(args, env, true, false)
+}
+
+func letRecImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return letCommon(args, env, false, true)
+}
+
 func rebindDoLocals(bindingForms *Data, env *SymbolTableFrame) (err error) {
 	var names []*Data
 	var values []*Data
@@ -253,7 +337,7 @@ func rebindDoLocals(bindingForms *Data, env *SymbolTableFrame) (err error) {
 	return
 }
 
-func DoImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func doImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	bindings := Car(args)
 	if !ListP(bindings) {
 		err = ProcessError("Do requires a list of bindings as it's first argument", env)
@@ -309,8 +393,11 @@ func DoImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return
 }
 
-func ApplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	f := Car(args)
+func applyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	f, err := Eval(Car(args), env)
+	if err != nil {
+		return
+	}
 
 	if !FunctionOrPrimitiveP(f) {
 		err = ProcessError(fmt.Sprintf("apply requires a function as it's first argument, but got %s.", String(f)), env)
@@ -333,7 +420,7 @@ func ApplyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return ApplyWithoutEval(f, argList, env)
 }
 
-func ChainImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func chainImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var value *Data
 
 	value, err = Eval(Car(args), env)
@@ -358,7 +445,7 @@ func ChainImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return
 }
 
-func TapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func tapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var value *Data
 
 	value, err = Eval(Car(args), env)
@@ -383,8 +470,8 @@ func TapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return
 }
 
-func DefinitionOfImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var name *Data
+func definitionOfImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	var name *Data = nil
 	if SymbolP(Car(args)) {
 		name = Car(args)
 	} else {
@@ -408,7 +495,7 @@ func DefinitionOfImpl(args *Data, env *SymbolTableFrame) (result *Data, err erro
 	}
 }
 
-func DocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func docImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var name *Data = First(args)
 	if !SymbolP(name) {
 		err = ProcessError(fmt.Sprintf("doc requires a symbol naming a function, but received %s.", String(name)), env)
@@ -432,7 +519,7 @@ func DocImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 }
 
-func TypeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func typeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var name *Data = First(args)
 	if !SymbolP(name) {
 		err = ProcessError(fmt.Sprintf("type requires a symbol naming a function, but received %s.", String(name)), env)

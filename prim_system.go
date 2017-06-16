@@ -24,38 +24,42 @@ var symbolCountsMutex sync.Mutex
 func RegisterSystemPrimitives() {
 	Global.BindTo(Intern("__OS__"), Intern(runtime.GOOS))
 
-	MakeTypedPrimitiveFunction("sleep", "1", SleepImpl, []uint32{IntegerType})
-	MakePrimitiveFunction("millis", "0", MillisImpl)
-	MakePrimitiveFunction("write-line", "*", WriteLineImpl)
-	MakePrimitiveFunction("write-log", "*", WriteLogImpl)
-	MakePrimitiveFunction("str", "*", MakeStringImpl)
+	MakeTypedPrimitiveFunction("sleep", "1", sleepImpl, []uint32{IntegerType})
+	MakePrimitiveFunction("millis", "0", millisImpl)
+	MakePrimitiveFunction("write-line", "*", writeLineImpl)
+	MakePrimitiveFunction("write-log", "*", writeLogImpl)
+	MakePrimitiveFunction("str", "*", makeStringImpl)
 	MakePrimitiveFunction("quit", "0", QuitImpl)
-	MakeTypedPrimitiveFunction("intern", "1", InternImpl, []uint32{StringType})
-	MakeTypedPrimitiveFunction("symbol->string", "1", SymbolToStringImpl, []uint32{SymbolType})
-	MakeTypedPrimitiveFunction("gensym", "0|1", GensymImpl, []uint32{StringType | SymbolType})
-	MakeTypedPrimitiveFunction("gensym-naked", "0|1", GensymNakedImpl, []uint32{StringType | SymbolType})
-	MakeTypedPrimitiveFunction("eval", "1|2", EvalImpl, []uint32{AnyType, EnvironmentType})
-	MakePrimitiveFunction("load", "1", LoadFileImpl)
-	MakePrimitiveFunction("global-eval", "1", GlobalEvalImpl)
-	MakePrimitiveFunction("panic!", "1", PanicImpl)
-	MakePrimitiveFunction("error", "1", ErrorImpl)
-	MakeTypedPrimitiveFunction("exec", ">=1", ExecImpl, []uint32{StringType, AnyType})
+	MakeTypedPrimitiveFunction("intern", "1", internImpl, []uint32{StringType})
+	MakeTypedPrimitiveFunction("symbol->string", "1", symbolToStringImpl, []uint32{SymbolType})
+	MakeTypedPrimitiveFunction("gensym", "0|1", gensymImpl, []uint32{StringType | SymbolType})
+	MakeTypedPrimitiveFunction("gensym-naked", "0|1", gensymNakedImpl, []uint32{StringType | SymbolType})
+	MakeTypedPrimitiveFunction("eval", "1|2", evalImpl, []uint32{AnyType, EnvironmentType})
+	MakeTypedPrimitiveFunction("load", "1", loadFileImpl, []uint32{StringType})
+	MakeTypedPrimitiveFunction("load-locally", "1", loadFileLocallyImpl, []uint32{StringType})
+	MakeTypedPrimitiveFunction("load-in-environment", "2", loadFileInEnvironmentImpl, []uint32{StringType, EnvironmentType})
+	MakePrimitiveFunction("global-eval", "1", globalEvalImpl)
+	MakePrimitiveFunction("panic!", "1", panicImpl)
+	MakePrimitiveFunction("error", "1", errorImpl)
+	MakeTypedPrimitiveFunction("exec", ">=1", execImpl, []uint32{StringType, AnyType})
 	MakeTypedPrimitiveFunction("get-env", "1", getEnvImpl, []uint32{StringType | SymbolType})
 	MakeTypedPrimitiveFunction("set-env", "2", setEnvImpl, []uint32{StringType | SymbolType, StringType | SymbolType})
 	MakeTypedPrimitiveFunction("unset-env", "1", unsetEnvImpl, []uint32{StringType | SymbolType})
-	MakeSpecialForm("on-error", "2|3", OnErrorImpl)
-	MakeSpecialForm("time", "1", TimeImpl)
-	MakeSpecialForm("profile", "1|2", ProfileImpl)
+	MakeSpecialForm("on-error", "2|3", onErrorImpl)
+	MakeSpecialForm("time", "1", timeImpl)
+	MakeSpecialForm("profile", "1|2", profileImpl)
 }
 
-func LoadFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	filename := Car(args)
-	if !StringP(filename) {
-		err = ProcessError("Filename must be a string", env)
-		return
-	}
+func loadFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return ProcessFile(StringValue(First(args)))
+}
 
-	return ProcessFile(StringValue(filename))
+func loadFileLocallyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return ProcessFileInEnvironment(StringValue(First(args)), env)
+}
+
+func loadFileInEnvironmentImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	return ProcessFileInEnvironment(StringValue(First(args)), EnvironmentValue(Second(args)))
 }
 
 var goodbyes []string = []string{
@@ -75,15 +79,15 @@ var goodbyes []string = []string{
 	"later dude",
 }
 
-func PanicImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func panicImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	panic(String(First(args)))
 }
 
-func ErrorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func errorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return nil, ProcessError(PrintString(First(args)), env)
 }
 
-func OnErrorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func onErrorImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	result, errThrown := Eval(First(args), env)
 	if errThrown == nil {
 		if Length(args) == 3 {
@@ -126,13 +130,13 @@ func QuitImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return
 }
 
-func SleepImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func sleepImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	millis := IntegerValue(First(args))
 	time.Sleep(time.Duration(millis) * time.Millisecond)
 	return
 }
 
-func MillisImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func millisImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	now := time.Now()
 	hour := now.Hour()
 	minute := now.Minute()
@@ -153,21 +157,21 @@ func concatStringForms(args *Data) (str string) {
 	return strings.Join(pieces, "")
 }
 
-func WriteLineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func writeLineImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	println(concatStringForms(args))
 	return
 }
 
-func WriteLogImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func writeLogImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	LogPrintf("%s\r\n", concatStringForms(args))
 	return
 }
 
-func MakeStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func makeStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return StringWithValue(concatStringForms(args)), nil
 }
 
-func TimeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func timeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	startTime := time.Now()
 
 	for cell := args; NotNilP(cell); cell = Cdr(cell) {
@@ -183,11 +187,11 @@ func TimeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return
 }
 
-func InternImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func internImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return Intern(StringValue(First(args))), nil
 }
 
-func SymbolToStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func symbolToStringImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return StringWithValue(StringValue(First(args))), nil
 }
 
@@ -220,7 +224,7 @@ func gensymHelper(primitiveName string, args *Data, env *SymbolTableFrame) (pref
 	return
 }
 
-func GensymImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func gensymImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	prefix, count, err := gensymHelper("gensym", args, env)
 	if err != nil {
 		return
@@ -229,7 +233,7 @@ func GensymImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return
 }
 
-func GensymNakedImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func gensymNakedImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	prefix, count, err := gensymHelper("gensym-naked", args, env)
 	if err != nil {
 		return
@@ -238,22 +242,21 @@ func GensymNakedImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 	return
 }
 
-func EvalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func evalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	var evalEnv *SymbolTableFrame
-	sexpr := First(args)
 	if Length(args) == 2 {
 		evalEnv = EnvironmentValue(Second(args))
 	} else {
 		evalEnv = env
 	}
-	return Eval(sexpr, evalEnv)
+	return Eval(First(args), evalEnv)
 }
 
-func GlobalEvalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func globalEvalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return Eval(First(args), Global)
 }
 
-func ProfileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func profileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if Length(args) == 2 {
 		if !StringP(Cadr(args)) {
 			err = ProcessError(fmt.Sprintf("profile requires a string filename, but received %s.", String(Cadr(args))), env)
@@ -270,7 +273,7 @@ func ProfileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return
 }
 
-func ExecImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func execImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	cmdString := StringValue(First(args))
 	cmdArgs := make([]string, 0, Length(args)-1)
 

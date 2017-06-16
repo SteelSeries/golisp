@@ -8,100 +8,34 @@
 ;;; GoLisp compiler driver
 
 
+;;;-----------------------------------------------------------------------------
+
+
 (define (make-path filename)
   (string-join (list (get-env "GOLISPHOME") "tools" "compiler" filename) "/"))
 
-(load (make-path "utils.scm"))
-(load (make-path "compiler.scm"))
-(load (make-path "assembler.scm"))
-(load (make-path "optimizer.scm"))
+(define ***COMPILER-ENVIRONMENT*** (make-top-level-environment "Compiler" ))
+(load-in-environment (make-path "utils.scm") ***COMPILER-ENVIRONMENT***)
+(load-in-environment (make-path "compiler.scm") ***COMPILER-ENVIRONMENT***)
+(load-in-environment (make-path "assembler.scm") ***COMPILER-ENVIRONMENT***)
+(load-in-environment (make-path "optimizer.scm") ***COMPILER-ENVIRONMENT***)
+(load-in-environment (make-path "macros.scm") ***COMPILER-ENVIRONMENT***)
 
 
-;;; Build a new function.
+;;; Compile an expression as if it were in a parameterless lambda.
 
-(define (optimize-and-assemble-function f)
-;  (dump-fn f)
-  (assemble-function (optimize-function f)))
-
-
-(define (create-compiled-function name env args code)
-  (if (and (list? code)
-		   (eqv? (length code) 0))
-	(error "setting code to empty"))
-  (optimize-and-assemble-function (make-compiled-function name env args code)))
-
-;;;-----------------------------------------------------------------------------
-;;; Print a compiled function
-
-;;; Format the code index to be right aligned, indented appropriately
-
-(define (format-code-index i indent)
-  (let ((prefix (cond ((< i 10) "  ")
-					  ((< i 100) " ")
-					  (else ""))))
-	(format #f "~VA~A~A: " indent "" prefix i)))
+(define (compile x)
+  (set! *label-num* 0)
+  (eval `(comp-lambda nil (list ',x) nil) ***COMPILER-ENVIRONMENT***))
 
 
-										;  5: 16                              ; RETURN
-
-;;; Print all the instructions in a function.
-;;; If the argument is not a function, just princ it,
-;;; but in a column at least 8 spaces wide.
-
-(define (show-fn fn . options)
-  (let ((stream (if (nil? options)
-				  *standard-output*
-				  (car options)))
-		(indent (if (or (nil? options) (nil? (cdr options)))
-				  0
-				  (cadr options))))
-	(if (not (compiled-function? fn))
-	  (format stream "~8A" fn)
-	  (let ((code (compiled-code fn)))
-		(newline stream)
-		(vector-for-each (lambda (i instr) 
-						   (let* ((instr-length (vector-length instr)))
-							 (format stream (format-code-index i indent))
-							 (vector-for-each (lambda (arg)
-												(show-fn arg stream (+ indent 8)))
-											  (subvector instr 0 (min (list instr-length 3))))
-							 (format stream "~VA; ~A ~A ~A ~A"
-									 (if (eqv? 20 (vector-first instr))
-										 37
-										 (+ (- 8 indent) (vector-ref #(0 16 8 0 0) instr-length))) ""
-										 (car (rassoc (vector-ref instr 0) opcodes))
-										 (if (> instr-length 1) (vector-ref instr 1) "")
-										 (if (> instr-length 2) (vector-ref instr 2) "")
-										 (if (> instr-length 3) (vector-ref instr 3) ""))
-							 (newline stream)))
-						 (list->vector (interval 0 (-1+ (vector-length code))))
-						 code)))))
-
-
-(define (dump-fn fn)
-  (format #t
-		  "=>Compiled function:~%=>  Name: ~A~%=>  Args: ~A~%=>  Env: ~A~%=>  Code: ~A~%"
-		  (compiled-name fn)
-		  (compiled-args fn)
-		  (compiled-env fn)
-		  (compiled-code fn)))
-
-
-;;; Compile an expression and show the resulting code
-
-(define (comp-show x)
-  (let ((fn (compile x)))
-;	(dump-fn fn)
-	(format #t "Result:~%")
-	(show-fn fn)
-	nil))
-
+(define (dissassemble fn)
+  (eval (list show-fn fn) ***COMPILER-ENVIRONMENT***))
 
 ;;; Compile an expression and execute the resulting code
 
 (define (run x)
   (execute (compile x)))
-
 
 ;;;-----------------------------------------------------------------------------
 ;;; Loading bytecode

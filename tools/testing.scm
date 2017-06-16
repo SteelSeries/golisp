@@ -51,7 +51,8 @@
                 (format #t "~%~A~%" ,label))
               (set! context-name ,label)
               (for-each (lambda (it-clause)
-                          ,@setup
+                          (unless (nil? ',setup)
+							,@setup)
                           (eval it-clause))
                         ',body))))
 
@@ -66,7 +67,7 @@
                           (let* ((err-parts (string-split err "\n"))
                                  (last-line (car (last-pair err-parts)))
                                  (report last-line))
-                            (log-error report)))))))
+                            (log-error err)))))))
 
 (defmacro (assert-true sexpr)
   `(let ((actual ,sexpr)

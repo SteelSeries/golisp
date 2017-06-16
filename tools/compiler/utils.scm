@@ -43,20 +43,3 @@
 
 
 
-;;;-----------------------------------------------------------------------------
-;;; Logging
-
-(define **LOGGING** #f)
-
-(define (logging on/off)
-  (set! **LOGGING** on/off))
-
-(define (log-it format-string . objects)
-
-  (when **LOGGING**
-	(apply format (if (nil? objects)
-					  (list #t format-string)
-					  (cons* #t format-string objects)))
-	(newline)))
-
-

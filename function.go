@@ -35,6 +35,7 @@ type Function struct {
 	ParentProcess    *Process
 }
 
+var selfSym = Intern("self")
 var functionTypeSignatures map[string]*FunctonTypeSignature = make(map[string]*FunctonTypeSignature, 20)
 var functionTypeSignaturesMutex sync.Mutex
 
@@ -201,7 +202,6 @@ func (self *Function) makeLocalBindings(args *Data, argEnv *SymbolTableFrame, lo
 func (self *Function) internalApply(args *Data, argEnv *SymbolTableFrame, frame *FrameMap, eval bool) (result *Data, err error) {
 	localEnv := NewSymbolTableFrameBelowWithFrame(self.Env, frame, self.Name)
 	localEnv.Previous = argEnv
-	selfSym := Intern("self")
 	if frame != nil {
 		_, err = localEnv.BindLocallyTo(selfSym, FrameWithValue(frame))
 		if err != nil {

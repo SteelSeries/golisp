@@ -32,14 +32,15 @@ const (
 	SymbolType           = 0x00000100
 	FunctionType         = 0x00000200
 	MacroType            = 0x00000400
-	PrimitiveType        = 0x00000800
-	CompiledFunctionType = 0x00001000
-	BoxedObjectType      = 0x00002000
-	FrameType            = 0x00004000
-	EnvironmentType      = 0x00008000
-	PortType             = 0x00010000
+	CompilerMacroType    = 0x00000800
+	PrimitiveType        = 0x00001000
+	CompiledFunctionType = 0x00002000
+	BoxedObjectType      = 0x00004000
+	FrameType            = 0x00008000
+	EnvironmentType      = 0x00010000
+	PortType             = 0x00020000
 	AnyType              = 0xFFFFFFFF
-	AtomType             = 0x0001FEFD
+	AtomType             = 0x0003FEFD
 )
 
 const (
@@ -118,6 +119,8 @@ func TypeName(t uint32) string {
 		return "Function"
 	case MacroType:
 		return "Macro"
+	case CompilerMacroType:
+		return "Compiler Macro"
 	case PrimitiveType:
 		return "Primitive"
 	case CompiledFunctionType:
@@ -277,7 +280,11 @@ func CompiledFunctionP(d *Data) bool {
 }
 
 func MacroP(d *Data) bool {
-	return d != nil && TypeOf(d) == MacroType
+	return (TypeOf(d) == MacroType) || (TypeOf(d) == CompilerMacroType)
+}
+
+func CompilerMacroP(d *Data) bool {
+	return TypeOf(d) == CompilerMacroType
 }
 
 func FrameP(d *Data) bool {
@@ -449,6 +456,10 @@ func MacroWithNameParamsBodyAndParent(name string, params *Data, body *Data, par
 	return &Data{Type: MacroType, Value: unsafe.Pointer(MakeMacro(name, params, body, parentEnv))}
 }
 
+func CompilerMacroWithNameParamsBodyAndParent(name string, params *Data, body *Data, parentEnv *SymbolTableFrame) *Data {
+	return &Data{Type: CompilerMacroType, Value: unsafe.Pointer(MakeMacro(name, params, body, parentEnv))}
+}
+
 func PrimitiveWithNameAndFunc(name string, f *PrimitiveFunction) *Data {
 	return &Data{Type: PrimitiveType, Value: unsafe.Pointer(f)}
 }
@@ -592,7 +603,7 @@ func FunctionValue(d *Data) *Function {
 }
 
 func MacroValue(d *Data) *Macro {
-	if d != nil && d.Type == MacroType {
+	if d != nil && (d.Type == MacroType || d.Type == CompilerMacroType) {
 		return (*Macro)(d.Value)
 	}
 
@@ -1076,7 +1087,7 @@ func IsEqual(d *Data, o *Data) bool {
 		return StringValue(d) == StringValue(o)
 	} else if t == FunctionType {
 		return FunctionValue(d) == FunctionValue(o)
-	} else if t == MacroType {
+	} else if t == MacroType || t == CompilerMacroType {
 		return MacroValue(d) == MacroValue(o)
 	} else if t == PrimitiveType {
 		return PrimitiveValue(d) == PrimitiveValue(o)
@@ -1148,6 +1159,8 @@ func String(d *Data) string {
 		return fmt.Sprintf("<function: %s>", FunctionValue(d).Name)
 	case MacroType:
 		return fmt.Sprintf("<macro: %s>", MacroValue(d).Name)
+	case CompilerMacroType:
+		return fmt.Sprintf("<compiler macro: %s>", MacroValue(d).Name)
 	case PrimitiveType:
 		return fmt.Sprintf("<prim: %s>", PrimitiveValue(d).Name)
 	case CompiledFunctionType:
@@ -1286,6 +1299,7 @@ func formatApply(function *Data, args *Data) string {
 	case FunctionType:
 		fname = FunctionValue(function).Name
 	case MacroType:
+	case CompilerMacroType:
 		fname = MacroValue(function).Name
 	case PrimitiveType:
 		fname = PrimitiveValue(function).Name
@@ -1297,7 +1311,7 @@ func formatApply(function *Data, args *Data) string {
 
 func Apply(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if NilP(function) {
-		err = errors.New("Nil when function expected.")
+		err = ProcessError("Nil when function expected.", env)
 		return
 	}
 	switch function.Type {
@@ -1308,13 +1322,14 @@ func Apply(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err
 			result, err = FunctionValue(function).Apply(args, env)
 		}
 	case MacroType:
+	case CompilerMacroType:
 		result, err = MacroValue(function).Apply(args, env)
 	case PrimitiveType:
 		result, err = PrimitiveValue(function).Apply(args, env)
 	case CompiledFunctionType:
 		result, err = CompiledFunctionValue(function).Apply(args, env)
 	default:
-		err = errors.New(fmt.Sprintf("%s when function or macro expected for %s.", TypeName(TypeOf(function)), String(function)))
+		err = ProcessError(fmt.Sprintf("%s when function or macro expected for %s.", TypeName(TypeOf(function)), String(function)), env)
 		return
 	}
 
@@ -1323,7 +1338,7 @@ func Apply(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err
 
 func ApplyWithoutEval(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	if NilP(function) {
-		err = errors.New("Nil when function or macro expected.")
+		err = ProcessError("Nil when function or macro expected.", env)
 		return
 	}
 	switch function.Type {
@@ -1335,13 +1350,14 @@ func ApplyWithoutEval(function *Data, args *Data, env *SymbolTableFrame) (result
 		}
 		//		result, err = FunctionValue(function).ApplyWithoutEval(args, env)
 	case MacroType:
+	case CompilerMacroType:
 		result, err = MacroValue(function).ApplyWithoutEval(args, env)
 	case PrimitiveType:
 		result, err = PrimitiveValue(function).ApplyWithoutEval(args, env)
 	case CompiledFunctionType:
 		result, err = CompiledFunctionValue(function).ApplyWithoutEval(args, env)
 	default:
-		err = errors.New(fmt.Sprintf("%s when function or macro expected for %s.", TypeName(TypeOf(function)), String(function)))
+		err = ProcessError(fmt.Sprintf("%s when function or macro expected for %s.", TypeName(TypeOf(function)), String(function)), env)
 		return
 	}
 
