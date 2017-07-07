@@ -46,13 +46,73 @@ func JsonToLispWithFrames(json interface{}) (result *Data) {
 		return Reverse(ary)
 	}
 
-	numValue, ok := json.(float64)
+	// handle conversion for all numeric primitives
+	float64Value, ok := json.(float64)
 	if ok {
-		if math.Trunc(numValue) == numValue {
-			return IntegerWithValue(int64(numValue))
+		if math.Trunc(float64Value) == float64Value {
+			return IntegerWithValue(int64(float64Value))
 		} else {
-			return FloatWithValue(float32(numValue))
+			return FloatWithValue(float32(float64Value))
 		}
+	}
+
+	float32Value, ok := json.(float32)
+	if ok {
+		if math.Trunc(float64(float32Value)) == float64(float32Value) {
+			return IntegerWithValue(int64(float32Value))
+		} else {
+			return FloatWithValue(float32Value)
+		}
+	}
+
+	intValue, ok := json.(int)
+	if ok {
+		return IntegerWithValue(int64(intValue))
+	}
+
+	int8Value, ok := json.(int8)
+	if ok {
+		return IntegerWithValue(int64(int8Value))
+	}
+
+	int16Value, ok := json.(int16)
+	if ok {
+		return IntegerWithValue(int64(int16Value))
+	}
+
+	int32Value, ok := json.(int32)
+	if ok {
+		return IntegerWithValue(int64(int32Value))
+	}
+
+	int64Value, ok := json.(int64)
+	if ok {
+		return IntegerWithValue(int64Value)
+	}
+
+	uintValue, ok := json.(uint)
+	if ok {
+		return IntegerWithValue(int64(uintValue))
+	}
+
+	uint8Value, ok := json.(uint8)
+	if ok {
+		return IntegerWithValue(int64(uint8Value))
+	}
+
+	uint16Value, ok := json.(uint16)
+	if ok {
+		return IntegerWithValue(int64(uint16Value))
+	}
+
+	uint32Value, ok := json.(uint32)
+	if ok {
+		return IntegerWithValue(int64(uint32Value))
+	}
+
+	uint64Value, ok := json.(uint64)
+	if ok {
+		return IntegerWithValue(int64(uint64Value))
 	}
 
 	strValue, ok := json.(string)
