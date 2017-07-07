@@ -11,25 +11,35 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"reflect"
 	"strings"
 )
 
 func JsonToLispWithFrames(json interface{}) (result *Data) {
-	mapValue, ok := json.(map[string]interface{})
-	if ok {
+	if json == nil {
+		return
+	}
+
+	rt := reflect.TypeOf(json)
+	rtKind := rt.Kind()
+
+	if rtKind == reflect.Map && reflect.Type.Key(rt).Kind() == reflect.String {
+		mapValue := reflect.ValueOf(json)
 		m := FrameMap{}
-		m.Data = make(FrameMapData, len(mapValue))
-		for key, val := range mapValue {
-			value := JsonToLispWithFrames(val)
-			m.Data[fmt.Sprintf("%s:", key)] = value
+		m.Data = make(FrameMapData, mapValue.Len())
+		for _, key := range mapValue.MapKeys() {
+			val := mapValue.MapIndex(key)
+			value := JsonToLispWithFrames(val.Interface())
+			m.Data[fmt.Sprintf("%s:", key.Interface().(string))] = value
 		}
 		return FrameWithValue(&m)
 	}
 
-	arrayValue, ok := json.([]interface{})
-	if ok {
+	if rtKind == reflect.Array || rtKind == reflect.Slice {
+		arrayValues := reflect.ValueOf(json)
 		var ary *Data
-		for _, val := range arrayValue {
+		for i := 0; i < arrayValues.Len(); i++ {
+			val := arrayValues.Index(i).Interface()
 			value := JsonToLispWithFrames(val)
 			ary = Cons(value, ary)
 		}
@@ -42,15 +52,6 @@ func JsonToLispWithFrames(json interface{}) (result *Data) {
 			return IntegerWithValue(int64(numValue))
 		} else {
 			return FloatWithValue(float32(numValue))
-		}
-	}
-
-	floatValue, ok := json.(float64)
-	if ok {
-		if math.Mod(floatValue, 1) == 0 {
-			return IntegerWithValue(int64(floatValue))
-		} else {
-			return FloatWithValue(float32(floatValue))
 		}
 	}
 
