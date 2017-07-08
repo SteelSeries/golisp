@@ -15,117 +15,70 @@ import (
 	"strings"
 )
 
-func JsonToLispWithFrames(json interface{}) (result *Data) {
+func JsonToLispWithFrames(json interface{}) *Data {
 	if json == nil {
-		return
+		return nil
 	}
 
 	rt := reflect.TypeOf(json)
+	rv := reflect.ValueOf(json)
 	rtKind := rt.Kind()
 
+	// maps with string keys get converted to frames
 	if rtKind == reflect.Map && reflect.Type.Key(rt).Kind() == reflect.String {
-		mapValue := reflect.ValueOf(json)
-		m := FrameMap{}
-		m.Data = make(FrameMapData, mapValue.Len())
-		for _, key := range mapValue.MapKeys() {
-			val := mapValue.MapIndex(key)
+		m := &FrameMap{}
+		m.Data = make(FrameMapData, rv.Len())
+		for _, key := range rv.MapKeys() {
+			val := rv.MapIndex(key)
 			value := JsonToLispWithFrames(val.Interface())
 			m.Data[fmt.Sprintf("%s:", key.Interface().(string))] = value
 		}
-		return FrameWithValue(&m)
+		return FrameWithValue(m)
 	}
 
+	// slices and arrays get converted to lists
 	if rtKind == reflect.Array || rtKind == reflect.Slice {
-		arrayValues := reflect.ValueOf(json)
 		var ary *Data
-		for i := 0; i < arrayValues.Len(); i++ {
-			val := arrayValues.Index(i).Interface()
+		for i := 0; i < rv.Len(); i++ {
+			val := rv.Index(i).Interface()
 			value := JsonToLispWithFrames(val)
 			ary = Cons(value, ary)
 		}
 		return Reverse(ary)
 	}
 
-	// handle conversion for all numeric primitives
-	float64Value, ok := json.(float64)
-	if ok {
-		if math.Trunc(float64Value) == float64Value {
-			return IntegerWithValue(int64(float64Value))
+	// handle conversion for all primitives
+	switch rtKind {
+	case
+		reflect.Int,
+		reflect.Int8,
+		reflect.Int16,
+		reflect.Int32,
+		reflect.Int64,
+		reflect.Uint,
+		reflect.Uint8,
+		reflect.Uint16,
+		reflect.Uint32,
+		reflect.Uint64,
+		reflect.Uintptr:
+		var intValue int64
+		intValue = reflect.ValueOf(json).Convert(reflect.TypeOf(intValue)).Int()
+		return IntegerWithValue(intValue)
+	case reflect.Float32, reflect.Float64:
+		var floatValue float64
+		floatValue = reflect.ValueOf(json).Convert(reflect.TypeOf(floatValue)).Float()
+		if math.Trunc(floatValue) == floatValue {
+			return IntegerWithValue(int64(floatValue))
 		} else {
-			return FloatWithValue(float32(float64Value))
+			return FloatWithValue(float32(floatValue))
 		}
+	case reflect.String:
+		return StringWithValue(rv.String())
+	case reflect.Bool:
+		return BooleanWithValue(rv.Bool())
 	}
 
-	float32Value, ok := json.(float32)
-	if ok {
-		if math.Trunc(float64(float32Value)) == float64(float32Value) {
-			return IntegerWithValue(int64(float32Value))
-		} else {
-			return FloatWithValue(float32Value)
-		}
-	}
-
-	intValue, ok := json.(int)
-	if ok {
-		return IntegerWithValue(int64(intValue))
-	}
-
-	int8Value, ok := json.(int8)
-	if ok {
-		return IntegerWithValue(int64(int8Value))
-	}
-
-	int16Value, ok := json.(int16)
-	if ok {
-		return IntegerWithValue(int64(int16Value))
-	}
-
-	int32Value, ok := json.(int32)
-	if ok {
-		return IntegerWithValue(int64(int32Value))
-	}
-
-	int64Value, ok := json.(int64)
-	if ok {
-		return IntegerWithValue(int64Value)
-	}
-
-	uintValue, ok := json.(uint)
-	if ok {
-		return IntegerWithValue(int64(uintValue))
-	}
-
-	uint8Value, ok := json.(uint8)
-	if ok {
-		return IntegerWithValue(int64(uint8Value))
-	}
-
-	uint16Value, ok := json.(uint16)
-	if ok {
-		return IntegerWithValue(int64(uint16Value))
-	}
-
-	uint32Value, ok := json.(uint32)
-	if ok {
-		return IntegerWithValue(int64(uint32Value))
-	}
-
-	uint64Value, ok := json.(uint64)
-	if ok {
-		return IntegerWithValue(int64(uint64Value))
-	}
-
-	strValue, ok := json.(string)
-	if ok {
-		return StringWithValue(strValue)
-	}
-
-	boolValue, ok := json.(bool)
-	if ok {
-		return BooleanWithValue(boolValue)
-	}
-
-	return
+	return nil
 }
 
 func JsonStringToLispWithFrames(jsonData string) (result *Data) {
