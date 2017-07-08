@@ -31,7 +31,7 @@ func JsonToLispWithFrames(json interface{}) *Data {
 		for _, key := range rv.MapKeys() {
 			val := rv.MapIndex(key)
 			value := JsonToLispWithFrames(val.Interface())
-			m.Data[fmt.Sprintf("%s:", key.Interface().(string))] = value
+			m.Data[fmt.Sprintf("%s:", key.String())] = value
 		}
 		return FrameWithValue(m)
 	}
