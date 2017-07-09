@@ -820,6 +820,10 @@ func IsEqual(d *Data, o *Data) bool {
 		return true
 	}
 
+	if NilP(d) && NilP(o) {
+		return true
+	}
+
 	if d == nil || o == nil {
 		return false
 	}
