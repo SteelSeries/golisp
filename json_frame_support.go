@@ -24,8 +24,16 @@ func JsonToLispWithFrames(json interface{}) *Data {
 	rv := reflect.ValueOf(json)
 	rtKind := rt.Kind()
 
-	if rtKind == reflect.Ptr {
-		return JsonToLispWithFrames(rv.Elem().Interface())
+	// dereference pointers
+	for rtKind == reflect.Ptr {
+		if rv.Pointer() == 0 {
+			return nil
+		}
+
+		json = rv.Elem().Interface()
+		rt = reflect.TypeOf(json)
+		rv = reflect.ValueOf(json)
+		rtKind = rt.Kind()
 	}
 
 	// maps with string keys get converted to frames
