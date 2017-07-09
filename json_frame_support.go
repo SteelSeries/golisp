@@ -15,24 +15,18 @@ import (
 	"strings"
 )
 
-func JsonToLispWithFrames(json interface{}) *Data {
-	if json == nil {
-		return nil
-	}
-
-	rt := reflect.TypeOf(json)
-	rv := reflect.ValueOf(json)
+func jsonToLispWithFramesReflect(rv reflect.Value) *Data {
+	rt := rv.Type()
 	rtKind := rt.Kind()
 
-	// dereference pointers
-	for rtKind == reflect.Ptr {
-		if rv.Pointer() == 0 {
+	// dereference pointers and interfaces
+	for rtKind == reflect.Ptr || rtKind == reflect.Interface {
+		if rv.IsNil() {
 			return nil
 		}
 
-		json = rv.Elem().Interface()
-		rt = reflect.TypeOf(json)
-		rv = reflect.ValueOf(json)
+		rv = rv.Elem()
+		rt = rv.Type()
 		rtKind = rt.Kind()
 	}
 
@@ -42,7 +36,7 @@ func JsonToLispWithFrames(json interface{}) *Data {
 		m.Data = make(FrameMapData, rv.Len())
 		for _, key := range rv.MapKeys() {
 			val := rv.MapIndex(key)
-			value := JsonToLispWithFrames(val.Interface())
+			value := jsonToLispWithFramesReflect(val)
 			m.Data[fmt.Sprintf("%s:", key.String())] = value
 		}
 		return FrameWithValue(m)
@@ -52,8 +46,8 @@ func JsonToLispWithFrames(json interface{}) *Data {
 	if rtKind == reflect.Array || rtKind == reflect.Slice {
 		var ary *Data
 		for i := 0; i < rv.Len(); i++ {
-			val := rv.Index(i).Interface()
-			value := JsonToLispWithFrames(val)
+			val := rv.Index(i)
+			value := jsonToLispWithFramesReflect(val)
 			ary = Cons(value, ary)
 		}
 		return Reverse(ary)
@@ -74,23 +68,33 @@ func JsonToLispWithFrames(json interface{}) *Data {
 		reflect.Uint64,
 		reflect.Uintptr:
 		var intValue int64
-		intValue = reflect.ValueOf(json).Convert(reflect.TypeOf(intValue)).Int()
+		intValue = rv.Convert(reflect.TypeOf(intValue)).Int()
 		return IntegerWithValue(intValue)
 	case reflect.Float32, reflect.Float64:
 		var floatValue float64
-		floatValue = reflect.ValueOf(json).Convert(reflect.TypeOf(floatValue)).Float()
+		floatValue = rv.Convert(reflect.TypeOf(floatValue)).Float()
 		if math.Trunc(floatValue) == floatValue {
 			return IntegerWithValue(int64(floatValue))
 		} else {
 			return FloatWithValue(float32(floatValue))
 		}
 	case reflect.String:
-		return StringWithValue(rv.String())
+		stringVal := rv.String()
+		return StringWithValue(stringVal)
 	case reflect.Bool:
-		return BooleanWithValue(rv.Bool())
+		boolVal := rv.Bool()
+		return BooleanWithValue(boolVal)
 	}
 
 	return nil
+}
+
+func JsonToLispWithFrames(data interface{}) *Data {
+	if data == nil {
+		return nil
+	}
+
+	return jsonToLispWithFramesReflect(reflect.ValueOf(data))
 }
 
 func JsonStringToLispWithFrames(jsonData string) (result *Data) {
@@ -103,7 +107,7 @@ func JsonStringToLispWithFrames(jsonData string) (result *Data) {
 		m.Data = make(FrameMapData, 0)
 		return FrameWithValue(&m)
 	}
-	return JsonToLispWithFrames(data)
+	return jsonToLispWithFramesReflect(reflect.ValueOf(data))
 }
 
 func LispWithFramesToJson(d *Data) (result interface{}) {
