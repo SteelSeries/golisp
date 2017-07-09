@@ -15,6 +15,105 @@ import (
 	"strings"
 )
 
+func jsonIsEmptyValue(data *Data) bool {
+	switch {
+	case NilP(data):
+		return true
+	case StringP(data):
+		return len(StringValue(data)) == 0
+	case IntegerP(data):
+		return IntegerValue(data) == 0
+	case FloatP(data):
+		return FloatValue(data) == 0.0
+	case BooleanP(data):
+		return !BooleanValue(data)
+	}
+	return false
+}
+
+// adapted from golang's encoding/json
+func jsonToLispWithFramesStruct(rv reflect.Value) *Data {
+	rt := rv.Type()
+	m := &FrameMap{}
+	m.Data = make(FrameMapData, rv.NumField())
+
+	for i := 0; i < rv.NumField(); i++ {
+		sf := rt.Field(i)
+
+		// unexported
+		if sf.PkgPath != "" && (!sf.Anonymous || sf.Type.Kind() != reflect.Struct) {
+			continue
+		}
+
+		tag := sf.Tag.Get("json")
+		var tagOpt []string
+
+		if tag == "-" {
+			continue
+		}
+
+		tagSplit := strings.Split(tag, ",")
+
+		if len(tagSplit) > 1 {
+			tag = tagSplit[0]
+			tagOpt = tagSplit[1:]
+		}
+
+		omitEmpty := false
+		encodeString := false
+
+		for _, opt := range tagOpt {
+			switch opt {
+			case "omitempty":
+				omitEmpty = true
+			case "string":
+				encodeString = true
+			}
+		}
+
+		name := tag
+		if name == "" {
+			name = sf.Name
+		}
+
+		ft := sf.Type
+
+		// follow pointer.
+		for ft.Name() == "" && ft.Kind() == reflect.Ptr {
+			ft = ft.Elem()
+		}
+
+		if name != "" || !sf.Anonymous || ft.Kind() != reflect.Struct {
+			name = fmt.Sprintf("%s:", name)
+
+			fv := rv.Field(i)
+			data := jsonToLispWithFramesReflect(fv)
+
+			if !omitEmpty || !jsonIsEmptyValue(data) {
+				if encodeString {
+					switch {
+					case StringP(data):
+						str, err := json.Marshal(StringValue(data))
+						if err == nil {
+							data = StringWithValue(string(str))
+						}
+					case IntegerP(data):
+						data = StringWithValue(fmt.Sprintf("%d", IntegerValue(data)))
+					case FloatP(data):
+						data = StringWithValue(fmt.Sprintf("%f", FloatValue(data)))
+					case BooleanP(data):
+						data = StringWithValue(fmt.Sprintf("%t", BooleanValue(data)))
+					}
+				}
+
+				m.Data[name] = data
+			}
+		}
+	}
+
+	return FrameWithValue(m)
+}
+
 func jsonToLispWithFramesReflect(rv reflect.Value) *Data {
 	rt := rv.Type()
 	rtKind := rt.Kind()
@@ -30,20 +129,19 @@ func jsonToLispWithFramesReflect(rv reflect.Value) *Data {
 		rtKind = rt.Kind()
 	}
 
-	// maps with string keys get converted to frames
-	if rtKind == reflect.Map && reflect.Type.Key(rt).Kind() == reflect.String {
-		m := &FrameMap{}
-		m.Data = make(FrameMapData, rv.Len())
-		for _, key := range rv.MapKeys() {
-			val := rv.MapIndex(key)
-			value := jsonToLispWithFramesReflect(val)
-			m.Data[fmt.Sprintf("%s:", key.String())] = value
+	switch rtKind {
+	case reflect.Map:
+		if reflect.Type.Key(rt).Kind() == reflect.String {
+			m := &FrameMap{}
+			m.Data = make(FrameMapData, rv.Len())
+			for _, key := range rv.MapKeys() {
+				val := rv.MapIndex(key)
+				value := jsonToLispWithFramesReflect(val)
+				m.Data[fmt.Sprintf("%s:", key.String())] = value
+			}
+			return FrameWithValue(m)
 		}
-		return FrameWithValue(m)
-	}
-
-	// slices and arrays get converted to lists
-	if rtKind == reflect.Array || rtKind == reflect.Slice {
+	case reflect.Array, reflect.Slice:
 		var ary *Data
 		for i := 0; i < rv.Len(); i++ {
 			val := rv.Index(i)
@@ -51,10 +149,8 @@ func jsonToLispWithFramesReflect(rv reflect.Value) *Data {
 			ary = Cons(value, ary)
 		}
 		return Reverse(ary)
-	}
-
-	// handle conversion for all primitives
-	switch rtKind {
+	case reflect.Struct:
+		return jsonToLispWithFramesStruct(rv)
 	case
 		reflect.Int,
 		reflect.Int8,
