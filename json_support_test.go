@@ -7,9 +7,7 @@
 
 package golisp
 
-import (
-	. "gopkg.in/check.v1"
-)
+import . "gopkg.in/check.v1"
 
 type JsonLispSuite struct {
 }
@@ -101,6 +99,101 @@ func (s *JsonLispSuite) TestLispWithFramesToJsonMixed(c *C) {
 func (s *JsonLispSuite) TestLispToJsonNil(c *C) {
 	data := LispToJsonString(nil)
 	c.Assert(data, Equals, `""`)
+}
+
+func (s *JsonLispSuite) TestJsonToLispWithFramesMap(c *C) {
+	a := int(63)
+	b := &a
+	_c := (*int)(nil)
+	d_p := (*int)(nil)
+	d := &d_p
+	testMap := map[string]interface{}{
+		"float64":    float64(1.1),
+		"float64int": float64(1.0),
+		"float32":    float32(1.1),
+		"float32int": float32(1.0),
+
+		"int":    int(1),
+		"int8":   int8(1),
+		"int16":  int16(1),
+		"int32":  int32(1),
+		"int64":  int64(1),
+		"uint":   uint(1),
+		"uint8":  uint8(1),
+		"uint16": uint16(1),
+		"uint32": uint32(1),
+		"uint64": uint64(1),
+
+		"int_ptr":    &a,
+		"int_ptrptr": &b,
+
+		"bool":   true,
+		"string": "asdf",
+
+		"nil":       nil,
+		"nilptr":    &_c,
+		"nilptrptr": &d,
+
+		"bad_map":       map[int]int{1: 2},
+		"good_map":      map[string]int{"1": 2},
+		"interface_map": map[string]interface{}{"abc": 123},
+
+		"slice_interface": []interface{}{1, 2, true},
+		"slice_typed":     []string{"a", "b", "c"},
+		"slice_2d":        [][]string{{"a", "b"}, {"c", "d"}},
+		"slice_pointer":   &[]interface{}{1, 2, true},
+	}
+	expected, _ := ParseAndEval(`
+		{bad_map: () bool: #t float32: 1.1 float32int: 1 float64: 1.1 float64int: 1 good_map: {(intern "1:") 2} int16: 1 int32: 1 int64: 1 int8: 1 int: 1 int_ptr: 63 int_ptrptr: 63
+		interface_map: {abc: 123} nil: () nilptr: () nilptrptr: () slice_2d: '(("a" "b") ("c" "d")) slice_interface: '(1 2 #t) slice_pointer: '(1 2 #t)
+		slice_typed: '("a" "b" "c") string: "asdf" uint16: 1 uint32: 1 uint64: 1 uint8: 1 uint: 1}`)
+	data := JsonToLispWithFrames(testMap)
+	c.Assert(IsEqual(data, expected), Equals, true)
+}
+
+type imageSyncFrame struct {
+	Image []interface{} `json:"image,omitempty"`
+	Delay int           `json:",string"`
+}
+
+type imageSyncGif struct {
+	Frames []imageSyncFrame `json:"frames"`
+}
+
+type imageSync struct {
+	Gif     imageSyncGif `json:"gif_data"`
+	Enabled int          `json:"enabled,string,omitempty"`
+	Str     string       `json:",omitempty"`
+	private string
+	Inter   interface{} `json:"inter,omitempty"`
+}
+
+func (s *JsonLispSuite) TestJsonToLispWithFramesStruct(c *C) {
+	jsonData := imageSync{
+		private: "sss",
+		Str:     "",
+		Enabled: 6,
+		Inter:   struct{}{},
+		Gif: imageSyncGif{
+			Frames: []imageSyncFrame{
+				imageSyncFrame{
+					Delay: 1,
+					Image: []interface{}{1, 3, 4},
+				},
+				imageSyncFrame{
+					Delay: 2,
+					Image: []interface{}{},
+				},
+				imageSyncFrame{
+					Delay: 3,
+					Image: nil,
+				},
+			},
+		},
+	}
+	data := JsonToLispWithFrames(jsonData)
+	expected, _ := ParseAndEval(`{enabled: "6" gif_data: {frames: (list {Delay: "1" image: '(1 3 4)} {Delay: "2"} {Delay: "3"})} inter: {}}`)
+	c.Assert(IsEqual(data, expected), Equals, true)
 }
 
 // func (s *JsonLispSuite) TestSimpleJsonTransformation(c *C) {
