@@ -151,35 +151,21 @@ func jsonToLispWithFramesReflect(rv reflect.Value) *Data {
 		return Reverse(ary)
 	case reflect.Struct:
 		return jsonToLispWithFramesStruct(rv)
-	case
-		reflect.Int,
-		reflect.Int8,
-		reflect.Int16,
-		reflect.Int32,
-		reflect.Int64,
-		reflect.Uint,
-		reflect.Uint8,
-		reflect.Uint16,
-		reflect.Uint32,
-		reflect.Uint64,
-		reflect.Uintptr:
-		var intValue int64
-		intValue = rv.Convert(reflect.TypeOf(intValue)).Int()
-		return IntegerWithValue(intValue)
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return IntegerWithValue(rv.Int())
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return IntegerWithValue(int64(rv.Uint()))
 	case reflect.Float32, reflect.Float64:
-		var floatValue float64
-		floatValue = rv.Convert(reflect.TypeOf(floatValue)).Float()
+		floatValue := rv.Float()
 		if math.Trunc(floatValue) == floatValue {
 			return IntegerWithValue(int64(floatValue))
 		} else {
 			return FloatWithValue(float32(floatValue))
 		}
 	case reflect.String:
-		stringVal := rv.String()
-		return StringWithValue(stringVal)
+		return StringWithValue(rv.String())
 	case reflect.Bool:
-		boolVal := rv.Bool()
-		return BooleanWithValue(boolVal)
+		return BooleanWithValue(rv.Bool())
 	}
 
 	return nil
