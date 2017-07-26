@@ -35,7 +35,6 @@ func MakeFrameImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 		return
 	}
 	m := FrameMap{}
-	m.Data = make(FrameMapData)
 	for c := args; NotNilP(c); c = Cddr(c) {
 		k := Car(c)
 		if !NakedP(k) {
@@ -43,7 +42,7 @@ func MakeFrameImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 			return
 		}
 		v := Cadr(c)
-		m.Data[StringValue(k)] = v
+		m.Data.Store(StringValue(k), v)
 	}
 	return FrameWithValue(&m), nil
 }
@@ -179,8 +178,6 @@ func getSuperFunction(selector string, env *SymbolTableFrame) *Data {
 		return nil
 	}
 
-	f.Mutex.RLock()
-	defer f.Mutex.RUnlock()
 	for _, p := range f.Parents() {
 		fun := p.Get(selector)
 		if fun != nil {

@@ -35,7 +35,6 @@ func jsonIsEmptyValue(data *Data) bool {
 func jsonToLispWithFramesStruct(rv reflect.Value) *Data {
 	rt := rv.Type()
 	m := &FrameMap{}
-	m.Data = make(FrameMapData, rv.NumField())
 
 	for i := 0; i < rv.NumField(); i++ {
 		sf := rt.Field(i)
@@ -106,7 +105,7 @@ func jsonToLispWithFramesStruct(rv reflect.Value) *Data {
 					}
 				}
 
-				m.Data[name] = data
+				m.Data.Store(name, data)
 			}
 		}
 	}
@@ -133,11 +132,10 @@ func jsonToLispWithFramesReflect(rv reflect.Value) *Data {
 	case reflect.Map:
 		if reflect.Type.Key(rt).Kind() == reflect.String {
 			m := &FrameMap{}
-			m.Data = make(FrameMapData, rv.Len())
 			for _, key := range rv.MapKeys() {
 				val := rv.MapIndex(key)
 				value := jsonToLispWithFramesReflect(val)
-				m.Data[fmt.Sprintf("%s:", key.String())] = value
+				m.Data.Store(fmt.Sprintf("%s:", key.String()), value)
 			}
 			return FrameWithValue(m)
 		}
@@ -186,7 +184,6 @@ func JsonStringToLispWithFrames(jsonData string) (result *Data) {
 	if err != nil {
 		fmt.Printf("Returning empty frame because of badly formed json: '%s'\n --> %v\n", jsonData, err)
 		m := FrameMap{}
-		m.Data = make(FrameMapData, 0)
 		return FrameWithValue(&m)
 	}
 	return jsonToLispWithFramesReflect(reflect.ValueOf(data))
@@ -232,13 +229,13 @@ func LispWithFramesToJson(d *Data) (result interface{}) {
 	if FrameP(d) {
 		dict := make(map[string]interface{}, Length(d))
 		frame := FrameValue(d)
-		frame.Mutex.RLock()
-		for k, v := range frame.Data {
-			if !FunctionP(v) {
-				dict[strings.TrimRight(k, ":")] = LispWithFramesToJson(v)
+		frame.Data.Range(func(k, v interface{}) bool {
+			val := v.(*Data)
+			if !FunctionP(val) {
+				dict[strings.TrimRight(k.(string), ":")] = LispWithFramesToJson(val)
 			}
-		}
-		frame.Mutex.RUnlock()
+			return true
+		})
 		return dict
 	}
 

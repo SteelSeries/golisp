@@ -641,9 +641,11 @@ func Length(d *Data) int {
 
 	if FrameP(d) {
 		frame := FrameValue(d)
-		frame.Mutex.RLock()
-		length := len(frame.Data)
-		frame.Mutex.RUnlock()
+		length := 0
+		frame.Data.Range(func(k, v interface{}) bool {
+			length++
+			return true
+		})
 		return length
 	}
 
@@ -793,13 +795,11 @@ func Copy(d *Data) *Data {
 	case FrameType:
 		{
 			m := FrameMap{}
-			m.Data = make(FrameMapData)
 			frame := FrameValue(d)
-			frame.Mutex.RLock()
-			for k, v := range frame.Data {
-				m.Data[k] = Copy(v)
-			}
-			frame.Mutex.RUnlock()
+			frame.Data.Range(func(k, v interface{}) bool {
+				m.Data.Store(k, Copy(v.(*Data)))
+				return true
+			})
 			return FrameWithValue(&m)
 		}
 	case BoxedObjectType:
@@ -870,25 +870,21 @@ func IsEqual(d *Data, o *Data) bool {
 	}
 
 	if FrameP(d) {
-		frameD := FrameValue(d)
-		frameO := FrameValue(o)
-		frameD.Mutex.RLock()
-		frameO.Mutex.RLock()
-		if len(frameD.Data) != len(frameO.Data) {
-			frameO.Mutex.RUnlock()
-			frameD.Mutex.RUnlock()
+		if Length(d) != Length(o) {
 			return false
 		}
-		for k, v := range frameD.Data {
-			if !IsEqual(v, frameO.Data[k]) {
-				frameO.Mutex.RUnlock()
-				frameD.Mutex.RUnlock()
+		frameD := FrameValue(d)
+		frameO := FrameValue(o)
+		ret := true
+		frameD.Data.Range(func(k, v interface{}) bool {
+			dv, ok := frameO.Data.Load(k)
+			if !ok || !IsEqual(v.(*Data), dv.(*Data)) {
+				ret = false
 				return false
 			}
-		}
-		frameO.Mutex.RUnlock()
-		frameD.Mutex.RUnlock()
-		return true
+			return true
+		})
+		return ret
 	}
 
 	// special case for byte arrays
@@ -1035,22 +1031,31 @@ func String(d *Data) string {
 			return fmt.Sprintf("<opaque Go object of type %s : 0x%x>", ObjectType(d), (*uint64)(ObjectValue(d)))
 		}
 	case FrameType:
-		frame := FrameValue(d)
-		frame.Mutex.RLock()
-		keys := make([]string, 0, len(frame.Data))
-		for key, _ := range frame.Data {
-			keys = append(keys, key)
+		type pairstruct struct {
+			key string
+			val *Data
 		}
+		frame := FrameValue(d)
+		keys := make([]string, 0)
+		pairs := make([]pairstruct, 0)
+
+		frame.Data.Range(func(k, v interface{}) bool {
+			pairs = append(pairs, pairstruct{key: k.(string), val: v.(*Data)})
+			return true
+		})
+
+		sort.Slice(pairs, func(i, j int) bool {
+			return strings.Compare(pairs[i].key, pairs[j].key) < 0
+		})
+
 		sort.Strings(keys)
 
-		pairs := make([]string, 0, len(frame.Data))
-		for _, key := range keys {
-			val := frame.Data[key]
-			var valString string = String(val)
-			pairs = append(pairs, fmt.Sprintf("%s %s", key, valString))
+		strPairs := make([]string, len(pairs))
+		for i, pair := range pairs {
+			var valString string = String(pair.val)
+			strPairs[i] = fmt.Sprintf("%s %s", pair.key, valString)
 		}
-		frame.Mutex.RUnlock()
-		return fmt.Sprintf("{%s}", strings.Join(pairs, " "))
+		return fmt.Sprintf("{%s}", strings.Join(strPairs, " "))
 	case EnvironmentType:
 		return fmt.Sprintf("<environment: %s>", EnvironmentValue(d).Name)
 	case PortType:

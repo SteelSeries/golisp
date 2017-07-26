@@ -9,28 +9,26 @@ package golisp
 
 import (
 	"strings"
-	"sync"
 
+	"golang.org/x/sync/syncmap"
 	"gopkg.in/fatih/set.v0"
 )
 
-type FrameMapData map[string]*Data
-
 type FrameMap struct {
-	Data  FrameMapData
-	Mutex sync.RWMutex
+	Data syncmap.Map
 }
 
 func (self *FrameMap) hasSlotLocally(key string) bool {
-	_, ok := self.Data[key]
+	_, ok := self.Data.Load(key)
 	return ok
 }
 
 func (self *FrameMap) localSlots() []string {
-	slots := make([]string, 0, len(self.Data))
-	for k, _ := range self.Data {
-		slots = append(slots, k)
-	}
+	slots := make([]string, 0)
+	self.Data.Range(func(k, v interface{}) bool {
+		slots = append(slots, k.(string))
+		return true
+	})
 	return slots
 }
 
@@ -39,22 +37,29 @@ func isParentKey(key string) bool {
 }
 
 func (self *FrameMap) hasParentSlots() bool {
-	for k, _ := range self.Data {
-		if isParentKey(k) {
-			return true
-		}
-	}
+	ret := false
 
-	return false
+	self.Data.Range(func(k, v interface{}) bool {
+		if isParentKey(k.(string)) {
+			ret = true
+			return false
+		}
+		return true
+	})
+
+	return ret
 }
 
 func (self *FrameMap) Parents() []*FrameMap {
-	parents := make([]*FrameMap, 0, 0)
-	for k, v := range self.Data {
-		if isParentKey(k) && v != nil {
-			parents = append(parents, FrameValue(v))
+	parents := make([]*FrameMap, 0)
+
+	self.Data.Range(func(k, v interface{}) bool {
+		if isParentKey(k.(string)) && v != nil {
+			parents = append(parents, FrameValue(v.(*Data)))
 		}
-	}
+		return true
+	})
+
 	return parents
 }
 
@@ -76,9 +81,7 @@ func (self *FrameMap) hasSlotHelper(key string, v *set.Set) bool {
 	}
 
 	for _, p := range self.Parents() {
-		p.Mutex.RLock()
 		hasSlot := p.hasSlotHelper(key, v)
-		p.Mutex.RUnlock()
 		if hasSlot {
 			return true
 		}
@@ -89,9 +92,7 @@ func (self *FrameMap) hasSlotHelper(key string, v *set.Set) bool {
 
 func (self *FrameMap) HasSlot(key string) (ret bool) {
 	visited := set.New()
-	self.Mutex.RLock()
 	ret = self.hasSlotHelper(key, visited)
-	self.Mutex.RUnlock()
 	return
 }
 
@@ -104,15 +105,13 @@ func (self *FrameMap) getHelper(key string, v *set.Set) *Data {
 
 	v.Add(self)
 
-	val, ok := self.Data[key]
+	val, ok := self.Data.Load(key)
 	if ok {
-		return val
+		return val.(*Data)
 	}
 
 	for _, p := range self.Parents() {
-		p.Mutex.RLock()
 		val := p.getHelper(key, v)
-		p.Mutex.RUnlock()
 		if val != nil {
 			return val
 		}
@@ -123,31 +122,24 @@ func (self *FrameMap) getHelper(key string, v *set.Set) *Data {
 
 func (self *FrameMap) Get(key string) (ret *Data) {
 	visited := set.New()
-	self.Mutex.RLock()
 	ret = self.getHelper(key, visited)
-	self.Mutex.RUnlock()
 	return
 }
 
 //------------------------------------------------------------
 
 func (self *FrameMap) Remove(key string) bool {
-	self.Mutex.Lock()
 	if !self.hasSlotLocally(key) {
-		self.Mutex.Unlock()
 		return false
 	}
-	delete(self.Data, key)
-	self.Mutex.Unlock()
+	self.Data.Delete(key)
 	return true
 }
 
 //------------------------------------------------------------
 
 func (self *FrameMap) Set(key string, value *Data) *Data {
-	self.Mutex.Lock()
-	self.Data[key] = value
-	self.Mutex.Unlock()
+	self.Data.Store(key, value)
 	return value
 }
 
@@ -155,31 +147,27 @@ func (self *FrameMap) Set(key string, value *Data) *Data {
 
 func (self *FrameMap) Clone() *FrameMap {
 	f := FrameMap{}
-	f.Data = make(FrameMapData)
-	self.Mutex.RLock()
-	for k, v := range self.Data {
-		f.Data[k] = v
-	}
-	self.Mutex.RUnlock()
+	self.Data.Range(func(k, v interface{}) bool {
+		f.Data.Store(k, v)
+		return true
+	})
 	return &f
 }
 
 func (self *FrameMap) Keys() []*Data {
-	self.Mutex.RLock()
-	keys := make([]*Data, 0, len(self.Data))
-	for k, _ := range self.Data {
-		keys = append(keys, Intern(k))
-	}
-	self.Mutex.RUnlock()
+	keys := make([]*Data, 0)
+	self.Data.Range(func(k, v interface{}) bool {
+		keys = append(keys, Intern(k.(string)))
+		return true
+	})
 	return keys
 }
 
 func (self *FrameMap) Values() []*Data {
-	self.Mutex.RLock()
-	values := make([]*Data, 0, len(self.Data))
-	for _, v := range self.Data {
-		values = append(values, v)
-	}
-	self.Mutex.RUnlock()
+	values := make([]*Data, 0)
+	self.Data.Range(func(k, v interface{}) bool {
+		values = append(values, v.(*Data))
+		return true
+	})
 	return values
 }

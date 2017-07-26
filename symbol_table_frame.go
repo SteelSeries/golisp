@@ -11,8 +11,9 @@ import (
 	"container/list"
 	"errors"
 	"fmt"
-	"sync"
 	"sync/atomic"
+
+	"golang.org/x/sync/syncmap"
 )
 
 const (
@@ -25,36 +26,31 @@ type SymbolTableFrame struct {
 	Parent       *SymbolTableFrame
 	Previous     *SymbolTableFrame
 	Frame        *FrameMap
-	Bindings     map[string]*Binding
-	Mutex        sync.RWMutex
+	Bindings     syncmap.Map
 	CurrentCode  *list.List
 	IsRestricted bool
 }
 
 type symbolsTable struct {
-	Symbols map[string]*Data
-	Mutex   sync.RWMutex
+	Symbols syncmap.Map
 }
 
 type environmentsTable struct {
-	Environments map[string]*SymbolTableFrame
-	Mutex        sync.RWMutex
+	Environments syncmap.Map
 }
 
 var Global *SymbolTableFrame
-var TopLevelEnvironments environmentsTable = environmentsTable{make(map[string]*SymbolTableFrame, 5), sync.RWMutex{}}
+var TopLevelEnvironments environmentsTable
 
-var internedSymbols symbolsTable = symbolsTable{make(map[string]*Data, 256), sync.RWMutex{}}
+var internedSymbols symbolsTable
 
 func Intern(name string) (sym *Data) {
-	internedSymbols.Mutex.RLock()
-	sym = internedSymbols.Symbols[name]
-	internedSymbols.Mutex.RUnlock()
-	if sym == nil {
-		internedSymbols.Mutex.Lock()
+	symInt, ok := internedSymbols.Symbols.Load(name)
+	if !ok {
 		sym = SymbolWithName(name)
-		internedSymbols.Symbols[name] = sym
-		internedSymbols.Mutex.Unlock()
+		internedSymbols.Symbols.Store(name, sym)
+	} else {
+		sym = symInt.(*Data)
 	}
 	return
 }
@@ -77,13 +73,13 @@ func (self *SymbolTableFrame) CurrentCodeString() string {
 
 func (self *SymbolTableFrame) InternalDump(frameNumber int) {
 	fmt.Printf("Frame %d: %s\n", frameNumber, self.CurrentCodeString())
-	self.Mutex.RLock()
-	defer self.Mutex.RUnlock()
-	for _, b := range self.Bindings {
+	self.Bindings.Range(func(k, v interface{}) bool {
+		b := v.(*Binding)
 		if b.Val == nil || TypeOf(b.Val) != PrimitiveType {
 			b.Dump()
 		}
-	}
+		return true
+	})
 	fmt.Printf("\n")
 	if self.Previous != nil {
 		self.Previous.InternalDump(frameNumber + 1)
@@ -98,13 +94,13 @@ func (self *SymbolTableFrame) Dump() {
 func (self *SymbolTableFrame) DumpSingleFrame(frameNumber int) {
 	if frameNumber == 0 {
 		fmt.Printf("%s\n", self.CurrentCodeString())
-		self.Mutex.RLock()
-		defer self.Mutex.RUnlock()
-		for _, b := range self.Bindings {
+		self.Bindings.Range(func(k, v interface{}) bool {
+			b := v.(*Binding)
 			if b.Val == nil || TypeOf(b.Val) != PrimitiveType {
 				b.Dump()
 			}
-		}
+			return true
+		})
 		fmt.Printf("\n")
 	} else if self.Previous != nil {
 		self.Previous.DumpSingleFrame(frameNumber - 1)
@@ -135,11 +131,9 @@ func NewSymbolTableFrameBelow(p *SymbolTableFrame, name string) *SymbolTableFram
 		f = p.Frame
 	}
 	restricted := p != nil && p.IsRestricted
-	env := &SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding), Frame: f, CurrentCode: list.New(), IsRestricted: restricted}
+	env := &SymbolTableFrame{Name: name, Parent: p, Frame: f, CurrentCode: list.New(), IsRestricted: restricted}
 	if p == nil || p == Global {
-		TopLevelEnvironments.Mutex.Lock()
-		TopLevelEnvironments.Environments[name] = env
-		TopLevelEnvironments.Mutex.Unlock()
+		TopLevelEnvironments.Environments.Store(name, env)
 	}
 	return env
 }
@@ -149,11 +143,9 @@ func NewSymbolTableFrameBelowWithFrame(p *SymbolTableFrame, f *FrameMap, name st
 		f = p.Frame
 	}
 	restricted := p != nil && p.IsRestricted
-	env := &SymbolTableFrame{Name: name, Parent: p, Bindings: make(map[string]*Binding, 10), Frame: f, CurrentCode: list.New(), IsRestricted: restricted}
+	env := &SymbolTableFrame{Name: name, Parent: p, Frame: f, CurrentCode: list.New(), IsRestricted: restricted}
 	if p == nil || p == Global {
-		TopLevelEnvironments.Mutex.Lock()
-		TopLevelEnvironments.Environments[name] = env
-		TopLevelEnvironments.Mutex.Unlock()
+		TopLevelEnvironments.Environments.Store(name, env)
 	}
 	return env
 }
@@ -163,22 +155,19 @@ func (self *SymbolTableFrame) HasFrame() bool {
 }
 
 func (self *SymbolTableFrame) BindingNamed(name string) (b *Binding, present bool) {
-	self.Mutex.RLock()
-	b, present = self.Bindings[name]
-	self.Mutex.RUnlock()
+	bInt, present := self.Bindings.Load(name)
+	if present {
+		b = bInt.(*Binding)
+	}
 	return
 }
 
 func (self *SymbolTableFrame) SetBindingAt(name string, b *Binding) {
-	self.Mutex.Lock()
-	self.Bindings[name] = b
-	self.Mutex.Unlock()
+	self.Bindings.Store(name, b)
 }
 
 func (self *SymbolTableFrame) DeleteBinding(name string) {
-	self.Mutex.Lock()
-	delete(self.Bindings, name)
-	self.Mutex.Unlock()
+	self.Bindings.Delete(name)
 }
 
 func (self *SymbolTableFrame) findSymbol(name string) (symbol *Data, found bool) {

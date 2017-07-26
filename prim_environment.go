@@ -64,10 +64,11 @@ func EnvironmentBoundNamesImpl(args *Data, env *SymbolTableFrame) (result *Data,
 		return
 	}
 	e := EnvironmentValue(Car(args))
-	keys := make([]*Data, 0, 0)
-	for _, val := range e.Bindings {
-		keys = append(keys, val.Sym)
-	}
+	keys := make([]*Data, 0)
+	e.Bindings.Range(func(k, v interface{}) bool {
+		keys = append(keys, v.(*Binding).Sym)
+		return true
+	})
 	return ArrayToList(keys), nil
 }
 
@@ -77,12 +78,14 @@ func EnvironmentMacroNamesImpl(args *Data, env *SymbolTableFrame) (result *Data,
 		return
 	}
 	e := EnvironmentValue(Car(args))
-	keys := make([]*Data, 0, 0)
-	for _, val := range e.Bindings {
+	keys := make([]*Data, 0)
+	e.Bindings.Range(func(k, v interface{}) bool {
+		val := v.(*Binding)
 		if MacroP(val.Val) {
 			keys = append(keys, val.Sym)
 		}
-	}
+		return true
+	})
 	return ArrayToList(keys), nil
 }
 
@@ -92,14 +95,16 @@ func EnvironmentBindingsImpl(args *Data, env *SymbolTableFrame) (result *Data, e
 		return
 	}
 	e := EnvironmentValue(Car(args))
-	keys := make([]*Data, 0, 0)
-	for _, val := range e.Bindings {
+	keys := make([]*Data, 0)
+	e.Bindings.Range(func(k, v interface{}) bool {
+		val := v.(*Binding)
 		if NilP(val.Val) {
 			keys = append(keys, InternalMakeList(val.Sym))
 		} else {
 			keys = append(keys, InternalMakeList(val.Sym, val.Val))
 		}
-	}
+		return true
+	})
 	return ArrayToList(keys), nil
 }
 
@@ -349,13 +354,11 @@ func FindTopLevelEnvironmentImpl(args *Data, env *SymbolTableFrame) (result *Dat
 		err = ProcessError("find-top-level-environment expects a symbol or string environment name", env)
 		return
 	}
-	TopLevelEnvironments.Mutex.RLock()
-	defer TopLevelEnvironments.Mutex.RUnlock()
-	e := TopLevelEnvironments.Environments[StringValue(Car(args))]
-	if e == nil {
+	e, ok := TopLevelEnvironments.Environments.Load(StringValue(Car(args)))
+	if !ok {
 		return nil, nil
 	} else {
-		return EnvironmentWithValue(e), nil
+		return EnvironmentWithValue(e.(*SymbolTableFrame)), nil
 	}
 }
 

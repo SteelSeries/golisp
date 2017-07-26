@@ -38,7 +38,7 @@ func (s *SymbolTableFrameSuite) TestBinding(c *C) {
 	_, err := s.frame.BindTo(Intern("test"), IntegerWithValue(42))
 	c.Assert(err, IsNil)
 
-	binding, found := s.frame.Bindings["test"]
+	binding, found := s.frame.Bindings.Load("test")
 	c.Assert(found, Equals, true)
 	c.Assert(binding, NotNil)
 }
