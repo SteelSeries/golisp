@@ -142,13 +142,17 @@ func jsonToLispWithFramesReflect(rv reflect.Value) *Data {
 			return FrameWithValue(m)
 		}
 	case reflect.Array, reflect.Slice:
-		var ary *Data
-		for i := 0; i < rv.Len(); i++ {
-			val := rv.Index(i)
-			value := jsonToLispWithFramesReflect(val)
-			ary = Cons(value, ary)
+		if rv.Len() == 0 {
+			return &Data{Type: ConsCellType, Value: nil}
+		} else {
+			var ary *Data
+			for i := 0; i < rv.Len(); i++ {
+				val := rv.Index(i)
+				value := jsonToLispWithFramesReflect(val)
+				ary = Cons(value, ary)
+			}
+			return Reverse(ary)
 		}
-		return Reverse(ary)
 	case reflect.Struct:
 		return jsonToLispWithFramesStruct(rv)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
