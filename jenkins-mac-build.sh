@@ -25,9 +25,9 @@ test () {
 
   mkdir -p reports
 
-  go test -i -ldflags=-linkmode=external github.com/steelseries/golisp
+  go test -i -ldflags=-linkmode=external github.com/SteelSeries/golisp
 
-  TEST_DIRS=$(find src/github.com/steelseries/golisp -name *test.go | xargs -n 1 dirname | sort -u)
+  TEST_DIRS=$(find src/github.com/SteelSeries/golisp -name *test.go | xargs -n 1 dirname | sort -u)
 
   for d in $TEST_DIRS
   do

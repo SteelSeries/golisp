@@ -2,14 +2,13 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// This package implements a basic LISP interpretor for embedding in a go program for scripting.
+// This package implements a basic LISP interpreter for embedding in a go program for scripting.
 // This file contains the built-in primitive functions.
 
 package golisp
 
 var DebugTrace = false
 var LispTrace = false
-var quasiquoteLevel = 1
 
 func init() {
 	InitLisp()

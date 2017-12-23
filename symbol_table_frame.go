@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// This package implements a basic LISP interpretor for embedding in a go program for scripting.
+// This package implements a basic LISP interpreter for embedding in a go program for scripting.
 // This file implements the symbol table.
 
 package golisp
@@ -13,11 +13,6 @@ import (
 	"fmt"
 	"sync"
 	"sync/atomic"
-)
-
-const (
-	READ_LOCK = iota
-	WRITE_LOCK
 )
 
 type SymbolTableFrame struct {
@@ -42,9 +37,9 @@ type environmentsTable struct {
 }
 
 var Global *SymbolTableFrame
-var TopLevelEnvironments environmentsTable = environmentsTable{make(map[string]*SymbolTableFrame, 5), sync.RWMutex{}}
+var TopLevelEnvironments = environmentsTable{make(map[string]*SymbolTableFrame, 5), sync.RWMutex{}}
 
-var internedSymbols symbolsTable = symbolsTable{make(map[string]*Data, 256), sync.RWMutex{}}
+var internedSymbols = symbolsTable{make(map[string]*Data, 256), sync.RWMutex{}}
 
 func Intern(name string) (sym *Data) {
 	internedSymbols.Mutex.RLock()
@@ -59,74 +54,74 @@ func Intern(name string) (sym *Data) {
 	return
 }
 
-func (self *SymbolTableFrame) Depth() int {
-	if self.Previous == nil {
+func (stf *SymbolTableFrame) Depth() int {
+	if stf.Previous == nil {
 		return 1
 	} else {
-		return 1 + self.Previous.Depth()
+		return 1 + stf.Previous.Depth()
 	}
 }
 
-func (self *SymbolTableFrame) CurrentCodeString() string {
-	if self.CurrentCode.Len() > 0 {
-		return self.CurrentCode.Front().Value.(string)
+func (stf *SymbolTableFrame) CurrentCodeString() string {
+	if stf.CurrentCode.Len() > 0 {
+		return stf.CurrentCode.Front().Value.(string)
 	} else {
 		return "Unknown code"
 	}
 }
 
-func (self *SymbolTableFrame) InternalDump(frameNumber int) {
-	fmt.Printf("Frame %d: %s\n", frameNumber, self.CurrentCodeString())
-	self.Mutex.RLock()
-	defer self.Mutex.RUnlock()
-	for _, b := range self.Bindings {
+func (stf *SymbolTableFrame) InternalDump(frameNumber int) {
+	fmt.Printf("Frame %d: %s\n", frameNumber, stf.CurrentCodeString())
+	stf.Mutex.RLock()
+	defer stf.Mutex.RUnlock()
+	for _, b := range stf.Bindings {
 		if b.Val == nil || TypeOf(b.Val) != PrimitiveType {
 			b.Dump()
 		}
 	}
 	fmt.Printf("\n")
-	if self.Previous != nil {
-		self.Previous.InternalDump(frameNumber + 1)
+	if stf.Previous != nil {
+		stf.Previous.InternalDump(frameNumber + 1)
 	}
 }
 
-func (self *SymbolTableFrame) Dump() {
+func (stf *SymbolTableFrame) Dump() {
 	println()
-	self.InternalDump(0)
+	stf.InternalDump(0)
 }
 
-func (self *SymbolTableFrame) DumpSingleFrame(frameNumber int) {
+func (stf *SymbolTableFrame) DumpSingleFrame(frameNumber int) {
 	if frameNumber == 0 {
-		fmt.Printf("%s\n", self.CurrentCodeString())
-		self.Mutex.RLock()
-		defer self.Mutex.RUnlock()
-		for _, b := range self.Bindings {
+		fmt.Printf("%s\n", stf.CurrentCodeString())
+		stf.Mutex.RLock()
+		defer stf.Mutex.RUnlock()
+		for _, b := range stf.Bindings {
 			if b.Val == nil || TypeOf(b.Val) != PrimitiveType {
 				b.Dump()
 			}
 		}
 		fmt.Printf("\n")
-	} else if self.Previous != nil {
-		self.Previous.DumpSingleFrame(frameNumber - 1)
+	} else if stf.Previous != nil {
+		stf.Previous.DumpSingleFrame(frameNumber - 1)
 	} else {
 		fmt.Printf("Invalid frame selected.\n")
 	}
 }
 
-func (self *SymbolTableFrame) InternalDumpHeaders(frameNumber int) {
-	fmt.Printf("Frame %d: %s\n", frameNumber, self.CurrentCodeString())
-	if self.Previous != nil {
-		self.Previous.InternalDumpHeaders(frameNumber + 1)
+func (stf *SymbolTableFrame) InternalDumpHeaders(frameNumber int) {
+	fmt.Printf("Frame %d: %s\n", frameNumber, stf.CurrentCodeString())
+	if stf.Previous != nil {
+		stf.Previous.InternalDumpHeaders(frameNumber + 1)
 	}
 }
 
-func (self *SymbolTableFrame) DumpHeaders() {
+func (stf *SymbolTableFrame) DumpHeaders() {
 	println()
-	self.InternalDumpHeaders(0)
+	stf.InternalDumpHeaders(0)
 }
 
-func (self *SymbolTableFrame) DumpHeader() {
-	fmt.Printf("%s\n", self.CurrentCodeString())
+func (stf *SymbolTableFrame) DumpHeader() {
+	fmt.Printf("%s\n", stf.CurrentCodeString())
 }
 
 func NewSymbolTableFrameBelow(p *SymbolTableFrame, name string) *SymbolTableFrame {
@@ -158,54 +153,54 @@ func NewSymbolTableFrameBelowWithFrame(p *SymbolTableFrame, f *FrameMap, name st
 	return env
 }
 
-func (self *SymbolTableFrame) HasFrame() bool {
-	return self.Frame != nil
+func (stf *SymbolTableFrame) HasFrame() bool {
+	return stf.Frame != nil
 }
 
-func (self *SymbolTableFrame) BindingNamed(name string) (b *Binding, present bool) {
-	self.Mutex.RLock()
-	b, present = self.Bindings[name]
-	self.Mutex.RUnlock()
+func (stf *SymbolTableFrame) BindingNamed(name string) (b *Binding, present bool) {
+	stf.Mutex.RLock()
+	b, present = stf.Bindings[name]
+	stf.Mutex.RUnlock()
 	return
 }
 
-func (self *SymbolTableFrame) SetBindingAt(name string, b *Binding) {
-	self.Mutex.Lock()
-	self.Bindings[name] = b
-	self.Mutex.Unlock()
+func (stf *SymbolTableFrame) SetBindingAt(name string, b *Binding) {
+	stf.Mutex.Lock()
+	stf.Bindings[name] = b
+	stf.Mutex.Unlock()
 }
 
-func (self *SymbolTableFrame) DeleteBinding(name string) {
-	self.Mutex.Lock()
-	delete(self.Bindings, name)
-	self.Mutex.Unlock()
+func (stf *SymbolTableFrame) DeleteBinding(name string) {
+	stf.Mutex.Lock()
+	delete(stf.Bindings, name)
+	stf.Mutex.Unlock()
 }
 
-func (self *SymbolTableFrame) findSymbol(name string) (symbol *Data, found bool) {
-	binding, found := self.BindingNamed(name)
+func (stf *SymbolTableFrame) findSymbol(name string) (symbol *Data, found bool) {
+	binding, found := stf.BindingNamed(name)
 	if found {
 		return binding.Sym, true
-	} else if self.Parent != nil {
-		return self.Parent.findSymbol(name)
+	} else if stf.Parent != nil {
+		return stf.Parent.findSymbol(name)
 	} else {
 		return nil, false
 	}
 }
 
-func (self *SymbolTableFrame) FindBindingFor(symbol *Data) (binding *Binding, found bool) {
+func (stf *SymbolTableFrame) FindBindingFor(symbol *Data) (binding *Binding, found bool) {
 	name := StringValue(symbol)
-	binding, found = self.BindingNamed(name)
+	binding, found = stf.BindingNamed(name)
 	if found {
 		return
-	} else if self.Parent != nil {
-		return self.Parent.FindBindingFor(symbol)
+	} else if stf.Parent != nil {
+		return stf.Parent.FindBindingFor(symbol)
 	} else {
 		return nil, false
 	}
 }
 
-func (self *SymbolTableFrame) BindTo(symbol *Data, value *Data) (*Data, error) {
-	binding, found := self.FindBindingFor(symbol)
+func (stf *SymbolTableFrame) BindTo(symbol *Data, value *Data) (*Data, error) {
+	binding, found := stf.FindBindingFor(symbol)
 	if found {
 		if binding.Protected {
 			return nil, fmt.Errorf("%s is a protected binding", StringValue(symbol))
@@ -213,25 +208,25 @@ func (self *SymbolTableFrame) BindTo(symbol *Data, value *Data) (*Data, error) {
 		binding.Val = value
 	} else {
 		binding = BindingWithSymbolAndValue(symbol, value)
-		self.SetBindingAt(StringValue(symbol), binding)
+		stf.SetBindingAt(StringValue(symbol), binding)
 	}
 	return binding.Val, nil
 }
 
-func (self *SymbolTableFrame) BindToProtected(symbol *Data, value *Data) *Data {
-	binding, found := self.FindBindingFor(symbol)
+func (stf *SymbolTableFrame) BindToProtected(symbol *Data, value *Data) *Data {
+	binding, found := stf.FindBindingFor(symbol)
 	if found {
 		binding.Val = value
 		binding.Protected = true
 	} else {
 		binding = ProtectedBindingWithSymbolAndValue(symbol, value)
-		self.SetBindingAt(StringValue(symbol), binding)
+		stf.SetBindingAt(StringValue(symbol), binding)
 	}
 	return binding.Val
 }
 
-func (self *SymbolTableFrame) SetTo(symbol *Data, value *Data) (result *Data, err error) {
-	localBinding, found := self.findBindingInLocalFrameFor(symbol)
+func (stf *SymbolTableFrame) SetTo(symbol *Data, value *Data) (result *Data, err error) {
+	localBinding, found := stf.findBindingInLocalFrameFor(symbol)
 	if found {
 		if localBinding.Protected {
 			return nil, fmt.Errorf("%s is a protected binding", StringValue(symbol))
@@ -242,12 +237,12 @@ func (self *SymbolTableFrame) SetTo(symbol *Data, value *Data) (result *Data, er
 	}
 
 	naked := StringValue(NakedSymbolFrom(symbol))
-	if self.HasFrame() && self.Frame.HasSlot(naked) {
-		self.Frame.Set(naked, value)
+	if stf.HasFrame() && stf.Frame.HasSlot(naked) {
+		stf.Frame.Set(naked, value)
 		return value, nil
 	}
 
-	binding, found := self.FindBindingFor(symbol)
+	binding, found := stf.FindBindingFor(symbol)
 	if found {
 		if binding.Protected {
 			return nil, fmt.Errorf("%s is a protected binding", StringValue(symbol))
@@ -260,12 +255,12 @@ func (self *SymbolTableFrame) SetTo(symbol *Data, value *Data) (result *Data, er
 	return nil, errors.New(fmt.Sprintf("%s is undefined", StringValue(symbol)))
 }
 
-func (self *SymbolTableFrame) findBindingInLocalFrameFor(symbol *Data) (b *Binding, found bool) {
-	return self.BindingNamed(StringValue(symbol))
+func (stf *SymbolTableFrame) findBindingInLocalFrameFor(symbol *Data) (b *Binding, found bool) {
+	return stf.BindingNamed(StringValue(symbol))
 }
 
-func (self *SymbolTableFrame) BindLocallyTo(symbol *Data, value *Data) (*Data, error) {
-	binding, found := self.findBindingInLocalFrameFor(symbol)
+func (stf *SymbolTableFrame) BindLocallyTo(symbol *Data, value *Data) (*Data, error) {
+	binding, found := stf.findBindingInLocalFrameFor(symbol)
 	if found {
 		if binding.Protected {
 			return nil, fmt.Errorf("%s is a protected binding", StringValue(symbol))
@@ -273,13 +268,13 @@ func (self *SymbolTableFrame) BindLocallyTo(symbol *Data, value *Data) (*Data, e
 		binding.Val = value
 	} else {
 		binding = BindingWithSymbolAndValue(symbol, value)
-		self.SetBindingAt(StringValue(symbol), binding)
+		stf.SetBindingAt(StringValue(symbol), binding)
 	}
 	return binding.Val, nil
 }
 
-func (self *SymbolTableFrame) ValueOfWithFunctionSlotCheck(symbol *Data, needFunction bool) *Data {
-	localBinding, found := self.findBindingInLocalFrameFor(symbol)
+func (stf *SymbolTableFrame) ValueOfWithFunctionSlotCheck(symbol *Data, needFunction bool) *Data {
+	localBinding, found := stf.findBindingInLocalFrameFor(symbol)
 	if found {
 		if FunctionP(localBinding.Val) {
 			atomic.StoreInt32(&FunctionValue(localBinding.Val).SlotFunction, 1)
@@ -287,8 +282,8 @@ func (self *SymbolTableFrame) ValueOfWithFunctionSlotCheck(symbol *Data, needFun
 		return localBinding.Val
 	}
 
-	if self.HasFrame() {
-		f := self.Frame
+	if stf.HasFrame() {
+		f := stf.Frame
 		naked := StringValue(NakedSymbolFrom(symbol))
 		if f.HasSlot(naked) {
 			slotValue := f.Get(naked)
@@ -302,7 +297,7 @@ func (self *SymbolTableFrame) ValueOfWithFunctionSlotCheck(symbol *Data, needFun
 		}
 	}
 
-	binding, found := self.FindBindingFor(symbol)
+	binding, found := stf.FindBindingFor(symbol)
 	if found {
 		if FunctionP(binding.Val) {
 			atomic.StoreInt32(&FunctionValue(binding.Val).SlotFunction, 0)
@@ -313,6 +308,6 @@ func (self *SymbolTableFrame) ValueOfWithFunctionSlotCheck(symbol *Data, needFun
 	}
 }
 
-func (self *SymbolTableFrame) ValueOf(symbol *Data) *Data {
-	return self.ValueOfWithFunctionSlotCheck(symbol, false)
+func (stf *SymbolTableFrame) ValueOf(symbol *Data) *Data {
+	return stf.ValueOfWithFunctionSlotCheck(symbol, false)
 }

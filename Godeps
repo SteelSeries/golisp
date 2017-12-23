@@ -2,7 +2,7 @@
 	"ImportPath": "_/Users/Thoughtworker/Kumar/jobs/ThoughtWorks/clients/SteelSeries/project/ssenext/core",
 	"GoVersion": "go1.4",
 	"Packages": [
-		"github.com/steelseries/golisp"
+		"github.com/SteelSeries/golisp"
 	],
 	"Deps": [
 	    {

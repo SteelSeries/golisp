@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// This package implements a basic LISP interpretor for embedding in a go program for scripting.
+// This package implements a basic LISP interpreter for embedding in a go program for scripting.
 // This file implements user defined functions.
 
 package golisp
@@ -45,25 +45,25 @@ func MakeFunction(name string, params *Data, body *Data, parentEnv *SymbolTableF
 	return &Function{Name: name, Params: params, VarArgs: varArgs, RequiredArgCount: requiredArgs, Body: body, Env: parentEnv, SlotFunction: 0}
 }
 
-func (self *Function) String() string {
-	return fmt.Sprintf("<func: %s>", self.Name)
+func (f *Function) String() string {
+	return fmt.Sprintf("<func: %s>", f.Name)
 }
 
-func (self *Function) makeLocalBindings(args *Data, argEnv *SymbolTableFrame, localEnv *SymbolTableFrame, eval bool) (err error) {
-	if self.VarArgs {
-		if Length(args) < self.RequiredArgCount {
-			return errors.New(fmt.Sprintf("%s expected at least %d parameters, received %d.", self.Name, self.RequiredArgCount, Length(args)))
+func (f *Function) makeLocalBindings(args *Data, argEnv *SymbolTableFrame, localEnv *SymbolTableFrame, eval bool) (err error) {
+	if f.VarArgs {
+		if Length(args) < f.RequiredArgCount {
+			return errors.New(fmt.Sprintf("%s expected at least %d parameters, received %d.", f.Name, f.RequiredArgCount, Length(args)))
 		}
 	} else {
-		if Length(args) != self.RequiredArgCount {
-			return errors.New(fmt.Sprintf("%s expected %d parameters, received %d.", self.Name, self.RequiredArgCount, Length(args)))
+		if Length(args) != f.RequiredArgCount {
+			return errors.New(fmt.Sprintf("%s expected %d parameters, received %d.", f.Name, f.RequiredArgCount, Length(args)))
 		}
 	}
 
 	var argValue *Data
 	var accumulatingParam *Data = nil
 	accumulatedArgs := make([]*Data, 0)
-	for p, a := self.Params, args; NotNilP(a); a = Cdr(a) {
+	for p, a := f.Params, args; NotNilP(a); a = Cdr(a) {
 		if eval {
 			argValue, err = Eval(Car(a), argEnv)
 			if err != nil {
@@ -97,16 +97,16 @@ func (self *Function) makeLocalBindings(args *Data, argEnv *SymbolTableFrame, lo
 	return nil
 }
 
-func (self *Function) internalApply(args *Data, argEnv *SymbolTableFrame, frame *FrameMap, eval bool) (result *Data, err error) {
-	localEnv := NewSymbolTableFrameBelowWithFrame(self.Env, frame, self.Name)
+func (f *Function) internalApply(args *Data, argEnv *SymbolTableFrame, frame *FrameMap, eval bool) (result *Data, err error) {
+	localEnv := NewSymbolTableFrameBelowWithFrame(f.Env, frame, f.Name)
 	localEnv.Previous = argEnv
-	selfSym := Intern("self")
+	selfSym := Intern("f")
 	if frame != nil {
 		_, err = localEnv.BindLocallyTo(selfSym, FrameWithValue(frame))
 		if err != nil {
 			return
 		}
-	} else if atomic.LoadInt32(&self.SlotFunction) == 1 {
+	} else if atomic.LoadInt32(&f.SlotFunction) == 1 {
 		selfBinding, found := argEnv.findBindingInLocalFrameFor(selfSym)
 		if found {
 			_, err = localEnv.BindLocallyTo(selfSym, selfBinding.Val)
@@ -117,72 +117,72 @@ func (self *Function) internalApply(args *Data, argEnv *SymbolTableFrame, frame 
 	}
 
 	parentProcSym := Intern("parentProcess")
-	if self.ParentProcess != nil {
-		procObj := ObjectWithTypeAndValue("Process", unsafe.Pointer(self.ParentProcess))
+	if f.ParentProcess != nil {
+		procObj := ObjectWithTypeAndValue("Process", unsafe.Pointer(f.ParentProcess))
 		_, err = localEnv.BindLocallyTo(parentProcSym, procObj)
 		if err != nil {
 			return
 		}
 	}
 
-	err = self.makeLocalBindings(args, argEnv, localEnv, eval)
+	err = f.makeLocalBindings(args, argEnv, localEnv, eval)
 	if err != nil {
 		return
 	}
 
 	localGuid := atomic.AddInt64(&ProfileGUID, 1) - 1
 
-	ProfileEnter("func", self.Name, localGuid)
+	ProfileEnter("func", f.Name, localGuid)
 
-	for s := self.Body; NotNilP(s); s = Cdr(s) {
+	for s := f.Body; NotNilP(s); s = Cdr(s) {
 		result, err = Eval(Car(s), localEnv)
 		if err != nil {
-			result, err = nil, errors.New(fmt.Sprintf("In '%s': %s", self.Name, err))
+			result, err = nil, errors.New(fmt.Sprintf("In '%s': %s", f.Name, err))
 			break
 		}
 	}
 
-	ProfileExit("func", self.Name, localGuid)
+	ProfileExit("func", f.Name, localGuid)
 
 	return
 }
 
-func (self *Function) Apply(args *Data, argEnv *SymbolTableFrame) (result *Data, err error) {
-	return self.internalApply(args, argEnv, nil, true)
+func (f *Function) Apply(args *Data, argEnv *SymbolTableFrame) (result *Data, err error) {
+	return f.internalApply(args, argEnv, nil, true)
 }
 
-func (self *Function) ApplyWithFrame(args *Data, argEnv *SymbolTableFrame, frame *FrameMap) (result *Data, err error) {
-	return self.internalApply(args, argEnv, frame, true)
+func (f *Function) ApplyWithFrame(args *Data, argEnv *SymbolTableFrame, frame *FrameMap) (result *Data, err error) {
+	return f.internalApply(args, argEnv, frame, true)
 }
 
-func (self *Function) ApplyWithoutEval(args *Data, argEnv *SymbolTableFrame) (result *Data, err error) {
-	return self.internalApply(args, argEnv, nil, false)
+func (f *Function) ApplyWithoutEval(args *Data, argEnv *SymbolTableFrame) (result *Data, err error) {
+	return f.internalApply(args, argEnv, nil, false)
 }
 
-func (self *Function) ApplyWithoutEvalWithFrame(args *Data, argEnv *SymbolTableFrame, frame *FrameMap) (result *Data, err error) {
-	return self.internalApply(args, argEnv, frame, false)
+func (f *Function) ApplyWithoutEvalWithFrame(args *Data, argEnv *SymbolTableFrame, frame *FrameMap) (result *Data, err error) {
+	return f.internalApply(args, argEnv, frame, false)
 }
 
-func (self *Function) ApplyOveriddingEnvironment(args *Data, argEnv *SymbolTableFrame) (result *Data, err error) {
-	localEnv := NewSymbolTableFrameBelow(argEnv, self.Name)
-	err = self.makeLocalBindings(args, argEnv, localEnv, true)
+func (f *Function) ApplyOveriddingEnvironment(args *Data, argEnv *SymbolTableFrame) (result *Data, err error) {
+	localEnv := NewSymbolTableFrameBelow(argEnv, f.Name)
+	err = f.makeLocalBindings(args, argEnv, localEnv, true)
 	if err != nil {
 		return
 	}
 
 	localGuid := atomic.AddInt64(&ProfileGUID, 1) - 1
 
-	ProfileEnter("func", self.Name, localGuid)
+	ProfileEnter("func", f.Name, localGuid)
 
-	for s := self.Body; NotNilP(s); s = Cdr(s) {
+	for s := f.Body; NotNilP(s); s = Cdr(s) {
 		result, err = Eval(Car(s), localEnv)
 		if err != nil {
-			result, err = nil, errors.New(fmt.Sprintf("In '%s': %s", self.Name, err))
+			result, err = nil, errors.New(fmt.Sprintf("In '%s': %s", f.Name, err))
 			break
 		}
 	}
 
-	ProfileExit("func", self.Name, localGuid)
+	ProfileExit("func", f.Name, localGuid)
 
 	return
 }

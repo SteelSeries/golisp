@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// This package implements a basic LISP interpretor for embedding in a go program for scripting.
+// This package implements a basic LISP interpreter for embedding in a go program for scripting.
 // This file contains the concurrency primitive functions.
 
 package golisp
@@ -176,7 +176,6 @@ func ScheduleImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	function.ParentProcess = proc
 
-	aborted := false
 	go func() {
 		var returnValue *Data
 		defer func() {
@@ -187,7 +186,6 @@ func ScheduleImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 			for {
 				select {
 				case <-proc.Abort:
-					aborted = true
 					break Loop
 				case <-proc.Restart:
 					proc.ScheduleTimer.Reset(time.Duration(IntegerValue(millis)) * time.Millisecond)

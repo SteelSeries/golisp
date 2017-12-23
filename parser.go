@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// This package implements a basic LISP interpretor for embedding in a go program for scripting.
+// This package implements a basic LISP interpreter for embedding in a go program for scripting.
 // This file implements the parser.
 
 package golisp
@@ -15,7 +15,7 @@ import (
 	"unsafe"
 )
 
-var EofObject *Data = Intern("__EOF__")
+var EofObject = Intern("__EOF__")
 
 func makeInteger(str string) (n *Data, err error) {
 	var i int64
@@ -206,7 +206,7 @@ func parseExpression(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 			return
 		case COMMENT:
 			s.ConsumeToken()
-			break
+			return
 		case NUMBER:
 			s.ConsumeToken()
 			sexpr, err = makeInteger(lit)

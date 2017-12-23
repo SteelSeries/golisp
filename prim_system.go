@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// This package implements a basic LISP interpretor for embedding in a go program for scripting.
+// This package implements a basic LISP interpreter for embedding in a go program for scripting.
 // This file contains the system primitive functions.
 
 package golisp
@@ -17,7 +17,7 @@ import (
 	"time"
 )
 
-var symbolCounts map[string]int = make(map[string]int)
+var symbolCounts = make(map[string]int)
 var symbolCountsMutex sync.Mutex
 
 func RegisterSystemPrimitives() {
@@ -54,7 +54,7 @@ func LoadFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return ProcessFile(StringValue(filename))
 }
 
-var goodbyes []string = []string{
+var goodbyes = []string{
 	"goodbye",
 	"zai jian",
 	"tot ziens",

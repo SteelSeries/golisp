@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// This package implements a basic LISP interpretor for embedding in a go program for scripting.
+// This package implements a basic LISP interpreter for embedding in a go program for scripting.
 // This file implements the frame data type.
 
 package golisp
@@ -21,14 +21,14 @@ type FrameMap struct {
 	Mutex sync.RWMutex
 }
 
-func (self *FrameMap) hasSlotLocally(key string) bool {
-	_, ok := self.Data[key]
+func (fm *FrameMap) hasSlotLocally(key string) bool {
+	_, ok := fm.Data[key]
 	return ok
 }
 
-func (self *FrameMap) localSlots() []string {
-	slots := make([]string, 0, len(self.Data))
-	for k, _ := range self.Data {
+func (fm *FrameMap) localSlots() []string {
+	slots := make([]string, 0, len(fm.Data))
+	for k := range fm.Data {
 		slots = append(slots, k)
 	}
 	return slots
@@ -38,8 +38,8 @@ func isParentKey(key string) bool {
 	return strings.HasSuffix(key, "*:")
 }
 
-func (self *FrameMap) hasParentSlots() bool {
-	for k, _ := range self.Data {
+func (fm *FrameMap) hasParentSlots() bool {
+	for k := range fm.Data {
 		if isParentKey(k) {
 			return true
 		}
@@ -48,9 +48,9 @@ func (self *FrameMap) hasParentSlots() bool {
 	return false
 }
 
-func (self *FrameMap) Parents() []*FrameMap {
-	parents := make([]*FrameMap, 0, 0)
-	for k, v := range self.Data {
+func (fm *FrameMap) Parents() []*FrameMap {
+	parents := make([]*FrameMap, 0, len(fm.Data))
+	for k, v := range fm.Data {
 		if isParentKey(k) && v != nil {
 			parents = append(parents, FrameValue(v))
 		}
@@ -60,22 +60,22 @@ func (self *FrameMap) Parents() []*FrameMap {
 
 //------------------------------------------------------------
 
-func (self *FrameMap) hasSlotHelper(key string, v *set.Set) bool {
-	if v.Has(self) {
+func (fm *FrameMap) hasSlotHelper(key string, v *set.Set) bool {
+	if v.Has(fm) {
 		return false
 	}
 
-	v.Add(self)
+	v.Add(fm)
 
-	if self.hasSlotLocally(key) {
+	if fm.hasSlotLocally(key) {
 		return true
 	}
 
-	if !self.hasParentSlots() {
+	if !fm.hasParentSlots() {
 		return false
 	}
 
-	for _, p := range self.Parents() {
+	for _, p := range fm.Parents() {
 		p.Mutex.RLock()
 		hasSlot := p.hasSlotHelper(key, v)
 		p.Mutex.RUnlock()
@@ -87,29 +87,29 @@ func (self *FrameMap) hasSlotHelper(key string, v *set.Set) bool {
 	return false
 }
 
-func (self *FrameMap) HasSlot(key string) (ret bool) {
+func (fm *FrameMap) HasSlot(key string) (ret bool) {
 	visited := set.New()
-	self.Mutex.RLock()
-	ret = self.hasSlotHelper(key, visited)
-	self.Mutex.RUnlock()
+	fm.Mutex.RLock()
+	ret = fm.hasSlotHelper(key, visited)
+	fm.Mutex.RUnlock()
 	return
 }
 
 //------------------------------------------------------------
 
-func (self *FrameMap) getHelper(key string, v *set.Set) *Data {
-	if v.Has(self) {
+func (fm *FrameMap) getHelper(key string, v *set.Set) *Data {
+	if v.Has(fm) {
 		return nil
 	}
 
-	v.Add(self)
+	v.Add(fm)
 
-	val, ok := self.Data[key]
+	val, ok := fm.Data[key]
 	if ok {
 		return val
 	}
 
-	for _, p := range self.Parents() {
+	for _, p := range fm.Parents() {
 		p.Mutex.RLock()
 		val := p.getHelper(key, v)
 		p.Mutex.RUnlock()
@@ -121,65 +121,65 @@ func (self *FrameMap) getHelper(key string, v *set.Set) *Data {
 	return nil
 }
 
-func (self *FrameMap) Get(key string) (ret *Data) {
+func (fm *FrameMap) Get(key string) (ret *Data) {
 	visited := set.New()
-	self.Mutex.RLock()
-	ret = self.getHelper(key, visited)
-	self.Mutex.RUnlock()
+	fm.Mutex.RLock()
+	ret = fm.getHelper(key, visited)
+	fm.Mutex.RUnlock()
 	return
 }
 
 //------------------------------------------------------------
 
-func (self *FrameMap) Remove(key string) bool {
-	self.Mutex.Lock()
-	if !self.hasSlotLocally(key) {
-		self.Mutex.Unlock()
+func (fm *FrameMap) Remove(key string) bool {
+	fm.Mutex.Lock()
+	if !fm.hasSlotLocally(key) {
+		fm.Mutex.Unlock()
 		return false
 	}
-	delete(self.Data, key)
-	self.Mutex.Unlock()
+	delete(fm.Data, key)
+	fm.Mutex.Unlock()
 	return true
 }
 
 //------------------------------------------------------------
 
-func (self *FrameMap) Set(key string, value *Data) *Data {
-	self.Mutex.Lock()
-	self.Data[key] = value
-	self.Mutex.Unlock()
+func (fm *FrameMap) Set(key string, value *Data) *Data {
+	fm.Mutex.Lock()
+	fm.Data[key] = value
+	fm.Mutex.Unlock()
 	return value
 }
 
 //------------------------------------------------------------
 
-func (self *FrameMap) Clone() *FrameMap {
+func (fm *FrameMap) Clone() *FrameMap {
 	f := FrameMap{}
 	f.Data = make(FrameMapData)
-	self.Mutex.RLock()
-	for k, v := range self.Data {
+	fm.Mutex.RLock()
+	for k, v := range fm.Data {
 		f.Data[k] = v
 	}
-	self.Mutex.RUnlock()
+	fm.Mutex.RUnlock()
 	return &f
 }
 
-func (self *FrameMap) Keys() []*Data {
-	self.Mutex.RLock()
-	keys := make([]*Data, 0, len(self.Data))
-	for k, _ := range self.Data {
+func (fm *FrameMap) Keys() []*Data {
+	fm.Mutex.RLock()
+	keys := make([]*Data, 0, len(fm.Data))
+	for k := range fm.Data {
 		keys = append(keys, Intern(k))
 	}
-	self.Mutex.RUnlock()
+	fm.Mutex.RUnlock()
 	return keys
 }
 
-func (self *FrameMap) Values() []*Data {
-	self.Mutex.RLock()
-	values := make([]*Data, 0, len(self.Data))
-	for _, v := range self.Data {
+func (fm *FrameMap) Values() []*Data {
+	fm.Mutex.RLock()
+	values := make([]*Data, 0, len(fm.Data))
+	for _, v := range fm.Data {
 		values = append(values, v)
 	}
-	self.Mutex.RUnlock()
+	fm.Mutex.RUnlock()
 	return values
 }

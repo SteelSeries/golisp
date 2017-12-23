@@ -2,20 +2,21 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// This package impliments a basic LISP interpretor for embedding in a go program for scripting.
+// This package implements a basic LISP interpreter for embedding in a go program for scripting.
 // This file provides a repl
 package main
 
 import (
 	"flag"
 	"fmt"
-	"github.com/steelseries/golisp"
 	"strings"
+
+	"github.com/SteelSeries/golisp"
 )
 
 var (
-	runTests     bool = false
-	verboseTests bool = false
+	runTests     = false
+	verboseTests = false
 )
 
 func test() {

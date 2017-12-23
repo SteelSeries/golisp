@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// This package implements a basic LISP interpretor for embedding in a go program for scripting.
+// This package implements a basic LISP interpreter for embedding in a go program for scripting.
 // This file provides a REPL.
 
 package golisp
@@ -21,12 +21,14 @@ func Repl() {
 	LoadHistoryFromFile(".golisp_history")
 	lastInput := ""
 	replEnv := NewSymbolTableFrameBelow(Global, "Repl")
+
+	defer func() {
+		if x := recover(); x != nil {
+			fmt.Printf("Don't Panic! %v\n", x)
+		}
+	}()
+
 	for true {
-		defer func() {
-			if x := recover(); x != nil {
-				fmt.Printf("Don't Panic! %v\n", x)
-			}
-		}()
 		DebugCurrentFrame = nil
 		DebugSingleStep = false
 		DebugEvalInDebugRepl = false
@@ -34,29 +36,33 @@ func Repl() {
 		inputp := ReadLine(&prompt)
 		if inputp == nil {
 			QuitImpl(nil, nil)
-		} else {
-			input := *inputp
-			//			fmt.Printf("input: <%s>\n", inputp)
-			if input != "" {
-				code, err := Parse(input)
-				if err != nil {
-					fmt.Printf("Error: %s\n", err)
-				} else {
-					if input != lastInput {
-						AddHistory(input)
-						lastInput = input
-					}
-					d, err := Eval(code, replEnv)
-					if err != nil {
-						fmt.Printf("Error in evaluation: %s\n", err)
-						if DebugOnError {
-							DebugRepl(DebugErrorEnv)
-						}
-					} else {
-						fmt.Printf("==> %s\n", String(d))
-					}
-				}
-			}
 		}
+
+		input := *inputp
+		if input == "" {
+			continue
+		}
+
+		code, err := Parse(input)
+		if err != nil {
+			fmt.Printf("Error: %s\n", err)
+			continue
+		}
+
+		if input != lastInput {
+			AddHistory(input)
+			lastInput = input
+		}
+		d, err := Eval(code, replEnv)
+		if err != nil {
+			fmt.Printf("Error in evaluation: %s\n", err)
+			if DebugOnError {
+				DebugRepl(DebugErrorEnv)
+			}
+
+			continue
+		}
+
+		fmt.Printf("==> %s\n", String(d))
 	}
 }

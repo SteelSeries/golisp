@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// This package implements a basic LISP interpretor for embedding in a go program for scripting.
+// This package implements a basic LISP interpreter for embedding in a go program for scripting.
 // This file implements Json<->Lisp conversions using frames.
 
 package golisp
@@ -190,7 +190,7 @@ func JsonStringToLispWithFrames(jsonData string) (result *Data) {
 	if err != nil {
 		fmt.Printf("Returning empty frame because of badly formed json: '%s'\n --> %v\n", jsonData, err)
 		m := FrameMap{}
-		m.Data = make(FrameMapData, 0)
+		m.Data = make(FrameMapData)
 		return FrameWithValue(&m)
 	}
 	return jsonToLispWithFramesReflect(reflect.ValueOf(data))

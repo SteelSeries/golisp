@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// This package implements a basic LISP interpretor for embedding in a go program for scripting.
+// This package implements a basic LISP interpreter for embedding in a go program for scripting.
 // This file implements data elements.
 
 package golisp
@@ -60,23 +60,23 @@ type BooleanBox struct {
 	B bool
 }
 
-var b_true bool = true
-var b_false bool = false
+var bTrue = true
+var bFalse = false
 
-var LispTrue *Data = &Data{Type: BooleanType, Value: unsafe.Pointer(&b_true)}
-var LispFalse *Data = &Data{Type: BooleanType, Value: unsafe.Pointer(&b_false)}
+var LispTrue = &Data{Type: BooleanType, Value: unsafe.Pointer(&bTrue)}
+var LispFalse = &Data{Type: BooleanType, Value: unsafe.Pointer(&bFalse)}
 
 // Debug support
 
-var EvalDepth int = 0
-var DebugSingleStep bool = false
+var EvalDepth = 0
+var DebugSingleStep = false
 var DebugCurrentFrame *SymbolTableFrame = nil
-var DebugEvalInDebugRepl bool = false
+var DebugEvalInDebugRepl = false
 var DebugErrorEnv *SymbolTableFrame = nil
-var DebugOnError bool = false
-var IsInteractive bool = false
+var DebugOnError = false
+var IsInteractive = false
 var DebugReturnValue *Data = nil
-var DebugOnEntry *set.Set = set.New()
+var DebugOnEntry = set.New()
 
 func TypeOf(d *Data) uint8 {
 	if d == nil {
@@ -676,7 +676,7 @@ func Flatten(d *Data) (result *Data, err error) {
 		return d, nil
 	}
 
-	var l []*Data = make([]*Data, 0, 10)
+	var l = make([]*Data, 0, 10)
 	for c := d; NotNilP(c); c = Cdr(c) {
 		if ListP(Car(c)) {
 			for i := Car(c); i != nil; i = Cdr(i) {
@@ -699,7 +699,7 @@ func RecursiveFlatten(d *Data) (result *Data, err error) {
 		return d, nil
 	}
 
-	var l []*Data = make([]*Data, 0, 10)
+	var l = make([]*Data, 0, 10)
 	var elem *Data
 	for c := d; NotNilP(c); c = Cdr(c) {
 		if ListP(Car(c)) {
@@ -727,7 +727,7 @@ func QuoteIt(value *Data) (result *Data) {
 }
 
 func QuoteAll(d *Data) (result *Data) {
-	var l []*Data = make([]*Data, 0, 10)
+	var l = make([]*Data, 0, 10)
 	if d == nil {
 		l = append(l, QuoteIt(nil))
 	} else {
@@ -952,7 +952,7 @@ func String(d *Data) string {
 			if NilP(d) {
 				return "()"
 			}
-			var c *Data = d
+			var c = d
 
 			contents := make([]string, 0, Length(d))
 			for NotNilP(c) && PairP(c) {
@@ -1038,7 +1038,7 @@ func String(d *Data) string {
 		frame := FrameValue(d)
 		frame.Mutex.RLock()
 		keys := make([]string, 0, len(frame.Data))
-		for key, _ := range frame.Data {
+		for key := range frame.Data {
 			keys = append(keys, key)
 		}
 		sort.Strings(keys)
@@ -1046,7 +1046,7 @@ func String(d *Data) string {
 		pairs := make([]string, 0, len(frame.Data))
 		for _, key := range keys {
 			val := frame.Data[key]
-			var valString string = String(val)
+			var valString = String(val)
 			pairs = append(pairs, fmt.Sprintf("%s %s", key, valString))
 		}
 		frame.Mutex.RUnlock()
@@ -1198,26 +1198,6 @@ func evalHelper(d *Data, env *SymbolTableFrame, needFunction bool) (result *Data
 
 func Eval(d *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return evalHelper(d, env, false)
-}
-
-func formatApply(function *Data, args *Data) string {
-	var fname string
-
-	if NilP(function) {
-		return "Trying to apply nil!"
-	}
-
-	switch function.Type {
-	case FunctionType:
-		fname = FunctionValue(function).Name
-	case MacroType:
-		fname = MacroValue(function).Name
-	case PrimitiveType:
-		fname = PrimitiveValue(function).Name
-	default:
-		return fmt.Sprintf("%s when function or macro expected for %s.", TypeName(TypeOf(function)), String(function))
-	}
-	return fmt.Sprintf("Apply %s to %s", fname, String(args))
 }
 
 func Apply(function *Data, args *Data, env *SymbolTableFrame) (result *Data, err error) {

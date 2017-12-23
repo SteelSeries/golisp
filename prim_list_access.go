@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// This package implements a basic LISP interpretor for embedding in a go program for scripting.
+// This package implements a basic LISP interpreter for embedding in a go program for scripting.
 // This file contains the list access primitive functions.
 
 package golisp
@@ -276,7 +276,7 @@ func TakeImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	l := Cadr(args)
 	if ListP(l) {
-		var items []*Data = make([]*Data, 0, Length(args))
+		var items = make([]*Data, 0, Length(args))
 		for i, cell := 0, l; i < size && NotNilP(cell); i, cell = i+1, Cdr(cell) {
 			items = append(items, Car(cell))
 		}
@@ -357,7 +357,7 @@ func ListHeadImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	l := Car(args)
 	if ListP(l) {
-		var items []*Data = make([]*Data, 0, Length(args))
+		var items = make([]*Data, 0, Length(args))
 		for i, cell := 0, l; i < size && NotNilP(cell); i, cell = i+1, Cdr(cell) {
 			items = append(items, Car(cell))
 		}

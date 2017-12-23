@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// This package implements a basic LISP interpretor for embedding in a go program for scripting.
+// This package implements a basic LISP interpreter for embedding in a go program for scripting.
 // This file tests the Json<->Lisp support.
 
 package golisp
@@ -183,15 +183,15 @@ func (s *JsonLispSuite) TestJsonToLispWithFramesStruct(c *C) {
 		NilSlice: nil,
 		Gif: imageSyncGif{
 			Frames: []imageSyncFrame{
-				imageSyncFrame{
+				{
 					Delay: 1,
 					Image: []interface{}{1, 3, 4},
 				},
-				imageSyncFrame{
+				{
 					Delay: 2,
 					Image: []interface{}{},
 				},
-				imageSyncFrame{
+				{
 					Delay: 3,
 					Image: nil,
 				},

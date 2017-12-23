@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// This package implements a basic LISP interpretor for embedding in a go program for scripting.
+// This package implements a basic LISP interpreter for embedding in a go program for scripting.
 // This file implements data elements.
 
 package golisp
@@ -89,7 +89,7 @@ func Nth(d *Data, n int) *Data {
 		return nil
 	}
 
-	var c *Data = d
+	var c = d
 	for i := n; i > 1; c, i = Cdr(c), i-1 {
 	}
 	return Car(c)

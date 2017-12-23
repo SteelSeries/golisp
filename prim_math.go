@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// This package implements a basic LISP interpretor for embedding in a go program for scripting.
+// This package implements a basic LISP interpreter for embedding in a go program for scripting.
 // This file contains the built-in primitive functions.
 
 package golisp
@@ -257,7 +257,7 @@ func quotientInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func quotientFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var acc float32 = FloatValue(Car(args))
+	var acc = FloatValue(Car(args))
 	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
 		v := FloatValue(Car(c))
 		if v == 0 {
@@ -285,13 +285,13 @@ func QuotientImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 func RemainderImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	dividend := Car(args)
 	if !IntegerP(dividend) {
-		err = ProcessError(fmt.Sprintf("%/modulo expected an integer first arg, received %s", String(dividend)), env)
+		err = ProcessError(fmt.Sprintf("%%/modulo expected an integer first arg, received %s", String(dividend)), env)
 		return
 	}
 
 	divisor := Cadr(args)
 	if !IntegerP(divisor) {
-		err = ProcessError(fmt.Sprintf("%/modulo expected an integer second arg, received %s", String(divisor)), env)
+		err = ProcessError(fmt.Sprintf("%%/modulo expected an integer second arg, received %s", String(divisor)), env)
 		return
 	}
 
@@ -341,7 +341,7 @@ func IntervalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 			step = direction
 		}
 	}
-	var items []*Data = make([]*Data, 0, int(math.Abs(float64(end-start)))+1)
+	var items = make([]*Data, 0, int(math.Abs(float64(end-start)))+1)
 
 	if direction == 1 {
 		for i := start; i <= end; i = i + step {
@@ -443,7 +443,7 @@ func minInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		err = ProcessError(fmt.Sprintf("min requires numbers, received %s", String(n)), env)
 		return
 	}
-	var acc int64 = IntegerValue(n)
+	var acc = IntegerValue(n)
 
 	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
 		n = Car(c)
@@ -465,7 +465,7 @@ func minFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		err = ProcessError(fmt.Sprintf("min requires numbers, received %s", String(n)), env)
 		return
 	}
-	var acc float32 = FloatValue(n)
+	var acc = FloatValue(n)
 
 	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
 		n = Car(c)
@@ -508,7 +508,7 @@ func maxInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		err = ProcessError(fmt.Sprintf("max requires numbers, received %s", String(n)), env)
 		return
 	}
-	var acc int64 = IntegerValue(n)
+	var acc = IntegerValue(n)
 
 	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
 		n = Car(c)
@@ -530,7 +530,7 @@ func maxFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		err = ProcessError(fmt.Sprintf("max requires numbers, received %s", String(n)), env)
 		return
 	}
-	var acc float32 = FloatValue(n)
+	var acc = FloatValue(n)
 
 	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
 		n = Car(c)
