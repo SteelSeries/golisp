@@ -17,8 +17,8 @@ type Binding struct {
 	Protected bool
 }
 
-func (self *Binding) Dump() {
-	fmt.Printf("   %s => %s\n", StringValue(self.Sym), String(self.Val))
+func (b *Binding) Dump() {
+	fmt.Printf("   %s => %s\n", StringValue(b.Sym), String(b.Val))
 }
 
 func BindingWithSymbolAndValue(sym *Data, val *Data) *Binding {

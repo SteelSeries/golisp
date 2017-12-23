@@ -60,11 +60,11 @@ type BooleanBox struct {
 	B bool
 }
 
-var b_true = true
-var b_false = false
+var bTrue = true
+var bFalse = false
 
-var LispTrue = &Data{Type: BooleanType, Value: unsafe.Pointer(&b_true)}
-var LispFalse = &Data{Type: BooleanType, Value: unsafe.Pointer(&b_false)}
+var LispTrue = &Data{Type: BooleanType, Value: unsafe.Pointer(&bTrue)}
+var LispFalse = &Data{Type: BooleanType, Value: unsafe.Pointer(&bFalse)}
 
 // Debug support
 

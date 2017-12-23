@@ -77,35 +77,35 @@ func NewTokenizerFromFile(src *os.File) *Tokenizer {
 	}
 }
 
-func (self *Tokenizer) Advance() {
+func (t *Tokenizer) Advance() {
 	var err error
-	self.CurrentCh, _, err = self.Source.ReadRune()
-	if err == io.EOF || self.CurrentCh == -1 {
-		self.Eof = true
-		self.NextCh = 0
+	t.CurrentCh, _, err = t.Source.ReadRune()
+	if err == io.EOF || t.CurrentCh == -1 {
+		t.Eof = true
+		t.NextCh = 0
 	} else {
-		self.NextCh, _, err = self.Source.ReadRune()
-		if err == io.EOF || self.NextCh == -1 {
-			self.AlmostEof = true
+		t.NextCh, _, err = t.Source.ReadRune()
+		if err == io.EOF || t.NextCh == -1 {
+			t.AlmostEof = true
 		} else {
-			self.Source.UnreadRune()
+			t.Source.UnreadRune()
 		}
 	}
 }
 
-func (self *Tokenizer) NextToken() (token int, lit string) {
-	return self.LookaheadToken, self.LookaheadLit
+func (t *Tokenizer) NextToken() (token int, lit string) {
+	return t.LookaheadToken, t.LookaheadLit
 }
 
-func (self *Tokenizer) isSymbolCharacter(ch rune) bool {
+func (t *Tokenizer) isSymbolCharacter(ch rune) bool {
 	return unicode.IsGraphic(ch) && !unicode.IsSpace(ch) && !strings.ContainsRune("();\"'`|[]{}#,", ch)
 }
 
-func (self *Tokenizer) readSymbol() (token int, lit string) {
+func (t *Tokenizer) readSymbol() (token int, lit string) {
 	buffer := make([]rune, 0, 1)
-	for !self.isEof() && self.isSymbolCharacter(self.CurrentCh) {
-		buffer = append(buffer, self.CurrentCh)
-		self.Advance()
+	for !t.isEof() && t.isSymbolCharacter(t.CurrentCh) {
+		buffer = append(buffer, t.CurrentCh)
+		t.Advance()
 	}
 	return SYMBOL, string(buffer)
 }
@@ -130,13 +130,13 @@ func isBinaryChar(ch rune) bool {
 	}
 }
 
-func (self *Tokenizer) readHexNumber() (token int, lit string) {
+func (t *Tokenizer) readHexNumber() (token int, lit string) {
 	buffer := make([]rune, 0, 1)
-	for !self.isEof() {
-		ch := rune(self.CurrentCh)
+	for !t.isEof() {
+		ch := rune(t.CurrentCh)
 		if isHexChar(ch) {
-			buffer = append(buffer, self.CurrentCh)
-			self.Advance()
+			buffer = append(buffer, t.CurrentCh)
+			t.Advance()
 		} else {
 			break
 		}
@@ -145,13 +145,13 @@ func (self *Tokenizer) readHexNumber() (token int, lit string) {
 	return HEXNUMBER, string(buffer)
 }
 
-func (self *Tokenizer) readBinaryNumber() (token int, lit string) {
+func (t *Tokenizer) readBinaryNumber() (token int, lit string) {
 	buffer := make([]rune, 0, 1)
-	for !self.isEof() {
-		ch := rune(self.CurrentCh)
+	for !t.isEof() {
+		ch := rune(t.CurrentCh)
 		if isBinaryChar(ch) {
-			buffer = append(buffer, self.CurrentCh)
-			self.Advance()
+			buffer = append(buffer, t.CurrentCh)
+			t.Advance()
 		} else {
 			break
 		}
@@ -160,24 +160,24 @@ func (self *Tokenizer) readBinaryNumber() (token int, lit string) {
 	return BINARYNUMBER, string(buffer)
 }
 
-func (self *Tokenizer) readNumber() (token int, lit string) {
+func (t *Tokenizer) readNumber() (token int, lit string) {
 	buffer := make([]rune, 0, 1)
 	isFloat := false
 	sawDecimal := false
 	firstChar := true
-	for !self.isEof() {
-		ch := rune(self.CurrentCh)
+	for !t.isEof() {
+		ch := rune(t.CurrentCh)
 		if ch == '.' && !sawDecimal {
 			isFloat = true
 			sawDecimal = true
-			buffer = append(buffer, self.CurrentCh)
-			self.Advance()
+			buffer = append(buffer, t.CurrentCh)
+			t.Advance()
 		} else if firstChar && ch == '-' {
-			buffer = append(buffer, self.CurrentCh)
-			self.Advance()
+			buffer = append(buffer, t.CurrentCh)
+			t.Advance()
 		} else if unicode.IsNumber(ch) {
-			buffer = append(buffer, self.CurrentCh)
-			self.Advance()
+			buffer = append(buffer, t.CurrentCh)
+			t.Advance()
 		} else {
 			break
 		}
@@ -193,132 +193,132 @@ func (self *Tokenizer) readNumber() (token int, lit string) {
 	return
 }
 
-func (self *Tokenizer) readString() (token int, lit string) {
+func (t *Tokenizer) readString() (token int, lit string) {
 	buffer := make([]rune, 0, 10)
-	self.Advance()
-	for !self.isEof() && rune(self.CurrentCh) != '"' {
-		if rune(self.CurrentCh) == '\\' {
-			self.Advance()
-			if rune(self.CurrentCh) == 'n' {
+	t.Advance()
+	for !t.isEof() && rune(t.CurrentCh) != '"' {
+		if rune(t.CurrentCh) == '\\' {
+			t.Advance()
+			if rune(t.CurrentCh) == 'n' {
 				buffer = append(buffer, '\n')
 			} else {
-				buffer = append(buffer, rune(self.CurrentCh))
+				buffer = append(buffer, rune(t.CurrentCh))
 			}
-			self.Advance()
+			t.Advance()
 			continue
 		}
-		buffer = append(buffer, rune(self.CurrentCh))
-		self.Advance()
+		buffer = append(buffer, rune(t.CurrentCh))
+		t.Advance()
 	}
-	if self.isEof() {
+	if t.isEof() {
 		return EOF, ""
 	}
-	self.Advance()
+	t.Advance()
 	return STRING, string(buffer)
 }
 
-func (self *Tokenizer) isEof() bool {
-	return self.Eof
+func (t *Tokenizer) isEof() bool {
+	return t.Eof
 }
 
-func (self *Tokenizer) isAlmostEof() bool {
-	return self.AlmostEof
+func (t *Tokenizer) isAlmostEof() bool {
+	return t.AlmostEof
 }
 
-func (self *Tokenizer) readNextToken() (token int, lit string) {
-	if self.isEof() {
+func (t *Tokenizer) readNextToken() (token int, lit string) {
+	if t.isEof() {
 		return EOF, ""
 	}
-	for unicode.IsSpace(self.CurrentCh) {
-		self.Advance()
-		if self.isEof() {
+	for unicode.IsSpace(t.CurrentCh) {
+		t.Advance()
+		if t.isEof() {
 			return EOF, ""
 		}
 	}
 
-	if self.CurrentCh == '0' && self.NextCh == 'x' {
-		self.Advance()
-		self.Advance()
-		return self.readHexNumber()
-	} else if unicode.IsNumber(self.CurrentCh) {
-		return self.readNumber()
-	} else if self.CurrentCh == '-' && unicode.IsNumber(self.NextCh) {
-		return self.readNumber()
-	} else if self.CurrentCh == '"' {
-		return self.readString()
-	} else if self.CurrentCh == '\'' {
-		self.Advance()
+	if t.CurrentCh == '0' && t.NextCh == 'x' {
+		t.Advance()
+		t.Advance()
+		return t.readHexNumber()
+	} else if unicode.IsNumber(t.CurrentCh) {
+		return t.readNumber()
+	} else if t.CurrentCh == '-' && unicode.IsNumber(t.NextCh) {
+		return t.readNumber()
+	} else if t.CurrentCh == '"' {
+		return t.readString()
+	} else if t.CurrentCh == '\'' {
+		t.Advance()
 		return QUOTE, "'"
-	} else if self.CurrentCh == '`' {
-		self.Advance()
+	} else if t.CurrentCh == '`' {
+		t.Advance()
 		return BACKQUOTE, "`"
-	} else if self.CurrentCh == ',' && self.NextCh == '@' {
-		self.Advance()
-		self.Advance()
+	} else if t.CurrentCh == ',' && t.NextCh == '@' {
+		t.Advance()
+		t.Advance()
 		return COMMAAT, ",@"
-	} else if self.CurrentCh == ',' {
-		self.Advance()
+	} else if t.CurrentCh == ',' {
+		t.Advance()
 		return COMMA, ","
-	} else if self.CurrentCh == '(' {
-		self.Advance()
+	} else if t.CurrentCh == '(' {
+		t.Advance()
 		return LPAREN, "("
-	} else if self.CurrentCh == ')' {
-		self.Advance()
+	} else if t.CurrentCh == ')' {
+		t.Advance()
 		return RPAREN, ")"
-	} else if self.CurrentCh == '[' {
-		self.Advance()
+	} else if t.CurrentCh == '[' {
+		t.Advance()
 		return LBRACKET, "["
-	} else if self.CurrentCh == ']' {
-		self.Advance()
+	} else if t.CurrentCh == ']' {
+		t.Advance()
 		return RBRACKET, "]"
-	} else if self.CurrentCh == '{' {
-		self.Advance()
+	} else if t.CurrentCh == '{' {
+		t.Advance()
 		return LBRACE, "{"
-	} else if self.CurrentCh == '}' {
-		self.Advance()
+	} else if t.CurrentCh == '}' {
+		t.Advance()
 		return RBRACE, "}"
-	} else if self.CurrentCh == '.' && self.NextCh == ' ' {
-		self.Advance()
+	} else if t.CurrentCh == '.' && t.NextCh == ' ' {
+		t.Advance()
 		return PERIOD, "."
-	} else if self.isSymbolCharacter(self.CurrentCh) {
-		return self.readSymbol()
-	} else if self.CurrentCh == '#' {
-		self.Advance()
-		if self.CurrentCh == 't' {
-			self.Advance()
+	} else if t.isSymbolCharacter(t.CurrentCh) {
+		return t.readSymbol()
+	} else if t.CurrentCh == '#' {
+		t.Advance()
+		if t.CurrentCh == 't' {
+			t.Advance()
 			return TRUE, "#t"
-		} else if self.CurrentCh == 'f' {
-			self.Advance()
+		} else if t.CurrentCh == 'f' {
+			t.Advance()
 			return FALSE, "#f"
-		} else if self.CurrentCh == 'x' {
-			self.Advance()
-			return self.readHexNumber()
-		} else if self.CurrentCh == 'b' {
-			self.Advance()
-			return self.readBinaryNumber()
+		} else if t.CurrentCh == 'x' {
+			t.Advance()
+			return t.readHexNumber()
+		} else if t.CurrentCh == 'b' {
+			t.Advance()
+			return t.readBinaryNumber()
 		} else {
-			return ILLEGAL, fmt.Sprintf("#%c", self.NextCh)
+			return ILLEGAL, fmt.Sprintf("#%c", t.NextCh)
 		}
-	} else if self.CurrentCh == ';' {
+	} else if t.CurrentCh == ';' {
 		buffer := make([]rune, 0, 1)
 		for {
-			if self.isEof() {
+			if t.isEof() {
 				return COMMENT, string(buffer)
-			} else if self.CurrentCh == '\n' {
+			} else if t.CurrentCh == '\n' {
 				return COMMENT, string(buffer)
 			}
-			buffer = append(buffer, self.CurrentCh)
-			self.Advance()
+			buffer = append(buffer, t.CurrentCh)
+			t.Advance()
 		}
 	} else {
-		self.Advance()
-		return ILLEGAL, fmt.Sprintf("%d", self.CurrentCh)
+		t.Advance()
+		return ILLEGAL, fmt.Sprintf("%d", t.CurrentCh)
 	}
 }
 
-func (self *Tokenizer) ConsumeToken() {
-	self.LookaheadToken, self.LookaheadLit = self.readNextToken()
-	if self.LookaheadToken == COMMENT { // skip comments
-		self.ConsumeToken()
+func (t *Tokenizer) ConsumeToken() {
+	t.LookaheadToken, t.LookaheadLit = t.readNextToken()
+	if t.LookaheadToken == COMMENT { // skip comments
+		t.ConsumeToken()
 	}
 }
