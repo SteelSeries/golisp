@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// This package implements a basic LISP interpretor for embedding in a go program for scripting.
+// This package implements a basic LISP interpreter for embedding in a go program for scripting.
 // This file contains the built-in primitive functions.
 
 package golisp
@@ -285,13 +285,13 @@ func QuotientImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 func RemainderImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	dividend := Car(args)
 	if !IntegerP(dividend) {
-		err = ProcessError(fmt.Sprintf("%/modulo expected an integer first arg, received %s", String(dividend)), env)
+		err = ProcessError(fmt.Sprintf("%%/modulo expected an integer first arg, received %s", String(dividend)), env)
 		return
 	}
 
 	divisor := Cadr(args)
 	if !IntegerP(divisor) {
-		err = ProcessError(fmt.Sprintf("%/modulo expected an integer second arg, received %s", String(divisor)), env)
+		err = ProcessError(fmt.Sprintf("%%/modulo expected an integer second arg, received %s", String(divisor)), env)
 		return
 	}
 
