@@ -9,7 +9,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/steelseries/golisp"
+	"github.com/SteelSeries/golisp"
 	"strings"
 )
 
