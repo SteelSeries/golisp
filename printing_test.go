@@ -9,8 +9,9 @@ package golisp
 
 import (
 	"fmt"
-	. "gopkg.in/check.v1"
 	"unsafe"
+
+	. "gopkg.in/check.v1"
 )
 
 type PrintingSuite struct{}

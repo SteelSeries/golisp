@@ -10,8 +10,9 @@ package golisp
 import (
 	"errors"
 	"fmt"
-	"gopkg.in/fatih/set.v0"
 	"strings"
+
+	"gopkg.in/fatih/set.v0"
 )
 
 var DebugCommandPrefix string = ":"

@@ -7,8 +7,6 @@
 
 package golisp
 
-import ()
-
 func RegisterAListPrimitives() {
 	MakePrimitiveFunction("acons", "2|3", AconsImpl)
 	MakePrimitiveFunction("pairlis", "2|3", PairlisImpl)

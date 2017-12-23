@@ -9,8 +9,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/SteelSeries/golisp"
 	"strings"
+
+	"github.com/SteelSeries/golisp"
 )
 
 var (

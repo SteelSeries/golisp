@@ -9,11 +9,12 @@ package golisp
 
 import (
 	"fmt"
-	"github.com/SteelSeries/bufrr"
 	"io"
 	"os"
 	"strings"
 	"unicode"
+
+	"github.com/SteelSeries/bufrr"
 )
 
 const (

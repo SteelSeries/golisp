@@ -7,8 +7,6 @@
 
 package golisp
 
-import ()
-
 func RegisterMutatorPrimitives() {
 	MakeSpecialForm("set!", "2", SetVarImpl)
 	MakeSpecialForm("set-car!", "2", SetCarImpl)
