@@ -21,12 +21,14 @@ func Repl() {
 	LoadHistoryFromFile(".golisp_history")
 	lastInput := ""
 	replEnv := NewSymbolTableFrameBelow(Global, "Repl")
+
+	defer func() {
+		if x := recover(); x != nil {
+			fmt.Printf("Don't Panic! %v\n", x)
+		}
+	}()
+
 	for true {
-		defer func() {
-			if x := recover(); x != nil {
-				fmt.Printf("Don't Panic! %v\n", x)
-			}
-		}()
 		DebugCurrentFrame = nil
 		DebugSingleStep = false
 		DebugEvalInDebugRepl = false

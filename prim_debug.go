@@ -123,12 +123,14 @@ func DebugRepl(env *SymbolTableFrame) {
 	env.DumpHeader()
 	prompt := "D> "
 	lastInput := ""
+
+	defer func() {
+		if x := recover(); x != nil {
+			println("Don't Panic!")
+		}
+	}()
+
 	for true {
-		defer func() {
-			if x := recover(); x != nil {
-				println("Don't Panic!")
-			}
-		}()
 		input := *ReadLine(&prompt)
 		if input != "" {
 			if input != lastInput {
