@@ -40,6 +40,12 @@ A sample application is also available at [https://github.com/SteelSeries/golisp
 
 GoLisp has the following dependencies:
 
-go get gopkg.in/fatih/set.v0
-go get github.com/SteelSeries/bufrr
-go get gopkg.in/check.v1
+* [gopkg.in/fatih/set.v0](gopkg.in/fatih/set.v0)
+* [github.com/SteelSeries/bufrr](github.com/SteelSeries/bufrr)
+* [gopkg.in/check.v1](gopkg.in/check.v1)
+
+To install GoLisp, use:
+
+```bash
+go get -u github.com/SteelSeries/golisp 
+```
