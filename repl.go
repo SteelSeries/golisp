@@ -36,29 +36,33 @@ func Repl() {
 		inputp := ReadLine(&prompt)
 		if inputp == nil {
 			QuitImpl(nil, nil)
-		} else {
-			input := *inputp
-			//			fmt.Printf("input: <%s>\n", inputp)
-			if input != "" {
-				code, err := Parse(input)
-				if err != nil {
-					fmt.Printf("Error: %s\n", err)
-				} else {
-					if input != lastInput {
-						AddHistory(input)
-						lastInput = input
-					}
-					d, err := Eval(code, replEnv)
-					if err != nil {
-						fmt.Printf("Error in evaluation: %s\n", err)
-						if DebugOnError {
-							DebugRepl(DebugErrorEnv)
-						}
-					} else {
-						fmt.Printf("==> %s\n", String(d))
-					}
-				}
-			}
 		}
+
+		input := *inputp
+		if input == "" {
+			continue
+		}
+
+		code, err := Parse(input)
+		if err != nil {
+			fmt.Printf("Error: %s\n", err)
+			continue
+		}
+
+		if input != lastInput {
+			AddHistory(input)
+			lastInput = input
+		}
+		d, err := Eval(code, replEnv)
+		if err != nil {
+			fmt.Printf("Error in evaluation: %s\n", err)
+			if DebugOnError {
+				DebugRepl(DebugErrorEnv)
+			}
+
+			continue
+		}
+
+		fmt.Printf("==> %s\n", String(d))
 	}
 }
