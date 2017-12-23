@@ -15,7 +15,7 @@ import (
 	"unsafe"
 )
 
-var EofObject *Data = Intern("__EOF__")
+var EofObject = Intern("__EOF__")
 
 func makeInteger(str string) (n *Data, err error) {
 	var i int64

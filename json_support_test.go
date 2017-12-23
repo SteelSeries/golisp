@@ -183,15 +183,15 @@ func (s *JsonLispSuite) TestJsonToLispWithFramesStruct(c *C) {
 		NilSlice: nil,
 		Gif: imageSyncGif{
 			Frames: []imageSyncFrame{
-				imageSyncFrame{
+				{
 					Delay: 1,
 					Image: []interface{}{1, 3, 4},
 				},
-				imageSyncFrame{
+				{
 					Delay: 2,
 					Image: []interface{}{},
 				},
-				imageSyncFrame{
+				{
 					Delay: 3,
 					Image: nil,
 				},

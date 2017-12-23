@@ -15,7 +15,7 @@ import (
 	"gopkg.in/fatih/set.v0"
 )
 
-var DebugCommandPrefix string = ":"
+var DebugCommandPrefix = ":"
 
 func RegisterDebugPrimitives() {
 	MakePrimitiveFunction("debug-trace", "0|1", DebugTraceImpl)

@@ -89,7 +89,7 @@ func Nth(d *Data, n int) *Data {
 		return nil
 	}
 
-	var c *Data = d
+	var c = d
 	for i := n; i > 1; c, i = Cdr(c), i-1 {
 	}
 	return Car(c)

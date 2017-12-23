@@ -17,7 +17,7 @@ import (
 	"time"
 )
 
-var symbolCounts map[string]int = make(map[string]int)
+var symbolCounts = make(map[string]int)
 var symbolCountsMutex sync.Mutex
 
 func RegisterSystemPrimitives() {
@@ -54,7 +54,7 @@ func LoadFileImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return ProcessFile(StringValue(filename))
 }
 
-var goodbyes []string = []string{
+var goodbyes = []string{
 	"goodbye",
 	"zai jian",
 	"tot ziens",

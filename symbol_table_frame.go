@@ -15,11 +15,6 @@ import (
 	"sync/atomic"
 )
 
-const (
-	READ_LOCK = iota
-	WRITE_LOCK
-)
-
 type SymbolTableFrame struct {
 	Name         string
 	Parent       *SymbolTableFrame
@@ -42,9 +37,9 @@ type environmentsTable struct {
 }
 
 var Global *SymbolTableFrame
-var TopLevelEnvironments environmentsTable = environmentsTable{make(map[string]*SymbolTableFrame, 5), sync.RWMutex{}}
+var TopLevelEnvironments = environmentsTable{make(map[string]*SymbolTableFrame, 5), sync.RWMutex{}}
 
-var internedSymbols symbolsTable = symbolsTable{make(map[string]*Data, 256), sync.RWMutex{}}
+var internedSymbols = symbolsTable{make(map[string]*Data, 256), sync.RWMutex{}}
 
 func Intern(name string) (sym *Data) {
 	internedSymbols.Mutex.RLock()

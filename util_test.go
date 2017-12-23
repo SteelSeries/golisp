@@ -26,7 +26,7 @@ func (s *UtilitySuite) TestArrayToList(c *C) {
 }
 
 func (s *UtilitySuite) TestEmptyArrayToList(c *C) {
-	a := []*Data{}
+	var a []*Data
 	sexpr := ArrayToList(a)
 	c.Assert(ListP(sexpr), Equals, true)
 	c.Assert(Length(sexpr), Equals, 0)

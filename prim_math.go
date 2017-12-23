@@ -257,7 +257,7 @@ func quotientInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 }
 
 func quotientFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
-	var acc float32 = FloatValue(Car(args))
+	var acc = FloatValue(Car(args))
 	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
 		v := FloatValue(Car(c))
 		if v == 0 {
@@ -341,7 +341,7 @@ func IntervalImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 			step = direction
 		}
 	}
-	var items []*Data = make([]*Data, 0, int(math.Abs(float64(end-start)))+1)
+	var items = make([]*Data, 0, int(math.Abs(float64(end-start)))+1)
 
 	if direction == 1 {
 		for i := start; i <= end; i = i + step {
@@ -443,7 +443,7 @@ func minInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		err = ProcessError(fmt.Sprintf("min requires numbers, received %s", String(n)), env)
 		return
 	}
-	var acc int64 = IntegerValue(n)
+	var acc = IntegerValue(n)
 
 	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
 		n = Car(c)
@@ -465,7 +465,7 @@ func minFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		err = ProcessError(fmt.Sprintf("min requires numbers, received %s", String(n)), env)
 		return
 	}
-	var acc float32 = FloatValue(n)
+	var acc = FloatValue(n)
 
 	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
 		n = Car(c)
@@ -508,7 +508,7 @@ func maxInts(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		err = ProcessError(fmt.Sprintf("max requires numbers, received %s", String(n)), env)
 		return
 	}
-	var acc int64 = IntegerValue(n)
+	var acc = IntegerValue(n)
 
 	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
 		n = Car(c)
@@ -530,7 +530,7 @@ func maxFloats(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		err = ProcessError(fmt.Sprintf("max requires numbers, received %s", String(n)), env)
 		return
 	}
-	var acc float32 = FloatValue(n)
+	var acc = FloatValue(n)
 
 	for c := Cdr(args); NotNilP(c); c = Cdr(c) {
 		n = Car(c)

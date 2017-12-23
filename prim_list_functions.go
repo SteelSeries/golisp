@@ -43,7 +43,7 @@ func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	var collections []*Data = make([]*Data, 0, Length(args)-1)
+	var collections = make([]*Data, 0, Length(args)-1)
 	var loopCount int64 = math.MaxInt64
 	var col *Data
 	for a := Cdr(args); NotNilP(a); a = Cdr(a) {
@@ -63,7 +63,7 @@ func MapImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	var d []*Data = make([]*Data, 0, loopCount)
+	var d = make([]*Data, 0, loopCount)
 	var v *Data
 	var a *Data
 	for index := 1; index <= int(loopCount); index++ {
@@ -90,7 +90,7 @@ func ForEachImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	var collections []*Data = make([]*Data, 0, Length(args)-1)
+	var collections = make([]*Data, 0, Length(args)-1)
 	var loopCount int64 = math.MaxInt64
 	var col *Data
 	for a := Cdr(args); NotNilP(a); a = Cdr(a) {
@@ -131,7 +131,7 @@ func AnyImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	var collections []*Data = make([]*Data, 0, Length(args)-1)
+	var collections = make([]*Data, 0, Length(args)-1)
 	var loopCount int64 = math.MaxInt64
 	var col *Data
 	for a := Cdr(args); NotNilP(a); a = Cdr(a) {
@@ -177,7 +177,7 @@ func EveryImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	var collections []*Data = make([]*Data, 0, Length(args)-1)
+	var collections = make([]*Data, 0, Length(args)-1)
 	var loopCount int64 = math.MaxInt64
 	var col *Data
 	for a := Cdr(args); NotNilP(a); a = Cdr(a) {
@@ -263,7 +263,7 @@ func FilterImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	var d []*Data = make([]*Data, 0, Length(col))
+	var d = make([]*Data, 0, Length(col))
 	var v *Data
 	for c := col; NotNilP(c); c = Cdr(c) {
 		v, err = ApplyWithoutEval(f, Cons(Car(c), nil), env)
@@ -296,7 +296,7 @@ func RemoveImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	var d []*Data = make([]*Data, 0, Length(col))
+	var d = make([]*Data, 0, Length(col))
 	var v *Data
 	for c := col; NotNilP(c); c = Cdr(c) {
 		v, err = ApplyWithoutEval(f, Cons(Car(c), nil), env)

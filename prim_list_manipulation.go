@@ -116,7 +116,7 @@ func AppendImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	}
 
 	// step through args, accumulating elements
-	var items []*Data = make([]*Data, 0, 10)
+	var items = make([]*Data, 0, 10)
 	var item *Data
 	for cell := args; NotNilP(cell); cell = Cdr(cell) {
 		item = Car(cell)
@@ -143,8 +143,8 @@ func partitionBySize(determiner *Data, l *Data, env *SymbolTableFrame) (result *
 		return
 	}
 
-	var pieces []*Data = make([]*Data, 0, 5)
-	var chunk []*Data = make([]*Data, 0, 5)
+	var pieces = make([]*Data, 0, 5)
+	var chunk = make([]*Data, 0, 5)
 	for c := l; NotNilP(c); c = Cdr(c) {
 		if len(chunk) < size {
 			chunk = append(chunk, Car(c))
@@ -243,7 +243,7 @@ func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	for i, cell = 1, l; i < first && NotNilP(cell); i, cell = i+1, Cdr(cell) {
 	}
 
-	var items []*Data = make([]*Data, 0, Length(args))
+	var items = make([]*Data, 0, Length(args))
 	for ; i < last && NotNilP(cell); i, cell = i+1, Cdr(cell) {
 		items = append(items, Car(cell))
 	}

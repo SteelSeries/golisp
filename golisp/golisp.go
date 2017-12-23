@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	runTests     bool = false
-	verboseTests bool = false
+	runTests     = false
+	verboseTests = false
 )
 
 func test() {
