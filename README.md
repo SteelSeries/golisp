@@ -47,5 +47,5 @@ GoLisp has the following dependencies:
 To install GoLisp, use:
 
 ```bash
-go get -u github.com/SteelSeries/golisp 
+go get -u github.com/SteelSeries/golisp/golisp
 ```
