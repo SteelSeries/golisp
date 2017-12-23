@@ -28,7 +28,7 @@ func (fm *FrameMap) hasSlotLocally(key string) bool {
 
 func (fm *FrameMap) localSlots() []string {
 	slots := make([]string, 0, len(fm.Data))
-	for k, _ := range fm.Data {
+	for k := range fm.Data {
 		slots = append(slots, k)
 	}
 	return slots
@@ -39,7 +39,7 @@ func isParentKey(key string) bool {
 }
 
 func (fm *FrameMap) hasParentSlots() bool {
-	for k, _ := range fm.Data {
+	for k := range fm.Data {
 		if isParentKey(k) {
 			return true
 		}
@@ -49,7 +49,7 @@ func (fm *FrameMap) hasParentSlots() bool {
 }
 
 func (fm *FrameMap) Parents() []*FrameMap {
-	parents := make([]*FrameMap, 0, 0)
+	parents := make([]*FrameMap, 0, len(fm.Data))
 	for k, v := range fm.Data {
 		if isParentKey(k) && v != nil {
 			parents = append(parents, FrameValue(v))
@@ -167,7 +167,7 @@ func (fm *FrameMap) Clone() *FrameMap {
 func (fm *FrameMap) Keys() []*Data {
 	fm.Mutex.RLock()
 	keys := make([]*Data, 0, len(fm.Data))
-	for k, _ := range fm.Data {
+	for k := range fm.Data {
 		keys = append(keys, Intern(k))
 	}
 	fm.Mutex.RUnlock()

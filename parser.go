@@ -206,7 +206,7 @@ func parseExpression(s *Tokenizer) (sexpr *Data, eof bool, err error) {
 			return
 		case COMMENT:
 			s.ConsumeToken()
-			break
+			return
 		case NUMBER:
 			s.ConsumeToken()
 			sexpr, err = makeInteger(lit)
