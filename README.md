@@ -17,7 +17,7 @@ evolution reflect that.
 GoLisp evolves along 4 axis:
 
 * becoming more compatible with MIT/GNU Scheme (GoLisp v1.0 is a huge
-  move forward in this regard) 
+  move forward in this regard)
 * supporting more capabilities of the underlying Go implementation
   language (e.g. recent work supporting concurrency and channels)
 * our particular needs (e.g. byte array support)
@@ -40,6 +40,8 @@ A sample application is also available at [https://github.com/SteelSeries/golisp
 
 GoLisp has the following dependencies:
 
+```shell
 go get gopkg.in/fatih/set.v0
 go get github.com/SteelSeries/bufrr
 go get gopkg.in/check.v1
+```
