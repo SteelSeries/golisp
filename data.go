@@ -17,7 +17,7 @@ import (
 	"sync/atomic"
 	"unsafe"
 
-	"gopkg.in/fatih/set.v0"
+	"github.com/SteelSeries/set.v0"
 )
 
 const (

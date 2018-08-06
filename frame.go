@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	"gopkg.in/fatih/set.v0"
+	"github.com/SteelSeries/set.v0"
 )
 
 type FrameMapData map[string]*Data

@@ -10,7 +10,7 @@ package golisp
 import (
 	"errors"
 	"fmt"
-	"gopkg.in/fatih/set.v0"
+	"github.com/SteelSeries/set.v0"
 	"strings"
 )
 

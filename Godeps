@@ -6,7 +6,7 @@
 	],
 	"Deps": [
 	    {
-    	    "ImportPath": "gopkg.in/fatih/set.v0"
+    	    "ImportPath": "github.com/SteelSeries/set.v0"
     	},
         {
             "ImportPath": "gopkg.in/check.v1"

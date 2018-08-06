@@ -25,7 +25,7 @@ bin/golisp
 src/launchpad.net/
 src/github.com/SteelSeries/bufrr/
 src/gopkg.in/check.v1/
-src/gopkg.in/fatih/set.v0/
+src/github.com/SteelSeries/set.v0/
 
 *.aux
 
