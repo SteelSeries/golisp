@@ -285,13 +285,13 @@ func QuotientImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 func RemainderImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	dividend := Car(args)
 	if !IntegerP(dividend) {
-		err = ProcessError(fmt.Sprintf("%/modulo expected an integer first arg, received %s", String(dividend)), env)
+		err = ProcessError(fmt.Sprintf("%%/modulo expected an integer first arg, received %s", String(dividend)), env)
 		return
 	}
 
 	divisor := Cadr(args)
 	if !IntegerP(divisor) {
-		err = ProcessError(fmt.Sprintf("%/modulo expected an integer second arg, received %s", String(divisor)), env)
+		err = ProcessError(fmt.Sprintf("%%/modulo expected an integer second arg, received %s", String(divisor)), env)
 		return
 	}
 

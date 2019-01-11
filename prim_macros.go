@@ -93,7 +93,6 @@ func processQuasiquoted(sexpr *Data, level int, env *SymbolTableFrame) (result *
 		}
 		return Cons(flat, nil), nil
 	}
-	return
 }
 
 func QuasiquoteImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
