@@ -186,4 +186,12 @@
              (assert-error (make-list "3" 1)) ;1st arg must be an integer
              (assert-error (make-list 3.4 1)) ;1st arg must be an integer
              (assert-error (make-list -3 1))) ;1st arg must be a non-negative integer
+
+         (it sort
+             (assert-eq (sort '(3 1 2) <)
+                        '(1 2 3))
+             (assert-eq (sort '(3 1 2) >)
+                        '(3 2 1))
+             (assert-eq (sort '((3 a) (1 b) (2 c)) (lambda (a b) (< (first a) (first b))))
+                        '((1 b) (2 c) (3 a))))
 )

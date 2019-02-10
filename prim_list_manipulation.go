@@ -7,6 +7,10 @@
 
 package golisp
 
+import (
+	"sort"
+)
+
 func RegisterListManipulationPrimitives() {
 	MakePrimitiveFunction("list", "*", ListImpl)
 	MakePrimitiveFunction("make-list", "1|2", MakeListImpl)
@@ -251,71 +255,20 @@ func SublistImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return
 }
 
-func mergeCompare(a *Data, b *Data, proc *Data, env *SymbolTableFrame) (result bool, err error) {
+func sortCompare(a *Data, b *Data, proc *Data, env *SymbolTableFrame) (result bool, err error) {
+	var procRet *Data
 	if FunctionP(proc) {
-		b, err := FunctionValue(proc).Apply(InternalMakeList(a, b), env)
+		procRet, err = FunctionValue(proc).ApplyWithoutEval(InternalMakeList(a, b), env)
 		if err == nil {
-			result = BooleanValue(b)
+			result = BooleanValue(procRet)
 		}
 	} else {
-		b, err := PrimitiveValue(proc).Apply(InternalMakeList(a, b), env)
+		procRet, err = PrimitiveValue(proc).ApplyWithoutEval(InternalMakeList(a, b), env)
 		if err == nil {
-			result = BooleanValue(b)
+			result = BooleanValue(procRet)
 		}
 	}
 	return
-}
-
-func merge(a []*Data, b []*Data, proc *Data, env *SymbolTableFrame) (result []*Data, err error) {
-	var r = make([]*Data, len(a)+len(b))
-	var i = 0
-	var j = 0
-	var comparison = false
-
-	for i < len(a) && j < len(b) {
-		comparison, err = mergeCompare(a[i], b[j], proc, env)
-		if err != nil {
-			return
-		}
-		if comparison {
-			r[i+j] = a[i]
-			i++
-		} else {
-			r[i+j] = b[j]
-			j++
-		}
-	}
-
-	for i < len(a) {
-		r[i+j] = a[i]
-		i++
-	}
-	for j < len(b) {
-		r[i+j] = b[j]
-		j++
-	}
-
-	return r, nil
-}
-
-func mergesort(items []*Data, proc *Data, env *SymbolTableFrame) (result []*Data, err error) {
-	if len(items) < 2 {
-		return items, nil
-	}
-
-	var middle = len(items) / 2
-
-	a, err := mergesort(items[:middle], proc, env)
-	if err != nil {
-		return
-	}
-
-	b, err := mergesort(items[middle:], proc, env)
-	if err != nil {
-		return
-	}
-
-	return merge(a, b, proc, env)
 }
 
 func SortImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
@@ -331,10 +284,17 @@ func SortImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 		return
 	}
 
-	sorted, err := mergesort(ToArray(coll), proc, env)
-	if err != nil {
-		return
-	}
+	arr := ToArray(coll)
 
-	return ArrayToList(sorted), nil
+	sort.Slice(arr, func(i, j int) bool {
+		var ret bool
+		if err == nil {
+			a := arr[i]
+			b := arr[j]
+			ret, err = sortCompare(a, b, proc, env)
+		}
+		return ret
+	})
+
+	return ArrayToList(arr), err
 }
