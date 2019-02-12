@@ -292,11 +292,11 @@ func (self *SymbolTableFrame) ValueOfWithFunctionSlotCheck(symbol *Data, needFun
 		naked := StringValue(NakedSymbolFrom(symbol))
 		if f.HasSlot(naked) {
 			slotValue := f.Get(naked)
-			if !needFunction {
-				return slotValue
-			}
 			if FunctionP(slotValue) {
 				atomic.StoreInt32(&FunctionValue(slotValue).SlotFunction, 1)
+				return slotValue
+			}
+			if !needFunction {
 				return slotValue
 			}
 		}
