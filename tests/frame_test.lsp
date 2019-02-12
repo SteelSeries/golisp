@@ -245,6 +245,13 @@
                (assert-eq (send f foo:)
                           42)))
 
+         (it apply-on-function-slots
+             (let ((f {a: (lambda () (b))
+                            b: (lambda () 42)
+                            foo: (lambda () (apply a '()))}))
+               (assert-eq (send f foo:)
+                          42)))
+
          (it keys_values
              (let* ((f {a: 1 b: 2 c: 3})
                     (ks (frame-keys f))
