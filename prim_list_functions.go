@@ -17,7 +17,11 @@ func RegisterListFunctionsPrimitives() {
 	MakePrimitiveFunction("for-each", ">=2", ForEachImpl)
 	MakePrimitiveFunction("any", ">=2", AnyImpl)
 	MakePrimitiveFunction("every", ">=2", EveryImpl)
-	MakePrimitiveFunction("reduce", "3", ReduceImpl)
+	MakePrimitiveFunction("reduce", "3", ReduceLeftImpl)
+	MakePrimitiveFunction("reduce-left", "3", ReduceLeftImpl)
+	MakePrimitiveFunction("reduce-right", "3", ReduceRightImpl)
+	MakePrimitiveFunction("fold-left", "3", FoldLeftImpl)
+	MakePrimitiveFunction("fold-right", "3", FoldRightImpl)
 	MakePrimitiveFunction("filter", "2", FilterImpl)
 	MakePrimitiveFunction("remove", "2", RemoveImpl)
 	MakePrimitiveFunction("memq", "2", MemqImpl)
@@ -216,10 +220,34 @@ func EveryImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	return LispTrue, nil
 }
 
-func ReduceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+func reduceFoldProc(initial *Data, col []*Data, f *Data, env *SymbolTableFrame, rightToLeft bool) (result *Data, err error) {
+	result = initial
+	for i := range col {
+		if rightToLeft {
+			i = len(col) - 1 - i
+		}
+		c := col[i]
+
+		var x, y *Data
+		if rightToLeft {
+			x, y = c, result
+		} else {
+			x, y = result, c
+		}
+
+		result, err = ApplyWithoutEval(f, InternalMakeList(x, y), env)
+		if err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+func ReduceLeftImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	f := First(args)
 	if !FunctionOrPrimitiveP(f) {
-		err = ProcessError("reduce needs a function as its first argument", env)
+		err = ProcessError("reduce-left needs a function as its first argument", env)
 		return
 	}
 
@@ -227,25 +255,87 @@ func ReduceImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 	col := Third(args)
 
 	if !ListP(col) {
-		err = ProcessError("map needs a list as its third argument", env)
+		err = ProcessError("reduce-left needs a list as its third argument", env)
 		return
 	}
 
-	if Length(col) == 0 {
+	length := Length(col)
+	if length == 0 {
 		return initial, nil
 	}
 
-	if Length(col) == 1 {
+	if length == 1 {
 		return Car(col), nil
 	}
 
-	result = Car(col)
-	for c := Cdr(col); NotNilP(c); c = Cdr(c) {
-		result, err = ApplyWithoutEval(f, InternalMakeList(result, Car(c)), env)
-		if err != nil {
-			return
-		}
+	list := ToArray(col)
+
+	result, err = reduceFoldProc(list[0], list[1:], f, env, false)
+
+	return
+}
+
+func ReduceRightImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	f := First(args)
+	if !FunctionOrPrimitiveP(f) {
+		err = ProcessError("reduce-right needs a function as its first argument", env)
+		return
 	}
+
+	initial := Second(args)
+	col := Third(args)
+
+	if !ListP(col) {
+		err = ProcessError("reduce-right needs a list as its third argument", env)
+		return
+	}
+
+	length := Length(col)
+	if length == 0 {
+		return initial, nil
+	}
+
+	if length == 1 {
+		return Car(col), nil
+	}
+
+	list := ToArray(col)
+
+	result, err = reduceFoldProc(list[len(list)-1], list[:len(list)-1], f, env, true)
+
+	return
+}
+
+func FoldLeftImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	f := First(args)
+	if !FunctionOrPrimitiveP(f) {
+		err = ProcessError("fold-left needs a function as its first argument", env)
+		return
+	}
+
+	initial := Second(args)
+	col := Third(args)
+
+	list := ToArray(col)
+
+	result, err = reduceFoldProc(initial, list, f, env, false)
+
+	return
+}
+
+func FoldRightImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
+	f := First(args)
+	if !FunctionOrPrimitiveP(f) {
+		err = ProcessError("fold-right needs a function as its first argument", env)
+		return
+	}
+
+	initial := Second(args)
+	col := Third(args)
+
+	list := ToArray(col)
+
+	result, err = reduceFoldProc(initial, list, f, env, true)
 
 	return
 }

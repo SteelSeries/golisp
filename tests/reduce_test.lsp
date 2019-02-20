@@ -3,7 +3,7 @@
 (context "reduce"
 
          ()
-         
+
          (it reduce-with-lambda
              (assert-eq (reduce (lambda (acc item) 0 (+ acc item)) 0 '(1 2 3))
                         6))
@@ -21,4 +21,18 @@
          (it reduce-errors
              (assert-error (reduce r r '(1 2))) ;initial arg must be a function
              (assert-error (reduce + 0 1))) ;last/3rd arg must be a list
+
+        (it reduce-direction
+            (assert-eq (reduce-left list '() '(1 2 3 4))
+                       '(((1 2) 3) 4))
+
+            (assert-eq (reduce-right list '() '(1 2 3 4))
+                       '(1 (2 (3 4)))))
+
+        (it fold
+            (assert-eq (fold-left list '() '(1 2 3 4))
+                       '((((() 1) 2) 3) 4))
+
+            (assert-eq (fold-right list '() '(1 2 3 4))
+                       '(1 (2 (3 (4 ()))))))
 )
