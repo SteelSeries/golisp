@@ -259,16 +259,10 @@ func ReduceLeftImpl(args *Data, env *SymbolTableFrame) (result *Data, err error)
 		return
 	}
 
-	length := Length(col)
-	if length == 0 {
+	list := ToArray(col)
+	if len(list) == 0 {
 		return initial, nil
 	}
-
-	if length == 1 {
-		return Car(col), nil
-	}
-
-	list := ToArray(col)
 
 	result, err = reduceFoldProc(list[0], list[1:], f, env, false)
 
@@ -290,16 +284,10 @@ func ReduceRightImpl(args *Data, env *SymbolTableFrame) (result *Data, err error
 		return
 	}
 
-	length := Length(col)
-	if length == 0 {
+	list := ToArray(col)
+	if len(list) == 0 {
 		return initial, nil
 	}
-
-	if length == 1 {
-		return Car(col), nil
-	}
-
-	list := ToArray(col)
 
 	result, err = reduceFoldProc(list[len(list)-1], list[:len(list)-1], f, env, true)
 
@@ -315,6 +303,11 @@ func FoldLeftImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) {
 
 	initial := Second(args)
 	col := Third(args)
+
+	if !ListP(col) {
+		err = ProcessError("fold-left needs a list as its third argument", env)
+		return
+	}
 
 	list := ToArray(col)
 
@@ -332,6 +325,11 @@ func FoldRightImpl(args *Data, env *SymbolTableFrame) (result *Data, err error) 
 
 	initial := Second(args)
 	col := Third(args)
+
+	if !ListP(col) {
+		err = ProcessError("fold-right needs a list as its third argument", env)
+		return
+	}
 
 	list := ToArray(col)
 
