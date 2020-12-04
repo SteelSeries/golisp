@@ -1172,7 +1172,7 @@ func evalHelper(d *Data, env *SymbolTableFrame, needFunction bool) (result *Data
 
 				result, err = Apply(function, args, env)
 				if err != nil {
-					err = errors.New(fmt.Sprintf("\nEvaling %s. %s", String(d), err))
+					err = fmt.Errorf("\nEvaling %s. %w", String(d), err)
 					return
 				} else if DebugReturnValue != nil {
 					result = DebugReturnValue
