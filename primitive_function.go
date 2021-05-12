@@ -77,27 +77,97 @@ func (self *PrimitiveFunction) parseNumArgs(argCount string) {
 		}
 
 		var intTerm int
-		n, _ := fmt.Sscanf(term, "%d", &intTerm)
-		if n == 1 {
-			argRestrictions = append(argRestrictions, ArgRestriction{Type: ARGS_EQ, Restriction: intTerm})
-			continue
+		if isJustNum(term) {
+			n, _ := fmt.Sscanf(term, "%d", &intTerm)
+			if n == 1 {
+				argRestrictions = append(argRestrictions, ArgRestriction{Type: ARGS_EQ, Restriction: intTerm})
+				continue
+			}
 		}
-		n, _ = fmt.Sscanf(term, ">=%d", &intTerm)
-		if n == 1 {
-			argRestrictions = append(argRestrictions, ArgRestriction{Type: ARGS_GTE, Restriction: intTerm})
-			continue
+
+		if isGTE(term) {
+			n, _ := fmt.Sscanf(term, ">=%d", &intTerm)
+			if n == 1 {
+				argRestrictions = append(argRestrictions, ArgRestriction{Type: ARGS_GTE, Restriction: intTerm})
+				continue
+			}
 		}
-		var lo int
-		var hi int
-		n, _ = fmt.Sscanf(term, "(%d,%d)", &lo, &hi)
-		if n == 2 {
-			//lo <= argCount && argCount <= hi
-			argRestrictions = append(argRestrictions, ArgRestriction{Type: ARGS_RANGE, Restriction: RangeRestriction{Lo: lo, Hi: hi}})
-			continue
+		if isRange(term) {
+			var lo int
+			var hi int
+			n, _ := fmt.Sscanf(term, "(%d,%d)", &lo, &hi)
+			if n == 2 {
+				//lo <= argCount && argCount <= hi
+				argRestrictions = append(argRestrictions, ArgRestriction{Type: ARGS_RANGE, Restriction: RangeRestriction{Lo: lo, Hi: hi}})
+				continue
+			}
 		}
 	}
 
 	self.ArgRestrictions = argRestrictions
+}
+
+func isJustNum(str string) bool {
+	// min length is 1 eg "0"
+	if len(str) < 1 {
+		return false
+	}
+
+	runes := []rune(str)
+	for _, r := range runes {
+		if !(r >= '0' && r <= '9') {
+			return false
+		}
+	}
+
+	return true
+}
+
+func isRange(str string) bool {
+	// min length is 5 eg "(0,0)"
+	if len(str) < 5 {
+		return false
+	}
+
+	runes := []rune(str)
+
+	// first and last must be open and close paren
+	if runes[0] != '(' || runes[len(runes)-1] != ')' {
+		return false
+	}
+
+	// other values must be number or comma (just one comma though)
+	commaCount := 0
+	for i, r := range runes[1 : len(runes)-1] {
+		if i > 0 && i < len(runes)-3 && r == ',' {
+			commaCount++
+			continue
+		}
+		if !(r >= '0' && r <= '9') {
+			return false
+		}
+	}
+
+	return commaCount == 1
+}
+
+func isGTE(str string) bool {
+	// min length is 3 eg ">=0"
+	if len(str) < 3 {
+		return false
+	}
+
+	runes := []rune(str)
+	if runes[0] != '>' || runes[1] != '=' {
+		return false
+	}
+
+	for _, r := range runes[2:] {
+		if !(r >= '0' && r <= '9') {
+			return false
+		}
+	}
+	return true
 }
 
 func (self *PrimitiveFunction) argsString() string {
