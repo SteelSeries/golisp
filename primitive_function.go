@@ -77,6 +77,14 @@ func (self *PrimitiveFunction) parseNumArgs(argCount string) {
 		}
 
 		var intTerm int
+
+		// Using `isJustNum`, `isGTE`, and `isRange` to check whether the subsequent calls to `fmt.Sscanf()` will fail.
+		// This avoids a Golang runtime bug caused by `fmt.Sscanf()` using panic+recover internally to return an error.
+		// The bug would clutter the stack trace reported by the race detector when run with `-race`.
+		//
+		// See the following Go github issues regarding the underlying runtime bug
+		// 		https://github.com/golang/go/issues/46095
+		// 		https://github.com/golang/go/issues/26813
 		if isJustNum(term) {
 			n, _ := fmt.Sscanf(term, "%d", &intTerm)
 			if n == 1 {
