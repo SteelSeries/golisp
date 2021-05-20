@@ -8,8 +8,9 @@
 package golisp
 
 import (
-	. "gopkg.in/check.v1"
 	"testing"
+
+	. "gopkg.in/check.v1"
 )
 
 func Test(t *testing.T) { TestingT(t) }
@@ -346,4 +347,44 @@ func (s *ParsingSuite) BenchmarkParse(c *C) {
 		src, _ := ReadFile("tests/list_access_test.lsp")
 		_, _ = ParseAndEval(src)
 	}
+}
+
+func (s *ParsingSuite) Test_isNum(c *C) {
+	c.Assert(isJustNum("0"), Equals, true)
+	c.Assert(isJustNum("5"), Equals, true)
+	c.Assert(isJustNum("9"), Equals, true)
+	c.Assert(isJustNum("10"), Equals, true)
+	c.Assert(isJustNum("124050"), Equals, true)
+
+	c.Assert(isJustNum("_1"), Equals, false)
+	c.Assert(isJustNum(">=1"), Equals, false)
+	c.Assert(isJustNum("(1)"), Equals, false)
+	c.Assert(isJustNum(""), Equals, false)
+}
+
+func (s *ParsingSuite) Test_isGTE(c *C) {
+	c.Assert(isGTE(">=0"), Equals, true)
+	c.Assert(isGTE(">=1"), Equals, true)
+	c.Assert(isGTE(">=9"), Equals, true)
+	c.Assert(isGTE(">=10"), Equals, true)
+
+	c.Assert(isGTE("10"), Equals, false)
+	c.Assert(isGTE(">="), Equals, false)
+	c.Assert(isGTE("<=-"), Equals, false)
+	c.Assert(isGTE(">=+"), Equals, false)
+}
+
+func (s *ParsingSuite) Test_isRange(c *C) {
+	c.Assert(isRange("(1,1)"), Equals, true)
+	c.Assert(isRange("(10,14)"), Equals, true)
+	c.Assert(isRange("(1,00400)"), Equals, true)
+	c.Assert(isRange("(999991,00400)"), Equals, true)
+
+	c.Assert(isRange("()"), Equals, false)
+	c.Assert(isRange("(,)"), Equals, false)
+	c.Assert(isRange("(,00)"), Equals, false)
+	c.Assert(isRange("(00,)"), Equals, false)
+	c.Assert(isRange("(000)"), Equals, false)
+	c.Assert(isRange("1234)"), Equals, false)
+	c.Assert(isRange("(1234"), Equals, false)
 }
